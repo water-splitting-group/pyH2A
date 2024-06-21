@@ -72,6 +72,7 @@ class Photovoltaic_Plugin:
 		self.calculate_stack_replacement(dcf)
 		self.calculate_scaling_factors(dcf)
 		self.calculate_area(dcf)
+		self.calculate_water_osmosis()
 
 		insert(dcf, 'Technical Operating Parameters and Specifications', 'Plant Design Capacity (kg of H2/day)', 'Value', 
 			   self.h2_production/365., __name__, print_info = print_info)
@@ -107,10 +108,23 @@ class Photovoltaic_Plugin:
 		for year in dcf.operation_years:
 			data_loss_corrected = self.calculate_photovoltaic_loss_correction(dcf, data, year)
 			power_generation = data_loss_corrected * dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value']
-
+			
 			electrolyzer_power_demand, power_increase = self.calculate_electrolyzer_power_demand(dcf, year) 
 			electrolyzer_power_demand *= np.ones(len(power_generation))
 			electrolyzer_power_consumption = np.amin(np.c_[power_generation, electrolyzer_power_demand], axis = 1)
+			
+			#sums for checking the values
+			#power_generation_sum = np.sum(power_generation)
+			#electrolyzer_power_demand_sum = np.sum(electrolyzer_power_demand)
+			#excessive power which is not used for the electrolyzer and we are loosing ower the year
+			#extra_power = power_generation - electrolyzer_power_demand
+			#extra_power = np.sum(extra_power[extra_power > 0])
+			#print(extra_power)
+
+			#array for checking of the power_generation_sum, electrolyzer_power_demand_sum, extra_power_test, extra_power
+			#check_array = np.array([power_generation_sum, electrolyzer_power_demand_sum, extra_power])
+			#print(check_array)
+
 			#BATTERY
 			#the battery_power_capacity should be added to the PV_E_base.md file, probably with other values as well, e.g. 0.2
 			battery_capacity_maximum = 375000  # in kW, based on Palmer 2021 1500 MWh —› depending on the rate in hours e.g. 4 h rate —> 375 MW power capacity
@@ -162,6 +176,8 @@ class Photovoltaic_Plugin:
 	#				electrolyzer_power_consumption = power_generation + (battery_charge * battery_efficiency)
 	#				battery_charge = battery_capacity_minimum
 			#print(electrolyzer_power_consumption)
+					
+			#OG code
 			threshold = dcf.inp['Electrolyzer']['Minimum capacity']['Value']
 			electrolyzer_capacity = electrolyzer_power_consumption / electrolyzer_power_demand
 			electrolyzer_capacity[electrolyzer_capacity > threshold] = 1
@@ -170,7 +186,9 @@ class Photovoltaic_Plugin:
 			h2_produced = electrolyzer_power_consumption * dcf.inp['Electrolyzer']['Conversion efficiency (kg H2/kWh)']['Value'] / power_increase
 			h2_produced *= electrolyzer_capacity
 
-			yearly_data.append([year, np.sum(h2_produced), np.sum(electrolyzer_capacity)])
+			yearly_data.append([year, np.sum(h2_produced), np.sum(electrolyzer_capacity), np.sum(power_generation)])
+			#import pprint
+			#pprint.pprint(yearly_data)
 
 		self.yearly_data = np.asarray(yearly_data)
 		self.h2_production = np.concatenate([np.zeros(dcf.inp['Financial Input Values']['construction time']['Value']), 
@@ -190,14 +208,15 @@ class Photovoltaic_Plugin:
 		demand = increase * dcf.inp['Electrolyzer']['Nominal Power (kW)']['Value']
 
 		return demand, increase
-
+		
+	
 	def calculate_stack_replacement(self, dcf):
 		'''Calculation of stack replacement frequency for electrolyzer.
 		'''
 
 		cumulative_running_time = np.cumsum(self.yearly_data[:,2])
 		stack_usage = cumulative_running_time / dcf.inp['Electrolyzer']['Replacement time (h)']['Value']
-
+	
 		number_of_replacements = np.floor_divide(stack_usage[-1], 1)
 
 		self.replacement_frequency = len(stack_usage) / (number_of_replacements + 1.)
@@ -219,11 +238,37 @@ class Photovoltaic_Plugin:
 
 	def calculate_area(self, dcf):
 		'''Area requirement calculation assuming 1000 W/m2 peak power.'''
-
+		
 		peak_kW_per_m2 = dcf.inp['Photovoltaic']['Efficiency']['Value'] * 1.
+		#print('peak_kW/m2', peak_kW_per_m2)
 		self.area_m2 = dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value'] / peak_kW_per_m2
 		self.area_acres = self.area_m2 * 0.000247105
+		#print('self_asea_m2:', self.area_m2, 'self_area_acres:', self.area_acres)
+
 		#PV amount calculation 
 		amount_PV = round(dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value'] / (dcf.inp['Photovoltaic']['Power (kW)']['Value'] / 1000))
 		print('amount of PV:', amount_PV)
+		#PV amount calculation 2 —› depending on the area of the PV
+		#area_PV_m2 = #here add the area of the PV
+		#amount_PV_check = self.area_m2 / area_PV_m2
+		#print('amount_PV_check:', amount_PV_check)
+
+	def calculate_water_osmosis(self):
+		'''How much water is needed and what power would reverse osmosis need'''
+		
+		#the yearly production is calculated using the estimate of 365 t/year of H2 production
+		demand_fresh_water_year = 365 * 18.01528 / 2.016  #in t
+		demand_fresh_water_year *= 1 / 0.000997 #in L
+		#total
+		demand_fresh_water = np.sum(self.yearly_data[:,1]) * 18.01528 / 2.016 / 1000 #in t // factor 2, due to the recovery rate of reverse osmosis
+		demand_sea_water = 2 * demand_fresh_water #t 
+		demand_sea_water *= 1 / 0.000997 #in L
+		print('total amount of sea water:', demand_sea_water, 'L')
+		#needed electricity requierement for reverse osmosis: 3.72 kWh/L based on Terlouw 2022 (generally between 3.5 - 5 kWh)
+		osmosis_power_demand = 2 * self.yearly_data[:,1] * 18.01528 / 2.016 / 1000 / 0.000997 * 3.72 #kWh
+		osmosis_power_demand *= 1 / 8760 #kW
+		osmosis_power_demand_percentage = osmosis_power_demand * 100 / self.yearly_data[:,3]
+		print(osmosis_power_demand_percentage)
+
+		
 
