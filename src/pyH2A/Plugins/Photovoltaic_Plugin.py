@@ -173,4 +173,7 @@ class Photovoltaic_Plugin:
 		peak_kW_per_m2 = dcf.inp['Photovoltaic']['Efficiency']['Value'] * 1.
 		self.area_m2 = dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value'] / peak_kW_per_m2
 		self.area_acres = self.area_m2 * 0.000247105
+		#PV amount calculation 
+		amount_PV = round(dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value'] / (dcf.inp['Photovoltaic']['Power (kW)']['Value'] / 1000))
+		print('amount of PV:', amount_PV)
 
