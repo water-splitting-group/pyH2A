@@ -111,7 +111,57 @@ class Photovoltaic_Plugin:
 			electrolyzer_power_demand, power_increase = self.calculate_electrolyzer_power_demand(dcf, year) 
 			electrolyzer_power_demand *= np.ones(len(power_generation))
 			electrolyzer_power_consumption = np.amin(np.c_[power_generation, electrolyzer_power_demand], axis = 1)
-
+			#BATTERY
+			#the battery_power_capacity should be added to the PV_E_base.md file, probably with other values as well, e.g. 0.2
+			battery_capacity_maximum = 375000  # in kW, based on Palmer 2021 1500 MWh —› depending on the rate in hours e.g. 4 h rate —> 375 MW power capacity
+			battery_capacity_minimum = 0.2 * battery_capacity_maximum  # lithium-ion batteries threshold
+			battery_efficiency = 0.9  # round_trip_efficiency from 0.85 - 0.95 for Li-ion batteries (also in Palmer 2021)
+			battery_charge = battery_capacity_minimum
+			#extra power
+			extra_power = power_generation - electrolyzer_power_demand
+			extra_power = np.array([power if power > 0 else 0 for power in extra_power])
+			
+		# 	electrolyzer_power_consumption = []
+		#	if [extra_power > 0]:
+		#		electrolyzer_power_consumption.append(electrolyzer_power_demand)
+		#		battery_charge += (extra_power * battery_efficiency)
+		#		if [battery_charge > battery_capacity_maximum]:
+		#			battery_charge = battery_capacity_maximum			
+		#	if [extra_power <= 0]:
+		#		electrolyzer_power_deficit = electrolyzer_power_demand - power_generation
+		#		if [battery_charge >= electrolyzer_power_deficit / battery_efficiency] and [battery_charge >= battery_capacity_minimum]:								
+		#			electrolyzer_power_consumption.append(power_generation + (electrolyzer_power_deficit / battery_efficiency))
+		#			battery_charge -= (electrolyzer_power_deficit / battery_efficiency)		
+		#		else: 
+		#			electrolyzer_power_consumption.append(power_generation)
+		#			battery_charge = battery_capacity_minimum
+		
+	
+	
+	#		#charging
+	#		if [extra_power > 0]:
+	#			extra = extra_power * battery_efficiency
+	#			battery_charge += (extra_power * battery_efficiency) 
+	#			battery_charge[battery_charge > battery_capacity_maximum] = battery_capacity_maximum
+	#			battery_charge[battery_charge < battery_capacity_minimum] = battery_capacity_minimum
+	#		else:
+	#			battery_charge += 0 
+	#		#print(battery_charge)
+			
+			
+	#		if [extra_power > 0]:
+	#			electrolyzer_power_consumption = electrolyzer_power_demand
+	#			battery_charge += (extra_power * battery_efficiency)
+	#			print(battery_charge)
+	#		else: #when power_generation < electrolyzer_power_demand
+	#			electrolyzer_power_deficit = electrolyzer_power_demand - power_generation
+	#			if [battery_charge >= electrolyzer_power_deficit / battery_efficiency] and [battery_charge >= battery_capacity_minimum]:
+	#				battery_charge -= (electrolyzer_power_deficit / battery_efficiency)					
+	#				electrolyzer_power_consumption = power_generation + (electrolyzer_power_deficit / battery_efficiency)
+	#			else: 
+	#				electrolyzer_power_consumption = power_generation + (battery_charge * battery_efficiency)
+	#				battery_charge = battery_capacity_minimum
+			#print(electrolyzer_power_consumption)
 			threshold = dcf.inp['Electrolyzer']['Minimum capacity']['Value']
 			electrolyzer_capacity = electrolyzer_power_consumption / electrolyzer_power_demand
 			electrolyzer_capacity[electrolyzer_capacity > threshold] = 1
