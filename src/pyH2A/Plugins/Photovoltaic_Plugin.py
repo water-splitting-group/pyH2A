@@ -107,26 +107,15 @@ class Photovoltaic_Plugin:
 
 		for year in dcf.operation_years:
 			data_loss_corrected = self.calculate_photovoltaic_loss_correction(dcf, data, year)
-			power_generation = data_loss_corrected * dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value']
+			power_generation = data_loss_corrected * dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value'] - self.calculate_water_osmosis()
 			
 			electrolyzer_power_demand, power_increase = self.calculate_electrolyzer_power_demand(dcf, year) 
 			electrolyzer_power_demand *= np.ones(len(power_generation))
 			electrolyzer_power_consumption = np.amin(np.c_[power_generation, electrolyzer_power_demand], axis = 1)
-			
-			#sums for checking the values
-			#power_generation_sum = np.sum(power_generation)
-			#electrolyzer_power_demand_sum = np.sum(electrolyzer_power_demand)
-			#excessive power which is not used for the electrolyzer and we are loosing ower the year
-			#extra_power = power_generation - electrolyzer_power_demand
-			#extra_power = np.sum(extra_power[extra_power > 0])
-			#print(extra_power)
-
-			#array for checking of the power_generation_sum, electrolyzer_power_demand_sum, extra_power_test, extra_power
-			#check_array = np.array([power_generation_sum, electrolyzer_power_demand_sum, extra_power])
-			#print(check_array)
 
 			#BATTERY
-			#the battery_power_capacity should be added to the PV_E_base.md file, probably with other values as well, e.g. 0.2
+
+			#here battery parameters are listed, which will later be added to the .md file
 			battery_capacity_maximum = 375000  # in kW, based on Palmer 2021 1500 MWh —› depending on the rate in hours e.g. 4 h rate —> 375 MW power capacity
 			battery_capacity_minimum = 0.2 * battery_capacity_maximum  # lithium-ion batteries threshold
 			battery_efficiency = 0.9  # round_trip_efficiency from 0.85 - 0.95 for Li-ion batteries (also in Palmer 2021)
@@ -246,7 +235,7 @@ class Photovoltaic_Plugin:
 		#print('self_asea_m2:', self.area_m2, 'self_area_acres:', self.area_acres)
 
 		#PV amount calculation 
-		amount_PV = round(dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value'] / (dcf.inp['Photovoltaic']['Power (kW)']['Value'] / 1000))
+		amount_PV = round(dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value'] / dcf.inp['Photovoltaic']['Power (kW)']['Value'])
 		print('amount of PV:', amount_PV)
 		#PV amount calculation 2 —› depending on the area of the PV
 		#area_PV_m2 = #here add the area of the PV
@@ -254,21 +243,22 @@ class Photovoltaic_Plugin:
 		#print('amount_PV_check:', amount_PV_check)
 
 	def calculate_water_osmosis(self):
-		'''How much water is needed and what power would reverse osmosis need'''
+		'''How much water is needed and what power would reverse osmosis need on a daily basis, since this is then extracted from power generation'''
 		
-		#the yearly production is calculated using the estimate of 365 t/year of H2 production
-		demand_fresh_water_year = 365 * 18.01528 / 2.016  #in t
-		demand_fresh_water_year *= 1 / 0.000997 #in L
-		#total
-		demand_fresh_water = np.sum(self.yearly_data[:,1]) * 18.01528 / 2.016 / 1000 #in t // factor 2, due to the recovery rate of reverse osmosis
-		demand_sea_water = 2 * demand_fresh_water #t 
-		demand_sea_water *= 1 / 0.000997 #in L
-		print('total amount of sea water:', demand_sea_water, 'L')
-		#needed electricity requierement for reverse osmosis: 3.72 kWh/L based on Terlouw 2022 (generally between 3.5 - 5 kWh)
-		osmosis_power_demand = 2 * self.yearly_data[:,1] * 18.01528 / 2.016 / 1000 / 0.000997 * 3.72 #kWh
-		osmosis_power_demand *= 1 / 8760 #kW
-		osmosis_power_demand_percentage = osmosis_power_demand * 100 / self.yearly_data[:,3]
-		print(osmosis_power_demand_percentage)
+		#yearly water demand is calculated using the estimate of 365 t/year of H2 production
+		demand_fresh_water_day = 1 * 18.01528 / 2.016  #in t
+		demand_fresh_water_day *= 1 / 0.997 #in m3
+		#yearly power demand for pure water with a two-pass reverse osmosis (< 10 ppm of dissolved salt —› needed depending on electrolyzer)
+		#the parameters for osmosis should be later added to the .md file 
+		osmosis_power_demand = 2.71 #kWh/m3 based on Hausmann 2021 and Kim 208
+		osmosis_recovery_rate = 0.4 #based on the ecoinvent database (and Palmer 2021 or Tewlour 2022)
+		osmosis_power_demand_day = osmosis_power_demand * demand_fresh_water_day / osmosis_recovery_rate #kWh
+		#print(osmosis_power_demand_day)
+		
+		return osmosis_power_demand_day
+
+		
+		
 
 		
 
