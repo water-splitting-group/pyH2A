@@ -107,50 +107,50 @@ class Photovoltaic_Plugin:
 
 		for year in dcf.operation_years:
 			data_loss_corrected = self.calculate_photovoltaic_loss_correction(dcf, data, year)
-			power_generation = data_loss_corrected * dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value'] - self.calculate_water_osmosis()
+			#CHANGE for power generation, substraction of the osmosis
+			power_generation = data_loss_corrected * dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value'] - self.calculate_water_osmosis() 
 			
 			electrolyzer_power_demand, power_increase = self.calculate_electrolyzer_power_demand(dcf, year) 
 			electrolyzer_power_demand *= np.ones(len(power_generation))
 			electrolyzer_power_consumption = np.amin(np.c_[power_generation, electrolyzer_power_demand], axis = 1)
+			
+	#now the electrolyzer_power_consumption is calculated depending how much power we produce and what the demand is, where the smaller value is chosen (line 115)
+	#this should change once we add battery, therefore electorlyzer_power_consumption calculation should be modified as well
 
-			#BATTERY
-
-			#here battery parameters are listed, which will later be added to the .md file
+	#BATTERY	
+	#CHARGING PROCESS & electrolyzer_power_consumption
+	# if extra_power is generated (meaning if extra_power > 0) then this power should be stored in a battery (charging process)
+	# during the charging process of the battery the battery_charge should not exceed the battery_capacity_maximum
+	# when extra_power is generated the electrolyzer_power_consumption = electrolyzer_power_demand
+	#DISCHARGING PROCESS & electrolyzer_power_comsumption
+	# if the power_generation is not sufficient for the electrolyzer_power_demand, power stored in battery can be used (works for power_generation = 0 and extra_power < 0)
+	# here the electrolyzer_power_consumption is equal to power_generation + what is needed from the battery
+	# during the discharging process, the battery doesn't go below the battery_capacity_minimum
+	#note: during the charging and discharging process the battery_efficiency should be considered
+			
+			#CODE STARTS HERE
+			#battery parameters are listed, which will later be added to the .md file
 			battery_capacity_maximum = 375000  # in kW, based on Palmer 2021 1500 MWh —› depending on the rate in hours e.g. 4 h rate —> 375 MW power capacity
-			battery_capacity_minimum = 0.2 * battery_capacity_maximum  # lithium-ion batteries threshold
+			battery_capacity_minimum = 0.2 * battery_capacity_maximum  # lithium-ion batteries threshold, this is the minimum for the battery
 			battery_efficiency = 0.9  # round_trip_efficiency from 0.85 - 0.95 for Li-ion batteries (also in Palmer 2021)
-			battery_charge = battery_capacity_minimum
-			#extra power
+			battery_charge = battery_capacity_minimum #this could be maybe chosen as battery_capacity_maximum at the beginning instead of minimum 
+			
+			#here the extra_power which is generated hourly is calculated
 			extra_power = power_generation - electrolyzer_power_demand
-			extra_power = np.array([power if power > 0 else 0 for power in extra_power])
+			extra_power = np.array([power if power > 0 else 0 for power in extra_power]) #list with only positive values for the extra_power is generated
 			
-		# 	electrolyzer_power_consumption = []
-		#	if [extra_power > 0]:
-		#		electrolyzer_power_consumption.append(electrolyzer_power_demand)
-		#		battery_charge += (extra_power * battery_efficiency)
-		#		if [battery_charge > battery_capacity_maximum]:
-		#			battery_charge = battery_capacity_maximum			
-		#	if [extra_power <= 0]:
-		#		electrolyzer_power_deficit = electrolyzer_power_demand - power_generation
-		#		if [battery_charge >= electrolyzer_power_deficit / battery_efficiency] and [battery_charge >= battery_capacity_minimum]:								
-		#			electrolyzer_power_consumption.append(power_generation + (electrolyzer_power_deficit / battery_efficiency))
-		#			battery_charge -= (electrolyzer_power_deficit / battery_efficiency)		
-		#		else: 
-		#			electrolyzer_power_consumption.append(power_generation)
-		#			battery_charge = battery_capacity_minimum
-		
+	#VERSIONS FOR BATTERY
+	# three different versions below
+	# version 1 and version 2 are very similar and the same problem occurs (electrolyzer_power_consumption = electrolyzer_power_demand) 
+	#   —› here the idea is to calculate charging and consumption in one step which could lead to errors (?)   
+	#   —› I think the problem is somewhere around the "electrolyzer_power_consumption = electrolyzer_power_demand" part
+	# version 3 is other approach where battery and electrolyzer_power_demand is calculated separately (this was yet not developed further)
+	#   —› I think that this approach could be better than version 1&2 but not sure
+	#   —› Can this work? How should I continue? How to decouple the charging/discharging from the consumption
 	
-	
-	#		#charging
-	#		if [extra_power > 0]:
-	#			extra = extra_power * battery_efficiency
-	#			battery_charge += (extra_power * battery_efficiency) 
-	#			battery_charge[battery_charge > battery_capacity_maximum] = battery_capacity_maximum
-	#			battery_charge[battery_charge < battery_capacity_minimum] = battery_capacity_minimum
-	#		else:
-	#			battery_charge += 0 
-	#		#print(battery_charge)
-			
+	#VERSION 1
+	# here the problem is that for the electrolyzer_power_consumption always = electrolyzer_power_demand is obtained
+	# and the battery charge is always at battery_capacity_maximum	
 			
 	#		if [extra_power > 0]:
 	#			electrolyzer_power_consumption = electrolyzer_power_demand
@@ -165,7 +165,42 @@ class Photovoltaic_Plugin:
 	#				electrolyzer_power_consumption = power_generation + (battery_charge * battery_efficiency)
 	#				battery_charge = battery_capacity_minimum
 			#print(electrolyzer_power_consumption)
-					
+		
+	#VESION 2
+	# same problem as above, here the idea was to work with append to and array for the electrolyzer_power_consumption
+	# but the calculation stays the same 
+		
+		#	electrolyzer_power_consumption = []	
+		#	if [extra_power > 0]:
+		#		electrolyzer_power_consumption.append(electrolyzer_power_demand)
+		#		battery_charge += (extra_power * battery_efficiency)
+		#		if [battery_charge > battery_capacity_maximum]:
+		#			battery_charge = battery_capacity_maximum			
+		#	if [extra_power <= 0]:
+		#		electrolyzer_power_deficit = electrolyzer_power_demand - power_generation
+		#		if [battery_charge >= electrolyzer_power_deficit / battery_efficiency] and [battery_charge >= battery_capacity_minimum]:								
+		#			electrolyzer_power_consumption.append(power_generation + (electrolyzer_power_deficit / battery_efficiency))
+		#			battery_charge -= (electrolyzer_power_deficit / battery_efficiency)		
+		#		else: 
+		#			electrolyzer_power_consumption.append(power_generation)
+		#			battery_charge = battery_capacity_minimum
+		#	print(electrolyzer_power_consumption)		
+		
+	#VERSION 3
+	# this is only other possibility how to calculate charging and discharging
+	# here the idea was to separate the code for battery charging/discharging and then later calculate the electrolyzer_power_demand and separate those
+	
+	#		#charging
+	#		if [extra_power > 0]:
+	#			extra = extra_power * battery_efficiency
+	#			battery_charge += (extra_power * battery_efficiency) 
+	#			battery_charge[battery_charge > battery_capacity_maximum] = battery_capacity_maximum
+	#			battery_charge[battery_charge < battery_capacity_minimum] = battery_capacity_minimum
+	#		else:
+	#			battery_charge += 0 
+	#		#print(battery_charge)
+
+			
 			#OG code
 			threshold = dcf.inp['Electrolyzer']['Minimum capacity']['Value']
 			electrolyzer_capacity = electrolyzer_power_consumption / electrolyzer_power_demand
@@ -175,6 +210,7 @@ class Photovoltaic_Plugin:
 			h2_produced = electrolyzer_power_consumption * dcf.inp['Electrolyzer']['Conversion efficiency (kg H2/kWh)']['Value'] / power_increase
 			h2_produced *= electrolyzer_capacity
 
+			#CHANGE: here yearly power_generation was added to the list (this was used for the osmosis calculation in the beginning)
 			yearly_data.append([year, np.sum(h2_produced), np.sum(electrolyzer_capacity), np.sum(power_generation)])
 			#import pprint
 			#pprint.pprint(yearly_data)
@@ -235,7 +271,7 @@ class Photovoltaic_Plugin:
 		#print('self_asea_m2:', self.area_m2, 'self_area_acres:', self.area_acres)
 
 		#PV amount calculation 
-		amount_PV = round(dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value'] / dcf.inp['Photovoltaic']['Power (kW)']['Value'])
+		amount_PV = round(dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value'] / dcf.inp['Photovoltaic']['Power (kW)']['Value'] / 1000)
 		print('amount of PV:', amount_PV)
 		#PV amount calculation 2 —› depending on the area of the PV
 		#area_PV_m2 = #here add the area of the PV
