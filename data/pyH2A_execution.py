@@ -4,8 +4,8 @@ import pprint
 
 def pv_e_base():
 	
-	result = pyH2A('./PV_E/Base/PV_E_Base.md', './PV_E/Base')
-	pprint.pprint(result.meta_modules['Monte_Carlo_Analysis']['Module'].shortest_target_distance)
+	result = pyH2A('/Users/jacob/Documents/Others/240529_pyH2A_Test/pyH2A/data/PV_E/Base/PV_E_Base.md', './PV_E/Base')
+	#pprint.pprint(result.meta_modules['Monte_Carlo_Analysis']['Module'].shortest_target_distance)
 
 	#pprint.pprint(result.__dict__)
 

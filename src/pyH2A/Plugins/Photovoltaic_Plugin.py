@@ -1,5 +1,6 @@
 from pyH2A.Utilities.input_modification import insert, process_table, read_textfile
 import numpy as np
+import pprint as pp
 
 class Photovoltaic_Plugin:
 	'''Simulation of hydrogen production using PV + electrolysis.
@@ -121,6 +122,8 @@ class Photovoltaic_Plugin:
 			h2_produced *= electrolyzer_capacity
 
 			yearly_data.append([year, np.sum(h2_produced), np.sum(electrolyzer_capacity)])
+			
+			#pp.pprint(electrolyzer_power_demand)
 
 		self.yearly_data = np.asarray(yearly_data)
 		self.h2_production = np.concatenate([np.zeros(dcf.inp['Financial Input Values']['construction time']['Value']), 
