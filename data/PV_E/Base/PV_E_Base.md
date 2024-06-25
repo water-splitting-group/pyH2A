@@ -74,6 +74,12 @@ CAPEX Reference Power (kW) | 1,000.0
 Power loss per year | 0.5% | Based on Chang 2020
 Efficiency | 22% | None | Only used for area calculation.
 
+# Battery
+
+Name | Value | Comment
+--- | --- | ---
+Capacity (kWh) | 10000. | Size of battery
+
 # Direct Capital Costs - PV
 
 Name | Value | Path | Comment
