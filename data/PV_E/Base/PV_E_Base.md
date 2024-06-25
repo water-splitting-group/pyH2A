@@ -78,8 +78,14 @@ Efficiency | 22% | None | Only used for area calculation.
 
 Name | Value | Comment
 --- | --- | ---
-Capacity (kWh) | 10000 | Size of battery, considering capacity minimum of 20%, capacity has to be 20% larger than design capacity
+Capacity (kWh) | 4000 | Size of battery, considering capacity minimum of 20%, capacity has to be 20% larger than design capacity
 Round trip efficiency | 100% | For lithium ion battery
+
+# Direct Capital Costs - Battery
+
+Name | Value | Path
+--- | --- | ---
+Battery CAPEX ($/kWh) | 139 | Battery > Capacity (kWh) > Value
 
 # Direct Capital Costs - PV
 

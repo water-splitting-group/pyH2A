@@ -146,9 +146,9 @@ class Photovoltaic_Plugin:
 			return np.sum(h2_produced) + additional_H2, np.sum(electrolyzer_capacity) + additional_working_hours
 
 		else:
-			total_power = np.sum(power_generation)
-			total_consumed = np.sum(electrolyzer_power_consumption * electrolyzer_capacity)
-			print(total_consumed/total_power)
+			# total_power = np.sum(power_generation)
+			# total_consumed = np.sum(electrolyzer_power_consumption * electrolyzer_capacity)
+			# print(total_consumed/total_power)
 			return np.sum(h2_produced), np.sum(electrolyzer_capacity)	
 	
 	def annual_electroyzer_operation_calculation_with_battery(self, dcf, data, 
@@ -187,9 +187,9 @@ class Photovoltaic_Plugin:
 
 		additional_daily_operating_hours = np.ceil(daily_additional_power_consumption / electrolyzer_power_demand[0])	
 
-		total_power = np.sum(power_generation)
-		total_consumed = np.sum(electrolyzer_power_consumption * electrolyzer_capacity) + np.sum(daily_additional_power_consumption)
-		print(total_consumed/total_power)
+		# total_power = np.sum(power_generation)
+		# total_consumed = np.sum(electrolyzer_power_consumption * electrolyzer_capacity) + np.sum(daily_additional_power_consumption)
+		# print(total_consumed/total_power)
 
 		return np.sum(daily_additional_H2_production), np.sum(additional_daily_operating_hours) 
 	
