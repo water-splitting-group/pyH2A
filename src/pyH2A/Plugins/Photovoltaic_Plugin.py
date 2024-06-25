@@ -43,6 +43,8 @@ class Photovoltaic_Plugin:
 		Power conversion efficiency of used solar cells. Percentage or value between 0 and 1.
 	Battery > Capacity (kWh) > Value : float
 		Capacity of battery storage in kWh.
+	Battery > Round trip efficiency > Value : float
+		Round trip efficiency of battery.
 
 	Returns
 	-------
@@ -71,7 +73,8 @@ class Photovoltaic_Plugin:
 		process_table(dcf.inp, 'CAPEX Multiplier', 'Value')
 		process_table(dcf.inp, 'Electrolyzer', 'Value')
 		process_table(dcf.inp, 'Photovoltaic', 'Value')
-		process_table(dcf.inp, 'Battery', 'Value')
+		if 'Battery' in dcf.inp:
+			process_table(dcf.inp, 'Battery', 'Value')
 
 		self.calculate_H2_production(dcf)
 		self.calculate_stack_replacement(dcf)
@@ -137,15 +140,18 @@ class Photovoltaic_Plugin:
 		h2_produced *= electrolyzer_capacity
 
 		if 'Battery' in dcf.inp:
-			additional_H2, additional_working_hours = self.annual_electroyzer_operation_calculation_with_battery_clean(dcf, data,
+			additional_H2, additional_working_hours = self.annual_electroyzer_operation_calculation_with_battery(dcf, data,
 																	 power_generation, electrolyzer_power_consumption,
 																	 electrolyzer_capacity, electrolyzer_power_demand, power_increase)
 			return np.sum(h2_produced) + additional_H2, np.sum(electrolyzer_capacity) + additional_working_hours
 
 		else:
+			total_power = np.sum(power_generation)
+			total_consumed = np.sum(electrolyzer_power_consumption * electrolyzer_capacity)
+			print(total_consumed/total_power)
 			return np.sum(h2_produced), np.sum(electrolyzer_capacity)	
 	
-	def annual_electroyzer_operation_calculation_with_battery_clean(self, dcf, data, 
+	def annual_electroyzer_operation_calculation_with_battery(self, dcf, data, 
 																	power_generation, electrolyzer_power_consumption,
 																	electrolyzer_capacity, electrolyzer_power_demand, power_increase):
 		'''Calculation of additional H2 production using stored power from battery.
@@ -160,11 +166,9 @@ class Photovoltaic_Plugin:
 		daily_power_consumption = daily_power_consumption.sum(axis=1)
 		daily_excess_power = daily_power_generation - daily_power_consumption
 
-
-
 		capacity = dcf.inp['Battery']['Capacity (kWh)']['Value']
 		capacity *= np.ones(len(daily_excess_power))
-		daily_stored_power = np.amin(np.c_[daily_excess_power, capacity], axis = 1)
+		daily_stored_power = np.amin(np.c_[daily_excess_power, capacity], axis = 1) * dcf.inp['Battery']['Round trip efficiency']['Value']
 
 		unused_power = electrolyzer_power_consumption * (1 - electrolyzer_capacity)
 		daily_unused_power = unused_power.reshape(-1, 24)
