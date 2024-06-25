@@ -70,10 +70,17 @@ Replacement time (h) | 80,000.0 | Based on Chang 2020, operating time after whic
 Name | Value | Path | Comment
 --- | --- | --- | --- 
 Nominal Power (kW) | 1.5 | Electrolyzer > Nominal Power (kW) > Value | Optimal PV oversize ratio, same as Chang 2020
-Power (kW) | 340 | | Based on the work by Palmer 2021 
+Power per module (kW)| 340 | | Based on the work by Palmer 2021 
 CAPEX Reference Power (kW) | 1,000.0
 Power loss per year | 0.5% | Based on Chang 2020
 Efficiency | 22% | None | Only used for area calculation.
+
+# Reverse Osmosis
+Name | Value | Path | Comment
+--- | --- | --- | ---
+Power Demand (kWh/m3) | 2.71 | based on Hausmann 2021 and Kim 208
+Recovery Rate | 40.0% | based on the ecoinvent database (and Palmer 2021 or Tewlour 2022)
+
 
 # Direct Capital Costs - PV
 
