@@ -75,7 +75,7 @@ class Photovoltaic_Plugin:
 		self.calculate_stack_replacement(dcf)
 		self.calculate_scaling_factors(dcf)
 		self.calculate_area(dcf)
-		self.calculate_water_osmosis()
+		self.calculate_water_osmosis(dcf)
 
 		insert(dcf, 'Technical Operating Parameters and Specifications', 'Plant Design Capacity (kg of H2/day)', 'Value', 
 			   self.h2_production/365., __name__, print_info = print_info)
@@ -187,13 +187,9 @@ class Photovoltaic_Plugin:
 		self.area_acres = self.area_m2 * 0.000247105
 		#print('self_asea_m2:', self.area_m2, 'self_area_acres:', self.area_acres)
 
-		#PV amount calculation 
 		number_of_PV_modules = np.ceil(dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value'] / dcf.inp['Photovoltaic']['Power per module (kW)']['Value'])
 		print('amount of PV:', number_of_PV_modules)
-		#PV amount calculation 2 —› depending on the area of the PV
-		#area_PV_m2 = #here add the area of the PV
-		#amount_PV_check = self.area_m2 / area_PV_m2
-		#print('amount_PV_check:', amount_PV_check)
+		
 
 	def calculate_water_osmosis(self, dcf):
 		'''How much water is needed and what power would reverse osmosis need on a daily basis, since this is then extracted from power generation'''
