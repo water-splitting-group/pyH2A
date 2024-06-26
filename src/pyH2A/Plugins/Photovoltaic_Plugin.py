@@ -41,12 +41,17 @@ class Photovoltaic_Plugin:
 		> 0. Reduction calculated as: (1 - loss per year) ^ year.
 	Photovoltaic > Efficiency > Value : float
 		Power conversion efficiency of used solar cells. Percentage or value between 0 and 1.
+	Photovoltaic > Power per module (kW) > Value : float
+		Power of a PV module in kW.
 	Battery > Capacity (kWh) > Value : float
 		Capacity of battery storage in kWh.
 	Battery > Round trip efficiency > Value : float
 		Round trip efficiency of battery.
-	Photovoltaic > Power per module (kW) > Value : float
-		Power of a PV module in kW.
+	Reverse Osmosis > Power Demand (kWh/m3) > Value : float
+		Power demand for the desalination of water using reverse osmosis in kWh/m3.
+	Reverse Osmosis > Recovery Rate > Value : float
+		Recovery rate of obtained pure water vs sea water using reverse osmosis.
+	
 
 	Returns
 	-------

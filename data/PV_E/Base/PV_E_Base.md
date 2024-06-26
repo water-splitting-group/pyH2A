@@ -82,16 +82,11 @@ Name | Value | Comment
 Capacity (kWh) | 4000 | Size of battery, considering capacity minimum of 20%, capacity has to be 20% larger than design capacity
 Round trip efficiency | 100% | For lithium ion battery
 
-# Direct Capital Costs - Battery
-
-Name | Value | Path
---- | --- | ---
-Battery CAPEX ($/kWh) | 139 | Battery > Capacity (kWh) > Value
 
 # Reverse Osmosis
 Name | Value | Path | Comment
 --- | --- | --- | ---
-Power Demand (kWh/m3) | 2.71 | based on Hausmann 2021 and Kim 208
+Power Demand (kWh/m3) | 2.71 | based on Hausmann 2021 and Kim 208 (this was chosen for a purity of < 10 ppm of disolved salts in the obtained pure water)
 Recovery Rate | 40.0% | based on the ecoinvent database (and Palmer 2021 or Tewlour 2022)
 
 
@@ -106,6 +101,18 @@ PV CAPEX ($/kW) | 818.0 | Photovoltaic > Nominal Power (kW) > Value ; Photovolta
 Name | Value | Path | Comment
 --- | --- | --- | ---
 Electrolyzer CAPEX ($/kW) | 784.0 | Electrolyzer > Nominal Power (kW) > Value ; Electrolyzer > Scaling Factor > Value | Based on Chang 2020, IRENA 2020 Green Hydrogen (PEM System CAPEX 700 - 1400 $/kg), Shah 2021.
+
+# Direct Capital Costs - Battery
+
+Name | Value | Path
+--- | --- | ---
+Battery CAPEX ($/kWh) | 139 | Battery > Capacity (kWh) > Value
+
+# Direct Capital Costs - Reverse Osmosis
+
+Name | Value | Path | Comment
+--- | --- | --- | ---
+Reverse Osmosis CAPEX () | 0 | | (inscomming, not yet resolved)
 
 # Non-Depreciable Capital Costs
 
