@@ -75,6 +75,19 @@ CAPEX Reference Power (kW) | 1,000.0
 Power loss per year | 0.5% | Based on Chang 2020
 Efficiency | 22% | None | Only used for area calculation.
 
+# Battery
+
+Name | Value | Comment
+--- | --- | ---
+Capacity (kWh) | 4000 | Size of battery, considering capacity minimum of 20%, capacity has to be 20% larger than design capacity
+Round trip efficiency | 100% | For lithium ion battery
+
+# Direct Capital Costs - Battery
+
+Name | Value | Path
+--- | --- | ---
+Battery CAPEX ($/kWh) | 139 | Battery > Capacity (kWh) > Value
+
 # Reverse Osmosis
 Name | Value | Path | Comment
 --- | --- | --- | ---
