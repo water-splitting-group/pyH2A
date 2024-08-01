@@ -59,6 +59,7 @@ Multiplier | 1.0 | CAPEX multiplier for every 10-fold increase of system size.
 Name | Value | Comment
 --- | --- | ---
 Nominal Power (kW) | 5,500.0 | Production of ca. 1 t of H2 per day to compare with PEC and photocatalytic models.
+Maximal electrolyzer capacity | 5000 | *this needs to be looked up, now it is just a value
 CAPEX Reference Power (kW) | 1,000.0
 Power requirement increase per year | 0.3% | Based on Chang 2020
 Minimum capacity | 10.0% | Based on Chang 2020, minimum capacity for electrolyzer to operate.
@@ -86,8 +87,8 @@ Round trip efficiency | 100% | For lithium ion battery
 # Reverse Osmosis
 Name | Value | Path | Comment
 --- | --- | --- | ---
-Power Demand (kWh/m3) | 2.71 | based on Hausmann 2021 and Kim 208 (this was chosen for a purity of < 10 ppm of disolved salts in the obtained pure water)
-Recovery Rate | 40.0% | based on the ecoinvent database (and Palmer 2021 or Tewlour 2022)
+Power Demand (kWh/m3) | 2.71 | based on Hausmann 2021 and Kim 2008 (this was chosen for a purity of < 10 ppm of disolved salts in the obtained water)
+Recovery Rate | 40.0% | based Palmer 2021 and Tewlour 2022
 
 
 # Direct Capital Costs - PV

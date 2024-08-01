@@ -21,6 +21,8 @@ class Photovoltaic_Plugin:
 		of 1 leads to no CAPEX reduction, a value < 1 enables cost reduction.
 	Electrolyzer > Nominal Power (kW) > Value : float
 		Nominal power of electrolyzer in kW.
+	Electrolyzer > Maximal electrolyzer capacity > Value : float
+		Maximal electrolyzer capacity.
 	Electrolyzer > CAPEX Reference Power (kW) > Value : float
 		Reference power of electrolyzer in kW for cost reduction calculation.
 	Electrolyzer > Power requirement increase per year > Value : float
@@ -85,10 +87,11 @@ class Photovoltaic_Plugin:
 		process_table(dcf.inp, 'Reverse Osmosis', 'Value')
 
 		self.calculate_H2_production(dcf)
+		#self.calculate_initial_h2_production(dcf)
+		#self.calculate_osmosis_power_demand(dcf)
 		self.calculate_stack_replacement(dcf)
 		self.calculate_scaling_factors(dcf)
 		self.calculate_area(dcf)
-		self.calculate_water_osmosis(dcf)
 
 		insert(dcf, 'Technical Operating Parameters and Specifications', 'Plant Design Capacity (kg of H2/day)', 'Value', 
 			   self.h2_production/365., __name__, print_info = print_info)
@@ -121,20 +124,27 @@ class Photovoltaic_Plugin:
 
 		yearly_data = []
 
+		electrolyzer_capacity = dcf.inp['Electrolyzer']['Maximal electrolyzer capacity']['Value']
+		initial_h2_production = self.calculate_initial_h2_production(dcf, electrolyzer_capacity)
+		osmosis_power_demand = self.calculate_osmosis_power_demand(dcf, initial_h2_production)
+
+		print(initial_h2_production)
+		print(osmosis_power_demand)
+		
 		for year in dcf.operation_years:
-			cumulative_h2_production, cumulative_running_hours = self.annual_electrolyzer_operation_calculation(dcf, year, data)
+			cumulative_h2_production, cumulative_running_hours = self.annual_electrolyzer_operation_calculation(dcf, year, data, osmosis_power_demand)
 			yearly_data.append([year, cumulative_h2_production, cumulative_running_hours])
 
 		self.yearly_data = np.asarray(yearly_data)
 		self.h2_production = np.concatenate([np.zeros(dcf.inp['Financial Input Values']['construction time']['Value']), 
 												self.yearly_data[:,1]])
 		
-	def annual_electrolyzer_operation_calculation(self, dcf, year, data):
+	def annual_electrolyzer_operation_calculation(self, dcf, year, data, osmosis_power_demand):
 		'''Annual calculation to calculate power generation, electrolzer power demand, capacity and H2 Produced
 		'''
 
 		data_loss_corrected = self.calculate_photovoltaic_loss_correction(dcf, data, year)
-		power_generation = data_loss_corrected * dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value']
+		power_generation = data_loss_corrected * dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value'] - osmosis_power_demand
 
 		electrolyzer_power_demand, power_increase = self.calculate_electrolyzer_power_demand(dcf, year) 
 		electrolyzer_power_demand *= np.ones(len(power_generation))
@@ -147,6 +157,8 @@ class Photovoltaic_Plugin:
 
 		h2_produced = electrolyzer_power_consumption * dcf.inp['Electrolyzer']['Conversion efficiency (kg H2/kWh)']['Value'] / power_increase
 		h2_produced *= electrolyzer_capacity
+
+		osmosis_power_demand = self.calculate_osmosis_power_demand(dcf, h2_produced)
 
 		if 'Battery' in dcf.inp:
 			additional_H2, additional_working_hours = self.annual_electroyzer_operation_calculation_with_battery(dcf, data,
@@ -201,6 +213,22 @@ class Photovoltaic_Plugin:
 		# print(total_consumed/total_power)
 
 		return np.sum(daily_additional_H2_production), np.sum(additional_daily_operating_hours) 
+	
+	def calculate_initial_h2_production(self, dcf, electrolyzer_capacity):
+		'''Calculation of the initial h2 production.
+		'''
+		
+		return electrolyzer_capacity * dcf.inp['Electrolyzer']['Conversion efficiency (kg H2/kWh)']['Value'] * 365 * 24 
+	
+	def calculate_osmosis_power_demand(self, dcf, h2_production):
+		'''Calculation of the reverse osmosis power demand.
+		'''
+		
+		demand_fresh_water = h2_production * 1000 * 18.01528 / 2.016 / 0.997 #in m3
+		osmosis_power_demand = dcf.inp['Reverse Osmosis']['Power Demand (kWh/m3)']['Value'] * demand_fresh_water / 8766 / dcf.inp['Reverse Osmosis']['Recovery Rate']['Value'] #kW
+		
+		return osmosis_power_demand
+	
 	
 	def calculate_photovoltaic_loss_correction(self, dcf, data, year):
 		'''Calculation of yearly reduction in electricity production by PV array.
@@ -257,17 +285,16 @@ class Photovoltaic_Plugin:
 		print('amount of PV:', number_of_PV_modules)
 		
 
-	def calculate_water_osmosis(self, dcf):
-		'''How much water is needed and what power would reverse osmosis need on a daily basis, since this is then extracted from power generation'''
-		
-		#yearly water demand is calculated using the estimate of 365 t/year of H2 production
-		demand_fresh_water_day = 1 * 18.01528 / 2.016  #in t
-		demand_fresh_water_day *= 1 / 0.997 #in m3
-		#yearly power demand for pure water with a two-pass reverse osmosis (< 10 ppm of dissolved salt —› needed depending on electrolyzer)
-		osmosis_power_demand_hour = dcf.inp['Reverse Osmosis']['Power Demand (kWh/m3)']['Value'] * demand_fresh_water_day / 24 / dcf.inp['Reverse Osmosis']['Recovery Rate']['Value'] #kWh
-		print(osmosis_power_demand_hour)
-		
-		return osmosis_power_demand_hour
+#	def calculate_water_osmosis(self, dcf):
+#		'''How much water is needed and what power would reverse osmosis need on a daily basis, since this is then extracted from power generation'''
+#		
+#		#yearly water demand is calculated using the estimate of 365 t/year of H2 production
+#		demand_fresh_water_day = 1 * 18.01528 / 2.016  #in t
+#		demand_fresh_water_day *= 1 / 0.997 #in m3
+#		#yearly power demand for pure water with a two-pass reverse osmosis (< 10 ppm of dissolved salt —› needed depending on electrolyzer)
+#		osmosis_power_demand_hour = dcf.inp['Reverse Osmosis']['Power Demand (kWh/m3)']['Value'] * demand_fresh_water_day / 24 / dcf.inp['Reverse Osmosis']['Recovery Rate']['Value'] #kWh
+#		print(osmosis_power_demand_hour)		
+#		return osmosis_power_demand_hour
 
 		
 		
