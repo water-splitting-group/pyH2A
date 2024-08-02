@@ -127,9 +127,6 @@ class Photovoltaic_Plugin:
 		electrolyzer_capacity = dcf.inp['Electrolyzer']['Maximal electrolyzer capacity']['Value']
 		initial_h2_production = self.calculate_initial_h2_production(dcf, electrolyzer_capacity)
 		osmosis_power_demand = self.calculate_osmosis_power_demand(dcf, initial_h2_production)
-
-		#print('here', initial_h2_production)
-		#print('here2', osmosis_power_demand)
 		
 		for year in dcf.operation_years:
 			cumulative_h2_production, cumulative_running_hours = self.annual_electrolyzer_operation_calculation(dcf, year, data, osmosis_power_demand)
@@ -159,9 +156,6 @@ class Photovoltaic_Plugin:
 		h2_produced *= electrolyzer_capacity
 		
 		osmosis_power_demand = self.calculate_osmosis_power_demand(dcf, h2_produced)
-		
-		print(osmosis_power_demand)
-		#print(osmosis_power_demand, np.sum(power_generation), np.sum(h2_produced))
 
 		if 'Battery' in dcf.inp:
 			additional_H2, additional_working_hours = self.annual_electroyzer_operation_calculation_with_battery(dcf, data,
@@ -227,9 +221,10 @@ class Photovoltaic_Plugin:
 		'''Calculation of the reverse osmosis power demand.
 		'''
 		
-		DENSITY_RATIO_WATER = 18.01528 / 2.016 / 997 #in m3/kg
-		demand_fresh_water = h2_produced * DENSITY_RATIO_WATER #in m3
-		osmosis_power_demand = dcf.inp['Reverse Osmosis']['Power Demand (kWh/m3)']['Value'] * demand_fresh_water / 8766 / dcf.inp['Reverse Osmosis']['Recovery Rate']['Value'] #kW
+		MOLAR_RATIO_WATER = 18.01528 / 2.016 #molar ratio of for water production, M(H2O) = 18.01528 g/mol, M(H2) = 2.016 g/mol
+		mass_fresh_water_demand = h2_produced * MOLAR_RATIO_WATER #in kg
+		volume_fresh_water_demand = mass_fresh_water_demand / 997 #in m3
+		osmosis_power_demand = dcf.inp['Reverse Osmosis']['Power Demand (kWh/m3)']['Value'] * volume_fresh_water_demand / 8766 / dcf.inp['Reverse Osmosis']['Recovery Rate']['Value'] #kW
 		
 		return osmosis_power_demand
 	
