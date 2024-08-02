@@ -128,8 +128,8 @@ class Photovoltaic_Plugin:
 		initial_h2_production = self.calculate_initial_h2_production(dcf, electrolyzer_capacity)
 		osmosis_power_demand = self.calculate_osmosis_power_demand(dcf, initial_h2_production)
 
-		print(initial_h2_production)
-		print(osmosis_power_demand)
+		#print('here', initial_h2_production)
+		#print('here2', osmosis_power_demand)
 		
 		for year in dcf.operation_years:
 			cumulative_h2_production, cumulative_running_hours = self.annual_electrolyzer_operation_calculation(dcf, year, data, osmosis_power_demand)
@@ -157,8 +157,11 @@ class Photovoltaic_Plugin:
 
 		h2_produced = electrolyzer_power_consumption * dcf.inp['Electrolyzer']['Conversion efficiency (kg H2/kWh)']['Value'] / power_increase
 		h2_produced *= electrolyzer_capacity
-
+		
 		osmosis_power_demand = self.calculate_osmosis_power_demand(dcf, h2_produced)
+		
+		print(osmosis_power_demand)
+		#print(osmosis_power_demand, np.sum(power_generation), np.sum(h2_produced))
 
 		if 'Battery' in dcf.inp:
 			additional_H2, additional_working_hours = self.annual_electroyzer_operation_calculation_with_battery(dcf, data,
@@ -218,13 +221,14 @@ class Photovoltaic_Plugin:
 		'''Calculation of the initial h2 production.
 		'''
 		
-		return electrolyzer_capacity * dcf.inp['Electrolyzer']['Conversion efficiency (kg H2/kWh)']['Value'] * 365 * 24 
+		return electrolyzer_capacity * dcf.inp['Electrolyzer']['Conversion efficiency (kg H2/kWh)']['Value'] * 8766
 	
-	def calculate_osmosis_power_demand(self, dcf, h2_production):
+	def calculate_osmosis_power_demand(self, dcf, h2_produced):
 		'''Calculation of the reverse osmosis power demand.
 		'''
 		
-		demand_fresh_water = h2_production * 1000 * 18.01528 / 2.016 / 0.997 #in m3
+		DENSITY_RATIO_WATER = 18.01528 / 2.016 / 997 #in m3/kg
+		demand_fresh_water = h2_produced * DENSITY_RATIO_WATER #in m3
 		osmosis_power_demand = dcf.inp['Reverse Osmosis']['Power Demand (kWh/m3)']['Value'] * demand_fresh_water / 8766 / dcf.inp['Reverse Osmosis']['Recovery Rate']['Value'] #kW
 		
 		return osmosis_power_demand
