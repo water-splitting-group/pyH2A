@@ -223,8 +223,9 @@ class Photovoltaic_Plugin:
 		
 		MOLAR_RATIO_WATER = 18.01528 / 2.016 #molar ratio of for water production, M(H2O) = 18.01528 g/mol, M(H2) = 2.016 g/mol
 		mass_fresh_water_demand = h2_produced * MOLAR_RATIO_WATER #in kg
-		volume_fresh_water_demand = mass_fresh_water_demand / 997 #in m3
-		osmosis_power_demand = dcf.inp['Reverse Osmosis']['Power Demand (kWh/m3)']['Value'] * volume_fresh_water_demand / 8766 / dcf.inp['Reverse Osmosis']['Recovery Rate']['Value'] #kW
+		volume_fresh_water_demand = mass_fresh_water_demand / 997 #in m3, density of water = 997 kg/m3
+		volume_sea_water_demand = volume_fresh_water_demand / dcf.inp['Reverse Osmosis']['Recovery Rate']['Value'] #in m3
+		osmosis_power_demand = dcf.inp['Reverse Osmosis']['Power Demand (kWh/m3)']['Value'] * volume_sea_water_demand / 8766  #kW
 		
 		return osmosis_power_demand
 	
