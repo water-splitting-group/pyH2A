@@ -180,11 +180,12 @@ for exchange in foreground_LCI_database_exchanges:
     input_code = exchange.pop('input') 
     activity_code = exchange.pop('activity')
     exchange['input'] = (activity_code, input_code)  # this was added to differentiate between the same variables but for different activities, e.g., electricity
+    #exchange['output'] = (input_code, activity_code)
     LCI_database[activity_code].setdefault('exchanges', []).append(exchange)
 #
 #print(json.dumps(activities, indent=4))
 #print(json.dumps(exchanges, indent=4))
-print(json.dumps(LCI_database, indent=4))
+#print(json.dumps(LCI_database, indent=4))
 #import pprint
 #pprint.pprint(LCI_database)
 

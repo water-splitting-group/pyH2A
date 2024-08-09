@@ -226,6 +226,8 @@ class Photovoltaic_Plugin:
 		volume_fresh_water_demand = mass_fresh_water_demand / 997 #in m3, density of water = 997 kg/m3
 		volume_sea_water_demand = volume_fresh_water_demand / dcf.inp['Reverse Osmosis']['Recovery Rate']['Value'] #in m3
 		osmosis_power_demand = dcf.inp['Reverse Osmosis']['Power Demand (kWh/m3)']['Value'] * volume_sea_water_demand / 8766  #kW
+		#calculation for amount of brine
+		mass_brine = mass_fresh_water_demand * 0.035 #factor 0.035: per 1 kg of H2O, 0.035 kg of NaCl/brine are obtained during the desalination process starting from 0.6 M NaCl solution (which is sea water)
 		
 		return osmosis_power_demand
 	
