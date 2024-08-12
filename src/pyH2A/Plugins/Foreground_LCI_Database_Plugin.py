@@ -1,4 +1,7 @@
 import json
+#reading the data from needed_data_for_LCA.jsom from Photovoltaic_Plugin.py
+with open('needed_data_for_LCA.json', 'r') as file:
+    photovoltaic_plugin_data = json.load(file)['needed_data_for_LCA']
 #listing of the ACTIVITIES
 activities = {
     "activities": [
@@ -38,7 +41,7 @@ exchanges = {
         #reverse osmosis
         {
             "input": "electricity",  # for reverse osmosis from PV
-            "amount": 1.0,  # !!!! specify the correct amount
+            "amount": photovoltaic_plugin_data['osmosis_power_demand'],  # !!!! specify the correct amount
             "type": "technosphere",
             "unit": "kilowatt",
             "activity": "pure_water_production"
@@ -186,6 +189,6 @@ for exchange in foreground_LCI_database_exchanges:
 #print(json.dumps(activities, indent=4))
 #print(json.dumps(exchanges, indent=4))
 #print(json.dumps(LCI_database, indent=4))
-#import pprint
-#pprint.pprint(LCI_database)
+import pprint
+pprint.pprint(LCI_database)
 

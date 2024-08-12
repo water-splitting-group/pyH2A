@@ -2,6 +2,7 @@ from pyH2A.Utilities.input_modification import insert, process_table, read_textf
 import numpy as np
 import pprint as pp
 import matplotlib.pyplot as plt
+import json 
 
 class Photovoltaic_Plugin:
 	'''Simulation of hydrogen production using PV + electrolysis.
@@ -284,9 +285,22 @@ class Photovoltaic_Plugin:
 		#print('self_asea_m2:', self.area_m2, 'self_area_acres:', self.area_acres)
 
 		number_of_PV_modules = np.ceil(dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value'] / dcf.inp['Photovoltaic']['Power per module (kW)']['Value'])
-		print('amount of PV:', number_of_PV_modules)
-		
+		#print('amount of PV:', number_of_PV_modules)
 
+	#exporting needed data as a json file
+	def exporting_needed_data_for_LCA(self, osmosis_power_demand, volume_sea_water_demand):
+		data_for_LCA_photovoltaic_plugin = {
+			'osmosis_power_demand' : osmosis_power_demand,
+			'volume_sea_water_demand' : volume_sea_water_demand
+		}
+
+		with open('data_for_LCA_photovolaic_plugin.json', 'w') as file:
+			json.dump(data_for_LCA_photovoltaic_plugin, file, indent=4)		
+		
+		return data_for_LCA_photovoltaic_plugin.json 
+	
+	
+#	OLD CALCULATION
 #	def calculate_water_osmosis(self, dcf):
 #		'''How much water is needed and what power would reverse osmosis need on a daily basis, since this is then extracted from power generation'''
 #		
