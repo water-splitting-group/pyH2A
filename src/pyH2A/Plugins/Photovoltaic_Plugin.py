@@ -2,7 +2,6 @@ from pyH2A.Utilities.input_modification import insert, process_table, read_textf
 import numpy as np
 import pprint as pp
 import matplotlib.pyplot as plt
-import json 
 
 class Photovoltaic_Plugin:
 	'''Simulation of hydrogen production using PV + electrolysis.
@@ -88,8 +87,8 @@ class Photovoltaic_Plugin:
 		process_table(dcf.inp, 'Reverse Osmosis', 'Value')
 
 		self.calculate_H2_production(dcf)
-		#self.calculate_initial_h2_production(dcf)
-		#self.calculate_osmosis_power_demand(dcf)
+		self.calculate_initial_h2_production(dcf)
+		self.calculate_osmosis_power_demand(dcf)
 		self.calculate_stack_replacement(dcf)
 		self.calculate_scaling_factors(dcf)
 		self.calculate_area(dcf)
@@ -112,6 +111,12 @@ class Photovoltaic_Plugin:
 				self.area_acres, __name__, print_info = print_info)
 		insert(dcf, 'Non-Depreciable Capital Costs', 'Solar Collection Area (m2)', 'Value', 
 				self.area_m2, __name__, print_info = print_info)
+		#data needed for LCA calculation
+		insert(dcf, 'LCA PV+E Database', 'Amount of sea water (m3)', 'Value',
+				self.volume_sea_water_demand, __name__, print_info = print_info)
+		insert(dcf, 'LCA PV+E Database', 'Amount of brine (kg)', 'Value',
+				self.mass_brine, __name__, print_info = print_info)
+		
 
 	def calculate_H2_production(self, dcf):
 		'''Using hourly irradiation data and electrolyzer as well as PV array parameters,
@@ -225,10 +230,10 @@ class Photovoltaic_Plugin:
 		MOLAR_RATIO_WATER = 18.01528 / 2.016 #molar ratio of for water production, M(H2O) = 18.01528 g/mol, M(H2) = 2.016 g/mol
 		mass_fresh_water_demand = h2_produced * MOLAR_RATIO_WATER #in kg
 		volume_fresh_water_demand = mass_fresh_water_demand / 997 #in m3, density of water = 997 kg/m3
-		volume_sea_water_demand = volume_fresh_water_demand / dcf.inp['Reverse Osmosis']['Recovery Rate']['Value'] #in m3
+		self.volume_sea_water_demand = volume_fresh_water_demand / dcf.inp['Reverse Osmosis']['Recovery Rate']['Value'] #in m3
 		osmosis_power_demand = dcf.inp['Reverse Osmosis']['Power Demand (kWh/m3)']['Value'] * volume_sea_water_demand / 8766  #kW
 		#calculation for amount of brine
-		mass_brine = mass_fresh_water_demand * 0.035 #factor 0.035: per 1 kg of H2O, 0.035 kg of NaCl/brine are obtained during the desalination process starting from 0.6 M NaCl solution (which is sea water)
+		self.mass_brine = mass_fresh_water_demand * 0.035 #factor 0.035: per 1 kg of H2O, 0.035 kg of NaCl/brine are obtained during the desalination process starting from 0.6 M NaCl solution (which is sea water)
 		
 		return osmosis_power_demand
 	
@@ -287,30 +292,6 @@ class Photovoltaic_Plugin:
 		number_of_PV_modules = np.ceil(dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value'] / dcf.inp['Photovoltaic']['Power per module (kW)']['Value'])
 		#print('amount of PV:', number_of_PV_modules)
 
-	#exporting needed data as a json file
-	def exporting_needed_data_for_LCA(self, osmosis_power_demand, volume_sea_water_demand):
-		data_for_LCA_photovoltaic_plugin = {
-			'osmosis_power_demand' : osmosis_power_demand,
-			'volume_sea_water_demand' : volume_sea_water_demand
-		}
-
-		with open('data_for_LCA_photovolaic_plugin.json', 'w') as file:
-			json.dump(data_for_LCA_photovoltaic_plugin, file, indent=4)		
-		
-		return data_for_LCA_photovoltaic_plugin.json 
-	
-	
-#	OLD CALCULATION
-#	def calculate_water_osmosis(self, dcf):
-#		'''How much water is needed and what power would reverse osmosis need on a daily basis, since this is then extracted from power generation'''
-#		
-#		#yearly water demand is calculated using the estimate of 365 t/year of H2 production
-#		demand_fresh_water_day = 1 * 18.01528 / 2.016  #in t
-#		demand_fresh_water_day *= 1 / 0.997 #in m3
-#		#yearly power demand for pure water with a two-pass reverse osmosis (< 10 ppm of dissolved salt —› needed depending on electrolyzer)
-#		osmosis_power_demand_hour = dcf.inp['Reverse Osmosis']['Power Demand (kWh/m3)']['Value'] * demand_fresh_water_day / 24 / dcf.inp['Reverse Osmosis']['Recovery Rate']['Value'] #kWh
-#		print(osmosis_power_demand_hour)		
-#		return osmosis_power_demand_hour
 
 		
 		
