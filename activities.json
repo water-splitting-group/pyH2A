@@ -1,0 +1,18 @@
+{
+    "activities": [
+        {
+            "name": "Production of hydrogen",
+            "location": "GLO",
+            "reference product": "hydrogen",
+            "unit": "kilogram",
+            "code": "production_of_hydrogen"
+        },
+        {
+            "name": "Production and maintenance of individual parts",
+            "location": "GLO",
+            "reference product": "hydrogen",
+            "unit": "unit",
+            "code": "production_and_maintenance"
+        }
+    ]
+}

@@ -5,7 +5,7 @@ Name | Type | Position
 Hourly_Irradiation_Plugin | plugin | 0
 Photovoltaic_Plugin | plugin | 0
 Multiple_Modules_Plugin | plugin | 3
-Foreground_LCI_Database_Plugin_V1 | plugin | 4
+Foreground_LCI_Database_Plugin_V2_1 | plugin | 4
 
 # Display Parameters
 

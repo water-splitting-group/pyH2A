@@ -1,0 +1,67 @@
+{
+    "exchanges": [
+        {
+            "input": "sunlight",
+            "amount": 1.0,
+            "type": "biosphere",
+            "unit": "kilowatt",
+            "activity": "production_of_hydrogen"
+        },
+        {
+            "input": "sea water",
+            "amount": 7171.141375137104,
+            "type": "biosphere",
+            "unit": "cubic meter",
+            "activity": "production_of_hydrogen"
+        },
+        {
+            "input": "brine",
+            "amount": 1.0,
+            "type": "byproduct",
+            "unit": "kilogram",
+            "activity": "production_of_hydrogen"
+        },
+        {
+            "input": "hydrogen",
+            "amount": 1.0,
+            "type": "production",
+            "unit": "kilogram",
+            "activity": "production_of_hydrogen"
+        },
+        {
+            "input": "oxygen",
+            "amount": 1.0,
+            "type": "byproduct",
+            "unit": "kilogram",
+            "activity": "production_of_hydrogen"
+        },
+        {
+            "input": "production_pv_panels",
+            "amount": 1.0,
+            "type": "production",
+            "unit": "kilowatt",
+            "activity": "production_and_maintenance"
+        },
+        {
+            "input": "production_battery",
+            "amount": 1.0,
+            "type": "production",
+            "unit": "kilowatt",
+            "activity": "production_and_maintenance"
+        },
+        {
+            "input": "production_electrolyzer",
+            "amount": 1.0,
+            "type": "technosphere",
+            "unit": "kilowatt",
+            "activity": "production_and_maintenance"
+        },
+        {
+            "input": "production_reverse_osmosis",
+            "amount": 1.0,
+            "type": "production",
+            "unit": "smt",
+            "activity": "production_and_maintenance"
+        }
+    ]
+}
