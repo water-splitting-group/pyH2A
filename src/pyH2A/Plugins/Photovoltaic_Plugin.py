@@ -92,6 +92,8 @@ class Photovoltaic_Plugin:
 		self.calculate_stack_replacement(dcf)
 		self.calculate_scaling_factors(dcf)
 		self.calculate_area(dcf)
+		self.calculate_amount_of_PV(dcf)
+		#self.calculate_total_h2_o2_produced(dcf)
 
 		insert(dcf, 'Technical Operating Parameters and Specifications', 'Plant Design Capacity (kg of H2/day)', 'Value', 
 			   self.h2_production/365., __name__, print_info = print_info)
@@ -112,10 +114,17 @@ class Photovoltaic_Plugin:
 		insert(dcf, 'Non-Depreciable Capital Costs', 'Solar Collection Area (m2)', 'Value', 
 				self.area_m2, __name__, print_info = print_info)
 		#data needed for LCA calculation
-		insert(dcf, 'LCA PV+E Database', 'Amount of sea water (m3)', 'Value',
-				self.volume_sea_water_demand, __name__, print_info = print_info)
-		insert(dcf, 'LCA PV+E Database', 'Amount of brine (kg)', 'Value',
-				self.mass_brine, __name__, print_info = print_info)
+		insert(dcf, 'LCA Parameters Photovoltaic', 'Sea water demand (m3)', 'Value',
+				self.total_volume_of_sea_water_demand, __name__, print_info = print_info)
+		insert(dcf, 'LCA Parameters Photovoltaic', 'Mass of brine (kg)', 'Value',
+				self.total_mass_brine, __name__, print_info = print_info)
+		insert(dcf, 'LCA Parameters Photovoltaic', 'Production and maintanence electrolyzer', 'Value',
+				self.production_maintanence_electrolyser, __name__, print_info = print_info)
+	#	insert(dcf, 'LCA Parameters Photovoltaic', 'H2 produced', 'Value',
+	#			self.total_h2_produced, __name__, print_info = print_info)
+	#	insert(dcf, 'LCA Parameters Photovoltaic', 'O2 produced', 'Value',
+	#			self.total_o2_produced, __name__, print_info = print_info)
+		
 		
 
 	def calculate_H2_production(self, dcf):
@@ -141,6 +150,7 @@ class Photovoltaic_Plugin:
 		self.yearly_data = np.asarray(yearly_data)
 		self.h2_production = np.concatenate([np.zeros(dcf.inp['Financial Input Values']['construction time']['Value']), 
 												self.yearly_data[:,1]])
+	#	self.total_h2_produced = np.sum(self.yearly_data[:,1]) + initial_h2_production
 		
 	def annual_electrolyzer_operation_calculation(self, dcf, year, data, osmosis_power_demand):
 		'''Annual calculation to calculate power generation, electrolzer power demand, capacity and H2 Produced
@@ -230,10 +240,13 @@ class Photovoltaic_Plugin:
 		MOLAR_RATIO_WATER = 18.01528 / 2.016 #molar ratio of for water production, M(H2O) = 18.01528 g/mol, M(H2) = 2.016 g/mol
 		mass_fresh_water_demand = h2_produced * MOLAR_RATIO_WATER #in kg
 		volume_fresh_water_demand = mass_fresh_water_demand / 997 #in m3, density of water = 997 kg/m3
-		self.volume_sea_water_demand = volume_fresh_water_demand / dcf.inp['Reverse Osmosis']['Recovery Rate']['Value'] #in m3
-		osmosis_power_demand = dcf.inp['Reverse Osmosis']['Power Demand (kWh/m3)']['Value'] * self.volume_sea_water_demand / 8766  #kW
+		volume_sea_water_demand = volume_fresh_water_demand / dcf.inp['Reverse Osmosis']['Recovery Rate']['Value'] #in m3
+		osmosis_power_demand = dcf.inp['Reverse Osmosis']['Power Demand (kWh/m3)']['Value'] * volume_sea_water_demand / 8766  #kW
 		#calculation for amount of brine
-		self.mass_brine = mass_fresh_water_demand * 0.035 #factor 0.035: per 1 kg of H2O, 0.035 kg of NaCl/brine are obtained during the desalination process starting from 0.6 M NaCl solution (which is sea water)
+		mass_brine = mass_fresh_water_demand * 0.035 #factor 0.035: per 1 kg of H2O, 0.035 kg of NaCl/brine are obtained during the desalination process starting from 0.6 M NaCl solution (which is sea water)
+		
+		self.total_volume_of_sea_water_demand = np.sum(volume_sea_water_demand)
+		self.total_mass_brine = np.sum(mass_brine)
 		
 		return osmosis_power_demand
 	
@@ -259,11 +272,13 @@ class Photovoltaic_Plugin:
 		'''
 
 		cumulative_running_time = np.cumsum(self.yearly_data[:,2])
+
 		stack_usage = cumulative_running_time / dcf.inp['Electrolyzer']['Replacement time (h)']['Value']
-	
 		number_of_replacements = np.floor_divide(stack_usage[-1], 1)
 
+		self.production_maintanence_electrolyser = 1 + np.floor_divide(np.sum(stack_usage), 1)
 		self.replacement_frequency = len(stack_usage) / (number_of_replacements + 1.)
+
 
 	def calculate_scaling_factors(self, dcf):
 		'''Calculation of electrolyzer and PV CAPEX scaling factors.
@@ -284,17 +299,18 @@ class Photovoltaic_Plugin:
 		'''Area requirement calculation assuming 1000 W/m2 peak power.'''
 		
 		peak_kW_per_m2 = dcf.inp['Photovoltaic']['Efficiency']['Value'] * 1.
-		#print('peak_kW/m2', peak_kW_per_m2)
 		self.area_m2 = dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value'] / peak_kW_per_m2
 		self.area_acres = self.area_m2 * 0.000247105
-		#print('self_asea_m2:', self.area_m2, 'self_area_acres:', self.area_acres)
+
+	def calculate_amount_of_PV(self, dcf):
+		'''Amount of PV modules needed for the h2_production.'''
 
 		number_of_PV_modules = np.ceil(dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value'] / dcf.inp['Photovoltaic']['Power per module (kW)']['Value'])
-		#print('amount of PV:', number_of_PV_modules)
 
-
-		
-		
-
-		
+#	def calculate_total_h2_o2_produced(self, initial_h2_production, yearly_data):
+#		'''Calculation of the O2 production depending on the total amount of produced hydrogen.'''
+#
+#		self.total_h2_produced = np.sum(yearly_data[:,1]) + initial_h2_production
+#		MOLAR_RATIO_O2_H2 = 31.999 / 2.016 #M(O2) = 31.999 g/mol, M(H2) = 2-016 g/mol
+#		self.total_o2_produced = 1/2 * self.total_h2_produced * MOLAR_RATIO_O2_H2 #in kg, factor 1/2 due to the H2/O2 ratio (2H2O —› 2H2 + O2
 
