@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import json 
 
 class Foreground_LCI_Database_Plugin_V2_1:
-    ''' Processing of foreground LCI data for brightway calculation.
+    ''' Processing of foreground LCI data for brightway calculation for Photovoltaics Version 2.
 
     Parameters
     ---------
@@ -19,27 +19,25 @@ class Foreground_LCI_Database_Plugin_V2_1:
     def __init__(self, dcf, print_info):
         process_table(dcf.inp, 'Irradiation Used', 'Value')
         process_table(dcf.inp, 'LCA Parameters Photovoltaic', 'Value')
-
+        
         self.calculate_sunlight(dcf)
         self.activities()
-        self.exchanges(dcf)
-        self.LCI_database(self.activities(), self.exchanges(dcf))
+        self.exchanges(dcf, self.calculate_sunlight(dcf))
+        self.LCI_database(self.activities(), self.exchanges(dcf, self.calculate_sunlight(dcf)))
 
     def calculate_sunlight(self, dcf):
         '''Calculating the amount of sunlight.'''
-    
-        if isinstance(dcf.inp['Irradiation Used']['Data']['Value'], str):
-            data = read_textfile(dcf.inp['Irradiation Used']['Data']['Value'], delimiter='  ')[:, 1]
+        value = dcf.inp['Irradiation Used']['Data']['Value']
+        if isinstance(value, str):
+            data = read_textfile(value, delimiter='  ')[:, 1]
         else:
-            data = dcf.inp['Irradiation Used']['Data']['Value']
-
+            data = np.array(value)
+        
         if len(data.shape) > 1:
             raise ValueError("Expected 1D array for sunlight data.")
-    
+        
         total_amount_sunlight = np.sum(data)
-        print(total_amount_sunlight)
         return total_amount_sunlight
-
     
     def activities(self):
         activities = {
@@ -62,13 +60,13 @@ class Foreground_LCI_Database_Plugin_V2_1:
         }
         return activities
     
-    def exchanges(self, dcf):
+    def exchanges(self, dcf, total_amount_sunlight):
         exchanges = {
             "exchanges": [
                 #production of hydrogen
                 {
                     "input": "sunlight",
-                    "amount": 1.0,  
+                    "amount": total_amount_sunlight,  
                     "type": "biosphere",
                     "unit": "kilowatt",
                     "activity": "production_of_hydrogen" 
