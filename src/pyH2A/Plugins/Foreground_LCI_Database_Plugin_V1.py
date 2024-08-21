@@ -69,7 +69,7 @@ class Foreground_LCI_Database_Plugin_V1:
             "exchanges": [
                 {
                     "input": "electricity",
-                    "amount": 1.0,
+                    "amount": dcf.inp['LCA Parameters Photovoltaic']['Electricity reverse osmosis (kW)']['Value'],
                     "type": "technosphere",
                     "unit": "kilowatt",
                     "activity": "pure_water_production"
@@ -78,65 +78,67 @@ class Foreground_LCI_Database_Plugin_V1:
                     "input": "production_reverse_osmosis",
                     "amount": 1.0,
                     "type": "production",
-                    "unit": "smt",
+                    "unit": "unit",
                     "activity": "pure_water_production"
                 },
                 {
                     "input": "sea water",
-                    "amount": 1.0,
+                    "amount": dcf.inp['LCA Parameters Photovoltaic']['Sea water demand (m3)']['Value'],
                     "type": "biosphere",
                     "unit": "cubic meter",
                     "activity": "pure_water_production"
                 },
                 {
                     "input": "pure water",
-                    "amount": 1.0,
+                    "amount": dcf.inp['LCA Parameters Photovoltaic']['Amount of fresh water (m3)']['Value'],
                     "type": "production",
                     "unit": "cubic meter",
                     "activity": "pure_water_production"
                 },
                 {
                     "input": "brine",
-                    "amount": 1.0,
+                    "amount": dcf.inp['LCA Parameters Photovoltaic']['Mass of brine (kg)']['Value'],
                     "type": "byproduct",
                     "unit": "kilogram",
                     "activity": "pure_water_production"
                 },
+                #electrolysis
                 {
                     "input": "electricity",
-                    "amount": 1.0,
+                    "amount": dcf.inp['LCA Parameters Photovoltaic']['Electrolyzer power consumption (kW)']['Value'] + dcf.inp['LCA Parameters Photovoltaic']['Electricity from battery (kW)']['Value'],
                     "type": "technosphere",
                     "unit": "kilowatt",
                     "activity": "electrolysis_of_water"
                 },
                 {
                     "input": "pure water",
-                    "amount": 1.0,
+                    "amount": dcf.inp['LCA Parameters Photovoltaic']['Amount of fresh water (m3)']['Value'],
                     "type": "technosphere",
                     "unit": "cubic meter",
                     "activity": "electrolysis_of_water"
                 },
                 {
                     "input": "production_electrolyzer",
-                    "amount": 1.0,
+                    "amount": dcf.inp['LCA Parameters Photovoltaic']['Production and maintenance electrolyzer']['Value'],
                     "type": "technosphere",
-                    "unit": "kilowatt",
+                    "unit": "unit",
                     "activity": "electrolysis_of_water"
                 },
                 {
                     "input": "hydrogen",
-                    "amount": 1.0,
+                    "amount": dcf.inp['LCA Parameters Photovoltaic']['H2 produced (kg)']['Value'],
                     "type": "production",
                     "unit": "kilogram",
                     "activity": "electrolysis_of_water"
                 },
                 {
                     "input": "oxygen",
-                    "amount": 1.0,
+                    "amount": dcf.inp['LCA Parameters Photovoltaic']['O2 produced (kg)']['Value'],
                     "type": "byproduct",
                     "unit": "kilogram",
                     "activity": "electrolysis_of_water"
                 },
+                #PV
                 {
                     "input": "sunlight",
                     "amount": total_amount_sunlight,
@@ -146,21 +148,22 @@ class Foreground_LCI_Database_Plugin_V1:
                 },
                 {
                     "input": "production_pv_panels",
-                    "amount": 1.0,
+                    "amount": dcf.inp['LCA Parameters Photovoltaic']['Amount of PV modules']['Value'],
                     "type": "production",
-                    "unit": "kilowatt",
+                    "unit": "unit",
                     "activity": "pv_electricity_production"
                 },
                 {
                     "input": "electricity",
-                    "amount": 1.0,
+                    "amount": dcf.inp['LCA Parameters Photovoltaic']['Electrolyzer power consumption (kW)']['Value'] + dcf.inp['LCA Parameters Photovoltaic']['Electricity stored in battery (kW)']['Value'] + dcf.inp['LCA Parameters Photovoltaic']['Electricity reverse osmosis (kW)']['Value'],
                     "type": "production",
                     "unit": "kilowatt",
                     "activity": "pv_electricity_production"
                 },
+                #battery
                 {
                     "input": "electricity",
-                    "amount": 1.0,
+                    "amount": dcf.inp['LCA Parameters Photovoltaic']['Electricity stored in battery (kW)']['Value'],
                     "type": "technosphere",
                     "unit": "kilowatt",
                     "activity": "excessive_power_storage"
@@ -174,7 +177,7 @@ class Foreground_LCI_Database_Plugin_V1:
                 },
                 {
                     "input": "electricity",
-                    "amount": 1.0,
+                    "amount": dcf.inp['LCA Parameters Photovoltaic']['Electricity from battery (kW)']['Value'],
                     "type": "production",
                     "unit": "kilowatt",
                     "activity": "excessive_power_storage"
