@@ -93,7 +93,6 @@ class Photovoltaic_Plugin:
 		self.calculate_scaling_factors(dcf)
 		self.calculate_area(dcf)
 		self.calculate_amount_of_PV(dcf)
-		#self.calculate_total_h2_o2_produced(dcf)
 
 		insert(dcf, 'Technical Operating Parameters and Specifications', 'Plant Design Capacity (kg of H2/day)', 'Value', 
 			   self.h2_production/365., __name__, print_info = print_info)
@@ -113,19 +112,33 @@ class Photovoltaic_Plugin:
 				self.area_acres, __name__, print_info = print_info)
 		insert(dcf, 'Non-Depreciable Capital Costs', 'Solar Collection Area (m2)', 'Value', 
 				self.area_m2, __name__, print_info = print_info)
-		#data needed for LCA calculation
+		#data needed for LCA calculation for V2
 		insert(dcf, 'LCA Parameters Photovoltaic', 'Sea water demand (m3)', 'Value',
-				self.total_volume_of_sea_water_demand, __name__, print_info = print_info)
+				self.total_volume_of_sea_water, __name__, print_info = print_info)
 		insert(dcf, 'LCA Parameters Photovoltaic', 'Mass of brine (kg)', 'Value',
 				self.total_mass_brine, __name__, print_info = print_info)
-		insert(dcf, 'LCA Parameters Photovoltaic', 'Production and maintanence electrolyzer', 'Value',
+		insert(dcf, 'LCA Parameters Photovoltaic', 'Production and maintenance electrolyzer', 'Value',
 				self.production_maintanence_electrolyser, __name__, print_info = print_info)
-	#	insert(dcf, 'LCA Parameters Photovoltaic', 'H2 produced', 'Value',
-	#			self.total_h2_produced, __name__, print_info = print_info)
-	#	insert(dcf, 'LCA Parameters Photovoltaic', 'O2 produced', 'Value',
-	#			self.total_o2_produced, __name__, print_info = print_info)
-		
-		
+		insert(dcf, 'LCA Parameters Photovoltaic', 'H2 produced (kg)', 'Value',
+				self.total_h2_produced, __name__, print_info = print_info)
+		insert(dcf, 'LCA Parameters Photovoltaic', 'O2 produced (kg)', 'Value',
+				self.total_o2_produced, __name__, print_info = print_info)
+		insert(dcf, 'LCA Parameters Photovoltaic', 'Amount of PV modules', 'Value',
+				self.amount_of_PV_modules, __name__, print_info = print_info)
+		#extras for V1
+		insert(dcf, 'LCA Parameters Photovoltaic', 'Amount of fresh water (m3)', 'Value',
+				self.total_volume_of_fresh_water, __name__, print_info = print_info)
+		insert(dcf, 'LCA Parameters Photovoltaic', 'Produced electricity PV (kW)', 'Value',
+				self.total_power_generation, __name__, print_info = print_info)
+		insert(dcf, 'LCA Parameters Photovoltaic', 'Electrolyzer power consumption (kW)', 'Value',
+				self.total_electrolyzer_power_consumption, __name__, print_info = print_info)
+		insert(dcf, 'LCA Parameters Photovoltaic', 'Electricity stored in battery (kW)', 'Value',
+				self.total_daily_stored_power, __name__, print_info = print_info)
+		insert(dcf, 'LCA Parameters Photovoltaic', 'Electricity reverse osmosis (kW)', 'Value',
+				self.total_osmosis_power_demand, __name__, print_info = print_info)
+		insert(dcf, 'LCA Parameters Photovoltaic', 'Electricity from battery (kW)', 'Value',
+				self.total_additional_power_consumption, __name__, print_info = print_info)
+
 
 	def calculate_H2_production(self, dcf):
 		'''Using hourly irradiation data and electrolyzer as well as PV array parameters,
@@ -150,7 +163,7 @@ class Photovoltaic_Plugin:
 		self.yearly_data = np.asarray(yearly_data)
 		self.h2_production = np.concatenate([np.zeros(dcf.inp['Financial Input Values']['construction time']['Value']), 
 												self.yearly_data[:,1]])
-	#	self.total_h2_produced = np.sum(self.yearly_data[:,1]) + initial_h2_production
+		self.total_h2_produced = np.sum(self.yearly_data[:,1]) + initial_h2_production
 		
 	def annual_electrolyzer_operation_calculation(self, dcf, year, data, osmosis_power_demand):
 		'''Annual calculation to calculate power generation, electrolzer power demand, capacity and H2 Produced
@@ -158,10 +171,12 @@ class Photovoltaic_Plugin:
 
 		data_loss_corrected = self.calculate_photovoltaic_loss_correction(dcf, data, year)
 		power_generation = data_loss_corrected * dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value'] - osmosis_power_demand
+		self.total_power_generation = np.sum(power_generation) + np.sum(osmosis_power_demand)
 
 		electrolyzer_power_demand, power_increase = self.calculate_electrolyzer_power_demand(dcf, year) 
 		electrolyzer_power_demand *= np.ones(len(power_generation))
 		electrolyzer_power_consumption = np.amin(np.c_[power_generation, electrolyzer_power_demand], axis = 1)
+		self.total_electrolyzer_power_consumption = np.sum(electrolyzer_power_consumption)
 
 		threshold = dcf.inp['Electrolyzer']['Minimum capacity']['Value']
 		electrolyzer_capacity = electrolyzer_power_consumption / electrolyzer_power_demand
@@ -199,10 +214,11 @@ class Photovoltaic_Plugin:
 		daily_power_consumption = electrolyzer_power_consumption.reshape(-1, 24)
 		daily_power_consumption = daily_power_consumption.sum(axis=1)
 		daily_excess_power = daily_power_generation - daily_power_consumption
-
+		#battery charging
 		capacity = dcf.inp['Battery']['Capacity (kWh)']['Value']
 		capacity *= np.ones(len(daily_excess_power))
 		daily_stored_power = np.amin(np.c_[daily_excess_power, capacity], axis = 1) * dcf.inp['Battery']['Round trip efficiency']['Value']
+		self.total_daily_stored_power = np.sum(daily_stored_power)
 
 		unused_power = electrolyzer_power_consumption * (1 - electrolyzer_capacity)
 		daily_unused_power = unused_power.reshape(-1, 24)
@@ -215,8 +231,9 @@ class Photovoltaic_Plugin:
 		daily_electrolyzer_working_hours = daily_electrolyzer_capacity.sum(axis =1)
 		daily_electrolyzer_off_hours = 24 - daily_electrolyzer_working_hours
 		daily_maximum_additional_power_consumption = daily_electrolyzer_off_hours * electrolyzer_power_demand[0]
-
+		#additional h2 generation
 		daily_additional_power_consumption = np.amin(np.c_[additional_daily_power, daily_maximum_additional_power_consumption], axis = 1)
+		self.total_additional_power_consumption = np.sum(daily_additional_power_consumption)
 		daily_additional_H2_production = daily_additional_power_consumption * dcf.inp['Electrolyzer']['Conversion efficiency (kg H2/kWh)']['Value'] / power_increase
 
 		additional_daily_operating_hours = np.ceil(daily_additional_power_consumption / electrolyzer_power_demand[0])	
@@ -233,23 +250,27 @@ class Photovoltaic_Plugin:
 		
 		return electrolyzer_capacity * dcf.inp['Electrolyzer']['Conversion efficiency (kg H2/kWh)']['Value'] * 8766
 	
-	def calculate_osmosis_power_demand(self, dcf, h2_produced):
-		'''Calculation of the reverse osmosis power demand.
+	def calculate_osmosis_power_demand(self, dcf, total_h2_produced):
+		'''Calculation of the reverse osmosis power demand and the amount of byprododucts (brine, O2) during electrolysis.
 		'''
 		
 		MOLAR_RATIO_WATER = 18.01528 / 2.016 #molar ratio of for water production, M(H2O) = 18.01528 g/mol, M(H2) = 2.016 g/mol
-		mass_fresh_water_demand = h2_produced * MOLAR_RATIO_WATER #in kg
+		mass_fresh_water_demand = total_h2_produced * MOLAR_RATIO_WATER #in kg
 		volume_fresh_water_demand = mass_fresh_water_demand / 997 #in m3, density of water = 997 kg/m3
+		self.total_volume_of_fresh_water = np.sum(volume_fresh_water_demand)
 		volume_sea_water_demand = volume_fresh_water_demand / dcf.inp['Reverse Osmosis']['Recovery Rate']['Value'] #in m3
+		self.total_volume_of_sea_water = np.sum(volume_sea_water_demand)
 		osmosis_power_demand = dcf.inp['Reverse Osmosis']['Power Demand (kWh/m3)']['Value'] * volume_sea_water_demand / 8766  #kW
+		self.total_osmosis_power_demand = np.sum(osmosis_power_demand)
 		#calculation for amount of brine
 		mass_brine = mass_fresh_water_demand * 0.035 #factor 0.035: per 1 kg of H2O, 0.035 kg of NaCl/brine are obtained during the desalination process starting from 0.6 M NaCl solution (which is sea water)
-		
-		self.total_volume_of_sea_water_demand = np.sum(volume_sea_water_demand)
 		self.total_mass_brine = np.sum(mass_brine)
-		
+		#calculation for amount of o2
+		MOLAR_RATIO_O2_H2 = 31.999 / 2.016 #M(O2) = 31.999 g/mol, M(H2) = 2-016 g/mol
+		o2_produced = 1/2 * total_h2_produced * MOLAR_RATIO_O2_H2 #in kg, factor 1/2 due to the H2/O2 ratio (2H2O —› 2H2 + O2
+		self.total_o2_produced = np.sum(o2_produced)
+
 		return osmosis_power_demand
-	
 	
 	def calculate_photovoltaic_loss_correction(self, dcf, data, year):
 		'''Calculation of yearly reduction in electricity production by PV array.
@@ -305,12 +326,9 @@ class Photovoltaic_Plugin:
 	def calculate_amount_of_PV(self, dcf):
 		'''Amount of PV modules needed for the h2_production.'''
 
-		number_of_PV_modules = np.ceil(dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value'] / dcf.inp['Photovoltaic']['Power per module (kW)']['Value'])
+		self.amount_of_PV_modules = np.ceil(dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value'] / dcf.inp['Photovoltaic']['Power per module (kW)']['Value'])
 
-#	def calculate_total_h2_o2_produced(self, initial_h2_production, yearly_data):
-#		'''Calculation of the O2 production depending on the total amount of produced hydrogen.'''
-#
-#		self.total_h2_produced = np.sum(yearly_data[:,1]) + initial_h2_production
-#		MOLAR_RATIO_O2_H2 = 31.999 / 2.016 #M(O2) = 31.999 g/mol, M(H2) = 2-016 g/mol
-#		self.total_o2_produced = 1/2 * self.total_h2_produced * MOLAR_RATIO_O2_H2 #in kg, factor 1/2 due to the H2/O2 ratio (2H2O —› 2H2 + O2
+	
+	
+	
 
