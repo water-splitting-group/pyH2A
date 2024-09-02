@@ -297,7 +297,7 @@ class Photovoltaic_Plugin:
 		stack_usage = cumulative_running_time / dcf.inp['Electrolyzer']['Replacement time (h)']['Value']
 		number_of_replacements = np.floor_divide(stack_usage[-1], 1)
 
-		self.production_maintanence_electrolyser = 1 + np.floor_divide(np.sum(stack_usage), 1)
+		self.production_maintanence_electrolyser = 1 + number_of_replacements
 		self.replacement_frequency = len(stack_usage) / (number_of_replacements + 1.)
 
 
