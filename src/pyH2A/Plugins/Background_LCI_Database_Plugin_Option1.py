@@ -5,6 +5,7 @@ import bw2analyzer as ba
 import bw2calc as bc
 import bw2data as bd
 import bw2io as bi
+from bw2io.importers.json_ld import JSONLDImporter
 #importing most important data science packages —› those are suggested by brightway getting started protocol (https://learn.brightway.dev/en/latest/content/notebooks/BW25_for_beginners.html#section1)
 import numpy as np
 import pandas as pd
@@ -33,10 +34,12 @@ class Background_LCI_Database_Plugin_Option1:
         bi.bw2setup()
         #print(bd.databases) 
         #pp.pprint(list(bd.methods)[:10])
-        #db = databases(name)
-        #foreground_database = dcf.inp['Foreground LCI Database']['Row']['Value']
-        #db.write(foreground_database)
-        importer = bi.importers.json_ld(filepath = dcf.inp['Foreground LCI Database']['Row']['Value'])
+        #
+       # db = bd.Database(name)
+       # foreground_database = dcf.inp['Foreground LCI Database']['Row']['Value']
+       # db.write(foreground_database)
+        fp = dcf.inp['Foreground LCI Database']['Row']['Value']
+        importer = JSONLDImporter(fp)
         importer.apply_strategies()
 
     
