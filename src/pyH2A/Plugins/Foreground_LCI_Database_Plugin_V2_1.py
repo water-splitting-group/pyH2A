@@ -5,7 +5,8 @@ import matplotlib.pyplot as plt
 import json 
 
 class Foreground_LCI_Database_Plugin_V2_1:
-    ''' Processing of foreground LCI data for brightway calculation for Photovoltaics Version 2.
+    ''' Processing of foreground LCI data for brightway calculation for Photovoltaics Version 2. 
+    This is the one which is up to date with all necessery changes!
 
     Parameters
     ---------
