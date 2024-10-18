@@ -43,17 +43,17 @@ class Foreground_LCI_Database_Plugin_V2_1:
         activities = {
             "activities": [
                 {
-                    "name":"Production of hydrogen",
+                    "name": "production_of_hydrogen",
                     "location": "GLO",
-                    "reference product": "hydrogen",
                     "unit": "kilogram",
+                    "reference product": "hydrogen",
                     "code": "production_of_hydrogen"
                 },
                 {
-                    "name": "Production and maintenance of individual parts",
+                    "name": "production_and_maintenance",
                     "location": "GLO",
-                    "reference product": "production",
                     "unit": "unit",
+                    "reference product": "production_and_maintenance",
                     "code": "production_and_maintenance" 
                 }
             ]
@@ -81,7 +81,7 @@ class Foreground_LCI_Database_Plugin_V2_1:
                 {
                     "input": "brine",
                     "amount": dcf.inp['LCA Parameters Photovoltaic']['Mass of brine (kg)']['Value'],   
-                    "type": "byproduct",
+                    "type": "production",
                     "unit": "kilogram",
                     "activity": "production_of_hydrogen"
                 },
@@ -95,7 +95,7 @@ class Foreground_LCI_Database_Plugin_V2_1:
                 {
                     "input": "oxygen",  
                     "amount": dcf.inp['LCA Parameters Photovoltaic']['O2 produced (kg)']['Value'],  
-                    "type": "byproduct",
+                    "type": "production",
                     "unit": "kilogram",
                     "activity": "production_of_hydrogen"
                 },
@@ -116,7 +116,7 @@ class Foreground_LCI_Database_Plugin_V2_1:
                 {
                     "input": "production_electrolyzer",
                     "amount": 1.0,  
-                    "type": "technosphere",
+                    "type": "production",
                     "unit": "unit",
                     "activity": "production_and_maintenance" 
                 },
