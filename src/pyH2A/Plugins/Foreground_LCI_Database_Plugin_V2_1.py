@@ -73,14 +73,14 @@ class Foreground_LCI_Database_Plugin_V2_1:
                 },
                 {
                     "input": "sea water",
-                    "amount": dcf.inp['LCA Parameters Photovoltaic']['Mass of brine (kg)']['Value'], 
+                    "amount": dcf.inp['LCA Parameters Photovoltaic']['Sea water demand (m3)']['Value'],
                     "type": "biosphere",
                     "unit": "cubic meter",
                     "activity": "production_of_hydrogen"
                 }, 
                 {
                     "input": "brine",
-                    "amount": dcf.inp['LCA Parameters Photovoltaic']['Sea water demand (m3)']['Value'],  
+                    "amount": dcf.inp['LCA Parameters Photovoltaic']['Mass of brine (kg)']['Value'],   
                     "type": "byproduct",
                     "unit": "kilogram",
                     "activity": "production_of_hydrogen"
@@ -162,4 +162,4 @@ class Foreground_LCI_Database_Plugin_V2_1:
             #exchange['output'] = (input_code, activity_code)
             LCI_database[activity_code].setdefault('exchanges', []).append(exchange)
         #
-        #pp.pprint(LCI_database)
+        pp.pprint(LCI_database)

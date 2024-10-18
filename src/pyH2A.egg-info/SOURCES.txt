@@ -97,7 +97,7 @@ src/pyH2A/Other/__init__.py
 src/pyH2A/Other/pyH2A.png
 src/pyH2A/Other/pyH2A.svg
 src/pyH2A/Other/pyH2A_source.svg
-src/pyH2A/Plugins/Backround_LCI_Database_Plugin_Option1.py
+src/pyH2A/Plugins/Background_LCI_Database_Plugin_Option1.py
 src/pyH2A/Plugins/Capital_Cost_Plugin.py
 src/pyH2A/Plugins/Catalyst_Separation_Plugin.py
 src/pyH2A/Plugins/Fixed_Operating_Cost_Plugin.py

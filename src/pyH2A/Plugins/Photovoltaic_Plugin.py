@@ -133,7 +133,7 @@ class Photovoltaic_Plugin:
 		insert(dcf, 'LCA Parameters Photovoltaic', 'Electrolyzer power consumption (kW)', 'Value',
 				self.total_electrolyzer_power_consumption, __name__, print_info = print_info)
 		insert(dcf, 'LCA Parameters Photovoltaic', 'Electricity stored in battery (kW)', 'Value',
-				self.total_daily_stored_power, __name__, print_info = print_info)
+				4, __name__, print_info = print_info)
 		insert(dcf, 'LCA Parameters Photovoltaic', 'Electricity reverse osmosis (kW)', 'Value',
 				self.total_osmosis_power_demand, __name__, print_info = print_info)
 		insert(dcf, 'LCA Parameters Photovoltaic', 'Electricity from battery (kW)', 'Value',

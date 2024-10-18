@@ -14,6 +14,7 @@ class Foreground_LCI_Database_Plugin_V1:
         self.activities()
         self.exchanges(dcf, self.calculate_sunlight(dcf))
         self.LCI_database(self.activities(), self.exchanges(dcf, self.calculate_sunlight(dcf)))
+        self.save_LCI_database_as_json()
 
         insert(dcf, 'Foreground LCI Database', 'Row', 'Value',
                self.LCI_database, __name__, print_info = print_info)  
@@ -205,6 +206,8 @@ class Foreground_LCI_Database_Plugin_V1:
             LCI_database[activity_code].setdefault('exchanges', []).append(exchange)
     
         self.LCI_database = LCI_database
-        
+
+    
+    
         #pp.pprint(LCI_database)
 
