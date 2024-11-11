@@ -125,9 +125,9 @@ class Photovoltaic_Plugin:
 				self.total_o2_produced, __name__, print_info = print_info)
 		insert(dcf, 'LCA Parameters Photovoltaic', 'Amount of PV modules', 'Value',
 				self.amount_of_PV_modules, __name__, print_info = print_info)
-		#extras for V1
 		insert(dcf, 'LCA Parameters Photovoltaic', 'Amount of fresh water (m3)', 'Value',
 				self.total_volume_of_fresh_water, __name__, print_info = print_info)
+		#extras for V1
 		insert(dcf, 'LCA Parameters Photovoltaic', 'Produced electricity PV (kW)', 'Value',
 				self.total_power_generation, __name__, print_info = print_info)
 		insert(dcf, 'LCA Parameters Photovoltaic', 'Electrolyzer power consumption (kW)', 'Value',
