@@ -2,7 +2,7 @@
     "exchanges": [
         {
             "input": "sunlight",
-            "amount": 1.0,
+            "amount": 2492.996413233446,
             "type": "biosphere",
             "unit": "kilowatt",
             "activity": "production_of_hydrogen"
@@ -16,51 +16,51 @@
         },
         {
             "input": "brine",
-            "amount": 1.0,
+            "amount": 100094.79131416371,
             "type": "byproduct",
             "unit": "kilogram",
             "activity": "production_of_hydrogen"
         },
         {
             "input": "hydrogen",
-            "amount": 1.0,
+            "amount": 7721737.941556455,
             "type": "production",
             "unit": "kilogram",
             "activity": "production_of_hydrogen"
         },
         {
             "input": "oxygen",
-            "amount": 1.0,
+            "amount": 2539854.4436103483,
             "type": "byproduct",
             "unit": "kilogram",
             "activity": "production_of_hydrogen"
         },
         {
             "input": "production_pv_panels",
-            "amount": 1.0,
+            "amount": 25.0,
             "type": "production",
-            "unit": "kilowatt",
+            "unit": "unit",
             "activity": "production_and_maintenance"
         },
         {
             "input": "production_battery",
             "amount": 1.0,
             "type": "production",
-            "unit": "kilowatt",
+            "unit": "unit",
             "activity": "production_and_maintenance"
         },
         {
             "input": "production_electrolyzer",
-            "amount": 1.0,
+            "amount": 2.0,
             "type": "technosphere",
-            "unit": "kilowatt",
+            "unit": "unit",
             "activity": "production_and_maintenance"
         },
         {
             "input": "production_reverse_osmosis",
             "amount": 1.0,
             "type": "production",
-            "unit": "smt",
+            "unit": "unit",
             "activity": "production_and_maintenance"
         }
     ]
