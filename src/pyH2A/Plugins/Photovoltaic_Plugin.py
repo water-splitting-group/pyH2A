@@ -63,114 +63,115 @@ class Photovoltaic_Plugin:
 	'''
 
 	def __init__(self, dcf, print_info):
-		process_table(dcf.inp, 'Irradiation Used', 'Value')
-		process_table(dcf.inp, 'CAPEX Multiplier', 'Value')
-		process_table(dcf.inp, 'Electrolyzer', 'Value')
-		process_table(dcf.inp, 'Photovoltaic', 'Value')
+		self.dcf = dcf
+		process_table(self.dcf.inp, 'Irradiation Used', 'Value')
+		process_table(self.dcf.inp, 'CAPEX Multiplier', 'Value')
+		process_table(self.dcf.inp, 'Electrolyzer', 'Value')
+		process_table(self.dcf.inp, 'Photovoltaic', 'Value')
 
-		self.calculate_H2_production(dcf)
-		self.calculate_stack_replacement(dcf)
-		self.calculate_scaling_factors(dcf)
-		self.calculate_area(dcf)
+		self.calculate_H2_production()
+		self.calculate_stack_replacement()
+		self.calculate_scaling_factors()
+		self.calculate_area()
 
-		insert(dcf, 'Technical Operating Parameters and Specifications', 'Plant Design Capacity (kg of H2/day)', 'Value', 
+		insert(self.dcf, 'Technical Operating Parameters and Specifications', 'Plant Design Capacity (kg of H2/day)', 'Value', 
 			   self.h2_production/365., __name__, print_info = print_info)
-		insert(dcf, 'Technical Operating Parameters and Specifications', 'Operating Capacity Factor (%)', 'Value', 
+		insert(self.dcf, 'Technical Operating Parameters and Specifications', 'Operating Capacity Factor (%)', 'Value', 
 				1., __name__, print_info = print_info)
 	
-		insert(dcf, 'Planned Replacement', 'Electrolyzer Stack Replacement', 'Frequency (years)', 
+		insert(self.dcf, 'Planned Replacement', 'Electrolyzer Stack Replacement', 'Frequency (years)', 
 				self.replacement_frequency, __name__, print_info = print_info, add_processed = False,
 				insert_path = False)
 
-		insert(dcf, 'Electrolyzer', 'Scaling Factor', 'Value', 
+		insert(self.dcf, 'Electrolyzer', 'Scaling Factor', 'Value', 
 				self.electrolyzer_scaling_factor, __name__, print_info = print_info)
-		insert(dcf, 'Photovoltaic', 'Scaling Factor', 'Value', 
+		insert(self.dcf, 'Photovoltaic', 'Scaling Factor', 'Value', 
 				self.pv_scaling_factor, __name__, print_info = print_info)
 
-		insert(dcf, 'Non-Depreciable Capital Costs', 'Land required (acres)', 'Value', 
+		insert(self.dcf, 'Non-Depreciable Capital Costs', 'Land required (acres)', 'Value', 
 				self.area_acres, __name__, print_info = print_info)
-		insert(dcf, 'Non-Depreciable Capital Costs', 'Solar Collection Area (m2)', 'Value', 
+		insert(self.dcf, 'Non-Depreciable Capital Costs', 'Solar Collection Area (m2)', 'Value', 
 				self.area_m2, __name__, print_info = print_info)
 
-	def calculate_H2_production(self, dcf):
+	def calculate_H2_production(self):
 		'''Using hourly irradiation data and electrolyzer as well as PV array parameters,
 		H2 production is calculated.
 		'''
 
-		if isinstance(dcf.inp['Irradiation Used']['Data']['Value'], str):
-			data = read_textfile(dcf.inp['Irradiation Used']['Data']['Value'], delimiter = '	')[:,1]
+		if isinstance(self.dcf.inp['Irradiation Used']['Data']['Value'], str):
+			data = read_textfile(self.dcf.inp['Irradiation Used']['Data']['Value'], delimiter = '	')[:,1]
 		else:
-			data = dcf.inp['Irradiation Used']['Data']['Value']
+			data = self.dcf.inp['Irradiation Used']['Data']['Value']
 
 		yearly_data = []
 
-		for year in dcf.operation_years:
-			data_loss_corrected = self.calculate_photovoltaic_loss_correction(dcf, data, year)
-			power_generation = data_loss_corrected * dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value']
+		for year in self.dcf.operation_years:
+			data_loss_corrected = self.calculate_photovoltaic_loss_correction(data, year)
+			power_generation = data_loss_corrected * self.dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value']
 
-			electrolyzer_power_demand, power_increase = self.calculate_electrolyzer_power_demand(dcf, year) 
+			electrolyzer_power_demand, power_increase = self.calculate_electrolyzer_power_demand(year) 
 			electrolyzer_power_demand *= np.ones(len(power_generation))
 			electrolyzer_power_consumption = np.amin(np.c_[power_generation, electrolyzer_power_demand], axis = 1)
 
-			threshold = dcf.inp['Electrolyzer']['Minimum capacity']['Value']
+			threshold = self.dcf.inp['Electrolyzer']['Minimum capacity']['Value']
 			electrolyzer_capacity = electrolyzer_power_consumption / electrolyzer_power_demand
 			electrolyzer_capacity[electrolyzer_capacity > threshold] = 1
 			electrolyzer_capacity[electrolyzer_capacity <= threshold] = 0
 
-			h2_produced = electrolyzer_power_consumption * dcf.inp['Electrolyzer']['Conversion efficiency (kg H2/kWh)']['Value'] / power_increase
+			h2_produced = electrolyzer_power_consumption * self.dcf.inp['Electrolyzer']['Conversion efficiency (kg H2/kWh)']['Value'] / power_increase
 			h2_produced *= electrolyzer_capacity
 
 			yearly_data.append([year, np.sum(h2_produced), np.sum(electrolyzer_capacity)])
 
 		self.yearly_data = np.asarray(yearly_data)
-		self.h2_production = np.concatenate([np.zeros(dcf.inp['Financial Input Values']['construction time']['Value']), 
+		self.h2_production = np.concatenate([np.zeros(self.dcf.inp['Financial Input Values']['construction time']['Value']), 
 												self.yearly_data[:,1]])
 
-	def calculate_photovoltaic_loss_correction(self, dcf, data, year):
+	def calculate_photovoltaic_loss_correction(self, data, year):
 		'''Calculation of yearly reduction in electricity production by PV array.
 		'''
 
-		return data * (1. - dcf.inp['Photovoltaic']['Power loss per year']['Value']) ** year
+		return data * (1. - self.dcf.inp['Photovoltaic']['Power loss per year']['Value']) ** year
 
-	def calculate_electrolyzer_power_demand(self, dcf, year):
+	def calculate_electrolyzer_power_demand(self, year):
 		'''Calculation of yearly increase in electrolyzer power demand.
 		'''
 
-		increase = (1. + dcf.inp['Electrolyzer']['Power requirement increase per year']['Value']) ** year
-		demand = increase * dcf.inp['Electrolyzer']['Nominal Power (kW)']['Value']
+		increase = (1. + self.dcf.inp['Electrolyzer']['Power requirement increase per year']['Value']) ** year
+		demand = increase * self.dcf.inp['Electrolyzer']['Nominal Power (kW)']['Value']
 
 		return demand, increase
 
-	def calculate_stack_replacement(self, dcf):
+	def calculate_stack_replacement(self):
 		'''Calculation of stack replacement frequency for electrolyzer.
 		'''
 
 		cumulative_running_time = np.cumsum(self.yearly_data[:,2])
-		stack_usage = cumulative_running_time / dcf.inp['Electrolyzer']['Replacement time (h)']['Value']
+		stack_usage = cumulative_running_time / self.dcf.inp['Electrolyzer']['Replacement time (h)']['Value']
 
 		number_of_replacements = np.floor_divide(stack_usage[-1], 1)
 
 		self.replacement_frequency = len(stack_usage) / (number_of_replacements + 1.)
 
-	def calculate_scaling_factors(self, dcf):
+	def calculate_scaling_factors(self):
 		'''Calculation of electrolyzer and PV CAPEX scaling factors.
 		'''
 
-		self.pv_scaling_factor = self.scaling_factor(dcf, dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value'], dcf.inp['Photovoltaic']['CAPEX Reference Power (kW)']['Value'])
-		self.electrolyzer_scaling_factor = self.scaling_factor(dcf, dcf.inp['Electrolyzer']['Nominal Power (kW)']['Value'], dcf.inp['Electrolyzer']['CAPEX Reference Power (kW)']['Value'])
+		self.pv_scaling_factor = self.scaling_factor(self.dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value'], self.dcf.inp['Photovoltaic']['CAPEX Reference Power (kW)']['Value'])
+		self.electrolyzer_scaling_factor = self.scaling_factor(self.dcf.inp['Electrolyzer']['Nominal Power (kW)']['Value'], self.dcf.inp['Electrolyzer']['CAPEX Reference Power (kW)']['Value'])
 		
-	def scaling_factor(self, dcf, power, reference):
+	def scaling_factor(self, power, reference):
 		'''Calculation of CAPEX scaling factor based on nominal and reference power.
 		'''
 		
 		number_of_tenfold_increases = np.log10(power/reference)
 
-		return dcf.inp['CAPEX Multiplier']['Multiplier']['Value'] ** number_of_tenfold_increases
+		return self.dcf.inp['CAPEX Multiplier']['Multiplier']['Value'] ** number_of_tenfold_increases
 
-	def calculate_area(self, dcf):
+	def calculate_area(self):
 		'''Area requirement calculation assuming 1000 W/m2 peak power.'''
 
-		peak_kW_per_m2 = dcf.inp['Photovoltaic']['Efficiency']['Value'] * 1.
-		self.area_m2 = dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value'] / peak_kW_per_m2
+		peak_kW_per_m2 = self.dcf.inp['Photovoltaic']['Efficiency']['Value'] * 1.
+		self.area_m2 = self.dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value'] / peak_kW_per_m2
 		self.area_acres = self.area_m2 * 0.000247105
 
