@@ -91,38 +91,199 @@ class Photovoltaic_Plugin:
 		process_table(self.dcf.inp, 'Reverse Osmosis', 'Value')
 
 	def calculate_H2_production(self):
-		'''Using hourly irradiation data and electrolyzer as well as PV array parameters,
-		H2 production is calculated.
-		'''
+		'''Calculates hydrogen production using hourly irradiation data, PV, and electrolyzer parameters.
+        '''
 
-		if isinstance(self.dcf.inp['Irradiation Used']['Data']['Value'], str):
-			data = read_textfile(self.dcf.inp['Irradiation Used']['Data']['Value'], delimiter = '	')[:,1]
-		else:
-			data = self.dcf.inp['Irradiation Used']['Data']['Value']
-
-		yearly_data = []
-
-		for year in self.dcf.operation_years:
-			data_loss_corrected = self.calculate_photovoltaic_loss_correction(data, year)
-			power_generation = data_loss_corrected * self.dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value']
-
-			electrolyzer_power_demand, power_increase = self.calculate_electrolyzer_power_demand(year) 
-			electrolyzer_power_demand *= np.ones(len(power_generation))
-			electrolyzer_power_consumption = np.amin(np.c_[power_generation, electrolyzer_power_demand], axis = 1)
-
-			threshold = self.dcf.inp['Electrolyzer']['Minimum capacity']['Value']
-			electrolyzer_capacity = electrolyzer_power_consumption / electrolyzer_power_demand
-			electrolyzer_capacity[electrolyzer_capacity > threshold] = 1
-			electrolyzer_capacity[electrolyzer_capacity <= threshold] = 0
-
-			h2_produced = electrolyzer_power_consumption * self.dcf.inp['Electrolyzer']['Conversion efficiency (kg H2/kWh)']['Value'] / power_increase
-			h2_produced *= electrolyzer_capacity
-
-			yearly_data.append([year, np.sum(h2_produced), np.sum(electrolyzer_capacity)])
-
-		self.yearly_data = np.asarray(yearly_data)
+		data = self.load_irradiation_data()
+		electrolyzer_capacity = self.dcf.inp['Electrolyzer']['Maximal electrolyzer capacity']['Value']
+		initial_h2_production = self.calculate_initial_h2_production(electrolyzer_capacity)
+		self.yearly_data = self.calculate_yearly_h2_production(data, initial_h2_production)
 		self.h2_production = np.concatenate([np.zeros(self.dcf.inp['Financial Input Values']['construction time']['Value']), 
 												self.yearly_data[:,1]])
+		self.total_h2_produced = np.sum(self.yearly_data[:,1]) + initial_h2_production
+	
+	def load_irradiation_data(self):
+		'''Loads hourly irradiation data from a file or array.
+
+		Returns
+		-------
+		ndarray
+			Array containing hourly irradiation data.
+        '''
+
+		if isinstance(self.dcf.inp['Irradiation Used']['Data']['Value'], str):
+			return read_textfile(self.dcf.inp['Irradiation Used']['Data']['Value'], delimiter = '	')[:, 1]
+		else:
+			return self.dcf.inp['Irradiation Used']['Data']['Value']
+	
+	def calculate_yearly_h2_production(self, data, initial_h2_production):
+		'''Computes yearly hydrogen production using irradiation data and system parameters.
+
+		Parameters
+		----------
+		data : ndarray
+			Hourly irradiation data.
+		initial_h2_production : float
+			Initial hydrogen production based on electrolyzer capacity.
+
+		Returns
+		-------
+		ndarray
+			Array containing yearly hydrogen production and operational metrics.
+        '''
+
+		yearly_data = []
+		osmosis_power_demand = self.calculate_osmosis_power_demand(initial_h2_production)
+		
+		for year in self.dcf.operation_years:
+			cumulative_h2_production, cumulative_running_hours = self.annual_electrolyzer_operation_calculation(year, data, osmosis_power_demand)
+			yearly_data.append([year, cumulative_h2_production, cumulative_running_hours])
+
+		return np.asarray(yearly_data)
+		
+	def annual_electrolyzer_operation_calculation(self, year, data, osmosis_power_demand):
+		'''Calculates yearly power generation, electrolyzer power demand, capacity, and hydrogen production.
+
+		Parameters
+		----------
+		year : int
+			Current operational year.
+		data : ndarray
+			Hourly irradiation data.
+		osmosis_power_demand : float
+			Power demand for reverse osmosis operations.
+
+		Returns
+		-------
+		tuple
+			Total hydrogen production and operational hours for the electrolyzer.
+		'''
+
+		# Adjust irradiation data based on yearly photovoltaic losses
+		data_loss_corrected = self.calculate_photovoltaic_loss_correction(data, year)
+		# Calculate power generation from the PV array
+		power_generation = data_loss_corrected * self.dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value'] - osmosis_power_demand
+		self.total_power_generation = np.sum(power_generation) + np.sum(osmosis_power_demand)
+
+		# Calculate electrolyzer power demand and increase due to degradation
+		electrolyzer_power_demand, power_increase = self.calculate_electrolyzer_power_demand(year) 
+		electrolyzer_power_demand *= np.ones(len(power_generation))
+		electrolyzer_power_consumption = np.amin(np.c_[power_generation, electrolyzer_power_demand], axis = 1)
+		self.total_electrolyzer_power_consumption = np.sum(electrolyzer_power_consumption)
+
+		# Determine the electrolyzer capacity based on a minimum threshold
+		threshold = self.dcf.inp['Electrolyzer']['Minimum capacity']['Value']
+		electrolyzer_capacity = electrolyzer_power_consumption / electrolyzer_power_demand
+		electrolyzer_capacity[electrolyzer_capacity > threshold] = 1
+		electrolyzer_capacity[electrolyzer_capacity <= threshold] = 0
+
+		# Calculate hydrogen produced by electrolyzer
+		h2_produced = electrolyzer_power_consumption * self.dcf.inp['Electrolyzer']['Conversion efficiency (kg H2/kWh)']['Value'] / power_increase
+		h2_produced *= electrolyzer_capacity
+		
+		# Recalculate osmosis power demand based on hydrogen production
+		osmosis_power_demand = self.calculate_osmosis_power_demand(h2_produced)
+
+		# Handle battery-based system for additional hydrogen production
+		if 'Battery' in self.dcf.inp:
+			additional_H2, additional_working_hours = self.annual_electroyzer_operation_calculation_with_battery(data,
+																	 power_generation, electrolyzer_power_consumption,
+																	 electrolyzer_capacity, electrolyzer_power_demand, power_increase)
+			return np.sum(h2_produced) + additional_H2, np.sum(electrolyzer_capacity) + additional_working_hours
+
+		else:
+			# total_power = np.sum(power_generation)
+			# total_consumed = np.sum(electrolyzer_power_consumption * electrolyzer_capacity)
+			# print(total_consumed/total_power)
+			return np.sum(h2_produced), np.sum(electrolyzer_capacity)	
+	
+	def annual_electroyzer_operation_calculation_with_battery(self, data, 
+																	power_generation, electrolyzer_power_consumption,
+																	electrolyzer_capacity, electrolyzer_power_demand, power_increase):
+		'''Calculates additional hydrogen production using stored power from a battery.
+
+		This method computes the additional hydrogen produced when a battery stores excess power generated by a photovoltaic system.
+		It calculates how much excess power can be used to produce hydrogen when the electrolyzer's daily capacity exceeds the available power from direct generation.
+
+		Parameters
+		----------
+		data : ndarray
+			Hourly data used for power generation analysis.
+		power_generation : ndarray
+			Array of power generation values (kW) from the solar system.
+		electrolyzer_power_consumption : ndarray
+			Power consumption of the electrolyzer over time.
+		electrolyzer_capacity : ndarray
+			The capacity of the electrolyzer system at each time point.
+		electrolyzer_power_demand : ndarray
+			The power demand required by the electrolyzer to operate.
+		power_increase : float
+			Power increase factor accounting for efficiency or other operational adjustments.
+
+		Returns
+		-------
+		tuple
+			- Total additional hydrogen production (float), calculated from the recovered and stored power.
+			- Total additional operating hours (float), based on the recovered and stored power.
+		'''
+
+		# Check if data length is a multiple of 24 hours (daily data)
+		if len(data) % 24 != 0:
+			raise ValueError("Data length is not a multiple of 24")
+		
+		# Reshape the power generation data into daily sums
+		daily_power_generation = power_generation.reshape(-1, 24)	
+		daily_power_generation =  daily_power_generation.sum(axis=1)  # Sum generation for each day
+
+		# Reshape the electrolyzer power consumption into daily sums
+		daily_power_consumption = electrolyzer_power_consumption.reshape(-1, 24)
+		daily_power_consumption = daily_power_consumption.sum(axis=1)  # Sum consumption for each day
+
+		# Calculate excess power generated each day
+		daily_excess_power = daily_power_generation - daily_power_consumption
+		
+		# Battery charging based on excess power and battery capacity
+		capacity = self.dcf.inp['Battery']['Capacity (kWh)']['Value']
+		capacity *= np.ones(len(daily_excess_power))  # Ensure capacity is the same length as daily data
+		# Store excess power in battery, considering round trip efficiency
+		daily_stored_power = np.amin(np.c_[daily_excess_power, capacity], axis = 1) * self.dcf.inp['Battery']['Round trip efficiency']['Value']
+		self.total_daily_stored_power = np.sum(daily_stored_power)
+
+		# Calculate unused power if electrolyzer capacity is below its maximum
+		unused_power = electrolyzer_power_consumption * (1 - electrolyzer_capacity)
+		daily_unused_power = unused_power.reshape(-1, 24)
+		daily_unused_power = daily_unused_power.sum(axis = 1)
+		
+		# Use stored power only if it exceeds the unused power, assuming stored + below-threshold power is used
+		daily_recovered_power = np.where(daily_stored_power > daily_unused_power, daily_unused_power, 0) 
+
+		# Additional power available for electrolyzer operation (stored + recovered)
+		additional_daily_power = daily_recovered_power + daily_stored_power
+
+		# Calculate daily electrolyzer working hours based on its capacity
+		daily_electrolyzer_capacity = electrolyzer_capacity.reshape(-1, 24)
+		daily_electrolyzer_working_hours = daily_electrolyzer_capacity.sum(axis =1)
+		daily_electrolyzer_off_hours = 24 - daily_electrolyzer_working_hours
+
+		# Maximum additional power consumption when electrolyzer is not operating
+		daily_maximum_additional_power_consumption = daily_electrolyzer_off_hours * electrolyzer_power_demand[0]
+		
+		# Determine the additional power consumption based on available stored and recovered power
+		daily_additional_power_consumption = np.amin(np.c_[additional_daily_power, daily_maximum_additional_power_consumption], axis = 1)
+		self.total_additional_power_consumption = np.sum(daily_additional_power_consumption)
+
+		# Calculate the additional hydrogen produced based on the additional power consumed
+		daily_additional_H2_production = daily_additional_power_consumption * self.dcf.inp['Electrolyzer']['Conversion efficiency (kg H2/kWh)']['Value'] / power_increase
+
+		# Calculate the additional operating hours based on the additional power consumption
+		additional_daily_operating_hours = np.ceil(daily_additional_power_consumption / electrolyzer_power_demand[0])	
+
+		# total_power = np.sum(power_generation)
+		# total_consumed = np.sum(electrolyzer_power_consumption * electrolyzer_capacity) + np.sum(daily_additional_power_consumption)
+		# print(total_consumed/total_power)
+
+		# Return the total additional hydrogen production and total additional operating hours
+		return np.sum(daily_additional_H2_production), np.sum(additional_daily_operating_hours) 
 
 	def calculate_initial_h2_production(self, electrolyzer_capacity):
 		'''
