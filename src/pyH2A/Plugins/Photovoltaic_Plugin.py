@@ -64,34 +64,28 @@ class Photovoltaic_Plugin:
 
 	def __init__(self, dcf, print_info):
 		self.dcf = dcf
-		process_table(self.dcf.inp, 'Irradiation Used', 'Value')
-		process_table(self.dcf.inp, 'CAPEX Multiplier', 'Value')
-		process_table(self.dcf.inp, 'Electrolyzer', 'Value')
-		process_table(self.dcf.inp, 'Photovoltaic', 'Value')
+		self.process_input_data()
 
+		# Perform main calculations for the plugin
 		self.calculate_H2_production()
 		self.calculate_stack_replacement()
 		self.calculate_scaling_factors()
 		self.calculate_area()
 
-		insert(self.dcf, 'Technical Operating Parameters and Specifications', 'Plant Design Capacity (kg of H2/day)', 'Value', 
-			   self.h2_production/365., __name__, print_info = print_info)
-		insert(self.dcf, 'Technical Operating Parameters and Specifications', 'Operating Capacity Factor (%)', 'Value', 
-				1., __name__, print_info = print_info)
-	
-		insert(self.dcf, 'Planned Replacement', 'Electrolyzer Stack Replacement', 'Frequency (years)', 
-				self.replacement_frequency, __name__, print_info = print_info, add_processed = False,
-				insert_path = False)
-
-		insert(self.dcf, 'Electrolyzer', 'Scaling Factor', 'Value', 
-				self.electrolyzer_scaling_factor, __name__, print_info = print_info)
-		insert(self.dcf, 'Photovoltaic', 'Scaling Factor', 'Value', 
-				self.pv_scaling_factor, __name__, print_info = print_info)
-
-		insert(self.dcf, 'Non-Depreciable Capital Costs', 'Land required (acres)', 'Value', 
-				self.area_acres, __name__, print_info = print_info)
-		insert(self.dcf, 'Non-Depreciable Capital Costs', 'Solar Collection Area (m2)', 'Value', 
-				self.area_m2, __name__, print_info = print_info)
+		# Initialize and populate output values
+		self.setup_inserts(print_info)
+		
+	def process_input_data(self):
+		'''
+        Prepares input data by processing tables and validating required parameters.
+        '''
+		process_table(self.dcf.inp, 'Irradiation Used', 'Value')
+		process_table(self.dcf.inp, 'CAPEX Multiplier', 'Value')
+		process_table(self.dcf.inp, 'Electrolyzer', 'Value')
+		process_table(self.dcf.inp, 'Photovoltaic', 'Value')
+		if 'Battery' in self.dcf.inp:
+			process_table(self.dcf.inp, 'Battery', 'Value')
+		process_table(self.dcf.inp, 'Reverse Osmosis', 'Value')
 
 	def calculate_H2_production(self):
 		'''Using hourly irradiation data and electrolyzer as well as PV array parameters,
@@ -175,3 +169,41 @@ class Photovoltaic_Plugin:
 		self.area_m2 = self.dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value'] / peak_kW_per_m2
 		self.area_acres = self.area_m2 * 0.000247105
 
+	def setup_inserts(self, print_info):
+		'''Sets up the output inserts for reporting the results of the calculations.
+		
+		This method prepares the results to be inserted into the output data structure, including plant design capacity, scaling factors, 
+		area required, and other important technical parameters for the system. The data is organized into a list of tuples.
+		
+		Args:
+			print_info (bool): Flag to control whether the information should be printed.
+		'''
+
+		inserts = [
+			('Technical Operating Parameters and Specifications', 'Plant Design Capacity (kg of H2/day)', self.h2_production/365.),
+			('Technical Operating Parameters and Specifications', 'Operating Capacity Factor (%)', 1.),
+			('Electrolyzer', 'Scaling Factor', self.electrolyzer_scaling_factor),
+			('Photovoltaic', 'Scaling Factor', self.pv_scaling_factor),
+			('Non-Depreciable Capital Costs', 'Land required (acres)', self.area_acres),
+			('Non-Depreciable Capital Costs', 'Solar Collection Area (m2)', self.area_m2),
+			('LCA Parameters Photovoltaic', 'Sea water demand (m3)', self.total_volume_of_sea_water),
+			('LCA Parameters Photovoltaic', 'Mass of brine (kg)', self.total_mass_brine),
+			('LCA Parameters Photovoltaic', 'Production and maintenance electrolyzer', self.production_maintanence_electrolyser),
+			('LCA Parameters Photovoltaic', 'H2 produced (kg)', self.total_h2_produced),
+			('LCA Parameters Photovoltaic', 'O2 produced (kg)', self.total_o2_produced),
+			('LCA Parameters Photovoltaic', 'Amount of PV modules', self.amount_of_PV_modules),
+			('LCA Parameters Photovoltaic', 'Amount of fresh water (m3)', self.total_volume_of_fresh_water),
+			# Optional: Uncomment to allow specifying an alternative power source for the plants
+			#('LCA Parameters Photovoltaic', 'Produced electricity PV (kW)', self.total_power_generation),
+			#('LCA Parameters Photovoltaic', 'Electrolyzer power consumption (kW)', self.total_electrolyzer_power_consumption),
+			#('LCA Parameters Photovoltaic', 'Electricity stored in battery (kW)', self.total_daily_stored_power),
+			#('LCA Parameters Photovoltaic', 'Electricity reverse osmosis (kW)', self.total_osmosis_power_demand),
+			#('LCA Parameters Photovoltaic', 'Electricity from battery (kW)', self.total_additional_power_consumption)
+		]
+
+		for category, name, value in inserts:
+			insert(self.dcf, category, name, 'Value', value, __name__, print_info=print_info)
+	
+		insert(self.dcf, 'Planned Replacement', 'Electrolyzer Stack Replacement', 'Frequency (years)', 
+				self.replacement_frequency, __name__, print_info = print_info, add_processed = False,
+				insert_path = False)
