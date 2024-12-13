@@ -68,9 +68,12 @@ class Photovoltaic_Plugin:
 
 		# Perform main calculations for the plugin
 		self.calculate_H2_production()
+		#self.calculate_initial_h2_production()
+		#self.calculate_osmosis_power_demand()
 		self.calculate_stack_replacement()
 		self.calculate_scaling_factors()
 		self.calculate_area()
+		self.calculate_amount_of_PV()
 
 		# Initialize and populate output values
 		self.setup_inserts(print_info)
@@ -121,6 +124,62 @@ class Photovoltaic_Plugin:
 		self.h2_production = np.concatenate([np.zeros(self.dcf.inp['Financial Input Values']['construction time']['Value']), 
 												self.yearly_data[:,1]])
 
+	def calculate_initial_h2_production(self, electrolyzer_capacity):
+		'''
+		Calculates the initial hydrogen production based on the electrolyzer's capacity.
+
+		Parameters
+		----------
+		electrolyzer_capacity : float
+			The maximal electrolyzer capacity in kW.
+
+		Returns
+		-------
+		float
+			Initial hydrogen production in kg, based on electrolyzer efficiency and operational time.
+		'''
+		
+		return electrolyzer_capacity * self.dcf.inp['Electrolyzer']['Conversion efficiency (kg H2/kWh)']['Value'] * 8766
+
+	def calculate_osmosis_power_demand(self, total_h2_produced):
+		'''
+		Calculates the estimated power demand for reverse osmosis and electrolysis byproducts (brine, O2).
+
+		Parameters
+		----------
+		total_h2_produced : float
+			Total hydrogen produced during the year.
+
+		Returns
+		-------
+		osmosis_power_demand : ndarray
+			Estimated power demand for desalination using reverse osmosis in kW.
+		'''
+		
+		MOLAR_RATIO_WATER = 18.01528 / 2.016 # Molar ratio for water production (H2O) and hydrogen (H2)
+		mass_fresh_water_demand = total_h2_produced * MOLAR_RATIO_WATER # Mass of fresh water required (kg)
+		volume_fresh_water_demand = mass_fresh_water_demand / 997 # Convert mass to volume (m^3), assuming water density = 997 kg/m3
+		self.total_volume_of_fresh_water = np.sum(volume_fresh_water_demand)
+
+		# Calculate the volume of seawater required based on recovery rate
+		volume_sea_water_demand = volume_fresh_water_demand / self.dcf.inp['Reverse Osmosis']['Recovery Rate']['Value'] #in m3
+		self.total_volume_of_sea_water = np.sum(volume_sea_water_demand)
+
+		# Calculate the power demand for reverse osmosis
+		osmosis_power_demand = self.dcf.inp['Reverse Osmosis']['Power Demand (kWh/m3)']['Value'] * volume_sea_water_demand / 8766  #kW
+		#self.total_osmosis_power_demand = np.sum(osmosis_power_demand)
+
+		# Calculate amount of brine during desalination
+		mass_brine = mass_fresh_water_demand * 0.035 #factor 0.035: per 1 kg of H2O, 0.035 kg of NaCl/brine are obtained during the desalination process starting from 0.6 M NaCl solution (which is sea water)
+		self.total_mass_brine = np.sum(mass_brine)
+
+		# Calculate the O2 produced in electrolysis
+		MOLAR_RATIO_O2_H2 = 31.999 / 2.016 # Molar ratio for O2 and H2
+		o2_produced = 1/2 * total_h2_produced * MOLAR_RATIO_O2_H2 #in kg, factor 1/2 due to the H2/O2 ratio (2H2O —› 2H2 + O2
+		self.total_o2_produced = np.sum(o2_produced)
+
+		return osmosis_power_demand
+	
 	def calculate_photovoltaic_loss_correction(self, data, year):
 		'''Calculation of yearly reduction in electricity production by PV array.
 		'''
@@ -140,11 +199,15 @@ class Photovoltaic_Plugin:
 		'''Calculation of stack replacement frequency for electrolyzer.
 		'''
 
+		# Cumulative running time for each year
 		cumulative_running_time = np.cumsum(self.yearly_data[:,2])
-		stack_usage = cumulative_running_time / self.dcf.inp['Electrolyzer']['Replacement time (h)']['Value']
 
+		# Calculate stack usage based on replacement time
+		stack_usage = cumulative_running_time / self.dcf.inp['Electrolyzer']['Replacement time (h)']['Value']
 		number_of_replacements = np.floor_divide(stack_usage[-1], 1)
 
+		# Calculate the frequency of stack replacements
+		self.production_maintanence_electrolyser = 1 + number_of_replacements
 		self.replacement_frequency = len(stack_usage) / (number_of_replacements + 1.)
 
 	def calculate_scaling_factors(self):
@@ -168,6 +231,12 @@ class Photovoltaic_Plugin:
 		peak_kW_per_m2 = self.dcf.inp['Photovoltaic']['Efficiency']['Value'] * 1.
 		self.area_m2 = self.dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value'] / peak_kW_per_m2
 		self.area_acres = self.area_m2 * 0.000247105
+	
+	def calculate_amount_of_PV(self):
+		"""Calculates the number of photovoltaic (PV) modules required for the hydrogen production capacity.
+		"""
+		# Calculate the number of PV modules required based on nominal power and module power
+		self.amount_of_PV_modules = np.ceil(self.dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value'] / self.dcf.inp['Photovoltaic']['Power per module (kW)']['Value'])
 
 	def setup_inserts(self, print_info):
 		'''Sets up the output inserts for reporting the results of the calculations.
