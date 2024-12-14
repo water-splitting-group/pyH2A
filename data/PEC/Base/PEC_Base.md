@@ -196,7 +196,7 @@ Name | Value | Comment
 --- | --- | ---
 Samples | 50000 | Number of samples in Monte Carlo simulation.
 Target Price Range ($) | 1.5; 1.6
-Input File | ./PEC/Base/Monte_Carlo_Output.csv
+Input File | tests.PEC.Base~Monte_Carlo_Output.csv
 
 # Parameters - Monte_Carlo_Analysis
 

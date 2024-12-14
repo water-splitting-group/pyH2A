@@ -203,7 +203,7 @@ Name | Value | Comment
 --- | --- | ---
 Samples | 50,000 | Number of samples in Monte Carlo simlulation.
 Target Price Range ($) | 1.5; 1.6
-Input File | ./Photocatalytic/Base/Monte_Carlo_Output.csv
+Input File | tests.Photocatalytic.Base~Monte_Carlo_Output.csv
 
 # Parameters - Monte_Carlo_Analysis
 

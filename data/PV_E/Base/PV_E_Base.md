@@ -5,6 +5,7 @@ Name | Type | Position
 Hourly_Irradiation_Plugin | plugin | 0
 Photovoltaic_Plugin | plugin | 0
 Multiple_Modules_Plugin | plugin | 3
+Foreground_LCI_Database_Plugin | plugin | 4
 
 # Display Parameters
 
@@ -59,6 +60,7 @@ Multiplier | 1.0 | CAPEX multiplier for every 10-fold increase of system size.
 Name | Value | Comment
 --- | --- | ---
 Nominal Power (kW) | 5,500.0 | Production of ca. 1 t of H2 per day to compare with PEC and photocatalytic models.
+Maximal electrolyzer capacity | 5000 | *this needs to be looked up, now it is just a value
 CAPEX Reference Power (kW) | 1,000.0
 Power requirement increase per year | 0.3% | Based on Chang 2020
 Minimum capacity | 10.0% | Based on Chang 2020, minimum capacity for electrolyzer to operate.
@@ -70,9 +72,24 @@ Replacement time (h) | 80,000.0 | Based on Chang 2020, operating time after whic
 Name | Value | Path | Comment
 --- | --- | --- | --- 
 Nominal Power (kW) | 1.5 | Electrolyzer > Nominal Power (kW) > Value | Optimal PV oversize ratio, same as Chang 2020
+Power per module (kW)| 340 | | Based on the work by Palmer 2021 
 CAPEX Reference Power (kW) | 1,000.0
 Power loss per year | 0.5% | Based on Chang 2020
 Efficiency | 22% | None | Only used for area calculation.
+
+# Battery
+
+Name | Value | Comment
+--- | --- | ---
+Capacity (kWh) | 4000 | Size of battery, considering capacity minimum of 20%, capacity has to be 20% larger than design capacity
+Round trip efficiency | 100% | For lithium ion battery
+
+
+# Reverse Osmosis
+Name | Value | Path | Comment
+--- | --- | --- | ---
+Power Demand (kWh/m3) | 2.71 | based on Hausmann 2021 and Kim 2008 (this was chosen for a purity of < 10 ppm of disolved salts in the obtained water)
+Recovery Rate | 40.0% | based Palmer 2021 and Tewlour 2022
 
 # Direct Capital Costs - PV
 
@@ -85,6 +102,18 @@ PV CAPEX ($/kW) | 818.0 | Photovoltaic > Nominal Power (kW) > Value ; Photovolta
 Name | Value | Path | Comment
 --- | --- | --- | ---
 Electrolyzer CAPEX ($/kW) | 784.0 | Electrolyzer > Nominal Power (kW) > Value ; Electrolyzer > Scaling Factor > Value | Based on Chang 2020, IRENA 2020 Green Hydrogen (PEM System CAPEX 700 - 1400 $/kg), Shah 2021.
+
+# Direct Capital Costs - Battery
+
+Name | Value | Path
+--- | --- | ---
+Battery CAPEX ($/kWh) | 139 | Battery > Capacity (kWh) > Value
+
+# Direct Capital Costs - Reverse Osmosis
+
+Name | Value | Path | Comment
+--- | --- | --- | ---
+Reverse Osmosis CAPEX () | 0 | | (inscomming, not yet resolved)
 
 # Non-Depreciable Capital Costs
 

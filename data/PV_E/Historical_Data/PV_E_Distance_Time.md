@@ -126,7 +126,7 @@ Name | Value | Comment
 --- | --- | ---
 Samples | 50,000 | Number of samples in Monte Carlo simulation.
 Target Price Range ($) | 1.5; 1.6
-Input File | ./PV_E/Base/Monte_Carlo_Output.csv
+Input File | tests.PV_E.Base~Monte_Carlo_Output.csv
 
 # Parameters - Monte_Carlo_Analysis
 
@@ -141,7 +141,7 @@ Planned Replacement > Electrolyzer Stack Replacement > Cost ($) | Stack repl. (f
 
 Name | Value
 --- | ---
-Input File | ./PV_E/Historical_Data/PV_E_Historical_Data.csv
+Input File | tests.PV_E.Historical_Data~PV_E_Historical_Data.csv
 Log Normalization | True
 Base Year | 2020
 Extrapolation Limit Year | 2060
@@ -215,9 +215,9 @@ image_kwargs | {'path': 'pyH2A.Other~PV_E_Clipart.png', 'x': 1.6, 'zoom': 0.095,
 
 Name | Value | Image
 --- | --- | ---
-pec | ./PEC/Base/PEC_Base.md | pyH2A.Other~PEC_Clipart.png
-photocatalytic | ./Photocatalytic/Base/Photocatalytic_Base.md | pyH2A.Other~Photocatalytic_Clipart.png
-pv_e | ./PV_E/Base/PV_E_Base.md | pyH2A.Other~PV_E_Clipart.png
+pec | tests.PEC.Base~PEC_Base.md | pyH2A.Other~PEC_Clipart.png
+photocatalytic | tests.Photocatalytic.Base~Photocatalytic_Base.md | pyH2A.Other~Photocatalytic_Clipart.png
+pv_e | tests.PV_E.Base~PV_E_Base.md | pyH2A.Other~PV_E_Clipart.png
 
 # Methods - Comparative_MC_Analysis
 
