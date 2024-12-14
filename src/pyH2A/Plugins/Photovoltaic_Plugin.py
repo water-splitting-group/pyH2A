@@ -79,8 +79,7 @@ class Photovoltaic_Plugin:
 		self.setup_inserts(print_info)
 		
 	def process_input_data(self):
-		'''
-        Prepares input data by processing tables and validating required parameters.
+		'''Prepares input data by processing tables and validating required parameters.
         '''
 		process_table(self.dcf.inp, 'Irradiation Used', 'Value')
 		process_table(self.dcf.inp, 'CAPEX Multiplier', 'Value')
@@ -286,8 +285,7 @@ class Photovoltaic_Plugin:
 		return np.sum(daily_additional_H2_production), np.sum(additional_daily_operating_hours) 
 
 	def calculate_initial_h2_production(self, electrolyzer_capacity):
-		'''
-		Calculates the initial hydrogen production based on the electrolyzer's capacity.
+		'''Calculates the initial hydrogen production based on the electrolyzer's capacity.
 
 		Parameters
 		----------
@@ -303,8 +301,7 @@ class Photovoltaic_Plugin:
 		return electrolyzer_capacity * self.dcf.inp['Electrolyzer']['Conversion efficiency (kg H2/kWh)']['Value'] * 8766
 
 	def calculate_osmosis_power_demand(self, total_h2_produced):
-		'''
-		Calculates the estimated power demand for reverse osmosis and electrolysis byproducts (brine, O2).
+		'''Calculates the estimated power demand for reverse osmosis and electrolysis byproducts (brine, O2).
 
 		Parameters
 		----------
@@ -342,13 +339,35 @@ class Photovoltaic_Plugin:
 		return osmosis_power_demand
 	
 	def calculate_photovoltaic_loss_correction(self, data, year):
-		'''Calculation of yearly reduction in electricity production by PV array.
+		'''Adjusts photovoltaic power generation data for losses due to degradation over the years.
+
+		Parameters
+		----------
+		data : ndarray
+		Hourly irradiation data used for calculating power generation.
+		year : int
+		Current operational year for which degradation needs to be applied.
+
+		Returns
+		-------
+		ndarray
+		Corrected hourly irradiation data accounting for yearly degradation.
 		'''
 
 		return data * (1. - self.dcf.inp['Photovoltaic']['Power loss per year']['Value']) ** year
 
 	def calculate_electrolyzer_power_demand(self, year):
-		'''Calculation of yearly increase in electrolyzer power demand.
+		'''Calculates the increase in electrolyzer power demand over time due to degradation.
+
+		Parameters
+		----------
+		year : int
+			The operational year for which the power demand increase is calculated.
+
+		Returns
+		-------
+		tuple
+			Electrolyzer power demand in kW and the power increase factor.
 		'''
 
 		increase = (1. + self.dcf.inp['Electrolyzer']['Power requirement increase per year']['Value']) ** year
@@ -357,7 +376,10 @@ class Photovoltaic_Plugin:
 		return demand, increase
 
 	def calculate_stack_replacement(self):
-		'''Calculation of stack replacement frequency for electrolyzer.
+		'''Calculates the frequency of electrolyzer stack replacements based on operational time and usage.
+		
+		This method computes the total running time of the electrolyzer and calculates how often the stack needs replacement.
+		The frequency is determined based on the total operational hours and the specified replacement time.		
 		'''
 
 		# Cumulative running time for each year
@@ -372,22 +394,41 @@ class Photovoltaic_Plugin:
 		self.replacement_frequency = len(stack_usage) / (number_of_replacements + 1.)
 
 	def calculate_scaling_factors(self):
-		'''Calculation of electrolyzer and PV CAPEX scaling factors.
+		'''Calculates the CAPEX scaling factors for both electrolyzer and photovoltaic systems.
+		
+		This method uses the scaling factor formula based on the nominal and reference power of the systems.
+		The multiplier from the input data is applied to calculate the scaling factors for both PV and electrolyzer.
 		'''
 
 		self.pv_scaling_factor = self.scaling_factor(self.dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value'], self.dcf.inp['Photovoltaic']['CAPEX Reference Power (kW)']['Value'])
 		self.electrolyzer_scaling_factor = self.scaling_factor(self.dcf.inp['Electrolyzer']['Nominal Power (kW)']['Value'], self.dcf.inp['Electrolyzer']['CAPEX Reference Power (kW)']['Value'])
 		
 	def scaling_factor(self, power, reference):
-		'''Calculation of CAPEX scaling factor based on nominal and reference power.
+		'''Calculates the CAPEX scaling factor for a system based on its nominal power and reference power.
+
+		Parameters
+		----------
+		power : float
+			Nominal power of the system.
+		reference : float
+			Reference power used for scaling calculations.
+
+		Returns
+		-------
+		float
+			CAPEX scaling factor.
 		'''
-		
+		# Calculate the number of ten-fold increases
 		number_of_tenfold_increases = np.log10(power/reference)
 
+		# Apply the CAPEX multiplier to calculate the scaling factor
 		return self.dcf.inp['CAPEX Multiplier']['Multiplier']['Value'] ** number_of_tenfold_increases
 
 	def calculate_area(self):
-		'''Area requirement calculation assuming 1000 W/m2 peak power.'''
+		'''Calculates the land area required for the photovoltaic (PV) system.
+		
+		This method calculates the area in square meters (m^2) required for the PV system, assuming peak efficiency of 1000 W/m2 for the solar panels.
+		'''
 
 		peak_kW_per_m2 = self.dcf.inp['Photovoltaic']['Efficiency']['Value'] * 1.
 		self.area_m2 = self.dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value'] / peak_kW_per_m2
@@ -401,12 +442,15 @@ class Photovoltaic_Plugin:
 
 	def setup_inserts(self, print_info):
 		'''Sets up the output inserts for reporting the results of the calculations.
-		
-		This method prepares the results to be inserted into the output data structure, including plant design capacity, scaling factors, 
-		area required, and other important technical parameters for the system. The data is organized into a list of tuples.
-		
-		Args:
-			print_info (bool): Flag to control whether the information should be printed.
+
+		This method prepares the results to be inserted into the output data structure, 
+		including plant design capacity, scaling factors, area required, and other important 
+		technical parameters for the system. The data is organized into a list of tuples.
+
+		Parameters
+		----------
+		print_info : bool
+			Flag to control whether the information should be printed.
 		'''
 
 		inserts = [
