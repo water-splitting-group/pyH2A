@@ -25,21 +25,23 @@ class Multiple_Modules_Plugin:
 	''' 
 
 	def __init__(self, dcf, print_info):
-		process_table(dcf.inp, 'Technical Operating Parameters and Specifications', 'Value')
-		process_table(dcf.inp, 'Non-Depreciable Capital Costs', 'Value')
-		process_table(dcf.inp, 'Fixed Operating Costs', 'Value')
+		self.dcf = dcf
 
-		self.required_staff(dcf)
+		process_table(self.dcf.inp, 'Technical Operating Parameters and Specifications', 'Value')
+		process_table(self.dcf.inp, 'Non-Depreciable Capital Costs', 'Value')
+		process_table(self.dcf.inp, 'Fixed Operating Costs', 'Value')
 
-		insert(dcf, 'Fixed Operating Costs', 'staff', 'Value', self.staff_per_module, __name__, print_info = print_info)
+		self.required_staff()
 
-	def required_staff(self, dcf):
+		insert(self.dcf, 'Fixed Operating Costs', 'staff', 'Value', self.staff_per_module, __name__, print_info = print_info)
+
+	def required_staff(self):
 		'''Calculation of total required staff for all plant modules, then scaling down to staff
 		requirements for one module.'''
 
-		area = dcf.inp['Technical Operating Parameters and Specifications']['Plant Modules']['Value'] * dcf.inp['Non-Depreciable Capital Costs']['Solar Collection Area (m2)']['Value']
+		area = self.dcf.inp['Technical Operating Parameters and Specifications']['Plant Modules']['Value'] * self.dcf.inp['Non-Depreciable Capital Costs']['Solar Collection Area (m2)']['Value']
 
-		staff = np.ceil(area / dcf.inp['Fixed Operating Costs']['area']['Value']) + dcf.inp['Fixed Operating Costs']['supervisor']['Value']
-		staff = staff * dcf.inp['Fixed Operating Costs']['shifts']['Value']
+		staff = np.ceil(area / self.dcf.inp['Fixed Operating Costs']['area']['Value']) + self.dcf.inp['Fixed Operating Costs']['supervisor']['Value']
+		staff = staff * self.dcf.inp['Fixed Operating Costs']['shifts']['Value']
 
-		self.staff_per_module = staff / dcf.inp['Technical Operating Parameters and Specifications']['Plant Modules']['Value']
+		self.staff_per_module = staff / self.dcf.inp['Technical Operating Parameters and Specifications']['Plant Modules']['Value']

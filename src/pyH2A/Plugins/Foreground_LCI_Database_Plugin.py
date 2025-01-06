@@ -29,27 +29,24 @@ class Foreground_LCI_Database_Plugin:
         print_info : bool
             Flag to print additional information for debugging or logging purposes.
         '''
+
+        self.dcf = dcf
         
         # Process the "Irradiation Used" and "LCA Parameters Photovoltaic" data sections
-        process_table(dcf.inp, 'Irradiation Used', 'Value')
-        process_table(dcf.inp, 'LCA Parameters Photovoltaic', 'Value')
+        process_table(self.dcf.inp, 'Irradiation Used', 'Value')
+        process_table(self.dcf.inp, 'LCA Parameters Photovoltaic', 'Value')
 
         # Calculate total sunlight based on irradiation data
-        total_sunlight = self.calculate_sunlight(dcf)
+        total_sunlight = self.calculate_sunlight()
         
         # Create the LCI database using the total sunlight and input data
-        self.LCI_database(dcf, total_sunlight)
+        self.LCI_database(total_sunlight)
 
-    def calculate_sunlight(self, dcf):
+    def calculate_sunlight(self):
         '''Calculates the total amount of sunlight based on input data.
         
         Retrieves sunlight irradiation data from the input container and 
         calculates the total sunlight by summing the irradiation values.
-        
-        Parameters
-        ----------
-        dcf : object
-            Data container object containing input data in the 'inp' attribute.
         
         Returns
         -------
@@ -66,7 +63,7 @@ class Foreground_LCI_Database_Plugin:
         
         try:
             # Retrieve sunlight irradiation data (file path or direct value array)
-            irradiation_values = dcf.inp['Irradiation Used']['Data']['Value']
+            irradiation_values = self.dcf.inp['Irradiation Used']['Data']['Value']
             
             # If the irradiation values are a string (file path), read data from the file
             if isinstance(irradiation_values, str):
@@ -87,13 +84,11 @@ class Foreground_LCI_Database_Plugin:
         except Exception as e:
             raise RuntimeError(f"Error while calculating sunlight: {e}")
 
-    def get_value(self, dcf, section, parameter):
+    def get_value(self, section, parameter):
         '''Retrieves the value of a specific parameter from the input data.
         
         Parameters
         ----------
-        dcf : object
-            Data container object containing input data in the 'inp' attribute.
         section : str
             The section name in the input data.
         parameter : str
@@ -112,11 +107,11 @@ class Foreground_LCI_Database_Plugin:
         
         try:
             # Retrieve the value from the specified section and parameter
-            return dcf.inp[section][parameter]['Value']
+            return self.dcf.inp[section][parameter]['Value']
         except KeyError:
             raise ValueError(f"Missing or invalid parameter: {section} -> {parameter}")
 
-    def LCI_database(self, dcf, total_amount_sunlight):
+    def LCI_database(self, total_amount_sunlight):
         '''Creates the LCI database by associating activities with exchanges.
         
         The LCI database is structured with activities, exchanges, and their relationships,
@@ -124,8 +119,6 @@ class Foreground_LCI_Database_Plugin:
         
         Parameters
         ----------
-        dcf : object
-            Data container object containing input data in the 'inp' attribute.
         total_amount_sunlight : float
             The total amount of sunlight used in the calculation (in kilowatt-hours).
         '''
@@ -151,12 +144,12 @@ class Foreground_LCI_Database_Plugin:
         }
 
         # Retrieve specific LCA parameters from input data
-        sea_water_demand_m3 = self.get_value(dcf, 'LCA Parameters Photovoltaic', 'Sea water demand (m3)')
-        brine_mass_kg = self.get_value(dcf, 'LCA Parameters Photovoltaic', 'Mass of brine (kg)')
-        produced_hydrogen_kg = self.get_value(dcf, 'LCA Parameters Photovoltaic', 'H2 produced (kg)')
-        produced_oxygen_kg = self.get_value(dcf, 'LCA Parameters Photovoltaic', 'O2 produced (kg)')
-        number_of_pv_modules = self.get_value(dcf, 'LCA Parameters Photovoltaic', 'Amount of PV modules')
-        electrolyzer_maintenance_production = self.get_value(dcf, 'LCA Parameters Photovoltaic', 'Production and maintenance electrolyzer')
+        sea_water_demand_m3 = self.get_value('LCA Parameters Photovoltaic', 'Sea water demand (m3)')
+        brine_mass_kg = self.get_value('LCA Parameters Photovoltaic', 'Mass of brine (kg)')
+        produced_hydrogen_kg = self.get_value('LCA Parameters Photovoltaic', 'H2 produced (kg)')
+        produced_oxygen_kg = self.get_value('LCA Parameters Photovoltaic', 'O2 produced (kg)')
+        number_of_pv_modules = self.get_value('LCA Parameters Photovoltaic', 'Amount of PV modules')
+        electrolyzer_maintenance_production = self.get_value('LCA Parameters Photovoltaic', 'Production and maintenance electrolyzer')
 
         # Define the LCI exchanges (inputs and outputs for each activity)
         lci_exchanges = {

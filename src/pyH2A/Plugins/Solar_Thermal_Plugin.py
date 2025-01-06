@@ -23,27 +23,29 @@ class Solar_Thermal_Plugin:
 		Total land requirement in acres.
 	'''
 	
-	def __init__(therm, dcf, print_info):
-		process_table(dcf.inp, 'Technical Operating Parameters and Specifications', 'Value')
-		process_table(dcf.inp, 'Solar-to-Hydrogen Efficiency', 'Value')
-		process_table(dcf.inp, 'Solar Input', 'Value')
-		process_table(dcf.inp, 'Non-Depreciable Capital Costs', 'Value')
+	def __init__(self, dcf, print_info):
+		self.dcf = dcf
 
-		therm.calculate_land_area(dcf)
+		process_table(self.dcf.inp, 'Technical Operating Parameters and Specifications', 'Value')
+		process_table(self.dcf.inp, 'Solar-to-Hydrogen Efficiency', 'Value')
+		process_table(self.dcf.inp, 'Solar Input', 'Value')
+		process_table(self.dcf.inp, 'Non-Depreciable Capital Costs', 'Value')
 
-		insert(dcf, 'Non-Depreciable Capital Costs', 'Land required (acres)', 'Value', therm.area_acres, __name__, print_info = print_info)
+		self.calculate_land_area()
 
-	def calculate_land_area(therm, dcf):
+		insert(self.dcf, 'Non-Depreciable Capital Costs', 'Land required (acres)', 'Value', self.area_acres, __name__, print_info = print_info)
+
+	def calculate_land_area(self):
 		'''Calculation of required land area based on solar input, solar-to-hydrogen efficiency
 		and addtional land are requirements.
 		'''
 
-		insolation_per_m2_per_day = Energy(dcf.inp['Solar Input']['Mean solar input (kWh/m2/day)']['Value'], kWh)
+		insolation_per_m2_per_day = Energy(self.dcf.inp['Solar Input']['Mean solar input (kWh/m2/day)']['Value'], kWh)
 
-		mol_H2_per_m2_per_day = (insolation_per_m2_per_day.J * dcf.inp['Solar-to-Hydrogen Efficiency']['STH (%)']['Value']) / Energy(2*1.229, eV).Jmol
+		mol_H2_per_m2_per_day = (insolation_per_m2_per_day.J * self.dcf.inp['Solar-to-Hydrogen Efficiency']['STH (%)']['Value']) / Energy(2*1.229, eV).Jmol
 		kg_H2_per_m2_per_day = (2 * mol_H2_per_m2_per_day)/1000.
 
-		required_area_m2 = dcf.inp['Technical Operating Parameters and Specifications']['Design Output per Day']['Value'] / kg_H2_per_m2_per_day
+		required_area_m2 = self.dcf.inp['Technical Operating Parameters and Specifications']['Design Output per Day']['Value'] / kg_H2_per_m2_per_day
 
-		therm.area_m2 = required_area_m2 * (1. + dcf.inp['Non-Depreciable Capital Costs']['Additional Land Area (%)']['Value'])
-		therm.area_acres = therm.area_m2 * 0.000247105
+		self.area_m2 = required_area_m2 * (1. + self.dcf.inp['Non-Depreciable Capital Costs']['Additional Land Area (%)']['Value'])
+		self.area_acres = self.area_m2 * 0.000247105

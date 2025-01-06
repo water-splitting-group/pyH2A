@@ -26,24 +26,26 @@ class Fixed_Operating_Cost_Plugin:
 
 
 	def __init__(self, dcf, print_info):
-		self.labor_cost(dcf)
-		insert(dcf, 'Fixed Operating Costs', 'Labor Cost - Uninflated', 'Value', self.labor_uninflated, __name__, print_info = print_info)
-		insert(dcf, 'Fixed Operating Costs', 'Labor Cost', 'Value', self.labor, __name__, print_info = print_info)
+		self.dcf = dcf
 
-		self.other_cost(dcf, print_info)
-		insert(dcf, 'Fixed Operating Costs', 'Total', 'Value', self.labor + self.other, __name__, print_info = print_info)
+		self.labor_cost()
+		insert(self.dcf, 'Fixed Operating Costs', 'Labor Cost - Uninflated', 'Value', self.labor_uninflated, __name__, print_info = print_info)
+		insert(self.dcf, 'Fixed Operating Costs', 'Labor Cost', 'Value', self.labor, __name__, print_info = print_info)
 
-	def labor_cost(self, dcf):
+		self.other_cost(print_info)
+		insert(self.dcf, 'Fixed Operating Costs', 'Total', 'Value', self.labor + self.other, __name__, print_info = print_info)
+
+	def labor_cost(self):
 		'''Calculation of yearly labor costs by multiplying number of staff times hourly labor cost.'''
 
-		process_table(dcf.inp, 'Fixed Operating Costs', 'Value')
+		process_table(self.dcf.inp, 'Fixed Operating Costs', 'Value')
 
-		self.labor_uninflated = dcf.inp['Fixed Operating Costs']['staff']['Value'] * dcf.inp['Fixed Operating Costs']['hourly labor cost']['Value'] * 2080.
-		self.labor = self.labor_uninflated * dcf.labor_inflator 
+		self.labor_uninflated = self.dcf.inp['Fixed Operating Costs']['staff']['Value'] * self.dcf.inp['Fixed Operating Costs']['hourly labor cost']['Value'] * 2080.
+		self.labor = self.labor_uninflated * self.dcf.labor_inflator 
 	
-	def other_cost(self, dcf, print_info):
+	def other_cost(self, print_info):
 		'''Calculation of yearly other fixed operating costs by applying ``sum_all_tables()`` 
 		to "Other Fixed Operating Cost" group.'''
 
-		self.other = sum_all_tables(dcf.inp, 'Other Fixed Operating Cost', 'Value', insert_total = True, class_object = dcf, print_info = print_info) * dcf.combined_inflator
+		self.other = sum_all_tables(self.dcf.inp, 'Other Fixed Operating Cost', 'Value', insert_total = True, class_object = self.dcf, print_info = print_info) * self.dcf.combined_inflator
 

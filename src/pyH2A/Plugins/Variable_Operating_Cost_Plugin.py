@@ -39,37 +39,37 @@ class Variable_Operating_Cost_Plugin:
 	'''
 
 	def __init__(self, dcf, print_info):
-		process_table(dcf.inp, 'Technical Operating Parameters and Specifications', 'Value')
-		process_table(dcf.inp, 'Utilities', ['Cost', 'Usage per kg H2'], path_key = ['Path', 'Usage Path'])
+		process_table(self.dcf.inp, 'Technical Operating Parameters and Specifications', 'Value')
+		process_table(self.dcf.inp, 'Utilities', ['Cost', 'Usage per kg H2'], path_key = ['Path', 'Usage Path'])
 
-		self.calculate_utilities_cost(dcf)
-		self.other_variable_costs(dcf, print_info)
+		self.calculate_utilities_cost()
+		self.other_variable_costs(print_info)
 
-		insert(dcf, 'Variable Operating Costs', 'Total', 'Value', 
+		insert(self.dcf, 'Variable Operating Costs', 'Total', 'Value', 
 				self.utilities + self.other, __name__, print_info = print_info)
-		insert(dcf, 'Variable Operating Costs', 'Utilities', 'Value', 
+		insert(self.dcf, 'Variable Operating Costs', 'Utilities', 'Value', 
 				self.utilities, __name__, print_info = print_info)
-		insert(dcf, 'Variable Operating Costs', 'Other', 'Value', 
+		insert(self.dcf, 'Variable Operating Costs', 'Other', 'Value', 
 				self.other, __name__, print_info = print_info)
 
-	def calculate_utilities_cost(self, dcf):
+	def calculate_utilities_cost(self):
 		'''Iterating over all utilities and computing summed yearly costs.
 		'''
 
 		self.utilities = 0.
 
-		for key in dcf.inp['Utilities']:
-			utility = Utility(dcf.inp['Utilities'][key], dcf)
+		for key in self.dcf.inp['Utilities']:
+			utility = Utility(self.dcf.inp['Utilities'][key], self.dcf)
 			self.utilities += utility.cost_per_kg_H2
 
-		self.utilities = self.utilities * dcf.inp['Technical Operating Parameters and Specifications']['Output per Year']['Value']
+		self.utilities = self.utilities * self.dcf.inp['Technical Operating Parameters and Specifications']['Output per Year']['Value']
 
-	def other_variable_costs(self, dcf, print_info):
+	def other_variable_costs(self, print_info):
 		'''Applying ``sum_all_tables()`` to "Other Variable Operating Cost" group.
 		'''
 
-		self.other = dcf.chemical_inflator * sum_all_tables(dcf.inp, 'Other Variable Operating Cost', 'Value', 
-																insert_total = True, class_object = dcf, 
+		self.other = self.dcf.chemical_inflator * sum_all_tables(self.dcf.inp, 'Other Variable Operating Cost', 'Value', 
+																insert_total = True, class_object = self.dcf, 
 																print_info = print_info)
 
 class Utility:
@@ -82,19 +82,21 @@ class Utility:
 	'''
 
 	def __init__(self, dictionary, dcf):
-		self.calculate_cost_per_kg_H2(dictionary, dcf)
+		self.dcf = dcf
 
-	def calculate_cost_per_kg_H2(self, dictionary, dcf):
+		self.calculate_cost_per_kg_H2(dictionary)
+
+	def calculate_cost_per_kg_H2(self, dictionary):
 		'''Calculation of utility cost per kg of H2 with inflation correction.
 		'''
 		
 		if isinstance(dictionary['Cost'], str):
 			prices = read_textfile(dictionary['Cost'], delimiter = '	')
-			years_idx = fn.find_nearest(prices, dcf.years)
+			years_idx = fn.find_nearest(prices, self.dcf.years)
 			prices = prices[years_idx]
 
-			self.cost_per_kg_H2 = prices[:,1] * dcf.inflation_correction * dictionary['Price Conversion Factor'] * dictionary['Usage per kg H2']
+			self.cost_per_kg_H2 = prices[:,1] * self.dcf.inflation_correction * dictionary['Price Conversion Factor'] * dictionary['Usage per kg H2']
 
 		else:
-			annual_cost_per_kg_H2 = dcf.inflation_correction * dictionary['Cost'] * dictionary['Usage per kg H2'] * dictionary['Price Conversion Factor']
-			self.cost_per_kg_H2 = np.ones(len(dcf.inflation_factor)) * annual_cost_per_kg_H2
+			annual_cost_per_kg_H2 = self.dcf.inflation_correction * dictionary['Cost'] * dictionary['Usage per kg H2'] * dictionary['Price Conversion Factor']
+			self.cost_per_kg_H2 = np.ones(len(self.dcf.inflation_factor)) * annual_cost_per_kg_H2

@@ -30,37 +30,39 @@ class Replacement_Plugin:
 		# process_table(dcf.inp, 'Planned Replacement', ['Cost ($)', 'Frequency (years)'], 
 		# 				path_key = ['Path', 'Frequency Path'])
 
-		self.initialize_yearly_costs(dcf)
-		self.calculate_planned_replacement(dcf)
-		self.unplanned_replacement(dcf, print_info)
+		self.dcf = dcf
 
-		yearly_inflated = self.yearly * dcf.inflation_correction * dcf.inflation_factor
+		self.initialize_yearly_costs()
+		self.calculate_planned_replacement()
+		self.unplanned_replacement(print_info)
+
+		yearly_inflated = self.yearly * self.dcf.inflation_correction * self.dcf.inflation_factor
 
 
-		insert(dcf, 'Replacement', 'Total', 'Value', yearly_inflated, __name__, print_info = print_info)
+		insert(self.dcf, 'Replacement', 'Total', 'Value', yearly_inflated, __name__, print_info = print_info)
 
-	def initialize_yearly_costs(self, dcf):
+	def initialize_yearly_costs(self):
 		'''Initializes ndarray filled with zeros with same length as dcf.inflation_factor.
 		'''
 
-		self.yearly = np.zeros(len(dcf.inflation_factor))
+		self.yearly = np.zeros(len(self.dcf.inflation_factor))
 
-	def calculate_planned_replacement(self, dcf):
+	def calculate_planned_replacement(self):
 		'''Calculation of yearly replacement costs by iterating over all entries of 
 		`Planned Replacement`.
 		'''
 
-		for key in dcf.inp['Planned Replacement']:
-			planned_replacement = Planned_Replacement(dcf.inp['Planned Replacement'][key], key, dcf)
+		for key in self.dcf.inp['Planned Replacement']:
+			planned_replacement = Planned_Replacement(self.dcf.inp['Planned Replacement'][key], key, self.dcf)
 			self.yearly[planned_replacement.years_idx] += planned_replacement.cost
 
-	def unplanned_replacement(self, dcf, print_info):
+	def unplanned_replacement(self, print_info):
 		'''Calculating unplanned replacement costs by appling ``sum_all_tables()`` to 
 		"Unplanned Replacement" group.
 		'''
 
-		self.unplanned = sum_all_tables(dcf.inp, 'Unplanned Replacement', 'Value', 
-										insert_total = True, class_object = dcf, 
+		self.unplanned = sum_all_tables(self.dcf.inp, 'Unplanned Replacement', 'Value', 
+										insert_total = True, class_object = self.dcf, 
 										print_info = print_info)
 		self.yearly += self.unplanned
 
@@ -75,9 +77,11 @@ class Planned_Replacement:
 	'''
 
 	def __init__(self, dictionary, key, dcf):
-		self.calculate_yearly_cost(dictionary, key, dcf)
+		self.dcf = dcf 
+
+		self.calculate_yearly_cost(dictionary, key)
 		
-	def calculate_yearly_cost(self, dictionary, key, dcf):
+	def calculate_yearly_cost(self, dictionary, key):
 		'''Calculation of yearly replacement costs.
 
 		Replacement costs are billed annually, replacements which are performed at a non-integer rate 
@@ -87,9 +91,9 @@ class Planned_Replacement:
 		replacement_frequency = int(np.ceil(dictionary['Frequency (years)']))
 		non_integer_correction = replacement_frequency / dictionary['Frequency (years)']
 
-		raw_replacement_cost = process_input(dcf.inp, 'Planned Replacement', key, 'Cost ($)')
-		initial_replacement_year_idx = fn.find_nearest(dcf.plant_years, replacement_frequency)[0]
+		raw_replacement_cost = process_input(self.dcf.inp, 'Planned Replacement', key, 'Cost ($)')
+		initial_replacement_year_idx = fn.find_nearest(self.dcf.plant_years, replacement_frequency)[0]
 
-		self.cost = raw_replacement_cost * non_integer_correction * dcf.combined_inflator
-		self.years = dcf.plant_years[initial_replacement_year_idx:][0::replacement_frequency]
-		self.years_idx = fn.find_nearest(dcf.plant_years, self.years)
+		self.cost = raw_replacement_cost * non_integer_correction * self.dcf.combined_inflator
+		self.years = self.dcf.plant_years[initial_replacement_year_idx:][0::replacement_frequency]
+		self.years_idx = fn.find_nearest(self.dcf.plant_years, self.years)

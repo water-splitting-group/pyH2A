@@ -48,61 +48,63 @@ class PEC_Plugin:
 	'''
 
 	def __init__(self, dcf, print_info):
-		if 'Solar Concentrator' in dcf.inp:
-			process_table(dcf.inp, 'Solar Concentrator', 'Value')
+		self.dcf = dcf
 
-		process_table(dcf.inp, 'Solar Input', 'Value')
-		process_table(dcf.inp, 'Solar-to-Hydrogen Efficiency', 'Value')
-		process_table(dcf.inp, 'PEC Cells', 'Value')
-		process_table(dcf.inp, 'Land Area Requirement', 'Value')
-		process_table(dcf.inp, 'Technical Operating Parameters and Specifications', 'Value')
+		if 'Solar Concentrator' in self.dcf.inp:
+			process_table(self.dcf.inp, 'Solar Concentrator', 'Value')
 
-		self.hydrogen_production(dcf)
-		self.PEC_cost(dcf)
-		self.land_area(dcf)
+		process_table(self.dcf.inp, 'Solar Input', 'Value')
+		process_table(self.dcf.inp, 'Solar-to-Hydrogen Efficiency', 'Value')
+		process_table(self.dcf.inp, 'PEC Cells', 'Value')
+		process_table(self.dcf.inp, 'Land Area Requirement', 'Value')
+		process_table(self.dcf.inp, 'Technical Operating Parameters and Specifications', 'Value')
 
-		insert(dcf, 'Non-Depreciable Capital Costs', 'Land required (acres)', 'Value', 
+		self.hydrogen_production()
+		self.PEC_cost()
+		self.land_area()
+
+		insert(self.dcf, 'Non-Depreciable Capital Costs', 'Land required (acres)', 'Value', 
 		       self.total_land_area_acres, __name__, print_info = print_info)
-		insert(dcf, 'Non-Depreciable Capital Costs', 'Solar Collection Area (m2)', 'Value', 
+		insert(self.dcf, 'Non-Depreciable Capital Costs', 'Solar Collection Area (m2)', 'Value', 
 			   self.total_solar_collection_area, __name__, print_info = print_info)
 		
-		insert(dcf, 'Planned Replacement', 'Planned Replacement PEC Cells', 'Cost ($)', 
+		insert(self.dcf, 'Planned Replacement', 'Planned Replacement PEC Cells', 'Cost ($)', 
 			   self.cell_cost, __name__, print_info = print_info)
-		insert(dcf, 'Planned Replacement', 'Planned Replacement PEC Cells', 'Frequency (years)', 
-			   dcf.inp['PEC Cells']['Lifetime (years)']['Value'], __name__, print_info = print_info)
+		insert(self.dcf, 'Planned Replacement', 'Planned Replacement PEC Cells', 'Frequency (years)', 
+			   self.dcf.inp['PEC Cells']['Lifetime (years)']['Value'], __name__, print_info = print_info)
 
-		insert(dcf, 'Direct Capital Costs - PEC Cells', 'PEC Cell Cost ($)', 'Value', 
+		insert(self.dcf, 'Direct Capital Costs - PEC Cells', 'PEC Cell Cost ($)', 'Value', 
 			   self.cell_cost, __name__, print_info = print_info)
 
-		insert(dcf, 'PEC Cells', 'Number', 'Value', self.cell_number, __name__, print_info = print_info)
+		insert(self.dcf, 'PEC Cells', 'Number', 'Value', self.cell_number, __name__, print_info = print_info)
 
-	def hydrogen_production(self, dcf):
+	def hydrogen_production(self):
 		'''Calculation of (kg of H2)/day produced by single PEC cell.
 		'''
 
-		pec = dcf.inp['PEC Cells']
+		pec = self.dcf.inp['PEC Cells']
 
 		self.cell_area = pec['Length (m)']['Value'] * pec['Width (m)']['Value']
-		cell_insolation = Energy(self.cell_area * dcf.inp['Solar Input']['Mean solar input (kWh/m2/day)']['Value'], kWh)
+		cell_insolation = Energy(self.cell_area * self.dcf.inp['Solar Input']['Mean solar input (kWh/m2/day)']['Value'], kWh)
 
-		mol_H2_per_cell = (cell_insolation.J * dcf.inp['Solar-to-Hydrogen Efficiency']['STH (%)']['Value']) / Energy(2*1.229, eV).Jmol
+		mol_H2_per_cell = (cell_insolation.J * self.dcf.inp['Solar-to-Hydrogen Efficiency']['STH (%)']['Value']) / Energy(2*1.229, eV).Jmol
 		self.kg_H2_per_cell = (2 * mol_H2_per_cell) / 1000.
 		self.mol_H2_per_m2_per_day = mol_H2_per_cell / self.cell_area
 
-	def PEC_cost(self, dcf):
+	def PEC_cost(self):
 		'''Calculation of cost per cell, number of required cells and total cell cost.
 		'''
 
-		cost_per_cell = self.cell_area * dcf.inp['PEC Cells']['Cell Cost ($/m2)']['Value']
-		self.cell_number = np.ceil(dcf.inp['Technical Operating Parameters and Specifications']['Design Output per Day']['Value'] / self.kg_H2_per_cell)
+		cost_per_cell = self.cell_area * self.dcf.inp['PEC Cells']['Cell Cost ($/m2)']['Value']
+		self.cell_number = np.ceil(self.dcf.inp['Technical Operating Parameters and Specifications']['Design Output per Day']['Value'] / self.kg_H2_per_cell)
 		self.cell_cost = self.cell_number * cost_per_cell
 
-	def land_area(self, dcf):
+	def land_area(self):
 		'''Calculation of total required land area and solar collection area.
 		'''
 
-		land = dcf.inp['Land Area Requirement']
-		pec = dcf.inp['PEC Cells']
+		land = self.dcf.inp['Land Area Requirement']
+		pec = self.dcf.inp['PEC Cells']
 
 		self.total_solar_collection_area = self.cell_area * self.cell_number
 
