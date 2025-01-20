@@ -21,14 +21,25 @@ class Cost_Contributions_Analysis:
 	'-' will be displayed.
 	'''
 
-	def __init__(self, input_file):
+	def __init__(
+			self, 
+			input_file : str
+			) -> None:
+		# Initialize the cost contributions analysis with the provided input file
 		self.base_case = Discounted_Cash_Flow(input_file, print_info = False)
 
-	def cost_breakdown_plot(self, ax = None, figure_lean = True,
-							plugin = None, plugin_property = None,
-							label_offset = 5.5, x_label_string = 'Cost / USD',
-							x_label_string_H2 = r'Levelized cost / USD per kg $H_{2}$',
-							plot_kwargs = {}, **kwargs):
+	def cost_breakdown_plot(
+			self, 
+			ax : plt.Axes = None, 
+			figure_lean : bool = True,
+			plugin : str = None, 
+			plugin_property : bool = None,
+			label_offset : float = 5.5, 
+			x_label_string : str = 'Cost / USD',
+			x_label_string_H2 : str = r'Levelized cost / USD per kg $H_{2}$',
+			plot_kwargs : dict = {}, 
+			**kwargs : dict
+			) -> plt.Figure:
 		'''Plotting cost breakdown plot.
 
 		Parameters

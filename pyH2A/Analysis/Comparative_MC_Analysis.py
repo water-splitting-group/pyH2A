@@ -21,16 +21,22 @@ class Comparative_MC_Analysis:
 	name for model.
 	'''
 
-	def __init__(self, input_file):
+	def __init__(
+			self, 
+			input_file : str
+			) -> None:
+		# Initialize the comparative Monte Carlo analysis with the provided input file
 		self.inp = convert_input_to_dictionary(input_file)
 		self.models = self.get_models()
 		self.check_target_price_range_consistency()
 
-	def get_models(self):
+	def get_models(
+			self
+			) -> dict:
 		'''Get models which are to be compared from `Comparative_MC_Analysis` 
 		table in input file and perform Monte Carlo analysis for them.
 		'''
-
+		# Retrieve models from the input file and perform Monte Carlo analysis
 		models = {}
 
 		for key, input_file in self.inp['Comparative_MC_Analysis'].items():
@@ -46,11 +52,13 @@ class Comparative_MC_Analysis:
 
 		return models
 
-	def check_target_price_range_consistency(self):
+	def check_target_price_range_consistency(
+			self
+			) -> None:
 		'''Check that the same target price ranges are specified
 		for all models which are to be compared.
 		'''
-
+		# Ensure that all models have the same target price range
 		model_keys = list(self.models)
 
 		target_price_range = np.asarray(self.models[model_keys[0]]['Model'].target_price_range)
@@ -60,10 +68,16 @@ class Comparative_MC_Analysis:
 
 		self.target_price_range = target_price_range
 
-	def plot_comparative_distance_histogram(self, ax = None, figure_lean = True, 
-											table_kwargs = {}, image_kwargs = {}, 
-											plot_kwargs = {}, hist_kwargs = {},
-										    **kwargs):
+	def plot_comparative_distance_histogram(
+			self, 
+			ax : plt.Axes = None, 
+			figure_lean : bool = True, 
+			table_kwargs : dict = {}, 
+			image_kwargs : dict = {}, 
+			plot_kwargs : dict = {}, 
+			hist_kwargs : dict = {},
+			**kwargs : dict
+			) -> plt.Figure:
 		'''Plot comparative development distance histogram.
 
 		Parameters
@@ -82,8 +96,8 @@ class Comparative_MC_Analysis:
 			Dictionary containing optional keyword arguments for
 			:func:`~pyH2A.Utilities.output_utilities.Figure_Lean`, has priority over `**kwargs`.
 		hist_kwargs: dict, optional
-			Dictionary containg optional keyword arguments for
-			:func:`~pyH2A.Analysis.Monte_Carlo_Analysis.Monte_Carlo_Analysis.plot_distance_histogram`
+				Dictionary containing optional keyword arguments for
+				:func:`~pyH2A.Analysis.Monte_Carlo_Analysis.Monte_Carlo_Analysis.plot_distance_histogram`
 		**kwargs: 
 			Additional `kwargs` passed to 
 			:func:`~pyH2A.Utilities.output_utilities.Figure_Lean`
@@ -93,7 +107,7 @@ class Comparative_MC_Analysis:
 		figure : matplotlib.fig or None
 			matplotlib.fig is returned if `figure_lean` is True.
 		'''
-
+		# Plot comparative development distance histogram for all models
 		model_number = len(self.models)
 
 		kwargs = {**{'left': 0.2, 'right': 0.55, 'bottom': 0.15, 'top': 0.9, 'hspace': 0.2,
@@ -141,10 +155,16 @@ class Comparative_MC_Analysis:
 			figure.execute()
 			return figure.fig
 
-	def plot_comparative_distance_cost_relationship(self, ax = None, figure_lean = True,
-													table_kwargs = {}, image_kwargs = {}, 
-											        plot_kwargs = {}, dist_kwargs = {},
-													**kwargs):
+	def plot_comparative_distance_cost_relationship(
+			self, 
+			ax : plt.Axes = None, 
+			figure_lean : bool = True,
+			table_kwargs : dict = {}, 
+			image_kwargs : dict = {}, 
+	        plot_kwargs : dict = {},
+			dist_kwargs : dict = {},
+			**kwargs : dict
+			) -> plt.Figure:
 		'''Plot comparative development distance/H2 cost relationship.
 
 		Parameters
@@ -163,7 +183,7 @@ class Comparative_MC_Analysis:
 			Dictionary containing optional keyword arguments for
 			:func:`~pyH2A.Utilities.output_utilities.Figure_Lean`, has priority over `**kwargs`.
 		dist_kwargs: dict, optional
-			Dictionary containg optional keyword arguments for
+			Dictionary containing optional keyword arguments for
 			:func:`~pyH2A.Analysis.Monte_Carlo_Analysis.Monte_Carlo_Analysis.plot_distance_cost_relationship`
 		**kwargs: 
 			Additional `kwargs` passed to 
@@ -174,7 +194,7 @@ class Comparative_MC_Analysis:
 		figure : Figure_Lean object
 			Figure_Lean object is returned.
 		'''
-
+		# Plot comparative development distance and H2 cost relationship for all models
 		model_number = len(self.models)
 
 		kwargs = {**{'right': 0.43, 'left': 0.08, 'top': 0.92,
@@ -220,10 +240,17 @@ class Comparative_MC_Analysis:
 		if return_figure:
 			return figure
 
-	def plot_combined_distance(self, fig_width = 12, fig_height = 2,
-							   table_kwargs = {}, image_kwargs = {}, 
-							   plot_kwargs = {}, dist_kwargs = {},
-							   hist_kwargs = {}, **kwargs):
+	def plot_combined_distance(
+			self, 
+			fig_width : float = 12, 
+			fig_height : float = 2,
+			table_kwargs : dict = {}, 
+			image_kwargs : dict = {}, 
+			plot_kwargs : dict = {}, 
+			dist_kwargs : dict = {},
+			hist_kwargs : dict = {}, 
+			**kwargs : dict
+			) -> plt.Figure:
 		'''Plot combining development distance histogram and distance/H2 cost
 		relationship.
 
@@ -245,10 +272,10 @@ class Comparative_MC_Analysis:
 			Dictionary containing optional keyword arguments for
 			:func:`~pyH2A.Utilities.output_utilities.Figure_Lean`, has priority over `**kwargs`.
 		dist_kwargs: dict, optional
-			Dictionary containg optional keyword arguments for
+			Dictionary containing optional keyword arguments for
 			:func:`~pyH2A.Analysis.Monte_Carlo_Analysis.Monte_Carlo_Analysis.plot_distance_cost_relationship`
 		hist_kwargs: dict, optional
-			Dictionary containg optional keyword arguments for
+			Dictionary containing optional keyword arguments for
 			:func:`~pyH2A.Analysis.Monte_Carlo_Analysis.Monte_Carlo_Analysis.plot_distance_histogram`
 		**kwargs: 
 			Additional `kwargs` passed to 
@@ -259,7 +286,7 @@ class Comparative_MC_Analysis:
 		figure : matplotlib.fig or None
 			matplotlib.fig is returned if `figure_lean` is True.
 		'''
-
+		# Plot combining development distance histogram and distance/H2 cost relationship
 		model_number = len(self.models)
 
 		kwargs = {**{'right': 0.675, 'left': 0.04, 'bottom': 0.15, 'top': 0.9,
@@ -303,4 +330,3 @@ class Comparative_MC_Analysis:
 
 		return fig
 
-	

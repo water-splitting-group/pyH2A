@@ -8,36 +8,47 @@ from pyH2A.Utilities.find_nearest import find_nearest
 from pyH2A.Utilities.input_modification import convert_input_to_dictionary, read_textfile, file_import, parse_parameter, merge
 from pyH2A.Utilities.output_utilities import Figure_Lean, insert_image
 
-def linear(p, x):
+def linear(
+		p : np.ndarray, 
+		x : np.ndarray
+		) -> np.ndarray:
 	'''Linear function for fitting.
 	'''
-
 	return p[0] * x + p[1]
 
-def exponential_decline(p, x):
+def exponential_decline(
+		p : np.ndarray, 
+		x : np.ndarray
+		) -> np.ndarray:
 	'''Exponential decay function for fitting.
 	'''
-
 	return p[0] * np.exp(-p[1] * x)
 
-def residual_generic(p, x, y, function, **kwargs):
+def residual_generic(
+		p : np.ndarray, 
+		x : np.ndarray, 
+		y : np.ndarray, 
+		function : callable, 
+		**kwargs : dict
+		) -> np.ndarray:
 	'''Generic residual function for least squares fitting.
 	'''
-
 	y_fit = function(p, x, **kwargs)
 	res = y - y_fit
-
 	return res
 
-def fit_generic(x, y, function, p_guess = None, kwargs = {}):
+def fit_generic(
+		x : np.ndarray, 
+		y : np.ndarray, 
+		function : callable, 
+		p_guess : np.ndarray = None,
+		kwargs : dict = {}
+		) -> np.ndarray:
 	'''Generic least squares fitting function.
 	'''
-
 	if p_guess is None:
 		p_guess = np.ones(2)
-
 	p = least_squares(fun=residual_generic, x0=p_guess, args=(x, y, function), kwargs = kwargs)
-
 	return p.x
 
 class Development_Distance_Time_Analysis:
@@ -73,7 +84,11 @@ class Development_Distance_Time_Analysis:
 	constant across all years included in the textfile.
 	'''
 
-	def __init__(self, input_file):
+	def __init__(
+			self, 
+			input_file : str
+			) -> None:
+		# Initialize the development distance time analysis with the provided input file
 		self.inp = convert_input_to_dictionary(input_file)
 		self.monte_carlo = Monte_Carlo_Analysis(input_file)
 		self.mc_parameters = deepcopy(self.monte_carlo.parameters)
@@ -99,10 +114,12 @@ class Development_Distance_Time_Analysis:
 		self.historical_development_distance()
 		self.fit_historical_development_distance()
 
-	def import_data(self, file_name):
+	def import_data(
+			self, 
+			file_name : str
+			) -> None:
 		'''Importing historical data from textfile.
 		'''
-
 		self.data = read_textfile(file_name, delimiter = '	')
 		self.years = self.data[:,0]
 
@@ -117,11 +134,12 @@ class Development_Distance_Time_Analysis:
 
 		self.column_names = column_names
 
-	def map_parameters(self):
+	def map_parameters(
+			self
+			) -> None:
 		'''Mapping parameters from historical data input file to Monte Carlo
 		parameters.
 		'''
-
 		parameters = {}
 
 		mapped = [False] * len(self.column_names)
@@ -138,7 +156,9 @@ class Development_Distance_Time_Analysis:
 
 		self.parameters_time = parameters
 
-	def harmonize_monte_carlo_parameters(self):
+	def harmonize_monte_carlo_parameters(
+			self
+			) -> None:
 		'''Checking if all Monte Carlo parameters are included in historical dataset.
 
 		Notes
@@ -146,7 +166,6 @@ class Development_Distance_Time_Analysis:
 		If Monte Carlo parameters are missing, they are added with their
 		historical value being set to the present reference/base value.
 		'''
-
 		max_column_index = len(self.column_names)
 
 		for name, mc_parameter in self.mc_parameters.items():
@@ -161,7 +180,9 @@ class Development_Distance_Time_Analysis:
 
 		assert sorted(list(self.parameters_time)) == sorted(list(self.mc_parameters)), 'Monte Carlo parameters differ from historical parameter data.'
 
-	def historical_development_distance(self):
+	def historical_development_distance(
+			self
+			) -> None:
 		'''Calculating development distance for historical and Monte Carlo analysis data.
 
 		Notes
@@ -171,7 +192,6 @@ class Development_Distance_Time_Analysis:
 		same hyperparameters. If `log_normalize` is set to `True`, all distances
 		are calculated using logarithmic normalization.
 		'''
-
 		self.distances = calculate_distance(self.data, self.parameters_time, self.monte_carlo.principal,
 											metric = 'cityblock', sum_distance = True,
 											log_normalize = self.log_normalize)
@@ -182,7 +202,9 @@ class Development_Distance_Time_Analysis:
 		self.monte_carlo.full_distance_cost_relationship(log_normalize = self.log_normalize,
 														 sum_distance = True)
 
-	def fit_historical_development_distance(self):
+	def fit_historical_development_distance(
+			self
+			) -> None:
 		'''Linear and asymptotic models are fitted to historical distances and are used 
 		to extrapolate into the future.
 
@@ -193,7 +215,6 @@ class Development_Distance_Time_Analysis:
 		asymptotic model are then fitted to the transformed data. The results are transformed
 		back for visualization.
 		'''
-
 		years_shifted = self.years - np.amin(self.years)
 		distances_shifted = -self.distances + 1
 
@@ -211,10 +232,14 @@ class Development_Distance_Time_Analysis:
 		self.p_expo = p_expo
 		self.p_linear = p_linear
 
-	def determine_distance_time_correspondence(self, years, model, 
-											   spacing = 1,
-											   minimum_tick_distance = 0.1,
-											   spacing_distances = np.array([1, 2, 3, 5, 10, 15, 20])):
+	def determine_distance_time_correspondence(
+			self, 
+			years : np.ndarray, 
+			model : np.ndarray, 
+			spacing : int = 1,
+			minimum_tick_distance : float = 0.1,
+			spacing_distances : np.ndarray = np.array([1, 2, 3, 5, 10, 15, 20])
+			) -> tuple[np.ndarray, np.ndarray]:
 		'''Mapping development distance to time for plotting.
 
 		Parameters
@@ -246,7 +271,10 @@ class Development_Distance_Time_Analysis:
 		`spacing_distances` until the `minimum_tick_distance` criterion is fullfilled.
 		'''
 
-		def generate_distances(max_idx, label_spacing):
+		def generate_distances(
+				max_idx : int,
+				label_spacing : int
+				) -> tuple[np.ndarray, np.ndarray]:
 			labels = np.arange(self.base_year, years[max_idx]+1, label_spacing)
 			distances_idx = find_nearest(years, labels)
 			distances = model[distances_idx]
@@ -265,10 +293,17 @@ class Development_Distance_Time_Analysis:
 
 		return labels.astype('int'), distances
 
-	def generate_time_axis(self, ax, position, distances, labels, axis_label, color):
+	def generate_time_axis(
+			self, 
+			ax : plt.Axes, 
+			position : float, 
+			distances : np.ndarray, 
+			labels : np.ndarray, 
+			axis_label : str, 
+			color : str
+			) -> None:
 		'''Generating additional x axis for plot which maps development distance to time.
 		'''
-
 		ax.xaxis.set_ticks_position('bottom')
 		ax.xaxis.set_label_position('bottom')
 		ax.spines['bottom'].set_position(('axes', position))
@@ -281,15 +316,21 @@ class Development_Distance_Time_Analysis:
 		ax.tick_params(axis = 'x', colors = color)
 		ax.spines['bottom'].set_color(color)
 
-	def plot_distance_histogram(self, ax = None, figure_lean = True,
-							    linear_axis_y_pos = -0.4,
-								expo_axis_y_pos = -0.8,
-								linear_axis_label = 'Year (linear model)',
-								expo_axis_label = 'Year (asymptotic model)',
-								label_kwargs = {},
-								hist_kwargs = {}, table_kwargs = {}, 
-								image_kwargs = {}, plot_kwargs = {},  
-								**kwargs):
+	def plot_distance_histogram(
+			self, 
+			ax : plt.Axes = None, 
+			figure_lean : bool = True,
+			linear_axis_y_pos : float = -0.4,
+			expo_axis_y_pos : float = -0.8,
+			linear_axis_label : str = 'Year (linear model)',
+			expo_axis_label : str = 'Year (asymptotic model)',
+			label_kwargs : dict = {},
+			hist_kwargs : dict = {}, 
+			table_kwargs : dict = {}, 
+			image_kwargs : dict = {}, 
+			plot_kwargs : dict = {},  
+			**kwargs : dict
+			) -> plt.Figure:
 		'''Plot distance histogram with additional axis mapping development distance
 		to time.
 
@@ -311,7 +352,7 @@ class Development_Distance_Time_Analysis:
 			Dictionary containing optional keyword arguments for
 			:func:`~pyH2A.Analysis.Development_Distance_Time_Analysis.Development_Distance_Time_Analysis.determine_distance_time_correspondence`.
 		hist_kwargs: dict, optional
-			Dictionary containg optional keyword arguments for
+			Dictionary containing optional keyword arguments for
 			:func:`~pyH2A.Analysis.Monte_Carlo_Analysis.Monte_Carlo_Analysis.plot_distance_histogram`
 		table_kwargs : dict, optional
 			Dictionary containing optional keyword arguments for 
@@ -331,7 +372,6 @@ class Development_Distance_Time_Analysis:
 		figure : matplotlib.fig or None
 			matplotlib.fig is returned if `figure_lean` is True.
 		'''
-
 
 		kwargs = {**{'left': 0.2, 'right': 0.55, 'bottom': 0.5, 'top': 0.9, 'hspace': 0.2,
 	 			     'fig_width': 10, 'fig_height': 2.5, 'font_size': 12,
@@ -378,15 +418,21 @@ class Development_Distance_Time_Analysis:
 			figure.execute()
 			return figure.fig
 
-	def plot_distance_cost_relationship(self, ax = None, figure_lean = True,
-										linear_axis_y_pos = -0.25,
-										expo_axis_y_pos = -0.5,
-										linear_axis_label = 'Year (linear model)',
-										expo_axis_label = 'Year (asymptotic model)',
-										label_kwargs = {},
-										dist_kwargs = {}, table_kwargs = {}, 
-										image_kwargs = {}, plot_kwargs = {}, 
-										**kwargs):
+	def plot_distance_cost_relationship(
+			self, 
+			ax : plt.Axes = None, 
+			figure_lean : bool = True,
+			linear_axis_y_pos : float = -0.25,
+			expo_axis_y_pos : float = -0.5,
+			linear_axis_label : str = 'Year (linear model)',
+			expo_axis_label : str = 'Year (asymptotic model)',
+			label_kwargs : dict = {},
+			dist_kwargs : dict = {}, 
+			table_kwargs : dict = {}, 
+			image_kwargs : dict = {}, 
+			plot_kwargs : dict = {}, 
+			**kwargs : dict
+			) -> plt.Figure:
 		'''Plot distance/cost relationship with additional axis mapping development distance
 		to time.
 
@@ -408,7 +454,7 @@ class Development_Distance_Time_Analysis:
 			Dictionary containing optional keyword arguments for
 			:func:`~pyH2A.Analysis.Development_Distance_Time_Analysis.Development_Distance_Time_Analysis.determine_distance_time_correspondence`.
 		dist_kwargs: dict, optional
-			Dictionary containg optional keyword arguments for
+			Dictionary containing optional keyword arguments for
 			:func:`~pyH2A.Analysis.Monte_Carlo_Analysis.Monte_Carlo_Analysis.plot_distance_cost_relationship`
 		table_kwargs : dict, optional
 			Dictionary containing optional keyword arguments for 
@@ -475,7 +521,15 @@ class Development_Distance_Time_Analysis:
 			figure.execute()
 			return figure.fig
 
-	def plot_distance_indicator(self, ax, target_distances, model, years, color, ylim_lower):
+	def plot_distance_indicator(
+			self, 
+			ax : plt.Axes, 
+			target_distances : np.ndarray, 
+			model : np.ndarray, 
+			years : np.ndarray, 
+			color : str, 
+			ylim_lower : float
+			) -> None:
 
 		idx = find_nearest(model, target_distances)
 
@@ -493,19 +547,25 @@ class Development_Distance_Time_Analysis:
 		# 					xytext = (x_coord, ylim_lower), 
 		# 					arrowprops={'arrowstyle': '-', 'ls': 'dashed', 'color': color})
 
-	def plot_distance_time_relationship(self, ax = None, figure_lean = True,  
-										legend_loc = 'upper left',
-										xlabel_string = 'Year',
-										ylabel_string = 'Development distance',
-										expo_label_string = 'Asymptotic model',
-										linear_label_string = 'Linear model',
-										datapoint_label_string = ' historical distance',
-										markersize = 10,
-										color_future = True,
-										parameter_table = True,
-										target_distances = None,
-										table_kwargs = {}, image_kwargs = {}, plot_kwargs = {},
-										**kwargs):
+	def plot_distance_time_relationship(
+		self, 
+		ax : plt.Axes = None, 
+		figure_lean : bool = True,  
+		legend_loc : str = 'upper left',
+		xlabel_string : str = 'Year',
+		ylabel_string : str = 'Development distance',
+		expo_label_string : str = 'Asymptotic model',
+		linear_label_string : str = 'Linear model',
+		datapoint_label_string : str = ' historical distance',
+		markersize : float = 10,
+		color_future : bool = True,
+		parameter_table : bool = True,
+		target_distances : bool = None,
+		table_kwargs : dict = {}, 
+		image_kwargs : dict = {}, 
+		plot_kwargs : dict = {},
+		**kwargs : dict
+	):
 		'''Ploting relationship between time and development distance based on 
 		historical data.
 
