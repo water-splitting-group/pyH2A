@@ -124,6 +124,8 @@ class Photocatalytic_Plugin:
 				__name__, print_info = print_info)
 		insert(self.dcf, 'Water Volume', 'Volume (liters)', 'Value', self.total_volume_liters, 
 				__name__, print_info = print_info)
+		
+		print("self.dcf: ", self.dcf.inp)
 
 	def hydrogen_production(self):
 		'''Calculation of hydrogen produced per day per baggie (in kg).

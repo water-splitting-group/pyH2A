@@ -239,4 +239,4 @@ class Foreground_LCI_Database_Plugin:
             lci_database[activity_code].setdefault('exchanges', []).append(exchange)
 
         #Optionally, print the LCI database
-        pp.pprint(lci_database)
+        #pp.pprint(lci_database)

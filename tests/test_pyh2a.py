@@ -39,3 +39,6 @@ def test_photocatalytic_limit():
 	results = pyH2A('./tests/Photocatalytic/Limit/Photocatalytic_Limit.md', './tests/Photocatalytic/Limit')
 	expected_result = 1.0546304750173923
 	assert results.base_case.h2_cost == expected_result, f"Expected {expected_result} $/kg' but got {results.base_case.h2_cost} $/kg"
+
+if __name__ == '__main__':
+	test_pv_e_base()
