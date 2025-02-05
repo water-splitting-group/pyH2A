@@ -1,6 +1,26 @@
 from pyH2A.run_pyH2A import pyH2A
+from pyH2A.Discounted_Cash_Flow import discounted_cash_flow_function
 from scipy.stats import ttest_ind
+import numpy as np
+import matplotlib.pyplot as plt
 import pprint
+
+
+def optimization_test():
+	result = pyH2A('data/PV_E/Base/PV_E_Base_Optimization.md', 'data/PV_E/Base')
+
+def dcf_test():
+
+	values = np.linspace(0.2, 3, 200)
+
+	parameter = ['Photovoltaic', 'Nominal Power (kW)', 'Value']
+
+	results = discounted_cash_flow_function('data/PV_E/Base/PV_E_Base.md', values, parameter)
+
+	plt.plot(values, results)
+	plt.show()
+
+
 
 def pv_e_base():
 	
@@ -100,8 +120,10 @@ def test():
 	print(Energy(285.83 * (1000./2.) * con.Avogadro, kJmol).J)
 
 def main():
+	#dcf_test()
+	optimization_test()
 	#pv_e_base()
-	pv_e_limit()
+	#pv_e_limit()
 	#pv_e_distance_time()
 	#pec_base()
 	#pec_limit()

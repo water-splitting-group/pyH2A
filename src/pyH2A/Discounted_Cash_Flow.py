@@ -143,6 +143,13 @@ def discounted_cash_flow_function(inp, values, parameters, attribute = 'h2_cost'
 
 def discounted_cash_flow_function_1D(values, parameters, inp, attribute = 'h2_cost', 
 											plugin = None, plugin_attr = None):
+	'''
+	Wrapper function for ``Discounted_Cash_Flow``, substituting provided values
+	at specified parameter positions and returning desired attribute of
+	``Discounted_Cash_Flow`` object.
+	
+
+	'''
 
 	if isinstance(inp, str):
 		inp = convert_input_to_dictionary(inp)
