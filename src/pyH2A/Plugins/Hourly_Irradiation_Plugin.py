@@ -78,8 +78,8 @@ class Hourly_Irradiation_Plugin:
 def converter_function(string):
 	'''Converter function for datetime of hourly irradiation data.'''
 
-	decoded = string.decode('utf-8')
-	split = decoded.split(':')
+	#decoded = string.decode('utf-8')
+	split = string.split(':')
 
 	return float(split[1][:2]) #- 0.5
 

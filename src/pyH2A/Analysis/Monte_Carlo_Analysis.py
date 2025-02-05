@@ -339,13 +339,15 @@ class Monte_Carlo_Analysis:
 			1D array containing H2 costvalues.
 		'''
 
-		num_cpus = multiprocessing.cpu_count()
-		pool = multiprocessing.Pool(num_cpus)
+		# num_cpus = multiprocessing.cpu_count()
+		# pool = multiprocessing.Pool(num_cpus)
 
-		value_batches = divide_into_batches(values, np.ceil(len(values)/num_cpus))
+		# value_batches = divide_into_batches(values, np.ceil(len(values)/num_cpus))
 		
-		h2_cost = pool.map(self.perform_h2_cost_calculation, value_batches)
-		h2_cost = np.concatenate(h2_cost)
+		# h2_cost = pool.map(self.perform_h2_cost_calculation, value_batches)
+		# h2_cost = np.concatenate(h2_cost)
+
+		h2_cost = self.perform_h2_cost_calculation(values)
 
 		if return_full_array is True:
 			return np.c_[self.values, h2_cost]

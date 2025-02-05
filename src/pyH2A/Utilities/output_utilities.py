@@ -205,7 +205,7 @@ class MathTextSciFormatter(mticker.Formatter):
 	'''
 
 	def __init__(self, fmt="%1.1e"):
-	    self.fmt = fmt
+		self.fmt = fmt
 	def __call__(self, x, pos=None):
 		s = self.fmt % x
 		decimal_point = '.'
@@ -262,6 +262,16 @@ def dynamic_value_formatting(value, cutoff = 6):
 			return millify(value, dollar_sign = False)
 		else:
 			return format_scientific(value)
+
+def format_value_dollar_sign(value, cutoff = 6, currency='$', decimal_places = 2, ):
+	
+	if currency:
+		return f'{currency}{value:.{decimal_places}f}'
+	elif value > 0.01:
+		return f'{value:.{decimal_places}f}'
+	else:
+		return dynamic_value_formatting(value, cutoff)	
+
 
 def bottom_offset(self, bboxes, bboxes2):
 	'''Bottom offset for cost contribution plot labels.

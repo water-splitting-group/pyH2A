@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from pyH2A.Discounted_Cash_Flow import Discounted_Cash_Flow
 from pyH2A.Utilities.input_modification import convert_input_to_dictionary, parse_parameter, get_by_path, set_by_path
-from pyH2A.Utilities.output_utilities import make_bold, Figure_Lean
+from pyH2A.Utilities.output_utilities import make_bold, Figure_Lean, format_value_dollar_sign
 
 class Waterfall_Analysis:
 	'''Perform waterfall analysis to study the compounded effect 
@@ -120,7 +120,9 @@ class Waterfall_Analysis:
 
 	def plot_waterfall_chart(self, ax = None, figure_lean = True,
 							 width = 0.7, connection_width = 1.0, 
-							 label_offset = 20, plot_sorted = False, 
+							 label_offset = 20, plot_sorted = False,
+							 y_axis_label = r'Levelized cost / USD per kg $H_{2}$', 
+							 currency = '$', decimal_places = 2, cutoff = 6,
 							 plot_kwargs = {},
 							 **kwargs):
 		'''Plot waterfall chart.
@@ -195,7 +197,10 @@ class Waterfall_Analysis:
 										             'color': 'grey', 
 										             'linewidth': connection_width})
 
-				ax.annotate('${:.2f}'.format(df[i]['Value']), 
+				# ax.annotate('${:.2f}'.format(df[i]['Value']), 
+				# 	         xy = (counter, df[i]['Value'] + label_offset), 
+				# 	         va = 'center', ha = 'center')
+				ax.annotate(format_value_dollar_sign(df[i]['Value'], cutoff, currency, decimal_places), 
 					         xy = (counter, df[i]['Value'] + label_offset), 
 					         va = 'center', ha = 'center')
 
@@ -223,7 +228,10 @@ class Waterfall_Analysis:
 					    [current_value, current_value + df[i]['Relative Change']], 
 					    color = color, linewidth = 0)
 	
-				ax.annotate('${:.2f}'.format(df[i]['Relative Change']), 
+				# ax.annotate('${:.2f}'.format(df[i]['Relative Change']), 
+				# 	         xy = (counter, y_label), va = 'center', 
+				# 	         ha = 'center', color = color)
+				ax.annotate(format_value_dollar_sign(df[i]['Value'], cutoff, currency, decimal_places), 
 					         xy = (counter, y_label), va = 'center', 
 					         ha = 'center', color = color)
 
@@ -246,12 +254,17 @@ class Waterfall_Analysis:
 		ax.plot([counter+1, counter+1], [0, current_value], 
 			     color = 'black', linewidth = 0)
 
-		ax.annotate('${:.2f}'.format(current_value),
+		# ax.annotate('${:.2f}'.format(current_value),
+		#             xy = (counter+1, current_value + label_offset), 
+		#             va = 'center', ha = 'center')
+		ax.annotate(format_value_dollar_sign(current_value, cutoff, currency, decimal_places),
 		            xy = (counter+1, current_value + label_offset), 
 		            va = 'center', ha = 'center')
+
+		
 		labels.append(make_bold('Adjusted'))
 
-		ax.set_ylabel(r'Levelized cost / USD per kg $H_{2}$')
+		ax.set_ylabel(y_axis_label)
 
 		ax.set_xticks(np.arange(0, len(results)+1))
 		ax.set_xticklabels(labels)
