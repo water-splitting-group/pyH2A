@@ -299,7 +299,7 @@ class Monte_Carlo_Analysis:
 		on the provided values and `self.parameters`. The modified copy of 
 		`self.inp` is then passed to `Discounted_Cash_Flow()`.
 		A parameter value can be either a value replacing the existing one 
-		in self.inp (Type = value) or it can be a factor hich will be multiplied 
+		in self.inp (Type = value) or it can be a factor which will be multiplied 
 		by the existing value.
 		'''
 

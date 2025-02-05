@@ -141,6 +141,27 @@ def discounted_cash_flow_function(inp, values, parameters, attribute = 'h2_cost'
 
 	return results
 
+def discounted_cash_flow_function_1D(values, parameters, inp, attribute = 'h2_cost', 
+											plugin = None, plugin_attr = None):
+
+	if isinstance(inp, str):
+		inp = convert_input_to_dictionary(inp)
+
+	input_dict = copy.deepcopy(inp)
+
+	for value, parameter in zip(values, parameters):
+		set_by_path(input_dict, parameter, value)
+		
+	dcf = Discounted_Cash_Flow(input_dict, print_info = False)
+
+	result = getattr(dcf, attribute)
+
+	if attribute == 'plugs':
+		result = result[plugin]
+		result = getattr(result, plugin_attr)
+
+	return result
+
 class Discounted_Cash_Flow:
 	'''Class to perform discounted cash flow analysis.
 

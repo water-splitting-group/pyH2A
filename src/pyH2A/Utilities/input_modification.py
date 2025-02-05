@@ -607,7 +607,10 @@ def process_cell(dictionary, top_key, key, bottom_key, cell = None, print_proces
 		if isinstance(num(cell), numbers.Number):
 			return num(cell)
 		else:
+			if cell != 'None':
+				print(f'Warning: Value at "{top_key} > {key} > {bottom_key}" is not numerical (value is "{cell}"), setting to 1.')
 			return 1.
+
 
 	else:
 		value = 1.
