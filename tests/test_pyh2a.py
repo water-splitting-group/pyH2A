@@ -5,6 +5,11 @@ def test_pv_e_base():
 	expected_result = 3.581887505029294
 	assert results.base_case.h2_cost == expected_result, f"Expected {expected_result} $/kg' but got {results.base_case.h2_cost} $/kg"
 
+def test_pv_e_new():
+	results = pyH2A('./tests/PV_E/Base/PV_E_New.md', './tests/Results/PV_E/New', True)
+	expected_result = 2.371129629524664
+	assert results.base_case.h2_cost == expected_result, f"Expected {expected_result} $/kg' but got {results.base_case.h2_cost} $/kg"
+
 def test_pv_e_limit():
 	results = pyH2A('./tests/PV_E/Limit/PV_E_Limit.md', '.tests/PV_E/Limit')
 	expected_result = 1.4242951683758598
@@ -41,4 +46,4 @@ def test_photocatalytic_limit():
 	assert results.base_case.h2_cost == expected_result, f"Expected {expected_result} $/kg' but got {results.base_case.h2_cost} $/kg"
 
 if __name__ == '__main__':
-	test_pv_e_base()
+	test_pv_e_new()

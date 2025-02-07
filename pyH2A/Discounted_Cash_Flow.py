@@ -701,4 +701,3 @@ class Discounted_Cash_Flow:
 				for middle_key in self.inp[top_key]:
 					if 'Processed' not in self.inp[top_key][middle_key]:
 						print('Warning: "{0} > {1}" has not been processed'.format(top_key, middle_key))
-
