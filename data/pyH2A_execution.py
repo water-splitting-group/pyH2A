@@ -2,6 +2,8 @@ from pyH2A.run_pyH2A import pyH2A
 from pyH2A.Discounted_Cash_Flow import discounted_cash_flow_function
 from scipy.stats import ttest_ind
 import numpy as np
+
+np.set_printoptions(suppress=True)
 import matplotlib.pyplot as plt
 import pprint
 
@@ -25,7 +27,14 @@ def dcf_test():
 def pv_e_base():
 	
 	result = pyH2A('data/PV_E/Base/PV_E_Base.md', './PV_E/Base')
-	pprint.pprint(result.meta_modules['Monte_Carlo_Analysis']['Module'].shortest_target_distance)
+
+	#pprint.pprint(result.base_case.inp['Power Generation'])
+
+	#pprint.pprint(result.base_case.inp['Technical Operating Parameters and Specifications']['Output per Year']['Value'])
+
+	#pprint.pprint(result.base_case.inp['Technical Operating Parameters and Specifications'])
+
+	#pprint.pprint(result.meta_modules['Monte_Carlo_Analysis']['Module'].shortest_target_distance)
 
 	#pprint.pprint(result.__dict__)
 
@@ -121,8 +130,8 @@ def test():
 
 def main():
 	#dcf_test()
-	optimization_test()
-	#pv_e_base()
+	#optimization_test()
+	pv_e_base()
 	#pv_e_limit()
 	#pv_e_distance_time()
 	#pec_base()

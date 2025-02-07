@@ -623,7 +623,8 @@ def process_cell(dictionary, top_key, key, bottom_key, cell = None, print_proces
 
 		return value
 
-def process_input(dictionary, top_key, key, bottom_key, path_key = 'Path', add_processed = True):
+def process_input(dictionary, top_key, key, bottom_key, path_key = 'Path', add_processed = True,
+				  print_processing_warning = True):
 	'''Processing of input at dictionary[top_key][key][bottom_key].
 
 	Parameters
@@ -640,6 +641,8 @@ def process_input(dictionary, top_key, key, bottom_key, path_key = 'Path', add_p
 		Key used for path column. Defaults to 'Path'.
 	add_processed : bool, optional
 		Flag to control if `Processed` key is added
+	print_processing_warning : bool, optional
+		Flag to control if a warning is printed when an unprocessed value is being used.
 
 	Notes
 	-----
@@ -679,10 +682,12 @@ def process_input(dictionary, top_key, key, bottom_key, path_key = 'Path', add_p
 		return entry
 
 	else:
-		value = process_cell(dictionary, top_key, key, bottom_key)
+		value = process_cell(dictionary, top_key, key, bottom_key, 
+					   		print_processing_warning = print_processing_warning)
 
 		try:
-			target_value = process_cell(dictionary, top_key, key, path_key)
+			target_value = process_cell(dictionary, top_key, key, path_key,
+							   print_processing_warning = print_processing_warning)
 			value *= target_value
 		except KeyError:
 			pass
@@ -697,7 +702,8 @@ def process_input(dictionary, top_key, key, bottom_key, path_key = 'Path', add_p
 
 		return value
 
-def process_table(dictionary, top_key, bottom_key, path_key = 'Path'):
+def process_table(dictionary, top_key, bottom_key, path_key = 'Path', 
+				  print_processing_warning = True):
 	'''Looping through all keys in dictionary[top_key] and applying process_input to
 	dictionary[top_key][key][bottom_key].
 
@@ -711,6 +717,8 @@ def process_table(dictionary, top_key, bottom_key, path_key = 'Path'):
 		Bottom key(s).
 	path_key : str or ndarray, optional
 		Key(s) used for path column(s). Defaults to 'Path'.
+	print_processing_warning : bool, optional
+		Flag to control if a warning is printed when an unprocessed value is being used.
 	
 	Notes
 	-----
@@ -720,15 +728,18 @@ def process_table(dictionary, top_key, bottom_key, path_key = 'Path'):
 
 	for key in dictionary[top_key]:
 		if isinstance(bottom_key, str):
-			value = process_input(dictionary, top_key, key, bottom_key, path_key = path_key)
+			value = process_input(dictionary, top_key, key, bottom_key, path_key = path_key,
+						 		print_processing_warning = print_processing_warning)
 
 		else:
 			for single_key, path in zip(bottom_key[:-1], path_key[:-1]):
 				value = process_input(dictionary, top_key, key, single_key, 
-									  path_key = path, add_processed = False)
+									  path_key = path, add_processed = False,
+									print_processing_warning = print_processing_warning)
 
 			process_input(dictionary, top_key, key, bottom_key[-1], 
-						  path_key = path_key[-1], add_processed = True)
+						  path_key = path_key[-1], add_processed = True,
+						  print_processing_warning = print_processing_warning)
 
 def sum_table(dictionary, top_key, bottom_key, path_key = 'Path'):
 	'''For the provided `dictionary`, all entries in dictionary[top_key] are processed 
@@ -818,3 +829,10 @@ def sum_all_tables(dictionary, table_group, bottom_key, insert_total = False,
 		return total, contributions
 	else:
 		return total
+	
+def daily_to_yearly_power(dictionary):
+
+    stacked_array = np.vstack(list(dictionary.values()))
+    yearly_power = stacked_array.sum(axis = 1)
+
+    return yearly_power

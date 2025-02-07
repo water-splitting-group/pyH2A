@@ -4,6 +4,11 @@ Name | Type | Position
 --- | --- | ---
 Hourly_Irradiation_Plugin | plugin | 0
 Photovoltaic_Plugin | plugin | 0
+Electrolyzer_Plugin | plugin | 0
+Battery_Plugin | plugin | 0
+Stored_Power_Electrolysis_Plugin | plugin | 0
+Reverse_Osmosis_Plugin | plugin | 2
+Power_Management_Plugin | plugin | 2
 Multiple_Modules_Plugin | plugin | 3
 
 # Display Parameters
@@ -65,6 +70,12 @@ Minimum capacity | 10.0% | Based on Chang 2020, minimum capacity for electrolyze
 Conversion efficiency (kg H2/kWh) | 0.0185 | Based on Chang 2020
 Replacement time (h) | 80,000.0 | Based on Chang 2020, operating time after which electrolyzer stacks have to be replaced.
 
+# Electrolysis Using Stored Power
+
+Name | Value | Comment
+--- | --- | ---
+Fraction of stored power used for electrolysis | 95% | Additional electrolysis using stored power
+
 # Photovoltaic
 
 Name | Value | Path | Comment
@@ -73,6 +84,35 @@ Nominal Power (kW) | 1.5 | Electrolyzer > Nominal Power (kW) > Value | Optimal P
 CAPEX Reference Power (kW) | 1,000.0
 Power loss per year | 0.5% | None | Based on Chang 2020
 Efficiency | 22% | None | Only used for area calculation.
+
+# Battery
+
+Name | Value | Comment
+--- | --- | ---
+Design Capacity (kWh) | 800000 | Full design capacity
+Lowest discharge level | 20% | Lowest level to which battery can be discharged
+Capacity loss per year | 1% | Loss of capacity per year
+Round trip efficiency | 100% | For lithium ion battery
+
+# Reverse Osmosis
+
+Name | Value | Comment
+--- | --- | --- | ---
+Power Demand (kWh/m3) | 2.71 | based on Hausmann 2021 and Kim 2008 (this was chosen for a purity of < 10 ppm of disolved salts in the obtained water), kWh per m3 of sea water
+Average daily operating hours | 4 | Assumption that reverse osmosis runs for 4 h/day, relevant for scaling of reverse osmosis plant
+Recovery Rate | 40.0% | Fraction of fresh water obtained from given volume of sea water, based Palmer 2021 and Tewlour 2022
+
+# Direct Capital Costs - Reverse Osmosis
+
+Name | Value | Path
+--- | --- | ---
+Reverse Osmosis CAPEX ($ per m3/h capacity) | 0 | Reverse Osmosis > Capacity (m3/h) > Value
+
+# Direct Capital Costs - Battery
+
+Name | Value | Path
+--- | --- | ---
+Battery CAPEX ($/kWh) | 0 | Battery > Design Capacity (kWh) > Value
 
 # Direct Capital Costs - PV
 
@@ -140,7 +180,7 @@ Direct Capital Costs - PV > PV CAPEX ($/kW) > Value | \$/kW(PV) | value | 220
 Direct Capital Costs - Electrolyzer > Electrolyzer CAPEX ($/kW) > Value | \$/kW(Electro- lyzer) | value | 200
 Planned Replacement > Electrolyzer Stack Replacement > Cost ($)| Stack replacement (%E-CAPEX) | value | 20% | True
 
-# Monte_Carlo_Analysis
+# Monte_Carlo_Analysis - Deactivate
 
 Name | Value | Comment
 --- | --- | ---

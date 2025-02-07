@@ -2,34 +2,19 @@ from pyH2A.Utilities.input_modification import insert, process_table, read_textf
 import numpy as np
 
 class Photovoltaic_Plugin:
-	'''Simulation of hydrogen production using PV + electrolysis.
+	'''Simulation of electricity production using PV.
 
 	Parameters
 	----------
-	Financial Input Values > construction time > Value : int
-		Construction time of hydrogen production plant in years.
 	Irradiation Used > Data > Value : str or ndarray
 		Hourly power ratio data for electricity production calculation. Either a 
 		path to a text file containing the data or ndarray. A suitable array 
 		can be retrieved from "Hourly Irradiation > *type of tracking* > Value".
 	CAPEX Multiplier > Multiplier > Value : float
-		Multiplier to describe cost reduction of PV and electrolysis CAPEX for every ten-fold
+		Multiplier to describe cost reduction of PV CAPEX for every ten-fold
 		increase of power relative to CAPEX reference power. Based on the multiplier the CAPEX
 		scaling factor is calculated as: multiplier ^ (number of ten-fold increases). A value
 		of 1 leads to no CAPEX reduction, a value < 1 enables cost reduction.
-	Electrolyzer > Nominal Power (kW) > Value : float
-		Nominal power of electrolyzer in kW.
-	Electrolyzer > CAPEX Reference Power (kW) > Value : float
-		Reference power of electrolyzer in kW for cost reduction calculation.
-	Electrolyzer > Power requirement increase per year > Value : float
-		Electrolyzer power requirement increase per year due to stack degradation. Percentage 
-		or value > 0. Increase calculated as: (1 + increase per year) ^ year.
-	Electrolyzer > Minimum capacity > Value : float
-		Minimum capacity required for electrolyzer operation. Percentage or value between 0 and 1.
-	Electrolyzer > Conversion efficiency (kg H2/kWh) > Value : float
-		Electrical conversion efficiency of electrolyzer in (kg H2)/kWh.
-	Electrolyzer > Replacement time (h) > Value : float
-		Operating time in hours before stack replacement of electrolyzer is required.
 	Photovoltaic > Nominal Power (kW) > Value : float
 		Nominal power of PV array in kW.
 	Photovoltaic > CAPEX Reference Power (kW) > Value : float
@@ -42,20 +27,15 @@ class Photovoltaic_Plugin:
 
 	Returns
 	-------
-	Technical Operating Parameters and Specifications > Plant Design Capacity (kg of H2/day) > Value : float
-		Plant design capacity in (kg of H2)/day calculated from installed 
-		PV + electrolysis power capacity and hourly irradiation data.
-	Technical Operating Parameters and Specifications >	Operating Capacity Factor (%) > Value : float
-		Operating capacity factor is set to 1 (100%).
-	Planned Replacement > Electrolyzer Stack Replacement > Frequency (years) : float
-		Frequency of electrolyzer stack replacements in years, calculated from replacement time and hourly
-		irradiation data.
-	Electrolyzer > Scaling Factor > Value : float
-		CAPEX scaling factor for electrolyzer calculated based on CAPEX multiplier, 
-		reference and nominal power.
 	Photovoltaic > Scaling Factor > Value : float
 		CAPEX scaling factor for PV array calculated based on CAPEX multiplier, 
 		reference and nominal power.
+	Power Generation > PV Hourly Power Generation (kWh) > Value : dict
+		Hourly power generation of PV array in kWh (dictionary of years).
+	Power Generation > Available Power (hourly, kWh) > Value : dict
+		Available power, hourly basis, dictionary of years (in kWh).
+	Power Generation > Available Power (daily, kWh) > Value : dict
+		Available power, daily basis, dictionary of years (in kWh).
 	Non-Depreciable Capital Costs > Land required (acres) > Value : float
 		Total land required in acres.
 	Non-Depreciable Capital Costs > Solar Collection Area (m2) > Value : float
@@ -65,36 +45,30 @@ class Photovoltaic_Plugin:
 	def __init__(self, dcf, print_info):
 		process_table(dcf.inp, 'Irradiation Used', 'Value')
 		process_table(dcf.inp, 'CAPEX Multiplier', 'Value')
-		process_table(dcf.inp, 'Electrolyzer', 'Value')
-		process_table(dcf.inp, 'Photovoltaic', 'Value')
+		process_table(dcf.inp, 'Photovoltaic', 'Value', print_processing_warning = False)
 
-		self.calculate_H2_production(dcf)
-		self.calculate_stack_replacement(dcf)
+		self.calculate_power_production(dcf)
 		self.calculate_scaling_factors(dcf)
 		self.calculate_area(dcf)
 
-		insert(dcf, 'Technical Operating Parameters and Specifications', 'Plant Design Capacity (kg of H2/day)', 'Value', 
-			   self.h2_production/365., __name__, print_info = print_info)
-		insert(dcf, 'Technical Operating Parameters and Specifications', 'Operating Capacity Factor (%)', 'Value', 
-				1., __name__, print_info = print_info)
-	
-		insert(dcf, 'Planned Replacement', 'Electrolyzer Stack Replacement', 'Frequency (years)', 
-				self.replacement_frequency, __name__, print_info = print_info, add_processed = False,
-				insert_path = False)
-
-		insert(dcf, 'Electrolyzer', 'Scaling Factor', 'Value', 
-				self.electrolyzer_scaling_factor, __name__, print_info = print_info)
 		insert(dcf, 'Photovoltaic', 'Scaling Factor', 'Value', 
 				self.pv_scaling_factor, __name__, print_info = print_info)
+		
+		insert(dcf, 'Power Generation', 'PV Hourly Power Generation (kWh)', 'Value',
+				self.power_generation_yearly_data, __name__, print_info = print_info)
+		insert(dcf, 'Power Generation', 'Available Power (hourly, kWh)', 'Value',
+				self.power_generation_yearly_data, __name__, print_info = print_info)
+		insert(dcf, 'Power Generation', 'Available Power (daily, kWh)', 'Value',
+		 		self.power_generation_yearly_data_hourly_power, __name__, print_info = print_info)
 
 		insert(dcf, 'Non-Depreciable Capital Costs', 'Land required (acres)', 'Value', 
 				self.area_acres, __name__, print_info = print_info)
 		insert(dcf, 'Non-Depreciable Capital Costs', 'Solar Collection Area (m2)', 'Value', 
 				self.area_m2, __name__, print_info = print_info)
 
-	def calculate_H2_production(self, dcf):
-		'''Using hourly irradiation data and electrolyzer as well as PV array parameters,
-		H2 production is calculated.
+	def calculate_power_production(self, dcf):
+		'''Using hourly irradiation data and PV array parameters,
+		power production is calculated.
 		'''
 
 		if isinstance(dcf.inp['Irradiation Used']['Data']['Value'], str):
@@ -102,29 +76,29 @@ class Photovoltaic_Plugin:
 		else:
 			data = dcf.inp['Irradiation Used']['Data']['Value']
 
-		yearly_data = []
+		yearly_data = {}
+		yearly_data_hourly_power = {}
 
 		for year in dcf.operation_years:
 			data_loss_corrected = self.calculate_photovoltaic_loss_correction(dcf, data, year)
 			power_generation = data_loss_corrected * dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value']
 
-			electrolyzer_power_demand, power_increase = self.calculate_electrolyzer_power_demand(dcf, year) 
-			electrolyzer_power_demand *= np.ones(len(power_generation))
-			electrolyzer_power_consumption = np.amin(np.c_[power_generation, electrolyzer_power_demand], axis = 1)
+			yearly_data[year] = power_generation
 
-			threshold = dcf.inp['Electrolyzer']['Minimum capacity']['Value']
-			electrolyzer_capacity = electrolyzer_power_consumption / electrolyzer_power_demand
-			electrolyzer_capacity[electrolyzer_capacity > threshold] = 1
-			electrolyzer_capacity[electrolyzer_capacity <= threshold] = 0
+			if len(power_generation) % 24 != 0:
+				raise ValueError("Data length is not a multiple of 24")
+			
+			daily_power_generation = power_generation.reshape(-1, 24)
+			daily_power_generation = daily_power_generation.sum(axis=1)	
 
-			h2_produced = electrolyzer_power_consumption * dcf.inp['Electrolyzer']['Conversion efficiency (kg H2/kWh)']['Value'] / power_increase
-			h2_produced *= electrolyzer_capacity
+			yearly_data_hourly_power[year] = daily_power_generation
 
-			yearly_data.append([year, np.sum(h2_produced), np.sum(electrolyzer_capacity)])
+		##############
+		# Checking that power generation is really in kWh
+		##############
 
-		self.yearly_data = np.asarray(yearly_data)
-		self.h2_production = np.concatenate([np.zeros(dcf.inp['Financial Input Values']['construction time']['Value']), 
-												self.yearly_data[:,1]])
+		self.power_generation_yearly_data = yearly_data
+		self.power_generation_yearly_data_hourly_power = yearly_data_hourly_power
 
 	def calculate_photovoltaic_loss_correction(self, dcf, data, year):
 		'''Calculation of yearly reduction in electricity production by PV array.
@@ -132,32 +106,11 @@ class Photovoltaic_Plugin:
 
 		return data * (1. - dcf.inp['Photovoltaic']['Power loss per year']['Value']) ** year
 
-	def calculate_electrolyzer_power_demand(self, dcf, year):
-		'''Calculation of yearly increase in electrolyzer power demand.
-		'''
-
-		increase = (1. + dcf.inp['Electrolyzer']['Power requirement increase per year']['Value']) ** year
-		demand = increase * dcf.inp['Electrolyzer']['Nominal Power (kW)']['Value']
-
-		return demand, increase
-
-	def calculate_stack_replacement(self, dcf):
-		'''Calculation of stack replacement frequency for electrolyzer.
-		'''
-
-		cumulative_running_time = np.cumsum(self.yearly_data[:,2])
-		stack_usage = cumulative_running_time / dcf.inp['Electrolyzer']['Replacement time (h)']['Value']
-
-		number_of_replacements = np.floor_divide(stack_usage[-1], 1)
-
-		self.replacement_frequency = len(stack_usage) / (number_of_replacements + 1.)
-
 	def calculate_scaling_factors(self, dcf):
-		'''Calculation of electrolyzer and PV CAPEX scaling factors.
+		'''Calculation of PV CAPEX scaling factors.
 		'''
 
 		self.pv_scaling_factor = self.scaling_factor(dcf, dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value'], dcf.inp['Photovoltaic']['CAPEX Reference Power (kW)']['Value'])
-		self.electrolyzer_scaling_factor = self.scaling_factor(dcf, dcf.inp['Electrolyzer']['Nominal Power (kW)']['Value'], dcf.inp['Electrolyzer']['CAPEX Reference Power (kW)']['Value'])
 		
 	def scaling_factor(self, dcf, power, reference):
 		'''Calculation of CAPEX scaling factor based on nominal and reference power.
