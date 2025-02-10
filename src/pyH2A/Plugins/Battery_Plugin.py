@@ -4,7 +4,7 @@ import numpy as np
 class Battery_Plugin:
     '''Simulation of electricity storage using a battery.
     Simulation assumes that battery is charged and completely discharged every day.
-    (no electricity storage across days).
+    (no electricity storage across days, only one discharge per day, not multiple ones).
 
     Parameters
     ----------

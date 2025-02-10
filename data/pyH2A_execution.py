@@ -28,7 +28,7 @@ def pv_e_base():
 	
 	result = pyH2A('data/PV_E/Base/PV_E_Base.md', './PV_E/Base')
 
-	#pprint.pprint(result.base_case.inp['Power Generation'])
+	pprint.pprint(result.base_case.inp['Direct Capital Costs - Reverse Osmosis'])
 
 	#pprint.pprint(result.base_case.inp['Technical Operating Parameters and Specifications']['Output per Year']['Value'])
 

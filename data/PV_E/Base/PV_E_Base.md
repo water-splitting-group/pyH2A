@@ -102,11 +102,17 @@ Power Demand (kWh/m3) | 2.71 | based on Hausmann 2021 and Kim 2008 (this was cho
 Average daily operating hours | 4 | Assumption that reverse osmosis runs for 4 h/day, relevant for scaling of reverse osmosis plant
 Recovery Rate | 40.0% | Fraction of fresh water obtained from given volume of sea water, based Palmer 2021 and Tewlour 2022
 
+# Power Consumption
+
+Name | Value | Type
+--- | --- | ---
+Test Consumer | 0 | on_demand
+
 # Direct Capital Costs - Reverse Osmosis
 
-Name | Value | Path
---- | --- | ---
-Reverse Osmosis CAPEX ($ per m3/h capacity) | 0 | Reverse Osmosis > Capacity (m3/h) > Value
+Name | Value | Path | Comment 
+--- | --- | --- | ---
+Reverse Osmosis CAPEX ($ per m3/h capacity) | 6000 | Reverse Osmosis > Capacity (m3/h) > Value | Based on https://samcotech.com/much-reverse-osmosis-nanofiltration-membrane-systems-cost/, Conversion factor of 4.5 from GPM to m3/h
 
 # Direct Capital Costs - Battery
 
@@ -153,6 +159,12 @@ PV OPEX (% of CAPEX) | 2% | Direct Capital Costs - PV > PV CAPEX ($/kW) > Value 
 Name | Usage per kg H2 | Usage Unit | Cost | Cost Unit | Price Conversion Factor | Comment
 --- | --- | --- | --- | --- | --- | ---
 Process Water | 10 | L/kg H2 | 0.0006 | $/L | 1. | Seawater reverse osmosis cost ca. 0.6 $/m3 (equal to 0.0006 $/L), based on Kibria 2021 and Driess 2021.
+
+# Grid Electricity
+
+Name | Value
+--- | ---
+Cost ($/kWh) | 10000.12
 
 # Planned Replacement
 
@@ -297,4 +309,23 @@ bottom | 0.12
 top | 0.93
 hist_kwargs | {'show_parameter_table': False}
 image_kwargs | {'x': -0.38}
+
+# Optimization_Analysis - Deactivate
+
+Name | Value
+--- | ---
+Algorithm | differential_evolution
+Target | dcf.h2_cost
+Direction | minimize
+
+# Parameters - Optimization_Analysis
+
+Parameter | Bounds
+--- | ---
+Photovoltaic > Nominal Power (kW) > Value | 0.1; 10
+Electrolyzer > Nominal Power (kW) > Value | 4,000; 6,000
+Electrolysis Using Stored Power > Fraction of stored power used for electrolysis > Value | 0; 1
+Battery > Design Capacity (kWh) > Value | 0; 100,000
+
+
 
