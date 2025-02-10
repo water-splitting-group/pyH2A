@@ -1,4 +1,4 @@
-from pyH2A.Utilities.input_modification import insert, process_table
+from pyH2A.Utilities.input_modification import insert, process_table, hourly_to_daily_power
 import numpy as np
 
 class Electrolyzer_Plugin:
@@ -122,14 +122,7 @@ class Electrolyzer_Plugin:
             # Calculation of unused power
             unused_power = power_generation - electrolyzer_power_consumption
             yearly_data_unused_power[year] = unused_power
-
-            if len(unused_power) % 24 != 0:
-                raise ValueError("Data length is not a multiple of 24")
-            
-            daily_unused_power = unused_power.reshape(-1, 24)
-            daily_unused_power = daily_unused_power.sum(axis=1)	
-
-            yearly_data_unused_power_daily[year] = daily_unused_power
+            yearly_data_unused_power_daily[year] = hourly_to_daily_power(unused_power)
 
         self.yearly_data = np.asarray(yearly_data)
         self.h2_production = np.concatenate([np.zeros(dcf.inp['Financial Input Values']['construction time']['Value']), 

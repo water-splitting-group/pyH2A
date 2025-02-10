@@ -20,7 +20,6 @@ class Power_Management_Plugin:
         Cost of grid electricity in $/kWh, can be float or nd.array with same shape
         as Technical Operating Parameters and Specifications> Output per Year > Value
 
-    
     Returns
     -------
     Power Generation > Available Power (yearly, kWh) > Value : nd.array

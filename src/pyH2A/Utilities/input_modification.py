@@ -830,9 +830,22 @@ def sum_all_tables(dictionary, table_group, bottom_key, insert_total = False,
 	else:
 		return total
 	
+def hourly_to_daily_power(array):
+	'''Convert array of hourly power values to array of daily power values.'''
+		
+	if len(array) % 24 != 0:
+		raise ValueError("Data length is not a multiple of 24")
+	
+	daily_array = array.reshape(-1, 24)
+	daily_array = daily_array.sum(axis=1)	
+
+	return daily_array
+	
 def daily_to_yearly_power(dictionary):
+	'''Convert dictionary with daily power values to array with yearly power values.
+	'''
 
-    stacked_array = np.vstack(list(dictionary.values()))
-    yearly_power = stacked_array.sum(axis = 1)
+	stacked_array = np.vstack(list(dictionary.values()))
+	yearly_power = stacked_array.sum(axis = 1)
 
-    return yearly_power
+	return yearly_power

@@ -1,4 +1,4 @@
-from pyH2A.Utilities.input_modification import insert, process_table, read_textfile
+from pyH2A.Utilities.input_modification import insert, process_table, read_textfile, hourly_to_daily_power
 import numpy as np
 
 class Photovoltaic_Plugin:
@@ -59,7 +59,7 @@ class Photovoltaic_Plugin:
 		insert(dcf, 'Power Generation', 'Available Power (hourly, kWh)', 'Value',
 				self.power_generation_yearly_data, __name__, print_info = print_info)
 		insert(dcf, 'Power Generation', 'Available Power (daily, kWh)', 'Value',
-		 		self.power_generation_yearly_data_hourly_power, __name__, print_info = print_info)
+		 		self.power_generation_yearly_data_daily_power, __name__, print_info = print_info)
 
 		insert(dcf, 'Non-Depreciable Capital Costs', 'Land required (acres)', 'Value', 
 				self.area_acres, __name__, print_info = print_info)
@@ -77,28 +77,17 @@ class Photovoltaic_Plugin:
 			data = dcf.inp['Irradiation Used']['Data']['Value']
 
 		yearly_data = {}
-		yearly_data_hourly_power = {}
+		yearly_data_daily_power = {}
 
 		for year in dcf.operation_years:
 			data_loss_corrected = self.calculate_photovoltaic_loss_correction(dcf, data, year)
 			power_generation = data_loss_corrected * dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value']
 
 			yearly_data[year] = power_generation
-
-			if len(power_generation) % 24 != 0:
-				raise ValueError("Data length is not a multiple of 24")
-			
-			daily_power_generation = power_generation.reshape(-1, 24)
-			daily_power_generation = daily_power_generation.sum(axis=1)	
-
-			yearly_data_hourly_power[year] = daily_power_generation
-
-		##############
-		# Checking that power generation is really in kWh
-		##############
+			yearly_data_daily_power[year] = hourly_to_daily_power(power_generation)
 
 		self.power_generation_yearly_data = yearly_data
-		self.power_generation_yearly_data_hourly_power = yearly_data_hourly_power
+		self.power_generation_yearly_data_daily_power = yearly_data_daily_power
 
 	def calculate_photovoltaic_loss_correction(self, dcf, data, year):
 		'''Calculation of yearly reduction in electricity production by PV array.
