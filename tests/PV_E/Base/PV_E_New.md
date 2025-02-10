@@ -5,6 +5,7 @@ Name | Type | Position
 Hourly_Irradiation_Plugin | plugin | 0
 Power_Management_Plugin | plugin | 0
 Photovoltaic_Plugin1 | plugin | 0
+Battery_Plugin | plugin | 0
 Electrolyzer_Plugin | plugin | 0
 Reverse_Osmosis_Plugin | plugin | 0
 Multiple_Modules_Plugin | plugin | 3
@@ -63,10 +64,9 @@ Multiplier | 1.0 | CAPEX multiplier for every 10-fold increase of system size.
 Name | Value | Comment
 --- | --- | ---
 Nominal Power (kW) | 5,500.0 | Production of ca. 1 t of H2 per day to compare with PEC and photocatalytic models.
-Maximal electrolyzer capacity | 5000 | *this needs to be looked up, now it is just a value
 CAPEX Reference Power (kW) | 1,000.0
 Power requirement increase per year | 0.3% | Based on Chang 2020
-Minimum capacity | 500 | Based on Chang 2020, minimum capacity for electrolyzer to operate.
+Minimum capacity | 10.0% | Based on Chang 2020, minimum capacity for electrolyzer to operate.
 Conversion efficiency (kg H2/kWh) | 0.0185 | Based on Chang 2020
 Replacement time (h) | 80,000.0 | Based on Chang 2020, operating time after which electrolyzer stacks have to be replaced.
 
@@ -289,4 +289,3 @@ bottom | 0.12
 top | 0.93
 hist_kwargs | {'show_parameter_table': False}
 image_kwargs | {'x': -0.38}
-

@@ -188,7 +188,7 @@ class Photovoltaic_Plugin:
 		self.total_power_generation = np.sum(power_generation) + np.sum(osmosis_power_demand)
 
 		# Calculate electrolyzer power demand and increase due to degradation
-		electrolyzer_power_demand, power_increase = self.calculate_electrolyzer_power_demand(year) 
+		electrolyzer_power_demand, power_increase = self.calculate_electrolyzer_power_demand(year)
 		electrolyzer_power_demand *= np.ones(len(power_generation))
 		electrolyzer_power_consumption = np.amin(np.c_[power_generation, electrolyzer_power_demand], axis = 1)
 		self.total_electrolyzer_power_consumption = np.sum(electrolyzer_power_consumption)
@@ -217,7 +217,7 @@ class Photovoltaic_Plugin:
 			# total_power = np.sum(power_generation)
 			# total_consumed = np.sum(electrolyzer_power_consumption * electrolyzer_capacity)
 			# print(total_consumed/total_power)
-			return np.sum(h2_produced), np.sum(electrolyzer_capacity)	
+			return np.sum(h2_produced), np.sum(electrolyzer_capacity)
 	
 	def annual_electroyzer_operation_calculation_with_battery(
 			self, 

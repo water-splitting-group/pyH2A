@@ -6,8 +6,8 @@ def test_pv_e_base():
 	assert results.base_case.h2_cost == expected_result, f"Expected {expected_result} $/kg' but got {results.base_case.h2_cost} $/kg"
 
 def test_pv_e_new():
-	results = pyH2A('./tests/PV_E/Base/PV_E_New.md', './tests/Results/PV_E/New', True)
-	expected_result = 2.371129629524664
+	results = pyH2A('./tests/PV_E/Base/PV_E_New.md', './tests/Results/PV_E/New')
+	expected_result = 3.703097857339301
 	assert results.base_case.h2_cost == expected_result, f"Expected {expected_result} $/kg' but got {results.base_case.h2_cost} $/kg"
 
 def test_pv_e_limit():
