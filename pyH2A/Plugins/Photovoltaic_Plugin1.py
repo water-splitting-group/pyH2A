@@ -83,12 +83,23 @@ class Photovoltaic_Plugin1:
         max_energy_threshold: np.ndarray = self.dcf.inp['Technical Operating Parameters and Specifications']['Yearly Plant Maximum Energy Threshold (kW)']["Value"]  # Max power limits per year
         plant_energy_generation: list[float] = []  # List to store yearly energy generation
         plant_active_hours: list[int] = []  # List to store active hours per year
+        self.plant_hourly_energy_demand_and_excess: list[np.ndarray] = []  # List to calculate additional working hours and energy with the Battery_Plugin
 
         for year in self.dcf.operation_years:
             pv_loss: float = (1. - self.dcf.inp['Photovoltaic']['Power loss per year']['Value']) ** year  # Power degradation per year
             print(pv_loss, self.nominal_power, min_energy_threshold[year], max_energy_threshold[year])
             
             nominal_irradiation_data: np.ndarray = pv_loss * self.nominal_power * self.irradiation_data  # Adjusted irradiation data
+
+            hourly_demand_and_excess: np.ndarray = np.array(nominal_irradiation_data)
+            hourly_demand_and_excess[
+                (hourly_demand_and_excess > min_energy_threshold[year]) &
+                (hourly_demand_and_excess <= max_energy_threshold[year])
+            ] = 0
+            hourly_demand_and_excess[
+                (hourly_demand_and_excess <= min_energy_threshold[year]) &
+                (hourly_demand_and_excess > max_energy_threshold[year])
+            ] -= max_energy_threshold[year]
             
             filtered_nominal_irradiation_data: np.ndarray = nominal_irradiation_data[
                 nominal_irradiation_data > min_energy_threshold[year]
@@ -101,10 +112,10 @@ class Photovoltaic_Plugin1:
             excess_energy: float = np.sum(excess_energy) - len(excess_energy) * max_energy_threshold[year]  # Calculate total excess energy
             plant_active_hours.append(len(filtered_nominal_irradiation_data))  # Count active hours
             plant_energy_generation.append(np.sum(filtered_nominal_irradiation_data) - excess_energy)  # Compute net energy generation
+            self.plant_hourly_energy_demand_and_excess.append(hourly_demand_and_excess)
         
         self.yearly_plant_energy_generation: np.ndarray = np.array(plant_energy_generation)  # Store yearly energy generation
         self.yearly_plant_active_hours: np.ndarray = np.array(plant_active_hours)  # Store active hours per year
-        print("yearly power, active:", self.yearly_plant_energy_generation, self.yearly_plant_active_hours)
 
     def calculate_scaling_factor(
 			self
@@ -122,10 +133,11 @@ class Photovoltaic_Plugin1:
             ) -> None:
         '''Prepare and insert output values into the data structure.
         '''
-        inserts: list[tuple[str, str, float | np.ndarray]] = [  # Define list of values to insert
+        inserts: list[tuple[str, str, float | np.ndarray | list[np.ndarray]]] = [  # Define list of values to insert
             ('Technical Operating Parameters and Specifications', 'Power Generation (kWh)', np.sum(self.power_generation)),
             ('Technical Operating Parameters and Specifications', 'Yearly Plant Energy Generation (kWh)', self.yearly_plant_energy_generation),
             ('Technical Operating Parameters and Specifications', 'Plant Active Hours', self.yearly_plant_active_hours),
+            ('Technical Operating Parameters and Specifications', 'Yearly Plant Hourly Energy Demand And Excess', self.plant_hourly_energy_demand_and_excess),
 			('Photovoltaic', 'Scaling Factor', self.scaling_factor),
             ('LCA Parameters Photovoltaic', 'Amount of PV modules', self.amount_of_PV_modules),
 			('Non-Depreciable Capital Costs', 'Land required (acres)', self.area_acres),
