@@ -18,7 +18,7 @@ Default Settings
 	replacement_costs | function | 7 | core function to process replacement costs
 	Fixed_Operating_Cost_Plugin | plugin | 8 |Calculation of fixed operating costs
 	fixed_operating_costs | function | 9 | core function to process fixed operating costs
-	Variable_Operating_Cost_Plugin | plugin | 10 | Calculation of variable operating costs, including utilities
+	Finance.Variable_Operating_Cost_Plugin | plugin | 10 | Calculation of variable operating costs, including utilities
 	variable_operating_costs | function | 11 | core function to process variable operating costs
 
 	# Financial Input Values

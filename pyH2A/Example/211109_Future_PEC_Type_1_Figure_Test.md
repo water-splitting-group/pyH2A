@@ -2,10 +2,10 @@
 
 Name | Type | Description | Position
 --- | --- | --- | ---
-Hourly_Irradiation_Plugin | plugin | Plugin to calculate solar irradiation from typical meteorological year data | 0
-Photocatalytic_Plugin | plugin | Computes number of required baggies, cost of baggies and catalyst cost | 2
-Catalyst_Separation_Plugin | plugin | Computes cost of catalyst separation | 2
-Multiple_Modules_Plugin | plugin | Modelling of multiple plant modules, adjustment of labor requirement | 3
+Energy.Hourly_Irradiation_Plugin | plugin | Plugin to calculate solar irradiation from typical meteorological year data | 0
+Hydrogen.Photocatalytic_Plugin | plugin | Computes number of required baggies, cost of baggies and catalyst cost | 2
+Hydrogen.Catalyst_Separation_Plugin | plugin | Computes cost of catalyst separation | 2
+Background.Multiple_Modules_Plugin | plugin | Modelling of multiple plant modules, adjustment of labor requirement | 3
 
 # Display Parameters
 
@@ -265,7 +265,7 @@ comparative_distance_combined | plot_combined_distance | {'show': False, 'save':
 Name | Method Name | Arguments
 --- | --- | ---
 cost_breakdown_plot_total | cost_breakdown_plot | {'name': 'Cost_Breakdown_Plot', 'show': False}
-cost_breakdown_plot_capital | cost_breakdown_plot | {'name': 'Cost_Breakdown_Plot_Capital', 'show': False, 'plugin': 'Capital_Cost_Plugin', 'plugin_property': 'direct_contributions'}
+cost_breakdown_plot_capital | cost_breakdown_plot | {'name': 'Cost_Breakdown_Plot_Capital', 'show': False, 'plugin': 'Finance.Capital_Cost_Plugin', 'plugin_property': 'direct_contributions'}
 
 # Waterfall_Analysis
 

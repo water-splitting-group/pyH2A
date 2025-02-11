@@ -4,10 +4,10 @@ Financial parameter differences: 100% equity, 10% IRR, 35% federal tax,
 
 Name | Type | Description | Position
 --- | --- | --- | ---
-Hourly_Irradiation_Plugin | plugin | Plugin to calculate solar irradiation from typical meteorological year data | 0
-PEC_Plugin | plugin | Plugin to model photoelectrochemical water splitting | 2
-Solar_Concentrator_Plugin | plugin | Plugin to model solar concentration | 2
-Multiple_Modules_Plugin | plugin | Modelling of module plant modules, adjustment of labor requirement | 3
+Energy.Hourly_Irradiation_Plugin | plugin | Plugin to calculate solar irradiation from typical meteorological year data | 0
+Hydrogen.PEC_Plugin | plugin | Plugin to model photoelectrochemical water splitting | 2
+Energy.Solar_Concentrator_Plugin | plugin | Plugin to model solar concentration | 2
+Background.Multiple_Modules_Plugin | plugin | Modelling of module plant modules, adjustment of labor requirement | 3
 
 # Display Parameters
 
