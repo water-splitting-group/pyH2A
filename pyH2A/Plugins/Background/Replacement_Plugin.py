@@ -33,7 +33,7 @@ class Replacement_Plugin:
 		self.dcf = dcf
 
 		self.initialize_yearly_costs()
-		self.initialize_contributions(dcf)
+		self.initialize_contributions()
 		self.calculate_planned_replacement()
 		self.unplanned_replacement(print_info)
 
@@ -49,6 +49,13 @@ class Replacement_Plugin:
 		'''
 
 		self.yearly = np.zeros(len(self.dcf.inflation_factor))
+
+	def initialize_contributions(self):
+		'''Initializes contributions to replacement costs.
+		'''
+		self.contributions = {}
+		self.contributions['Data'] = {}
+		self.contributions['Table Group'] = 'Replacement Costs'
 
 	def calculate_planned_replacement(self):
 		'''Calculation of yearly replacement costs by iterating over all entries of 
@@ -102,3 +109,5 @@ class Planned_Replacement:
 		self.cost = raw_replacement_cost * non_integer_correction * self.dcf.combined_inflator
 		self.years = self.dcf.plant_years[initial_replacement_year_idx:][0::replacement_frequency]
 		self.years_idx = fn.find_nearest(self.dcf.plant_years, self.years)
+
+		self.total_cost = np.sum(np.ones_like(self.years) * self.cost)
