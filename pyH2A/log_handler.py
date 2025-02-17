@@ -1,4 +1,5 @@
 import logging
+import os
 from pythonjsonlogger import json
 
 class Log_Handler(logging.Handler):
@@ -17,6 +18,11 @@ def setup_logging(log_file=None):
     """
     Configures the logging system for the entire project.
     """
+
+    if log_file:
+            log_directory = os.path.dirname(log_file)
+            if not os.path.exists(log_directory):
+                os.makedirs(log_directory)
 
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.DEBUG)
