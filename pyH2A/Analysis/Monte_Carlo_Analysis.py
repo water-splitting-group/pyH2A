@@ -342,7 +342,12 @@ class Monte_Carlo_Analysis:
 
 		Notes
 		-----
-		Performs H2 cost calculation by modifying a copy of self.inp based on the provided values and `self.parameters`. The modified copy of `self.inp` is then passed to `Discounted_Cash_Flow()`. A parameter value can be either a value replacing the existing one in self.inp (Type = value) or it can be a factor which will be multiplied by the existing value.
+		Performs H2 cost calulation by modifying a copy of self.inp based 
+		on the provided values and `self.parameters`. The modified copy of 
+		`self.inp` is then passed to `Discounted_Cash_Flow()`.
+		A parameter value can be either a value replacing the existing one 
+		in self.inp (Type = value) or it can be a factor which will be multiplied 
+		by the existing value.
 		'''
 		parameters = self.parameters
 		h2_cost = []
@@ -379,13 +384,16 @@ class Monte_Carlo_Analysis:
 		ndarray
 			1D array containing H2 cost values.
 		'''
-		num_cpus = multiprocessing.cpu_count()
-		pool = multiprocessing.Pool(num_cpus)
 
-		value_batches = divide_into_batches(values, np.ceil(len(values)/num_cpus))
+		# num_cpus = multiprocessing.cpu_count()
+		# pool = multiprocessing.Pool(num_cpus)
+
+		# value_batches = divide_into_batches(values, np.ceil(len(values)/num_cpus))
 		
-		h2_cost = pool.map(self.perform_h2_cost_calculation, value_batches)
-		h2_cost = np.concatenate(h2_cost)
+		# h2_cost = pool.map(self.perform_h2_cost_calculation, value_batches)
+		# h2_cost = np.concatenate(h2_cost)
+
+		h2_cost = self.perform_h2_cost_calculation(values)
 
 		if return_full_array is True:
 			return np.c_[self.values, h2_cost]
