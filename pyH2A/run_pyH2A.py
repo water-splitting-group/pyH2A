@@ -5,8 +5,9 @@ from pyH2A.Discounted_Cash_Flow import Discounted_Cash_Flow
 from pyH2A.Utilities.input_modification import convert_input_to_dictionary, execute_plugin, convert_dict_to_kwargs_dict, check_for_meta_module
 
 from timeit import default_timer as timer
+from pyH2A.log_handler import setup_logging
 
-import pprint
+import time
 
 class pyH2A:
 	'''pyH2A class that performs discounted cash flow analysis and executes analysis modules.
@@ -39,6 +40,10 @@ class pyH2A:
 
 	def __init__(self, input_file, output_directory, print_info = False):
 
+
+		logger, _ = setup_logging(log_file=f"logs/system_{time.strftime('%Y%m%d_%H%M%S')}.log")
+		logger.info("Starting pyH2A")
+
 		self.input_file = input_file
 		self.file_name = os.path.basename(input_file).split('.')[0]
 		self.output_directory = output_directory
@@ -48,7 +53,7 @@ class pyH2A:
 		self.meta_modules = {}
 		self.meta_workflow(self.meta_modules)
 
-		print(f'Levelized cost of hydrogen (base case): {self.base_case.h2_cost} $/kg')
+		logger.info(f'Levelized cost of hydrogen (base case): {self.base_case.h2_cost} $/kg')
 
 	def meta_workflow(self, meta_dict):
 		'''Meta modules (analysis modules) are identified and executed

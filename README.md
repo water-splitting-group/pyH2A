@@ -73,9 +73,55 @@ Tools such as [StackEdit](https://stackedit.io/app#) can be used to edit markdow
 
 ![comparative distance cost relationship and histograms](https://github.com/jschneidewind/pyH2A/blob/master/Example_Output/Monte_Carlo_Combined_Plot.png?raw=true "Comparative distance cost relationship and histograms")
 
-# Publication data 
+# Development
+## Running the Application
 
-Data for the accompanying publication can be found in the `data` directory.
+To execute a Python script outside the `pyH2A` package, use the following command:
+```bash
+python3 -m path.to.file
+```
+This will run the script as a standalone module.
+
+## Running Tests
+
+pyH2A uses `pytest` for testing. To run all tests in the codebase, use:
+```bash
+pytest
+```
+
+To run individual tests, specify the test method within the relevant test file:
+```bash
+pytest tests/test_pyh2a.py::test_pv_e_base
+pytest tests/test_pyh2a.py::test_pec
+pytest tests/test_pyh2a.py::test_photocatalytic_base
+```
+
+You can also pass flags like `-v` for verbose output or `--maxfail` to limit the number of failures.
+## Setting Up A Development Environment
+
+1. Clone the repository:
+```bash
+git clone https://github.com/jschneidewind/pyH2A.git
+cd pyH2A
+```
+2. Install the dependencies:
+
+For local development, it's recommended to set up a Python virtual environment:
+```bash
+python3 -m venv pyh2a_env
+source pyh2a_env/bin/activate  # On Windows: venv\Scripts\activate
+pip install -e .
+```
+
+This will install the required libraries (NumPy, SciPy, Pandas, Matplotlib, Click), along with other dependencies.
+
+## Debugging
+
+To debug or analyze the code, you can use the built-in Python debugger:
+```bash
+python -m pdb path/to/your/script.py
+```
+This will allow you to step through the code, inspect variables, and troubleshoot issues.
 
 # To do
 

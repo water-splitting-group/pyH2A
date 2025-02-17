@@ -85,3 +85,10 @@ celerybeat-schedule
 *.fchk
 *.cube
 
+#logs
+logs/
+
+#virtualenv
+pyh2a_env/
+build/
+pyH2A.egg-info/

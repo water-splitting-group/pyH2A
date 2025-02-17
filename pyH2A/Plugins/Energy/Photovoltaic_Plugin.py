@@ -1,4 +1,5 @@
 from pyH2A.Utilities.input_modification import insert, process_table, read_textfile, hourly_to_daily_power
+from pyH2A.log_handler import setup_logging
 import numpy as np
 
 class Photovoltaic_Plugin:
@@ -43,6 +44,7 @@ class Photovoltaic_Plugin:
 	'''
 
 	def __init__(self, dcf, print_info):
+
 		process_table(dcf.inp, 'Irradiation Used', 'Value')
 		process_table(dcf.inp, 'CAPEX Multiplier', 'Value')
 		process_table(dcf.inp, 'Photovoltaic', 'Value', print_processing_warning = False)
