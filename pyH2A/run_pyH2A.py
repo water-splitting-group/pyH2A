@@ -54,6 +54,7 @@ class pyH2A:
 		self.meta_workflow(self.meta_modules)
 
 		logger.info(f'Levelized cost of hydrogen (base case): {self.base_case.h2_cost} $/kg')
+		print(f'Levelized cost of hydrogen (base case): {self.base_case.h2_cost} $/kg')
 
 	def meta_workflow(self, meta_dict):
 		'''Meta modules (analysis modules) are identified and executed
