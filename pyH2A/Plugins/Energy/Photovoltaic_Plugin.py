@@ -1,3 +1,4 @@
+from pyH2A import Discounted_Cash_Flow
 from pyH2A.Utilities.input_modification import insert, process_table, read_textfile, hourly_to_daily_power
 from pyH2A.log_handler import setup_logging
 import numpy as np
@@ -52,6 +53,9 @@ class Photovoltaic_Plugin:
 		self.calculate_power_production(dcf)
 		self.calculate_scaling_factors(dcf)
 		self.calculate_area(dcf)
+
+		LCA_exports = Photovoltaic_Plugin_LCA_Export(dcf, print_info, self)
+		LCA_inserts = LCA_exports.inserts
 
 		insert(dcf, 'Photovoltaic', 'Scaling Factor', 'Value', 
 				self.pv_scaling_factor, __name__, print_info = print_info)
@@ -117,3 +121,20 @@ class Photovoltaic_Plugin:
 		peak_kW_per_m2 = dcf.inp['Photovoltaic']['Efficiency']['Value'] * 1.
 		self.area_m2 = dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value'] / peak_kW_per_m2
 		self.area_acres = self.area_m2 * 0.000247105
+
+class Photovoltaic_Plugin_LCA_Export:
+	
+	def __init__(self, 
+			  	dcf: Discounted_Cash_Flow, 
+				print_info: bool, 
+				PV_plugin_instance: Photovoltaic_Plugin):
+		
+		self.inserts = {}
+
+		self.calculate_panel_number(dcf, PV_plugin_instance)
+	
+	def calculate_panel_number(self, dcf, PV_plugin_instance):
+
+		self.inserts['PV Panels'] = 10
+
+		return 

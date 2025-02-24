@@ -58,6 +58,8 @@ class LCA:
     
     def build_scaling_vector(self, dcf):
         '''Builds the scaling vector for the LCA calculation.
+
+        ### Adding check that scaling vector is completely populated with data (no zeros).
         '''
         
         table_group = 'LCA'
@@ -72,6 +74,11 @@ class LCA:
                 process_LCA_table(self.scaling_vector, dcf.inp[key], self.tech_index_dict)
 
     def perform_LCA(self):
+        '''Performs the LCA calculation.
+
+        ### Adding real data export into LCA class instance instead of printing results
+
+        '''
 
         g = self.B @ self.scaling_vector
         h = self.C @ g
@@ -82,15 +89,18 @@ class LCA:
 
 def process_LCA_table(scaling_vector : np.ndarray, input_table : dict, tech_index_dict : dict):
     '''Processes the an LCA table and builds the scaling vector.
+
+    ### Adding unit check and conversion for the scaling vector.
+
     '''
 
     for key in input_table:
         uuid = input_table[key]['UUID']
         value = input_table[key]['Value']
 
-        tech_index = tech_index_dict[uuid]
+        tech_index = tech_index_dict[uuid].index 
 
-        scaling_vector[tech_index.index] = value
+        scaling_vector[tech_index] = value
         
 
 
