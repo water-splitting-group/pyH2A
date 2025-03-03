@@ -109,7 +109,7 @@ cd pyH2A
 For local development, it's recommended to set up a Python virtual environment:
 ```bash
 python3 -m venv pyh2a_env
-source pyh2a_env/bin/activate  # On Windows: venv\Scripts\activate
+source pyh2a_env/bin/activate  # On Windows: pyh2a_env\Scripts\activate
 pip install -e .
 ```
 

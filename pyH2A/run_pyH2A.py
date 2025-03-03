@@ -40,8 +40,11 @@ class pyH2A:
 
 	def __init__(self, input_file, output_directory, print_info = False):
 
+		current_time = time.time()
+		msecs = int((current_time - int(current_time)) * 1000)
+		base_time = time.strftime('%Y%m%d_%H%M%S')
 
-		logger, _ = setup_logging(log_file=f"logs/system_{time.strftime('%Y%m%d_%H%M%S')}.log")
+		logger, _ = setup_logging(log_file=f"logs/{base_time}_{msecs:03d}.log")
 		logger.info("Starting pyH2A")
 
 		self.input_file = input_file
@@ -53,7 +56,7 @@ class pyH2A:
 		self.meta_modules = {}
 		self.meta_workflow(self.meta_modules)
 
-		logger.info(f'Levelized cost of hydrogen (base case): {self.base_case.h2_cost} $/kg')
+		logger.debug(f'Levelized cost of hydrogen (base case): {self.base_case.h2_cost} $/kg')
 
 	def meta_workflow(self, meta_dict):
 		'''Meta modules (analysis modules) are identified and executed

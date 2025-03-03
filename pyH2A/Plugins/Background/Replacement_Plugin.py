@@ -1,6 +1,7 @@
 from pyH2A.Utilities.input_modification import insert, process_input, sum_all_tables, process_table
 import pyH2A.Utilities.find_nearest as fn
 import numpy as np
+import logging
 
 class Replacement_Plugin:
 	'''Calculating yearly overall replacement costs based on one-time replacement costs and frequency.
@@ -32,6 +33,9 @@ class Replacement_Plugin:
 
 		self.dcf = dcf
 
+		self.logger = logging.getLogger("pyH2A.Plugins.Background.Replacement_Plugin")
+		self.logger.info("Starting Replacement_Plugin")
+
 		self.initialize_yearly_costs()
 		self.initialize_contributions()
 		self.calculate_planned_replacement()
@@ -41,8 +45,16 @@ class Replacement_Plugin:
 		
 		yearly_inflated = self.yearly * self.dcf.inflation_correction * self.dcf.inflation_factor
 
+		inserts = [
+			('Replacement', 'Total', yearly_inflated)
+		]
+		self.insert_table(inserts, print_info)
 
-		insert(self.dcf, 'Replacement', 'Total', 'Value', yearly_inflated, __name__, print_info = print_info)
+	def process_table(self, table_keys):
+		'''Processes input table.
+		'''
+		for table_key in table_keys:
+			process_table(self.dcf.inp, table_key, 'Value')
 
 	def initialize_yearly_costs(self):
 		'''Initializes ndarray filled with zeros with same length as dcf.inflation_factor.
@@ -77,6 +89,13 @@ class Replacement_Plugin:
 										print_info = print_info)
 		self.yearly += self.unplanned
 		self.contributions['Data']['Unplanned Replacement'] = np.sum(np.ones_like(self.yearly) * self.unplanned)
+
+	def insert_table(self, inserts, print_info):
+		'''Inserts the calculated values into the DCF.
+		'''
+		for key, subkey, value in inserts:
+			insert(self.dcf, key, subkey, 'Value', value, __name__, print_info)
+			self.logger.debug(f"{key} > {subkey} > Value: {value}")
 
 class Planned_Replacement:
 	'''

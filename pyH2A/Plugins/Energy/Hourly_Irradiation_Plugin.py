@@ -1,9 +1,11 @@
 import numpy as np
 from functools import lru_cache
+import logging
 
-from pyH2A.Utilities.input_modification import insert, process_table, read_textfile, file_import
+from pyH2A.Utilities.input_modification import read_textfile, file_import
+from pyH2A.Plugins.Plugin import Plugin
 
-class Hourly_Irradiation_Plugin:
+class Hourly_Irradiation_Plugin(Plugin):
 	'''Calculation of hourly and mean daily irradiation data with different module configurations.
 	
 	Parameters
@@ -41,41 +43,47 @@ class Hourly_Irradiation_Plugin:
 	'''
 
 	def __init__(self, dcf, print_info):
+		super().__init__(dcf, print_info)
+		
+		self.logger = logging.getLogger("pyH2A.Plugins.Energy.Hourly_Irradiation_Plugin")
+		self.logger.info("Starting Hourly_Irradiation_Plugin")
 
-		self.dcf = dcf
 
-		process_table(dcf.inp, 'Hourly Irradiation', 'Value')
+		table_keys = ['Hourly Irradiation']
+		self.process_table(table_keys)
 
 		data, location = import_hourly_data(dcf.inp['Hourly Irradiation']['File']['Value'])
-
-		insert(self.dcf, 'Hourly Irradiation', 'Latitude', 'Value', 
-			   location['Latitude (decimal degrees)'], __name__, print_info = print_info)
-		insert(self.dcf, 'Hourly Irradiation', 'Longitude', 'Value', 
-			   location['Longitude (decimal degrees)'], __name__, print_info = print_info)
-
-		process_table(self.dcf.inp, 'Irradiance Area Parameters', 'Value')
+		
+		self.insert_queue.extend([
+			('Hourly Irradiation', 'Latitude', location['Latitude (decimal degrees)']),
+			('Hourly Irradiation', 'Longitude', location['Longitude (decimal degrees)'])
+		])
+		self.insert_table()
+		
+		table_keys = ['Irradiance Area Parameters']
+		self.process_table(table_keys)
 
 		pv = self.dcf.inp['Irradiance Area Parameters']
 
-		self.power_kW, self.power_sat_kW, self.power_dat_kW = calculate_PV_power_ratio(self.dcf.inp['Hourly Irradiation']['File']['Value'],
-											pv['Module Tilt (degrees)']['Value'], pv['Array Azimuth (degrees)']['Value'],
-											pv['Nominal Operating Temperature (Celsius)']['Value'], 
-											pv['Temperature Coefficient (per Celsius)']['Value'],
-											pv['Mismatch Derating']['Value'], pv['Dirt Derating']['Value'])
+		self.power_kW, self.power_sat_kW, self.power_dat_kW = calculate_PV_power_ratio(
+			self.dcf.inp['Hourly Irradiation']['File']['Value'],
+			pv['Module Tilt (degrees)']['Value'], 
+			pv['Array Azimuth (degrees)']['Value'],
+			pv['Nominal Operating Temperature (Celsius)']['Value'], 
+			pv['Temperature Coefficient (per Celsius)']['Value'],
+			pv['Mismatch Derating']['Value'], 
+			pv['Dirt Derating']['Value']
+		)
 
-		insert(self.dcf, 'Hourly Irradiation', 'No Tracking (kW)', 'Value', 
-			   self.power_kW, __name__, print_info = print_info)
-		insert(self.dcf, 'Hourly Irradiation', 'Horizontal Single Axis Tracking (kW)', 'Value', 
-			   self.power_sat_kW, __name__, print_info = print_info)
-		insert(self.dcf, 'Hourly Irradiation', 'Two Axis Tracking (kW)', 'Value', 
-			   self.power_dat_kW, __name__, print_info = print_info)
-
-		insert(self.dcf, 'Hourly Irradiation', 'Mean solar input no tracking (kWh/m2/day)', 'Value', 
-			   np.sum(self.power_kW)/365., __name__, print_info = print_info)
-		insert(self.dcf, 'Hourly Irradiation', 'Mean solar input single axis tracking (kWh/m2/day)', 'Value', 
-			   np.sum(self.power_sat_kW)/365., __name__, print_info = print_info)
-		insert(self.dcf, 'Hourly Irradiation', 'Mean solar input two axis tracking (kWh/m2/day)', 'Value', 
-			   np.sum(self.power_dat_kW)/365., __name__, print_info = print_info)
+		self.insert_queue.extend([
+			('Hourly Irradiation', 'No Tracking (kW)', self.power_kW),
+			('Hourly Irradiation', 'Horizontal Single Axis Tracking (kW)', self.power_sat_kW),
+			('Hourly Irradiation', 'Two Axis Tracking (kW)', self.power_dat_kW),
+			('Hourly Irradiation', 'Mean solar input no tracking (kWh/m2/day)', np.sum(self.power_kW)/365.),
+			('Hourly Irradiation', 'Mean solar input single axis tracking (kWh/m2/day)', np.sum(self.power_sat_kW)/365.),
+			('Hourly Irradiation', 'Mean solar input two axis tracking (kWh/m2/day)', np.sum(self.power_dat_kW)/365.)
+		])
+		self.insert_table()
 
 def converter_function(string):
 	'''Converter function for datetime of hourly irradiation data.'''

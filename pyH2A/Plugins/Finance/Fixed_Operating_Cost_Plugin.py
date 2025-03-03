@@ -1,4 +1,5 @@
 from pyH2A.Utilities.input_modification import insert, sum_all_tables, process_table
+import logging
 
 class Fixed_Operating_Cost_Plugin:
 	'''Calculation of yearly fixed operating costs.
@@ -28,12 +29,33 @@ class Fixed_Operating_Cost_Plugin:
 	def __init__(self, dcf, print_info):
 		self.dcf = dcf
 
+		self.logger = logging.getLogger("pyH2A.Plugins.Finance.Fixed_Operating_Cost_Plugin")
+		self.logger.info("Starting Fixed_Operating_Cost_Plugin")
+
+		table_keys = ['Fixed Operating Costs']
+		self.process_table(table_keys)
+
 		self.labor_cost()
-		insert(self.dcf, 'Fixed Operating Costs', 'Labor Cost - Uninflated', 'Value', self.labor_uninflated, __name__, print_info = print_info)
-		insert(self.dcf, 'Fixed Operating Costs', 'Labor Cost', 'Value', self.labor, __name__, print_info = print_info)
+
+		inserts = [
+			('Fixed Operating Costs', 'Labor Cost - Uninflated', self.labor_uninflated),
+			('Fixed Operating Costs', 'Labor Cost', self.labor)
+		]
+		self.insert_table(inserts, print_info)
 
 		self.other_cost(print_info)
-		insert(self.dcf, 'Fixed Operating Costs', 'Total', 'Value', self.labor + self.other, __name__, print_info = print_info)
+
+		inserts = [
+			('Fixed Operating Costs', 'Total', self.labor + self.other)
+		]
+		self.insert_table(inserts, print_info)
+
+	def process_table(self, table_keys):
+		'''Processes input table.
+		'''
+		for table_key in table_keys:
+			process_table(self.dcf.inp, table_key, 'Value')
+		
 
 	def labor_cost(self):
 		'''Calculation of yearly labor costs by multiplying number of staff times hourly labor cost.'''
@@ -49,3 +71,9 @@ class Fixed_Operating_Cost_Plugin:
 
 		self.other = sum_all_tables(self.dcf.inp, 'Other Fixed Operating Cost', 'Value', insert_total = True, class_object = self.dcf, print_info = print_info) * self.dcf.combined_inflator
 
+	def insert_table(self, inserts, print_info):
+		'''Inserts the calculated values into the DCF.
+		'''
+		for key, subkey, value in inserts:
+			insert(self.dcf, key, subkey, 'Value', value, __name__, print_info)
+			self.logger.debug(f"{key} > {subkey} > Value: {value}")

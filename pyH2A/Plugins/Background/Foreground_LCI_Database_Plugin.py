@@ -2,7 +2,7 @@ from pyH2A.Utilities.input_modification import insert, process_table, read_textf
 import numpy as np
 import pprint as pp
 import matplotlib.pyplot as plt
-import json
+import logging
 
 class Foreground_LCI_Database_Plugin:
     '''Class for processing foreground Life Cycle Inventory (LCI) data for Brightway calculation.
@@ -31,16 +31,30 @@ class Foreground_LCI_Database_Plugin:
         '''
 
         self.dcf = dcf
-        
-        # Process the "Irradiation Used" and "LCA Parameters Photovoltaic" data sections
-        process_table(self.dcf.inp, 'Irradiation Used', 'Value')
-        process_table(self.dcf.inp, 'LCA Parameters Photovoltaic', 'Value')
+
+        self.logger = logging.getLogger("pyH2A.Plugins.Background.Foreground_LCI_Database_Plugin")
+        self.logger.info("Starting Foreground_LCI_Database_Plugin")
+
+        table_keys = ['Irradiation Used', 'LCA Parameters Photovoltaic']
+        self.process_table(table_keys)
 
         # Calculate total sunlight based on irradiation data
         total_sunlight = self.calculate_sunlight()
         
         # Create the LCI database using the total sunlight and input data
         self.LCI_database(total_sunlight)
+
+    def process_table(self, table_keys):
+        '''Processes input table data for the specified keys.
+        
+        Parameters
+        ----------
+        table_keys : list
+            List of table keys to process in the input data.
+        '''
+        
+        for table_key in table_keys:
+            process_table(self.dcf.inp, table_key, 'Value')
 
     def calculate_sunlight(self):
         '''Calculates the total amount of sunlight based on input data.
