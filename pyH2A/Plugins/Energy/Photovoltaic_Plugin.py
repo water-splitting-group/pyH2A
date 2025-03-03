@@ -1,3 +1,4 @@
+from pyH2A import Discounted_Cash_Flow
 from pyH2A.Utilities.input_modification import read_textfile, hourly_to_daily_power
 from pyH2A.Plugins.Plugin import Plugin
 import numpy as np
@@ -60,7 +61,11 @@ class Photovoltaic_Plugin(Plugin):
 		self.calculate_power_production()
 		self.calculate_scaling_factors()
 		self.calculate_area()
+
+		LCA_exports = Photovoltaic_Plugin_LCA_Export(self)
+		LCA_exports.inserts
 		self.insert_table()
+
 
 	def calculate_power_production(
 			self
@@ -135,3 +140,16 @@ class Photovoltaic_Plugin(Plugin):
 			('Non-Depreciable Capital Costs', 'Land required (acres)', area_acres),
 			('Non-Depreciable Capital Costs', 'Solar Collection Area (m2)', area_m2)
 		])
+class Photovoltaic_Plugin_LCA_Export(Photovoltaic_Plugin):
+	
+	def __init__(
+			self, 
+			) -> None:
+		
+		self.inserts = []
+	
+	def calculate_panel_number(self, dcf, PV_plugin_instance):
+
+		self.inserts['PV Panels'] = 10
+
+		return 

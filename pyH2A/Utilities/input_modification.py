@@ -39,12 +39,12 @@ def import_plugin(plugin_name, plugin_module):
 		prefix = f'pyH2A.Plugins.{folder_prefix}'
 	else:
 		prefix = 'pyH2A.Analysis.'
-	print("plugin_name:", plugin_name)
-	print("plugin_module:", plugin_module)
-	print(prefix + plugin_name)
+	# print("plugin_name:", plugin_name)
+	# print("plugin_module:", plugin_module)
+	# print(prefix + plugin_name)
 
 	plugin = import_module(prefix + plugin_name)
-	print(plugin)
+	# print(plugin)
 	plugin_class = getattr(plugin, plugin_name)
 
 	return plugin_class

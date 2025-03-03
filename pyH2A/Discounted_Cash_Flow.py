@@ -4,6 +4,7 @@ from functools import lru_cache
 import numpy as np
 
 from pyH2A.Utilities.input_modification import convert_input_to_dictionary, process_input, process_table, insert, read_textfile, set_by_path, execute_plugin
+from pyH2A.LCA.LCA import LCA
 import pyH2A.Utilities.find_nearest as fn
 
 def numpy_npv(rate, values):
@@ -196,6 +197,8 @@ class Discounted_Cash_Flow:
 		Cost contributions to H2 price.
 	plugs : dict 
 		Dictionary containing plugin class objects used during analysis.
+	lca : LCA object
+		Life cycle assessment object, containing life cycle assessment results
 
 	Notes
 	-----
@@ -273,6 +276,9 @@ class Discounted_Cash_Flow:
 		self.pre_workflow()
 		self.workflow(self.inp, self.npv_dict, self.plugs)  # execution of all functions and plugins specified in "Workflow"
 		self.post_workflow()
+
+		if 'Life Cycle Assessment' in self.inp:
+			self.lca = LCA(self.inp['Life Cycle Assessment']['Matrix Folder']['Value'], self)
 
 		if check_processing is True:
 			self.check_processing()
@@ -722,7 +728,7 @@ class Discounted_Cash_Flow:
 
 		'''
 
-		exceptions = ['Workflow', 'Display Parameters']
+		exceptions = ['Workflow', 'Display Parameters', 'Life Cycle Assessment']
 
 		for top_key in self.inp:
 			if top_key not in exceptions and 'Analysis' not in top_key:
