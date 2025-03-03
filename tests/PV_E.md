@@ -81,6 +81,7 @@ Fraction of stored power used for electrolysis | 95% | Additional electrolysis u
 Name | Value | Path | Comment
 --- | --- | --- | --- 
 Nominal Power (kW) | 1.5 | Electrolyzer > Nominal Power (kW) > Value | Optimal PV oversize ratio, same as Chang 2020
+Power per module (kW)| 340 | | Based on the work by Palmer 2021 
 CAPEX Reference Power (kW) | 1,000.0
 Power loss per year | 0.5% | None | Based on Chang 2020
 Efficiency | 22% | None | Only used for area calculation.

@@ -43,6 +43,10 @@ class Photovoltaic_Plugin(Plugin):
 		Total land required in acres.
 	Non-Depreciable Capital Costs > Solar Collection Area (m2) > Value : float
 		Solar collection area in m2.
+	LCA Parameters Photovoltaic > Amount of PV modules > Value : float
+		Number of PV modules required for the hydrogen production capacity.
+	LCA Parameters Photovoltaic > Produced electricity PV (kW) > Value : float
+		Total electricity produced by the PV modules.
 	'''
 
 	def __init__(
@@ -57,15 +61,31 @@ class Photovoltaic_Plugin(Plugin):
 
 		table_keys = ['Irradiation Used', 'CAPEX Multiplier', 'Photovoltaic']
 		self.process_table(table_keys)
-
-		self.calculate_power_production()
-		self.calculate_scaling_factors()
-		self.calculate_area()
-
-		LCA_exports = Photovoltaic_Plugin_LCA_Export(self)
-		LCA_exports.inserts
+		self.run_plugin()	
 		self.insert_table()
 
+	def run_plugin(
+			self
+			) -> None:
+		'''Run the plugin.
+		'''
+		tea = Photovoltaic_Plugin_TEA(self)
+		lca = Photovoltaic_Plugin_LCA(self)
+
+		tea.calculate_power_production()
+		tea.calculate_scaling_factors()
+		tea.calculate_area()
+		lca.calculate_amount_of_PV()
+		lca.calculate_total_power_generation()
+
+		self.insert_table()
+
+class Photovoltaic_Plugin_TEA:
+	def __init__(
+			self,
+			plugin: Photovoltaic_Plugin
+			) -> None:
+		self.plugin = plugin
 
 	def calculate_power_production(
 			self
@@ -74,22 +94,23 @@ class Photovoltaic_Plugin(Plugin):
 		power production is calculated.
 		'''
 
-		if isinstance(self.dcf.inp['Irradiation Used']['Data']['Value'], str):
-			data = read_textfile(self.dcf.inp['Irradiation Used']['Data']['Value'], delimiter = '	')[:,1]
+		if isinstance(self.plugin.dcf.inp['Irradiation Used']['Data']['Value'], str):
+			data = read_textfile(self.plugin.dcf.inp['Irradiation Used']['Data']['Value'], delimiter = '	')[:,1]
 		else:
-			data = self.dcf.inp['Irradiation Used']['Data']['Value']
+			data = self.plugin.dcf.inp['Irradiation Used']['Data']['Value']
 
 		yearly_data = {}
 		yearly_data_daily_power = {}
 
-		for year in self.dcf.operation_years:
+		for year in self.plugin.dcf.operation_years:
 			data_loss_corrected = self.calculate_photovoltaic_loss_correction(data, year)
-			power_generation = data_loss_corrected * self.dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value']
+			power_generation = data_loss_corrected * self.plugin.dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value']
 
 			yearly_data[year] = power_generation
 			yearly_data_daily_power[year] = hourly_to_daily_power(power_generation)
 		
-		self.insert_queue.extend([
+		self.plugin.yearly_power_generation = yearly_data
+		self.plugin.insert_queue.extend([
 			('Power Generation', 'PV Hourly Power Generation (kWh)', yearly_data),
 			('Power Generation', 'Available Power (hourly, kWh)', yearly_data),
 			('Power Generation', 'Available Power (daily, kWh)', yearly_data_daily_power)
@@ -103,7 +124,7 @@ class Photovoltaic_Plugin(Plugin):
 		'''Calculation of yearly reduction in electricity production by PV array.
 		'''
 
-		return data * (1. - self.dcf.inp['Photovoltaic']['Power loss per year']['Value']) ** year
+		return data * (1. - self.plugin.dcf.inp['Photovoltaic']['Power loss per year']['Value']) ** year
 
 	def calculate_scaling_factors(
 			self
@@ -112,10 +133,10 @@ class Photovoltaic_Plugin(Plugin):
 		'''
 
 		pv_scaling_factor = self.scaling_factor(
-			self.dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value'], 
-			self.dcf.inp['Photovoltaic']['CAPEX Reference Power (kW)']['Value']
+			self.plugin.dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value'], 
+			self.plugin.dcf.inp['Photovoltaic']['CAPEX Reference Power (kW)']['Value']
 		)
-		self.insert_queue.append(('Photovoltaic', 'Scaling Factor', pv_scaling_factor))
+		self.plugin.insert_queue.append(('Photovoltaic', 'Scaling Factor', pv_scaling_factor))
 
 	def scaling_factor(
 			self, 
@@ -125,31 +146,39 @@ class Photovoltaic_Plugin(Plugin):
 		'''Calculation of CAPEX scaling factor based on nominal and reference power.
 		'''
 		number_of_tenfold_increases = np.log10(power/reference)
-		return self.dcf.inp['CAPEX Multiplier']['Multiplier']['Value'] ** number_of_tenfold_increases
+		return self.plugin.dcf.inp['CAPEX Multiplier']['Multiplier']['Value'] ** number_of_tenfold_increases
 
 	def calculate_area(
 			self
 			) -> None:
 		'''Area requirement calculation assuming 1000 W/m2 peak power.'''
 
-		peak_kW_per_m2 = self.dcf.inp['Photovoltaic']['Efficiency']['Value'] * 1.
-		area_m2 = self.dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value'] / peak_kW_per_m2
+		peak_kW_per_m2 = self.plugin.dcf.inp['Photovoltaic']['Efficiency']['Value'] * 1.
+		area_m2 = self.plugin.dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value'] / peak_kW_per_m2
 		area_acres = area_m2 * 0.000247105
 
-		self.insert_queue.extend([
+		self.plugin.insert_queue.extend([
 			('Non-Depreciable Capital Costs', 'Land required (acres)', area_acres),
 			('Non-Depreciable Capital Costs', 'Solar Collection Area (m2)', area_m2)
 		])
-class Photovoltaic_Plugin_LCA_Export(Photovoltaic_Plugin):
-	
+
+
+class Photovoltaic_Plugin_LCA:
 	def __init__(
-			self, 
+			self,
+			plugin: Photovoltaic_Plugin
 			) -> None:
 		
-		self.inserts = []
+		self.plugin = plugin
 	
-	def calculate_panel_number(self, dcf, PV_plugin_instance):
+	def calculate_amount_of_PV(self):
+		"""Calculates the number of photovoltaic (PV) modules required for the hydrogen production capacity.
+		"""
+		amount_of_PV_modules = np.ceil(self.plugin.dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value'] / self.plugin.dcf.inp['Photovoltaic']['Power per module (kW)']['Value'])
+		self.plugin.insert_queue.append(('LCA Parameters Photovoltaic', 'Amount of PV modules', amount_of_PV_modules))
 
-		self.inserts['PV Panels'] = 10
-
-		return 
+	def calculate_total_power_generation(self):
+		"""Calculates the total electricity produced by the PV modules.
+		"""
+		total_power_generation = sum(self.plugin.yearly_power_generation)
+		self.plugin.insert_queue.append(('LCA Parameters Photovoltaic', 'Produced electricity PV (kW)', total_power_generation))

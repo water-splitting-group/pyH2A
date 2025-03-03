@@ -97,7 +97,11 @@ class Power_Management_Plugin(Plugin):
             ('Grid Electricity', 'Used grid electricity (yearly, kWh)', self.total_unfulfilled)
         ])
 
-    def calculate_electricity_cost(self):
+    def calculate_electricity_cost(
+            self
+            ) -> None:
+        '''Calculate cost of grid electricity used to fulfill power consumption.
+        '''
 
         cost_per_kWh = self.dcf.inp['Grid Electricity']['Cost ($/kWh)']['Value']
 
@@ -107,8 +111,13 @@ class Power_Management_Plugin(Plugin):
                                                 electricity_cost])
         self.insert_queue.append(('Other Variable Operating Cost - Grid Electricity', 'Cost of grid electricity (yearly, $)', self.electricity_cost))
     
-def allocate_power(consumption, flexible_power, stored_power):
-    """Allocate available power to consumers based on their type."""
+def allocate_power(
+        consumption: dict, 
+        flexible_power: np.ndarray, 
+        stored_power: np.ndarray
+        ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    '''Allocate available power to consumers based on their type.
+    '''
 
     # Initialize remaining power
     remaining_flexible = flexible_power.copy()
