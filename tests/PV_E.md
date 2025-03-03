@@ -2,14 +2,14 @@
 
 Name | Type | Position
 --- | --- | ---
-Energy.Hourly_Irradiation_Plugin | plugin | 0
-Energy.Photovoltaic_Plugin | plugin | 0
-Hydrogen.Electrolyzer_Plugin | plugin | 0
-Energy.Battery_Plugin | plugin | 0
-Hydrogen.Stored_Power_Electrolysis_Plugin | plugin | 0
-Hydrogen.Reverse_Osmosis_Plugin | plugin | 2
-Energy.Power_Management_Plugin | plugin | 2
-Background.Multiple_Modules_Plugin | plugin | 3
+Energy.HourlyIrradiationPlugin | plugin | 0
+Energy.PhotovoltaicPlugin | plugin | 0
+Hydrogen.ElectrolyzerPlugin | plugin | 0
+Energy.BatteryPlugin | plugin | 0
+Hydrogen.StoredPowerElectrolysisPlugin | plugin | 0
+Hydrogen.ReverseOsmosisPlugin | plugin | 2
+Energy.PowerManagementPlugin | plugin | 2
+Background.MultipleModulesPlugin | plugin | 3
 
 # Display Parameters
 
@@ -217,7 +217,7 @@ Planned Replacement > Electrolyzer Stack Replacement > Cost ($) | Stack repl. (f
 Name | Method Name | Arguments
 --- | --- | ---
 cost_breakdown_plot_total | cost_breakdown_plot | {'name': 'Cost_Breakdown_Plot', 'show': False, 'save': False}
-cost_breakdown_plot_capital | cost_breakdown_plot | {'name': 'Cost_Breakdown_Plot_Capital', 'show': False, 'save': False, 'plugin': 'Finance.Capital_Cost_Plugin', 'plugin_property': 'direct_contributions', 'fig_height': 3, 'bottom': 0.2}
+cost_breakdown_plot_capital | cost_breakdown_plot | {'name': 'Cost_Breakdown_Plot_Capital', 'show': False, 'save': False, 'plugin': 'Finance.CapitalCostPlugin', 'plugin_property': 'direct_contributions', 'fig_height': 3, 'bottom': 0.2}
 
 # Methods - Sensitivity_Analysis
 

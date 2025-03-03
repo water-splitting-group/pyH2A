@@ -2,9 +2,9 @@
 
 Name | Type | Position
 --- | --- | ---
-Hourly_Irradiation_Plugin | plugin | 0
-Photovoltaic_Plugin | plugin | 0
-Multiple_Modules_Plugin | plugin | 3
+HourlyIrradiationPlugin | plugin | 0
+PhotovoltaicPlugin | plugin | 0
+MultipleModulesPlugin | plugin | 3
 
 # Display Parameters
 
@@ -165,7 +165,7 @@ Planned Replacement > Electrolyzer Stack Replacement > Cost ($) | Stack repl. (f
 Name | Method Name | Arguments
 --- | --- | ---
 cost_breakdown_plot_total | cost_breakdown_plot | {'name': 'Cost_Breakdown_Plot', 'show': False, 'save': False}
-cost_breakdown_plot_capital | cost_breakdown_plot | {'name': 'Cost_Breakdown_Plot_Capital', 'show': False, 'save': False, 'plugin': 'Capital_Cost_Plugin', 'plugin_property': 'direct_contributions', 'fig_height': 3, 'bottom': 0.2}
+cost_breakdown_plot_capital | cost_breakdown_plot | {'name': 'Cost_Breakdown_Plot_Capital', 'show': False, 'save': False, 'plugin': 'CapitalCostPlugin', 'plugin_property': 'direct_contributions', 'fig_height': 3, 'bottom': 0.2}
 
 # Methods - Sensitivity_Analysis
 

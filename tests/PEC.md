@@ -2,10 +2,10 @@
 
 Name | Type | Description | Position
 --- | --- | --- | ---
-Energy.Hourly_Irradiation_Plugin | plugin | Plugin to calculate solar irradiation from typical meteorological year data | 0
-Hydrogen.PEC_Plugin | plugin | Plugin to model photoelectrochemical water splitting | 2
-Energy.Solar_Concentrator_Plugin | plugin | Plugin to model solar concentration | 2
-Background.Multiple_Modules_Plugin | plugin | Modelling of module plant modules, adjustment of labor requirement | 3
+Energy.HourlyIrradiationPlugin | plugin | Plugin to calculate solar irradiation from typical meteorological year data | 0
+Hydrogen.PECPlugin | plugin | Plugin to model photoelectrochemical water splitting | 2
+Energy.SolarConcentratorPlugin | plugin | Plugin to model solar concentration | 2
+Background.MultipleModulesPlugin | plugin | Modelling of module plant modules, adjustment of labor requirement | 3
 
 # Display Parameters
 
@@ -214,7 +214,7 @@ Solar Concentrator > Concentration Factor > Value | Solar concentration factor |
 Name | Method Name | Arguments
 --- | --- | ---
 cost_breakdown_plot_total | cost_breakdown_plot | {'name': 'Cost_Breakdown_Plot', 'show': False, 'save': False}
-cost_breakdown_plot_capital | cost_breakdown_plot | {'name': 'Cost_Breakdown_Plot_Capital', 'show': False, 'save': False, 'plugin': 'Finance.Capital_Cost_Plugin', 'plugin_property': 'direct_contributions'}
+cost_breakdown_plot_capital | cost_breakdown_plot | {'name': 'Cost_Breakdown_Plot_Capital', 'show': False, 'save': False, 'plugin': 'Finance.CapitalCostPlugin', 'plugin_property': 'direct_contributions'}
 
 # Methods - Monte_Carlo_Analysis
 
