@@ -13,7 +13,7 @@ and iterative solvers from the SciPy package:
 """
 
 import numpy as np
-from pyH2A import Discounted_Cash_Flow
+from pyH2A import DiscountedCashFlow
 from pyH2A.LCA.LCA_lib import ExportFolder, Matrix, solve 
 from pyH2A.Utilities.input_modification import process_table
 import pprint as pp
@@ -22,7 +22,7 @@ class LCA:
     '''Wrapper class for life-cycle assessment.
     '''
 
-    def __init__(self, matrix_folder: str, dcf: Discounted_Cash_Flow):
+    def __init__(self, matrix_folder: str, dcf: DiscountedCashFlow):
         '''Initializes the LCA calculation.'''
 
         self.folder = self.import_folder(matrix_folder)

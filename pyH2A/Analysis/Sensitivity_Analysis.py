@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-from pyH2A.Discounted_Cash_Flow import Discounted_Cash_Flow
+from pyH2A.DiscountedCashFlow import DiscountedCashFlow
 from pyH2A.Utilities.input_modification import num, convert_input_to_dictionary, parse_parameter, get_by_path, set_by_path
 from pyH2A.Utilities.output_utilities import make_bold, Figure_Lean, dynamic_value_formatting
 
@@ -36,7 +36,7 @@ class Sensitivity_Analysis:
 
 	def __init__(self, input_file):
 		self.inp = convert_input_to_dictionary(input_file)
-		self.base_case = Discounted_Cash_Flow(input_file, print_info = False)
+		self.base_case = DiscountedCashFlow(input_file, print_info = False)
 		#self.results = self.perform_sensitivity_analysis()
 
 	def perform_sensitivity_analysis(self, format_cutoff = 7):
@@ -88,7 +88,7 @@ class Sensitivity_Analysis:
 						shown_value = dynamic_value_formatting(numerical_value, cutoff = format_cutoff)
 
 
-				dcf = Discounted_Cash_Flow(input_dict, print_info = False)
+				dcf = DiscountedCashFlow(input_dict, print_info = False)
 
 				sensitivity_results[name]['Values'][shown_value] = dcf.h2_cost
 

@@ -76,11 +76,11 @@ def MACRS_depreciation(plant_years, depreciation_length, annual_depreciable_capi
 
 	return annual_charge
 
-def discounted_cash_flow_function(inp, values, parameters, attribute = 'h2_cost', 
+def DiscountedCashFlow_function(inp, values, parameters, attribute = 'h2_cost', 
 											plugin = None, plugin_attr = None):
-	'''Wrapper function for ``Discounted_Cash_Flow``, substituting provided values 
+	'''Wrapper function for ``DiscountedCashFlow``, substituting provided values 
 	at specified parameter positions and returning desired attribute of 
-	``Discounted_Cash_Flow`` object.
+	``DiscountedCashFlow`` object.
 
 	Parameters
 	----------
@@ -94,7 +94,7 @@ def discounted_cash_flow_function(inp, values, parameters, attribute = 'h2_cost'
 		1D or 2D array containing the parameter specifications (location within inp);
 		Format: [top_key, middle_key, bottom_key].
 	attribute : str, optional
-		Desired attribute of ``Discounted_Cash_Flow`` object, which should be returned.
+		Desired attribute of ``DiscountedCashFlow`` object, which should be returned.
 		If the attribute is `plugs`, the `.plugs` dictionary attribute is accessed, which 
 		contains information of all used plugins (see `plugin` and `plugin_attr`).
 		Defaults to `h2_cost`.
@@ -110,7 +110,7 @@ def discounted_cash_flow_function(inp, values, parameters, attribute = 'h2_cost'
 	-------
 	results : ndarray
 		For each value (1D array) or set of values (2D array), the values are 
-		substituted in inp, Discounted_Cash_Flow (dcf) is executed and the dcf 
+		substituted in inp, DiscountedCashFlow (dcf) is executed and the dcf 
 		object is generated. Then, the requested attribute is stored in results, 
 		which is finally returned.
 	'''
@@ -130,7 +130,7 @@ def discounted_cash_flow_function(inp, values, parameters, attribute = 'h2_cost'
 			for value, parameter in zip(value_set, parameters):
 				set_by_path(input_dict, parameter, value)
 
-		dcf = Discounted_Cash_Flow(input_dict, print_info = False)
+		dcf = DiscountedCashFlow(input_dict, print_info = False)
 
 		result = getattr(dcf, attribute)
 
@@ -142,12 +142,12 @@ def discounted_cash_flow_function(inp, values, parameters, attribute = 'h2_cost'
 
 	return results
 
-def discounted_cash_flow_function_1D(values, parameters, inp, attribute = 'h2_cost', 
+def DiscountedCashFlow_function_1D(values, parameters, inp, attribute = 'h2_cost', 
 											plugin = None, plugin_attr = None):
 	'''
-	Wrapper function for ``Discounted_Cash_Flow``, substituting provided values
+	Wrapper function for ``DiscountedCashFlow``, substituting provided values
 	at specified parameter positions and returning desired attribute of
-	``Discounted_Cash_Flow`` object.
+	``DiscountedCashFlow`` object.
 	
 
 	'''
@@ -160,7 +160,7 @@ def discounted_cash_flow_function_1D(values, parameters, inp, attribute = 'h2_co
 	for value, parameter in zip(values, parameters):
 		set_by_path(input_dict, parameter, value)
 		
-	dcf = Discounted_Cash_Flow(input_dict, print_info = False)
+	dcf = DiscountedCashFlow(input_dict, print_info = False)
 
 	result = getattr(dcf, attribute)
 
@@ -170,7 +170,7 @@ def discounted_cash_flow_function_1D(values, parameters, inp, attribute = 'h2_co
 
 	return result
 
-class Discounted_Cash_Flow:
+class DiscountedCashFlow:
 	'''Class to perform discounted cash flow analysis.
 
 	Parameters
@@ -186,7 +186,7 @@ class Discounted_Cash_Flow:
 
 	Returns
 	-------
-	Discounted_Cash_Flow : object
+	DiscountedCashFlow : object
 		Discounted cash flow analysis object.
 
 	Attributes
@@ -258,7 +258,12 @@ class Discounted_Cash_Flow:
 	of the "insert()" function to modify the discounted cash flow object's "inp" dictionary (self.inp).
 	'''
 
-	def __init__(self, input_file, print_info = True, check_processing = True):
+	def __init__(
+			self, 
+			input_file: str, 
+			print_info: bool = True, 
+			check_processing: bool = True
+			) -> None:
 
 		if isinstance(input_file, str):
 			self.inp = convert_input_to_dictionary(input_file)
@@ -349,7 +354,7 @@ class Discounted_Cash_Flow:
 			if inp['Workflow'][key]['Type'] == 'function':
 				self.execute_function(key, npv_dict)
 			else:
-				execute_plugin(key, plugs_dict, print_info = self.print_info, dcf = self)
+				execute_plugin(key, plugs_dict, dcf = self)
 
 	def post_workflow(self):
 		'''Functions executed after workflow.

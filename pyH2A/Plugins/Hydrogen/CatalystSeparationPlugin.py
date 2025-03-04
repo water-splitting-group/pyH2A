@@ -1,6 +1,7 @@
-from pyH2A.Utilities.input_modification import insert, process_table
+from pyH2A.Plugins.Plugin import Plugin
+from pyH2A.DiscountedCashFlow import DiscountedCashFlow
 
-class CatalystSeparationPlugin:
+class CatalystSeparationPlugin(Plugin):
 	'''Calculation of cost for catalyst separation (e.g. via nanofiltration).
 
 	Parameters
@@ -18,34 +19,57 @@ class CatalystSeparationPlugin:
 		Yearly cost of catalyst seperation.
 	'''
 
-	def __init__(self, dcf, print_info):
-		self.dcf = dcf
+	def __init__(
+			self, 
+			dcf: DiscountedCashFlow
+			) -> None:
+		super().__init__(dcf)
 
-		process_table(dcf.inp, 'Water Volume', 'Value')
-		process_table(dcf.inp, 'Catalyst Separation', 'Value')
+		table_keys = ['Water Volume', 'Catalyst Separation']
+		self.process_table(table_keys)
+		self.run_plugin()
+		self.insert_table()
 
-		self.calculate_yearly_filtration_volume()
-		self.calculate_filtration_cost()
 
-		insert(self.dcf, 'Other Variable Operating Cost - Catalyst Separation', 
-				'Catalyst Separation (yearly cost)', 'Value', self.yearly_cost,
-				__name__, print_info = print_info)
+	def run_plugin(
+			self
+			) -> None:
+		tea = CatalystSeparationPluginTEA(self)
+		tea.calculate_yearly_filtration_volume()
+		tea.calculate_filtration_cost()
 
-	def calculate_yearly_filtration_volume(self):
+
+
+class CatalystSeparationPluginTEA:
+	'''Handles life-cycle assessment (LCA) calculations for the catalyst separation plugin.
+	'''
+	def __init__(
+			self,
+			plugin: CatalystSeparationPlugin
+			) -> None:
+		self.plugin: CatalystSeparationPlugin = plugin
+
+	def calculate_yearly_filtration_volume(
+			self
+			) -> None:
 		'''Calculation of water volume that has to be filtered per year.
 		'''
 
-		fraction_to_be_filtered_yearly = 1./self.dcf.inp['Catalyst']['Lifetime (years)']['Value']
+		fraction_to_be_filtered_yearly = 1./self.plugin.dcf.inp['Catalyst']['Lifetime (years)']['Value']
 
-		yearly_filtration_volume_liters = self.dcf.inp['Water Volume']['Volume (liters)']['Value'] * fraction_to_be_filtered_yearly
+		yearly_filtration_volume_liters = self.plugin.dcf.inp['Water Volume']['Volume (liters)']['Value'] * fraction_to_be_filtered_yearly
 		self.yearly_filtration_volume_m3 = yearly_filtration_volume_liters/1000.
 
-	def calculate_filtration_cost(self):
+	def calculate_filtration_cost(
+			self
+			) -> None:
 		'''Yearly cost of water filtration to remove catalyst.
 		'''
 
-		self.yearly_cost = self.yearly_filtration_volume_m3 * self.dcf.inp['Catalyst Separation']['Filtration cost ($/m3)']['Value']
-
+		yearly_cost = self.yearly_filtration_volume_m3 * self.plugin.dcf.inp['Catalyst Separation']['Filtration cost ($/m3)']['Value']
+		self.plugin.insert_queue.append(
+			('Other Variable Operating Cost - Catalyst Separation', 'Catalyst Separation (yearly cost)', yearly_cost)
+		)
 
 
 

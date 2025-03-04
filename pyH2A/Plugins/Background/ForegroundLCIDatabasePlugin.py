@@ -1,10 +1,12 @@
-from pyH2A.Utilities.input_modification import insert, process_table, read_textfile
+from pyH2A.Utilities.input_modification import read_textfile
+from pyH2A.Plugins.Plugin import Plugin
+from pyH2A.DiscountedCashFlow import DiscountedCashFlow
 import numpy as np
 import pprint as pp
 import matplotlib.pyplot as plt
 import logging
 
-class ForegroundLCIDatabasePlugin:
+class ForegroundLCIDatabasePlugin(Plugin):
     '''Class for processing foreground Life Cycle Inventory (LCI) data for Brightway calculation.
     
     This class processes data related to photovoltaic (PV) systems, including solar radiation,
@@ -18,7 +20,10 @@ class ForegroundLCIDatabasePlugin:
         Flag to print additional information for debugging or logging purposes.
     '''
     
-    def __init__(self, dcf, print_info):
+    def __init__(
+            self, 
+            dcf: DiscountedCashFlow
+            ) -> None:
         '''Initializes the ForegroundLCIDatabasePlugin, processes input data, 
         and creates an LCI database.
         
@@ -30,7 +35,7 @@ class ForegroundLCIDatabasePlugin:
             Flag to print additional information for debugging or logging purposes.
         '''
 
-        self.dcf = dcf
+        super().__init__(dcf)
 
         self.logger = logging.getLogger("pyH2A.Plugins.Background.ForegroundLCIDatabasePlugin")
         self.logger.info("Starting ForegroundLCIDatabasePlugin")
@@ -44,19 +49,9 @@ class ForegroundLCIDatabasePlugin:
         # Create the LCI database using the total sunlight and input data
         self.LCI_database(total_sunlight)
 
-    def process_table(self, table_keys):
-        '''Processes input table data for the specified keys.
-        
-        Parameters
-        ----------
-        table_keys : list
-            List of table keys to process in the input data.
-        '''
-        
-        for table_key in table_keys:
-            process_table(self.dcf.inp, table_key, 'Value')
-
-    def calculate_sunlight(self):
+    def calculate_sunlight(
+            self
+            ) -> float:
         '''Calculates the total amount of sunlight based on input data.
         
         Retrieves sunlight irradiation data from the input container and 
@@ -98,7 +93,11 @@ class ForegroundLCIDatabasePlugin:
         except Exception as e:
             raise RuntimeError(f"Error while calculating sunlight: {e}")
 
-    def get_value(self, section, parameter):
+    def get_value(
+            self, 
+            section: str, 
+            parameter: str
+            ) -> float:
         '''Retrieves the value of a specific parameter from the input data.
         
         Parameters
@@ -125,7 +124,10 @@ class ForegroundLCIDatabasePlugin:
         except KeyError:
             raise ValueError(f"Missing or invalid parameter: {section} -> {parameter}")
 
-    def LCI_database(self, total_amount_sunlight):
+    def LCI_database(
+            self, 
+            total_amount_sunlight: float
+            ) -> None:
         '''Creates the LCI database by associating activities with exchanges.
         
         The LCI database is structured with activities, exchanges, and their relationships,

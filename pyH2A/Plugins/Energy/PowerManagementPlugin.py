@@ -1,7 +1,7 @@
 from pyH2A.Utilities.input_modification import daily_to_yearly_power
+from pyH2A.DiscountedCashFlow import DiscountedCashFlow
 from pyH2A.Plugins.Plugin import Plugin
 import numpy as np
-import logging
 
 class PowerManagementPlugin(Plugin):
     '''Management of electricity production and consumption.
@@ -42,25 +42,36 @@ class PowerManagementPlugin(Plugin):
 
     def __init__(
             self, 
-            dcf: dict, 
-            print_info: bool
+            dcf: DiscountedCashFlow
             ) -> None:
-        super().__init__(dcf, print_info)
-
-        self.logger = logging.getLogger("pyH2A.Plugins.Energy.PowerManagementPlugin")
-        self.logger.info("Starting PowerManagementPlugin")
-
+        super().__init__(dcf)
         table_keys = []
-        if 'Power Generation' in self.dcf.inp:
+        if 'Power Generation' in dcf.inp:
             table_keys.append('Power Generation')
 
-        if 'Power Consumption' in self.dcf.inp:
-            table_keys.append('Power Consumption')
-            table_keys.append('Grid Electricity')
-            self.calculate_consumers()
-            self.calculate_electricity_cost()
-
+        if 'Power Consumption' in dcf.inp:
+            table_keys.extend(['Power Consumption', 'Grid Electricity'])
+        self.process_table(table_keys)
+        self.run_plugin()
         self.insert_table()
+
+    def run_plugin(
+            self
+            ) -> None:
+        tea = PowerManagementPluginTEA(self)
+        tea.calculate_consumers()
+        tea.calculate_electricity_cost()
+
+        
+        
+class PowerManagementPluginTEA:
+    '''Handles life-cycle assessment (LCA) calculations for the stored power management plugin.
+	'''
+    def __init__(
+			self,
+			plugin: PowerManagementPlugin
+			) -> None:
+        self.plugin: PowerManagementPlugin = plugin        
         
     def calculate_consumers(
             self
@@ -71,27 +82,23 @@ class PowerManagementPlugin(Plugin):
         '''
 
         try:
-            flexible_available_power = self.dcf.inp['Power Generation']['Available Power (daily, kWh)']['Value']
+            flexible_available_power = self.plugin.dcf.inp['Power Generation']['Available Power (daily, kWh)']['Value']
             flexible_available_power_yearly = daily_to_yearly_power(flexible_available_power)
         except KeyError:
-            flexible_available_power_yearly = np.zeros(len(self.dcf.operation_years))
+            flexible_available_power_yearly = np.zeros(len(self.plugin.dcf.operation_years))
 
         try:
-            stored_available_power = self.dcf.inp['Power Generation']['Stored Power (daily, kWh)']['Value']
+            stored_available_power = self.plugin.dcf.inp['Power Generation']['Stored Power (daily, kWh)']['Value']
             stored_available_power_yearly = daily_to_yearly_power(stored_available_power)
         except KeyError:
-            stored_available_power_yearly = np.zeros(len(self.dcf.operation_years))
+            stored_available_power_yearly = np.zeros(len(self.plugin.dcf.operation_years))
 
-        (self.total_unfulfilled, 
-         remaining_flexible, 
-         remaining_stored) = allocate_power(
-            self.dcf.inp['Power Consumption'], 
-            flexible_available_power_yearly, 
-            stored_available_power_yearly
-        )
-        self.insert_queue.extend([
-            ('Power Generation', 'Available Power (yearly, kWh)', remaining_flexible),
-            ('Power Generation', 'Stored Power (yearly, kWh)', remaining_stored),
+        self.total_unfulfilled, self.remaining_flexible, self.remaining_stored = allocate_power(self.plugin.dcf.inp['Power Consumption'], 
+                                                                                                flexible_available_power_yearly, 
+                                                                                                stored_available_power_yearly)
+        self.plugin.insert_queue.extend([
+            ('Power Generation', 'Available Power (yearly, kWh)', self.remaining_flexible),
+            ('Power Generation', 'Stored Power (yearly, kWh)', self.remaining_stored),
             ('Power Generation', 'Available Power (daily, kWh)', 0),
             ('Power Generation', 'Stored Power (daily, kWh)', 0),
             ('Grid Electricity', 'Used grid electricity (yearly, kWh)', self.total_unfulfilled)
@@ -100,24 +107,20 @@ class PowerManagementPlugin(Plugin):
     def calculate_electricity_cost(
             self
             ) -> None:
-        '''Calculate cost of grid electricity used to fulfill power consumption.
-        '''
 
-        cost_per_kWh = self.dcf.inp['Grid Electricity']['Cost ($/kWh)']['Value']
+        cost_per_kWh = self.plugin.dcf.inp['Grid Electricity']['Cost ($/kWh)']['Value']
 
         electricity_cost = self.total_unfulfilled * cost_per_kWh
 
-        self.electricity_cost = np.concatenate([np.zeros(self.dcf.inp['Financial Input Values']['construction time']['Value']), 
+        self.electricity_cost = np.concatenate([np.zeros(self.plugin.dcf.inp['Financial Input Values']['construction time']['Value']), 
                                                 electricity_cost])
-        self.insert_queue.append(('Other Variable Operating Cost - Grid Electricity', 'Cost of grid electricity (yearly, $)', self.electricity_cost))
+        self.plugin.insert_queue.append(
+            ('Other Variable Operating Cost - Grid Electricity', 'Cost of grid electricity (yearly, $)', self.electricity_cost)
+        )
+        
     
-def allocate_power(
-        consumption: dict, 
-        flexible_power: np.ndarray, 
-        stored_power: np.ndarray
-        ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    '''Allocate available power to consumers based on their type.
-    '''
+def allocate_power(consumption, flexible_power, stored_power):
+    """Allocate available power to consumers based on their type."""
 
     # Initialize remaining power
     remaining_flexible = flexible_power.copy()
@@ -157,10 +160,7 @@ def allocate_power(
     
     return total_unfulfilled, remaining_flexible, remaining_stored
         
-def calculate_fulfillment(
-        demand: np.ndarray, 
-        remaining: np.ndarray
-        ) -> tuple[np.ndarray, np.ndarray]:
+def calculate_fulfillment(demand, remaining):
     """Calculate fulfillment of demand using stored power."""
     
     fulfilled = np.minimum(demand, remaining)
@@ -169,3 +169,4 @@ def calculate_fulfillment(
     unfulfilled = demand - fulfilled
     
     return remaining, unfulfilled
+

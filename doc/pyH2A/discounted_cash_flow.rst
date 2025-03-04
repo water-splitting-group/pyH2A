@@ -1,5 +1,5 @@
-Discounted_Cash_Flow
+DiscountedCashFlow
 ====================
 
-.. automodule:: pyH2A.Discounted_Cash_Flow
+.. automodule:: pyH2A.DiscountedCashFlow
     :members:

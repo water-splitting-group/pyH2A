@@ -1,9 +1,10 @@
-from pyH2A.Utilities.input_modification import insert, sum_all_tables, process_table
+from pyH2A.DiscountedCashFlow import DiscountedCashFlow
+from pyH2A.Plugins.Plugin import Plugin
+from pyH2A.Utilities.input_modification import sum_all_tables
 import logging
 
-class CapitalCostPlugin:
+class CapitalCostPlugin(Plugin):
 	'''
-
 	Parameters
 	----------
 	[...] Direct Capital Cost [...] >> Value : float
@@ -48,80 +49,96 @@ class CapitalCostPlugin:
 	['Finance.CapitalCostPlugin'].direct_contributions : dict
 		Attribute containing cost contributions for "Direct Capital Cost" group.
 	'''
-	def __init__(self, dcf, print_info):
+	def __init__(
+			self, 
+			dcf: DiscountedCashFlow
+			) -> None:
 
-		self.dcf = dcf
+		super().__init__(dcf)
 
 		self.logger = logging.getLogger("pyH2A.Plugins.Finance.CapitalCostPlugin")
 		self.logger.info("Starting CapitalCostPlugin")
 
 		table_keys = ['Non-Depreciable Capital Costs']
 		self.process_table(table_keys)
+		self.run_plugin()
+		self.insert_table()
 
-		self.direct_capital_costs(print_info)  
-		direct_inflated = self.direct * dcf.combined_inflator
-
-		inserts = [
-			('Direct Capital Costs', 'Total', self.direct),
-			('Direct Capital Costs', 'Inflated', direct_inflated)
-		]
-		self.insert_table(inserts, print_info)
-
-		self.indirect_capital_costs(print_info)
-
-		indirect_inflated = self.indirect * dcf.combined_inflator
-		depreciable = self.direct + self.indirect
-		depreciable_inflated = direct_inflated + indirect_inflated
+	def run_plugin(
+			self
+			) -> None:
 		
-		self.non_depreciable_capital_costs(print_info)
+		tea = CapitalCostPluginTEA(self)
 
-		non_depreciable_inflated = self.non_depreciable * self.dcf.ci_inflator
-		total = depreciable + self.non_depreciable
-		total_inflated = depreciable_inflated + non_depreciable_inflated
+		tea.direct_capital_costs()  
+		self.insert_table()
 
-		inserts = [
-			('Indirect Capital Costs', 'Total', self.indirect),
-			('Indirect Capital Costs', 'Inflated', indirect_inflated),
-			('Depreciable Capital Costs', 'Total', depreciable),
-			('Depreciable Capital Costs', 'Inflated', depreciable_inflated),
-			('Non-Depreciable Capital Costs', 'Total', self.non_depreciable),
-			('Non-Depreciable Capital Costs', 'Inflated', non_depreciable_inflated),
-			('Total Capital Costs', 'Total', total),
-			('Total Capital Costs', 'Inflated', total_inflated)
-		]
-		self.insert_table(inserts, print_info)
+		tea.indirect_capital_costs()
+		tea.non_depreciable_capital_costs()
+		tea.total_cost()
 
-	def process_table(self, table_keys):
-		'''Processes input table.
+class CapitalCostPluginTEA:
+	'''Handles life-cycle assessment (LCA) calculations for the capital cost plugin.
+	'''
+	def __init__(
+			self,
+			plugin: CapitalCostPlugin
+			) -> None:
+		self.plugin: CapitalCostPlugin = plugin		
+
+	def direct_capital_costs(
+			self
+			) -> None:
+		'''Calculation of direct capital costs by applying ``sum_all_tables()`` to "Direct Capital Cost" group.
 		'''
-		for table_key in table_keys:
-			process_table(self.dcf.inp, table_key, 'Value')
+		(self.direct, 
+   		 self.direct_contributions) = sum_all_tables(self.plugin.dcf.inp, 'Direct Capital Cost', 'Value',
+												  insert_total = True, class_object = self.plugin.dcf, 
+												  print_info = self.plugin.dcf.print_info, return_contributions = True
+												)
+		self.direct_inflated = self.direct * self.plugin.dcf.combined_inflator
+		self.plugin.insert_queue.extend([
+			('Direct Capital Costs', 'Total', self.direct),
+			('Direct Capital Costs', 'Inflated', self.direct_inflated)
+		])
 
-	def direct_capital_costs(self, print_info):
-		'''Calculation of direct capital costs by applying ``sum_all_tables()`` to "Direct Capital Cost" group.'''
-
-		self.direct, self.direct_contributions = sum_all_tables(self.dcf.inp, 'Direct Capital Cost', 'Value', insert_total = True, 
-																class_object = self.dcf, print_info = print_info, 
-																return_contributions = True)
-
-	def indirect_capital_costs(self, print_info):
+	def indirect_capital_costs(self):
 		'''Calculation of indirect capital costs by applying ``sum_all_tables()`` to "Indirect Capital Cost" group.'''
+		self.indirect = sum_all_tables(self.plugin.dcf.inp, 'Indirect Capital Cost', 'Value', insert_total = True, 
+									   class_object = self.plugin.dcf, print_info = self.plugin.dcf.print_info)
+		indirect_inflated = self.indirect * self.plugin.dcf.combined_inflator
+		self.depreciable = self.direct + self.indirect
+		self.depreciable_inflated = self.direct_inflated + indirect_inflated
+		self.plugin.insert_queue.extend([
+			('Indirect Capital Costs', 'Inflated', indirect_inflated),
+			('Depreciable Capital Costs', 'Total', self.depreciable),
+			('Depreciable Capital Costs', 'Inflated', self.depreciable_inflated)
+		])
 
-		self.indirect = sum_all_tables(self.dcf.inp, 'Indirect Capital Cost', 'Value', insert_total = True, 
-									   class_object = self.dcf, print_info = print_info)
-
-	def non_depreciable_capital_costs(self, print_info):
+	def non_depreciable_capital_costs(
+			self
+			) -> None:
 		'''Calculation of non-depreciable capital costs by calculating cost of land and applying
 		``sum_all_tables()`` to "Other Non-Depreciable Capital Cost" group.
 		'''
-
-		non_depreciable = self.dcf.inp['Non-Depreciable Capital Costs']
+		non_depreciable = self.plugin.dcf.inp['Non-Depreciable Capital Costs']
 		self.non_depreciable = non_depreciable['Cost of land ($ per acre)']['Value'] * non_depreciable['Land required (acres)']['Value']
-		self.non_depreciable += sum_all_tables(self.dcf.inp, 'Other Non-Depreciable Capital Cost', 'Value', insert_total = True, class_object = self.dcf, print_info = print_info)
+		self.non_depreciable += sum_all_tables(self.plugin.dcf.inp, 'Other Non-Depreciable Capital Cost', 'Value', 
+									insert_total = True, class_object = self.plugin.dcf, print_info = self.plugin.dcf.print_info)
+		self.non_depreciable_inflated = self.non_depreciable * self.plugin.dcf.ci_inflator
 
-	def insert_table(self, inserts, print_info):
-		'''Inserts the calculated values into the DCF.
-		'''
-		for key, subkey, value in inserts:
-			insert(self.dcf, key, subkey, 'Value', value, __name__, print_info)
-			self.logger.debug(f"{key} > {subkey} > Value: {value}")
+		self.plugin.insert_queue.extend([
+			('Non-Depreciable Capital Costs', 'Total', self.non_depreciable),
+			('Non-Depreciable Capital Costs', 'Inflated', self.non_depreciable_inflated),
+		])
+
+	def total_cost(
+			self
+			) -> None:
+		total = self.depreciable + self.non_depreciable
+		total_inflated = self.depreciable_inflated + self.non_depreciable_inflated
+
+		self.plugin.insert_queue.extend([
+			('Total Capital Costs', 'Total', total),
+			('Total Capital Costs', 'Inflated', total_inflated)
+		])

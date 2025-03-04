@@ -4,6 +4,7 @@ import logging
 
 from pyH2A.Utilities.input_modification import read_textfile, file_import
 from pyH2A.Plugins.Plugin import Plugin
+from pyH2A.DiscountedCashFlow import DiscountedCashFlow
 
 class HourlyIrradiationPlugin(Plugin):
 	'''Calculation of hourly and mean daily irradiation data with different module configurations.
@@ -42,8 +43,11 @@ class HourlyIrradiationPlugin(Plugin):
 		Mean solar input with two axis tracking in kWh/m2/day.
 	'''
 
-	def __init__(self, dcf, print_info):
-		super().__init__(dcf, print_info)
+	def __init__(
+			self, 
+			dcf: DiscountedCashFlow
+			) -> None:
+		super().__init__(dcf)
 		
 		self.logger = logging.getLogger("pyH2A.Plugins.Energy.HourlyIrradiationPlugin")
 		self.logger.info("Starting HourlyIrradiationPlugin")
@@ -85,14 +89,16 @@ class HourlyIrradiationPlugin(Plugin):
 		])
 		self.insert_table()
 
-def converter_function(string):
+def converter_function(
+		string: str
+		) -> float:
 	'''Converter function for datetime of hourly irradiation data.'''
-
 	split = string.split(':')
-
 	return float(split[1][:2]) #- 0.5
 
-def import_Chang_data(file_name):
+def import_Chang_data(
+		file_name: str
+		) -> tuple[dict, dict]:
 	'''Import of Chang 2020 data, for debugging.'''
 
 	file_name = 'pyH2A.Lookup_Tables.Hourly_Irradiation_Data~Hourly_Irradiation_Data_Townsville_Chang_2020.csv'
@@ -107,7 +113,9 @@ def import_Chang_data(file_name):
 	return data_dict, location
 	
 @lru_cache(maxsize = None)
-def import_hourly_data(file_name):
+def import_hourly_data(
+		file_name
+		) -> tuple[dict, dict]:
 	'''Imports hourly irradiation data and location coordinates from the `.csv` format provided 
 	by: https://re.jrc.ec.europa.eu/pvg_tools/en/#TMY.
 	``@lru_cache`` is used for fast repeated reads
@@ -137,8 +145,15 @@ def import_hourly_data(file_name):
 	return data_dict, location
 
 @lru_cache(maxsize = None)
-def calculate_PV_power_ratio(file_name, module_tilt, array_azimuth, nominal_operating_temperature,
-							 temperature_coefficient, mismatch_derating, dirt_derating):
+def calculate_PV_power_ratio(
+		file_name: str, 
+		module_tilt: float, 
+		array_azimuth: float, 
+		nominal_operating_temperature: float,
+		temperature_coefficient: float, 
+		mismatch_derating: float, 
+		dirt_derating: float
+		) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
 	'''Calculation based on Chang 2020, https://doi.org/10.1016/j.xcrp.2020.100209
 	SAT: horzontal single axis tracking
 	DAT: dual axis tracking, no diffuse radiation

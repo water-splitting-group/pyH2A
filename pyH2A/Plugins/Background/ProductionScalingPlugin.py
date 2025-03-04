@@ -1,4 +1,5 @@
 from pyH2A.Plugins.Plugin import Plugin
+from pyH2A.DiscountedCashFlow import DiscountedCashFlow
 import logging
 
 class ProductionScalingPlugin(Plugin):
@@ -47,8 +48,11 @@ class ProductionScalingPlugin(Plugin):
 	or `Scaling > Labor Scaling Factor > Value` has to specified for the respective table entry.
 	'''
 
-	def __init__(self, dcf, print_info):
-		super().__init__(dcf, print_info)
+	def __init__(
+			self, 
+			dcf: DiscountedCashFlow
+			) -> None:
+		super().__init__(dcf)
 
 		self.logger = logging.getLogger("pyH2A.Plugins.Background.ProductionScalingPlugin")
 		self.logger.info("Starting ProductionScalingPlugin")
@@ -62,7 +66,9 @@ class ProductionScalingPlugin(Plugin):
 		self.calculate_output()
 		self.insert_table()
 
-	def calculate_scaling(self):
+	def calculate_scaling(
+			self
+			) -> None:
 		'''Calculation of scaling if scaling is requested (either `New Plant Design Capacity (kg of H2/day)` or
 		`Scaling Ratio` was provided). Otherwise returns regular design output and output at gate per day in (kg H2).
 		'''
@@ -104,7 +110,9 @@ class ProductionScalingPlugin(Plugin):
 			('Technical Operating Parameters and Specifications', 'Max Gate Output per Day', self.max_gate_output_per_day)
 		])
 		
-	def calculate_output(self):
+	def calculate_output(
+			self
+			) -> None:
 		'''Calculation of yearly output in kg and yearly output at gate in kg.
 		'''
 

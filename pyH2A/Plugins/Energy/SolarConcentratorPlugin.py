@@ -34,10 +34,9 @@ class SolarConcentratorPlugin(Plugin):
 
 	def __init__(
 			self, 
-			dcf: dict, 
-			print_info: bool = False
+			dcf: dict
 			) -> None:
-		super().__init__(dcf, print_info)
+		super().__init__(dcf)
 
 		self.logger = logging.getLogger("pyH2A.Plugins.Energy.SolarConcentratorPlugin")
 		self.logger.info("Starting SolarConcentratorPlugin")

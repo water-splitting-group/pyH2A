@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from pyH2A.Utilities.input_modification import insert, convert_input_to_dictionary, check_for_meta_module, import_plugin, merge, parse_parameter
-from pyH2A.Discounted_Cash_Flow import Discounted_Cash_Flow
+from pyH2A.DiscountedCashFlow import DiscountedCashFlow
 
 def is_parameter_or_output(line, spaces_for_tab = 4, spaces_cutoff = 5):
 	'''Detection of parameters and output values in line based on presence of more than `spaces_cuttoff`
@@ -193,7 +193,7 @@ class Generate_Template_Input_File:
 		'''
 
 		if target_type == 'function':
-			target = getattr(Discounted_Cash_Flow, target_name)
+			target = getattr(DiscountedCashFlow, target_name)
 			data = extract_input_output_from_docstring(target, spaces_cutoff = 9)
 
 		else:

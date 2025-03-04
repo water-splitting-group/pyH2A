@@ -1,8 +1,10 @@
-from pyH2A.Utilities.input_modification import insert, process_table, daily_to_yearly_power
+from pyH2A.Plugins.Plugin import Plugin
+from pyH2A.DiscountedCashFlow import DiscountedCashFlow
+from pyH2A.Utilities.input_modification import daily_to_yearly_power, insert
 from pyH2A.Plugins.Hydrogen.ElectrolyzerPlugin import calculate_electrolyzer_power_demand, calculate_hydrogen_production, calculate_stack_replacement
 import numpy as np
 
-class StoredPowerElectrolysisPlugin:
+class StoredPowerElectrolysisPlugin(Plugin):
     '''Simulation of hydrogen production using electrolysis.
 
     Parameters
@@ -41,61 +43,88 @@ class StoredPowerElectrolysisPlugin:
         Type of power consumer, type is 'on_demand' (only uses stored power).
     '''
 
-    def __init__(self, dcf, print_info):
-        process_table(dcf.inp, 'Electrolysis Using Stored Power', 'Value')
-        process_table(dcf.inp, 'Power Generation', 'Value')
-        process_table(dcf.inp, 'Electrolyzer', 'Value')
+    def __init__(
+            self, 
+            dcf: DiscountedCashFlow
+            ) -> None:
+        super().__init__(dcf)
+        table_keys = ['Electrolysis Using Stored Power', 'Power Generation', 'Electrolyzer']
+        self.process_table(table_keys)
+        self.run_plugin()
+        self.insert_table()
 
-        self.calculate_H2_production(dcf)
-        self.replacement_frequency = calculate_stack_replacement(self.operation_hours, 
-                                    dcf.inp['Electrolyzer']['Replacement time (h)']['Value'])
+    def run_plugin(
+            self
+            ) -> None:
+        tea = StoredPowerElectrolysisPluginTEA(self)
+        tea.calculate_H2_production()
+        tea.calculate_replacement()
         
-        insert(dcf, 'Power Consumption', 'Stored Power Electrolysis (kWh, yearly)', 'Value',
-                self.power_consumption_kWh, __name__, print_info = print_info)
-        insert(dcf, 'Power Consumption', 'Stored Power Electrolysis (kWh, yearly)', 'Type',
-                'on_demand', __name__, print_info = print_info)
-        
-        insert(dcf, 'Planned Replacement', 'Electrolyzer Stack Replacement', 'Frequency (years)', 
-                self.replacement_frequency, __name__, print_info = print_info, add_processed = False,
-                insert_path = False)
+class StoredPowerElectrolysisPluginTEA:
+    '''Handles life-cycle assessment (LCA) calculations for the stored power electrolysis plugin.
+	'''
+    def __init__(
+			self,
+			plugin: StoredPowerElectrolysisPlugin
+			) -> None:
+        self.plugin: StoredPowerElectrolysisPlugin = plugin
 
-        insert(dcf, 'Technical Operating Parameters and Specifications', 'Plant Design Capacity (kg of H2/day)', 'Value', 
-                self.new_h2_production_kg/365., __name__, print_info = print_info)
-
-    def calculate_H2_production(self, dcf):
+    def calculate_H2_production(
+            self
+            ) -> None:
         '''
         '''
-
         HOURS_IN_A_YEAR = 8760
 
-        electrolyzer_yearly_data = dcf.inp['Electrolyzer']['Yearly Operation Data']['Value']
+        electrolyzer_yearly_data = self.plugin.dcf.inp['Electrolyzer']['Yearly Operation Data']['Value']
         remaining_run_time_per_year_in_hours = HOURS_IN_A_YEAR - electrolyzer_yearly_data[:,2]
         
-        electrolyzer_power_demand, power_increase = calculate_electrolyzer_power_demand(dcf.inp['Electrolyzer']['Power requirement increase per year']['Value'],
-                                                                                        dcf.inp['Electrolyzer']['Nominal Power (kW)']['Value'],
-                                                                                        dcf.operation_years)
+        (electrolyzer_power_demand, 
+         power_increase) = calculate_electrolyzer_power_demand(
+            self.plugin.dcf.inp['Electrolyzer']['Power requirement increase per year']['Value'],
+            self.plugin.dcf.inp['Electrolyzer']['Nominal Power (kW)']['Value'],
+            self.plugin.dcf.operation_years
+        )
 
         maximum_consumable_power_kWh = remaining_run_time_per_year_in_hours * electrolyzer_power_demand
         
-        stored_power = dcf.inp['Power Generation']['Stored Power (daily, kWh)']['Value']
+        stored_power = self.plugin.dcf.inp['Power Generation']['Stored Power (daily, kWh)']['Value']
         stored_power_yearly = daily_to_yearly_power(stored_power)
 
-        stored_power_yearly_available_for_use = stored_power_yearly * dcf.inp['Electrolysis Using Stored Power']['Fraction of stored power used for electrolysis']['Value']
+        stored_power_yearly_available_for_use = stored_power_yearly * self.plugin.dcf.inp['Electrolysis Using Stored Power']['Fraction of stored power used for electrolysis']['Value']
 
-        self.power_consumption_kWh = np.minimum(maximum_consumable_power_kWh, stored_power_yearly_available_for_use)
+        power_consumption_kWh = np.minimum(maximum_consumable_power_kWh, stored_power_yearly_available_for_use)
 
         # Updating H2 production
 
-        additional_h2_production_kg = calculate_hydrogen_production(self.power_consumption_kWh, 
-                                                         dcf.inp['Electrolyzer']['Conversion efficiency (kg H2/kWh)']['Value'],
+        additional_h2_production_kg = calculate_hydrogen_production(power_consumption_kWh, 
+                                                         self.plugin.dcf.inp['Electrolyzer']['Conversion efficiency (kg H2/kWh)']['Value'],
                                                          power_increase)
         
-        old_h2_production_kg = dcf.inp['Electrolyzer']['H2 Production (yearly, kg)']['Value']
+        old_h2_production_kg = self.plugin.dcf.inp['Electrolyzer']['H2 Production (yearly, kg)']['Value']
 
-        self.new_h2_production_kg = old_h2_production_kg.copy()
-        self.new_h2_production_kg[-len(additional_h2_production_kg):] += additional_h2_production_kg
+        new_h2_production_kg = old_h2_production_kg.copy()
+        new_h2_production_kg[-len(additional_h2_production_kg):] += additional_h2_production_kg
         
         # Updating operation hours
 
-        additional_operation_hours = self.power_consumption_kWh / electrolyzer_power_demand
+        additional_operation_hours = power_consumption_kWh / electrolyzer_power_demand
         self.operation_hours = additional_operation_hours + electrolyzer_yearly_data[:,2]
+
+        self.plugin.insert_queue.extend([
+            ('Power Consumption', 'Stored Power Electrolysis (kWh, yearly)', power_consumption_kWh),
+            ('Technical Operating Parameters and Specifications', 'Plant Design Capacity (kg of H2/day)', new_h2_production_kg/365.)
+        ])
+
+    def calculate_replacement(
+            self
+            ) -> None:
+        replacement_frequency = calculate_stack_replacement(
+            self.operation_hours, 
+            self.plugin.dcf.inp['Electrolyzer']['Replacement time (h)']['Value']
+        )
+        insert(self.plugin.dcf, 'Planned Replacement', 'Electrolyzer Stack Replacement', 'Frequency (years)', 
+                replacement_frequency, __name__, print_info = self.plugin.dcf.print_info, add_processed = False,
+                insert_path = False)
+        insert(self.plugin.dcf, 'Power Consumption', 'Stored Power Electrolysis (kWh, yearly)', 'Type',
+                'on_demand', __name__, print_info = self.plugin.dcf.print_info)

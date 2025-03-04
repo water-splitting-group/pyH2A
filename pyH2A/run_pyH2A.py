@@ -1,7 +1,7 @@
 import sys
 import ast
 import os
-from pyH2A.Discounted_Cash_Flow import Discounted_Cash_Flow
+from pyH2A.DiscountedCashFlow import DiscountedCashFlow
 from pyH2A.Utilities.input_modification import convert_input_to_dictionary, execute_plugin, convert_dict_to_kwargs_dict, check_for_meta_module
 
 from timeit import default_timer as timer
@@ -31,14 +31,19 @@ class pyH2A:
 	inp : dict
 		Dictionary containing input information and all information from discounted
 		cash flow analysis.
-	base_case : Discounted_Cash_Flow object
-		Discounted_Cash_Flow object for base case defined in input file with corresponding
+	base_case : DiscountedCashFlow object
+		DiscountedCashFlow object for base case defined in input file with corresponding
 		attributes.
 	meta_modules : dict
 		Dictionary containing class instances of executes analysis modules.
 	'''
 
-	def __init__(self, input_file, output_directory, print_info = False):
+	def __init__(
+			self, 
+			input_file: str, 
+			output_directory: str, 
+			print_info: bool = False
+			) -> None:
 
 		current_time = time.time()
 		msecs = int((current_time - int(current_time)) * 1000)
@@ -51,7 +56,7 @@ class pyH2A:
 		self.file_name = os.path.basename(input_file).split('.')[0]
 		self.output_directory = output_directory
 		self.inp = convert_input_to_dictionary(self.input_file)
-		self.base_case = Discounted_Cash_Flow(self.input_file, print_info = print_info)
+		self.base_case = DiscountedCashFlow(self.input_file, print_info = print_info)
 
 		self.meta_modules = {}
 		self.meta_workflow(self.meta_modules)

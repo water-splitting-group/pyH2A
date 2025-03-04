@@ -2,7 +2,7 @@ import types
 import numpy as np
 import matplotlib.pyplot as plt
 from pyH2A.Utilities.output_utilities import make_bold, millify, bottom_offset, Figure_Lean
-from pyH2A.Discounted_Cash_Flow import Discounted_Cash_Flow
+from pyH2A.DiscountedCashFlow import DiscountedCashFlow
 
 class Cost_Contributions_Analysis:
 	'''Reading cost contributions from DCF output and plotting it.
@@ -26,7 +26,7 @@ class Cost_Contributions_Analysis:
 			input_file : str
 			) -> None:
 		# Initialize the cost contributions analysis with the provided input file
-		self.base_case = Discounted_Cash_Flow(input_file, print_info = False)
+		self.base_case = DiscountedCashFlow(input_file, print_info = False)
 
 	def cost_breakdown_plot(
 			self, 

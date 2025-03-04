@@ -6,6 +6,8 @@ from pathlib import Path
 import ast
 import operator
 import numpy as np
+from pyH2A import DiscountedCashFlow
+import pint
 
 def import_plugin(plugin_name, plugin_module):
 	'''Importing module.
@@ -375,13 +377,22 @@ def set_by_path(root, items, value, value_type = 'value'):
 	else:
 		get_by_path(root, items[:-1])[items[-1]] = value
 
-def insert(class_object, top_key, middle_key, bottom_key, value, name, 
-		   print_info = True, add_processed = True, insert_path = True):
+def insert(
+		class_object: DiscountedCashFlow, 
+		top_key: str, 
+		middle_key: str, 
+		bottom_key: str, 
+		value: pint.Quantity, 
+		name: str, 
+		print_info = True, 
+		add_processed = True, 
+		insert_path = True
+		) -> None:
 	'''Insert function used in plugins. 
 
 	Parameters
 	----------
-	class_object: Discounted_Cash_Flow object
+	class_object: DiscountedCashFlow object
 		Dicounted_Cash_Flow object with .inp attribute, which is modified.
 	top_key : str
 		Top key.
@@ -416,24 +427,22 @@ def insert(class_object, top_key, middle_key, bottom_key, value, name,
 		class_object.inp[top_key][middle_key][bottom_key] = value
 		if insert_path is True: 
 			class_object.inp[top_key][middle_key]['Path'] = 'None' # setting path to "None" to avoid processing
-		if print_info is True: print("'{0} > {1} > {2}' is being overwritten by {3}".format(top_key, 
-																							middle_key, 
-																							bottom_key, 
-																							name))
+		if print_info is True: 
+			print(f"'{top_key} > {middle_key} > {bottom_key}' is being overwritten by {name}")
 
 	except KeyError:
 		try:
 			class_object.inp[top_key][middle_key] = {}
 			class_object.inp[top_key][middle_key][bottom_key] = value
-			if print_info is True: print("'{0} > {1}' is being created by {2}".format(top_key, 
-																					  middle_key, 
-																					  name))
+			if print_info is True:
+				print(f"'{top_key} > {middle_key}' is being created by {name}")
 
 		except KeyError:
 			class_object.inp[top_key] = {}
 			class_object.inp[top_key][middle_key] = {}
 			class_object.inp[top_key][middle_key][bottom_key] = value
-			if print_info is True: print("'{0}' is being created by {1}".format(top_key, name))
+			if print_info is True:
+				print(f"'{top_key}' is being created by {name}")
 
 	if add_processed is True:
 		class_object.inp[top_key][middle_key]['Processed'] = 'Yes'
@@ -670,7 +679,6 @@ def process_input(dictionary, top_key, key, bottom_key, path_key = 'Path', add_p
 
 	At the end, "Processed" is added.
 	'''
-
 	entry = dictionary[top_key][key][bottom_key]
 
 	if 'Processed' in dictionary[top_key][key]:
@@ -783,8 +791,8 @@ def sum_all_tables(dictionary, table_group, bottom_key, insert_total = False,
 	insert_total : bool, optional
 		If `insert_total` is True, the total of each table is inserted in the
 		respective table.
-	class_object : Discounted_Cash_Flow object
-		Discounted_Cash_Flow object whose .inp attribute is modified.
+	class_object : DiscountedCashFlow object
+		DiscountedCashFlow object whose .inp attribute is modified.
 	middle_key_insertion : str, optional
 		Middle key used for insertion of total.
 	bottom_key_insertion : str, optional

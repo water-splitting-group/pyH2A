@@ -6,7 +6,7 @@ from timeit import default_timer as timer
 
 import pyH2A.Utilities.find_nearest as fn
 from pyH2A.Utilities.input_modification import convert_input_to_dictionary,parse_parameter, parse_parameter_to_array, get_by_path, set_by_path, read_textfile, file_import, reverse_parameter_to_string
-from pyH2A.Discounted_Cash_Flow import Discounted_Cash_Flow, discounted_cash_flow_function, discounted_cash_flow_function_1D
+from pyH2A.DiscountedCashFlow import DiscountedCashFlow, DiscountedCashFlow_function, DiscountedCashFlow_function_1D
 from pyH2A.Utilities.output_utilities import make_bold, format_scientific, dynamic_value_formatting, insert_image, Figure_Lean
 
 class Optimization_Analysis:
@@ -26,7 +26,7 @@ class Optimization_Analysis:
 
 		# start = timer()
 
-		# Discounted_Cash_Flow(self.inp, print_info = False)
+		# DiscountedCashFlow(self.inp, print_info = False)
 
 		# end = timer()
 		# print(end - start)
@@ -66,7 +66,7 @@ class Optimization_Analysis:
 		printing results.
 		'''
 
-		p = differential_evolution(func = discounted_cash_flow_function_1D, 
+		p = differential_evolution(func = DiscountedCashFlow_function_1D, 
 								   bounds = self.bounds,
 								   args = (self.parameters, self.inp))
 

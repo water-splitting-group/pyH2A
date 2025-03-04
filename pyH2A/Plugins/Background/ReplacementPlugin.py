@@ -1,9 +1,11 @@
-from pyH2A.Utilities.input_modification import insert, process_input, sum_all_tables, process_table
+from pyH2A.Utilities.input_modification import sum_all_tables, process_input
+from pyH2A.Plugins.Plugin import Plugin
+from pyH2A.DiscountedCashFlow import DiscountedCashFlow
 import pyH2A.Utilities.find_nearest as fn
 import numpy as np
 import logging
 
-class ReplacementPlugin:
+class ReplacementPlugin(Plugin):
 	'''Calculating yearly overall replacement costs based on one-time replacement costs and frequency.
 
 	Parameters
@@ -27,11 +29,14 @@ class ReplacementPlugin:
 		Total inflated replacement costs (sum of `Planned Replacement` entries and
 		unplanned replacement costs).
 	'''
-	def __init__(self, dcf, print_info):
+	def __init__(
+			self, 
+			dcf: DiscountedCashFlow
+			) -> None:
 		# process_table(dcf.inp, 'Planned Replacement', ['Cost ($)', 'Frequency (years)'], 
 		# 				path_key = ['Path', 'Frequency Path'])
 
-		self.dcf = dcf
+		super().__init__(dcf)
 
 		self.logger = logging.getLogger("pyH2A.Plugins.Background.ReplacementPlugin")
 		self.logger.info("Starting ReplacementPlugin")
@@ -39,22 +44,14 @@ class ReplacementPlugin:
 		self.initialize_yearly_costs()
 		self.initialize_contributions()
 		self.calculate_planned_replacement()
-		self.unplanned_replacement(print_info)
+		self.unplanned_replacement()
 
 		self.contributions['Total'] = np.sum(self.yearly)
 		
 		yearly_inflated = self.yearly * self.dcf.inflation_correction * self.dcf.inflation_factor
 
-		inserts = [
-			('Replacement', 'Total', yearly_inflated)
-		]
-		self.insert_table(inserts, print_info)
-
-	def process_table(self, table_keys):
-		'''Processes input table.
-		'''
-		for table_key in table_keys:
-			process_table(self.dcf.inp, table_key, 'Value')
+		self.insert_queue.append(('Replacement', 'Total', yearly_inflated))
+		self.insert_table()
 
 	def initialize_yearly_costs(self):
 		'''Initializes ndarray filled with zeros with same length as dcf.inflation_factor.
@@ -75,29 +72,22 @@ class ReplacementPlugin:
 		'''
 
 		for key in self.dcf.inp['Planned Replacement']:
-			planned_replacement = Planned_Replacement(self.dcf.inp['Planned Replacement'][key], key, self.dcf)
+			planned_replacement = PlannedReplacement(self.dcf.inp['Planned Replacement'][key], key, self.dcf)
 			self.yearly[planned_replacement.years_idx] += planned_replacement.cost
 			self.contributions['Data'][key] = planned_replacement.total_cost
 
-	def unplanned_replacement(self, print_info):
+	def unplanned_replacement(self):
 		'''Calculating unplanned replacement costs by appling ``sum_all_tables()`` to 
 		"Unplanned Replacement" group.
 		'''
 
 		self.unplanned = sum_all_tables(self.dcf.inp, 'Unplanned Replacement', 'Value', 
 										insert_total = True, class_object = self.dcf, 
-										print_info = print_info)
+										print_info = self.dcf.print_info)
 		self.yearly += self.unplanned
 		self.contributions['Data']['Unplanned Replacement'] = np.sum(np.ones_like(self.yearly) * self.unplanned)
 
-	def insert_table(self, inserts, print_info):
-		'''Inserts the calculated values into the DCF.
-		'''
-		for key, subkey, value in inserts:
-			insert(self.dcf, key, subkey, 'Value', value, __name__, print_info)
-			self.logger.debug(f"{key} > {subkey} > Value: {value}")
-
-class Planned_Replacement:
+class PlannedReplacement:
 	'''
 	Individual planned replacement objects.
 
@@ -112,13 +102,16 @@ class Planned_Replacement:
 
 		self.calculate_yearly_cost(dictionary, key)
 		
-	def calculate_yearly_cost(self, dictionary, key):
+	def calculate_yearly_cost(
+			self, 
+			dictionary: dict, 
+			key: str
+			) -> None:
 		'''Calculation of yearly replacement costs.
 
 		Replacement costs are billed annually, replacements which are performed at a non-integer rate 
 		are corrected using non_integer_correction.
 		'''
-
 		replacement_frequency = int(np.ceil(dictionary['Frequency (years)']))
 		non_integer_correction = replacement_frequency / dictionary['Frequency (years)']
 

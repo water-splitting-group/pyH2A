@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-from pyH2A.Discounted_Cash_Flow import Discounted_Cash_Flow
+from pyH2A.DiscountedCashFlow import DiscountedCashFlow
 from pyH2A.Utilities.input_modification import convert_input_to_dictionary, parse_parameter, get_by_path, set_by_path
 from pyH2A.Utilities.output_utilities import make_bold, Figure_Lean, format_value_dollar_sign
 
@@ -38,7 +38,7 @@ class Waterfall_Analysis:
 
 	def __init__(self, input_file):
 		self.inp = convert_input_to_dictionary(input_file)
-		self.base_case = Discounted_Cash_Flow(input_file, print_info = False)
+		self.base_case = DiscountedCashFlow(input_file, print_info = False)
 		self.results = self.perform_waterfall_analysis()
 
 
@@ -97,7 +97,7 @@ class Waterfall_Analysis:
 
 			output[variable]['Previous Changes'][name] = shown_value					
 
-		dcf = Discounted_Cash_Flow(inp_modified, print_info = False)
+		dcf = DiscountedCashFlow(inp_modified, print_info = False)
 
 		output[variable]['Value'] = dcf.h2_cost
 		output[variable]['Shown Value'] = shown_value

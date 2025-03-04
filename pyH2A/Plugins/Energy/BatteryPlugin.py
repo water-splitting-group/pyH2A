@@ -1,3 +1,4 @@
+from pyH2A.DiscountedCashFlow import DiscountedCashFlow
 from pyH2A.Plugins.Plugin import Plugin
 import numpy as np
 import logging
@@ -33,10 +34,9 @@ class BatteryPlugin(Plugin):
     '''
     def __init__(
             self, 
-            dcf : dict, 
-            print_info : bool
+            dcf : DiscountedCashFlow
             ) -> None:
-        super().__init__(dcf, print_info)
+        super().__init__(dcf)
 
         self.logger = logging.getLogger("pyH2A.Plugins.Energy.BatteryPlugin")
         self.logger.info("Starting BatteryPlugin")

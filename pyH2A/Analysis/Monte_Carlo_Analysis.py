@@ -12,7 +12,7 @@ from matplotlib.transforms import Bbox
 
 import pyH2A.Utilities.find_nearest as fn
 from pyH2A.Utilities.input_modification import convert_input_to_dictionary, parse_parameter, parse_parameter_to_array, get_by_path, set_by_path, read_textfile, file_import, reverse_parameter_to_string
-from pyH2A.Discounted_Cash_Flow import Discounted_Cash_Flow
+from pyH2A.DiscountedCashFlow import DiscountedCashFlow
 from pyH2A.Utilities.output_utilities import make_bold, format_scientific, dynamic_value_formatting, insert_image, Figure_Lean
 
 def select_non_reference_value(
@@ -344,7 +344,7 @@ class Monte_Carlo_Analysis:
 		-----
 		Performs H2 cost calulation by modifying a copy of self.inp based 
 		on the provided values and `self.parameters`. The modified copy of 
-		`self.inp` is then passed to `Discounted_Cash_Flow()`.
+		`self.inp` is then passed to `DiscountedCashFlow()`.
 		A parameter value can be either a value replacing the existing one 
 		in self.inp (Type = value) or it can be a factor which will be multiplied 
 		by the existing value.
@@ -358,7 +358,7 @@ class Monte_Carlo_Analysis:
 			for key, parameter in parameters.items():
 				set_by_path(input_dict, parameter['Parameter'], value_set[parameter['Index']], value_type = parameter['Type'])
 
-			dcf = Discounted_Cash_Flow(input_dict, print_info = False)
+			dcf = DiscountedCashFlow(input_dict, print_info = False)
 			h2_cost.append(dcf.h2_cost)
 
 		return np.asarray(h2_cost)

@@ -1,8 +1,10 @@
 from pyH2A.Utilities.input_modification import insert, sum_all_tables, process_table, read_textfile
+from pyH2A.DiscountedCashFlow import DiscountedCashFlow
+from pyH2A.Plugins.Plugin import Plugin
 import pyH2A.Utilities.find_nearest as fn
 import numpy as np
 
-class VariableOperatingCostPlugin:
+class VariableOperatingCostPlugin(Plugin):
 	'''Calculation of variable operating costs.
 
 	Parameters
@@ -38,26 +40,34 @@ class VariableOperatingCostPlugin:
 		Sum of `Other Variable Operating Cost` entries.
 	'''
 
-	def __init__(self, dcf, print_info):
-		self.dcf = dcf
-		
-		process_table(self.dcf.inp, 'Technical Operating Parameters and Specifications', 'Value')
+	def __init__(
+			self,
+			dcf: DiscountedCashFlow
+			) -> None:
+		super().__init__(dcf)
+		table_keys = ['Technical Operating Parameters and Specifications']
+		self.process_table(table_keys)
 		process_table(self.dcf.inp, 'Utilities', ['Cost', 'Usage per kg H2'], path_key = ['Path', 'Usage Path'])
+		self.run_plugin()
+		self.insert_table()
 
+	def run_plugin(
+			self
+			) -> None:
 		self.calculate_utilities_cost()
-		self.other_variable_costs(print_info)
+		self.other_variable_costs()
 
-		insert(self.dcf, 'Variable Operating Costs', 'Total', 'Value', 
-				self.utilities + self.other, __name__, print_info = print_info)
-		insert(self.dcf, 'Variable Operating Costs', 'Utilities', 'Value', 
-				self.utilities, __name__, print_info = print_info)
-		insert(self.dcf, 'Variable Operating Costs', 'Other', 'Value', 
-				self.other, __name__, print_info = print_info)
+		self.insert_queue.extend([
+			('Variable Operating Costs', 'Total', self.utilities + self.other),
+			('Variable Operating Costs', 'Utilities', self.utilities),
+			('Variable Operating Costs', 'Other', self.other)
+		])
 
-	def calculate_utilities_cost(self):
+	def calculate_utilities_cost(
+			self
+			) -> None:
 		'''Iterating over all utilities and computing summed yearly costs.
 		'''
-
 		self.utilities = 0.
 
 		for key in self.dcf.inp['Utilities']:
@@ -66,13 +76,15 @@ class VariableOperatingCostPlugin:
 
 		self.utilities = self.utilities * self.dcf.inp['Technical Operating Parameters and Specifications']['Output per Year']['Value']
 
-	def other_variable_costs(self, print_info):
+	def other_variable_costs(
+			self
+			) -> None:
 		'''Applying ``sum_all_tables()`` to "Other Variable Operating Cost" group.
 		'''
 
 		self.other = self.dcf.chemical_inflator * sum_all_tables(self.dcf.inp, 'Other Variable Operating Cost', 'Value', 
 																insert_total = True, class_object = self.dcf, 
-																print_info = print_info)
+																print_info = self.dcf.print_info)
 
 class Utility:
 	'''Individual utility objects.

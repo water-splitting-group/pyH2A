@@ -1,8 +1,9 @@
 import numpy as np
-from pyH2A.Utilities.input_modification import insert, process_table
+from pyH2A.Plugins.Plugin import Plugin
+from pyH2A.DiscountedCashFlow import DiscountedCashFlow
 import logging
 
-class MultipleModulesPlugin:
+class MultipleModulesPlugin(Plugin):
 	''' Simulating mutliple plant modules which are operated together, assuming that only labor cost is reduced. 
 	Calculation of required labor to operate all modules, scaling down labor requirement to one module for subsequent calculations.
 
@@ -25,8 +26,11 @@ class MultipleModulesPlugin:
 		Number of 8-hour equivalent staff required for operating one plant module.
 	''' 
 
-	def __init__(self, dcf, print_info):
-		self.dcf = dcf
+	def __init__(
+			self, 
+			dcf: DiscountedCashFlow
+			):
+		super().__init__(dcf)
 
 		self.logger = logging.getLogger("pyH2A.Plugins.Background.MultipleModulesPlugin")
 		self.logger.info("Starting MultipleModulesPlugin")
@@ -36,14 +40,7 @@ class MultipleModulesPlugin:
 
 		self.required_staff()
 
-		inserts = [
-			('Fixed Operating Costs', 'staff', self.staff_per_module)
-		]
-		self.insert_table(inserts, print_info)
-
-	def process_table(self, table_keys):
-		for table_key in table_keys:
-			process_table(self.dcf.inp, table_key, 'Value')
+		self.insert_table()
 
 	def required_staff(self):
 		'''Calculation of total required staff for all plant modules, then scaling down to staff
@@ -54,11 +51,5 @@ class MultipleModulesPlugin:
 		staff = np.ceil(area / self.dcf.inp['Fixed Operating Costs']['area']['Value']) + self.dcf.inp['Fixed Operating Costs']['supervisor']['Value']
 		staff = staff * self.dcf.inp['Fixed Operating Costs']['shifts']['Value']
 
-		self.staff_per_module = staff / self.dcf.inp['Technical Operating Parameters and Specifications']['Plant Modules']['Value']
-
-	def insert_table(self, inserts, print_info):
-		'''Inserts the calculated values into the DCF.
-        '''
-		for key, subkey, value in inserts:
-			insert(self.dcf, key, subkey, 'Value', value, __name__, print_info)
-			self.logger.debug(f"{key} > {subkey} > Value: {value}")
+		staff_per_module = staff / self.dcf.inp['Technical Operating Parameters and Specifications']['Plant Modules']['Value']
+		self.insert_queue.append(('Fixed Operating Costs', 'staff', staff_per_module))

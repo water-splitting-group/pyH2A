@@ -1,4 +1,4 @@
-from pyH2A import Discounted_Cash_Flow
+from pyH2A.DiscountedCashFlow import DiscountedCashFlow
 from pyH2A.Utilities.input_modification import read_textfile, hourly_to_daily_power
 from pyH2A.Plugins.Plugin import Plugin
 import numpy as np
@@ -51,10 +51,9 @@ class PhotovoltaicPlugin(Plugin):
 
 	def __init__(
 			self, 
-			dcf: dict, 
-			print_info: bool = False
+			dcf: DiscountedCashFlow
 			) -> None:
-		super().__init__(dcf, print_info)
+		super().__init__(dcf)
 
 		self.logger: logging.Logger = logging.getLogger("pyH2A.Plugins.Energy.Photosoltaic_Plugin")
 		self.logger.info("Starting PhotovoltaicPlugin")
@@ -69,8 +68,8 @@ class PhotovoltaicPlugin(Plugin):
 			) -> None:
 		'''Run the Photovoltaic plugin.
 		'''
-		tea = PhotovoltaicPlugin_TEA(self)
-		lca = PhotovoltaicPlugin_LCA(self)
+		tea = PhotovoltaicPluginTEA(self)
+		lca = PhotovoltaicPluginLCA(self)
 
 		tea.calculate_power_production()
 		tea.calculate_scaling_factors()
@@ -78,7 +77,7 @@ class PhotovoltaicPlugin(Plugin):
 		lca.calculate_amount_of_PV()
 		lca.calculate_total_power_generation()
 
-class PhotovoltaicPlugin_TEA:
+class PhotovoltaicPluginTEA:
 	'''Handles techno-economic analysis calculations for the photovoltaic plugin.'''
 	def __init__(
 			self,
@@ -160,7 +159,7 @@ class PhotovoltaicPlugin_TEA:
 		])
 
 
-class PhotovoltaicPlugin_LCA:
+class PhotovoltaicPluginLCA:
 	'''Handles life-cycle assessment (LCA) calculations for the photovoltaic plugin.
 	'''
 	def __init__(

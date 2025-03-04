@@ -15,7 +15,8 @@ dependencies = [
     "matplotlib",
     "numpydoc",
     "autodocsumm",
-    "furo"
+    "furo",
+    "pint"
 ]
 
 [tool.setuptools]
