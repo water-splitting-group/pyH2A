@@ -1,6 +1,12 @@
 from pyH2A.Plugins.Plugin import Plugin
 from pyH2A.DiscountedCashFlow import DiscountedCashFlow
 from pyH2A.Utilities.input_modification import insert, process_table
+import numpy as np
+import logging
+
+MOLAR_RATIO_WATER = 18.01528 / 2.016
+MOLAR_RATIO_O2_H2 = 31.999 / 2.016
+DENSITY_WATER_KG_PER_M3 = 997
 
 class ReverseOsmosisPlugin(Plugin):
     '''Simulation of purified water production using reverse osmosis.
@@ -33,6 +39,10 @@ class ReverseOsmosisPlugin(Plugin):
             dcf
             ) -> None:
         super().__init__(dcf)
+
+        self.logger: logging.Logger = logging.getLogger("pyH2A.Plugins.Hydrogen.ReverseOsmosisPlugin")
+        self.logger.info("Starting ReverseOsmosisPlugin")
+
         table_keys = ['Reverse Osmosis', 'Technical Operating Parameters and Specifications']
         self.process_table(table_keys)
         self.run_plugin()
@@ -42,9 +52,12 @@ class ReverseOsmosisPlugin(Plugin):
             self
             ) -> None:
         tea = ReverseOsmosisPluginTEA(self)
- 
+        lca = ReverseOsmosisPluginLCA(self)
+
         tea.calculate_electricity_demand()
         tea.calculate_reverse_osmosis_scaling()
+        lca.calculate_amount_brine()
+        lca.calculate_amount_o2()
         
 class ReverseOsmosisPluginTEA:
     '''Handles life-cycle assessment (LCA) calculations for the reverse osmosis plugin.
@@ -61,17 +74,14 @@ class ReverseOsmosisPluginTEA:
         '''Calculation of electricity demand for reverse osmosis based on
         yearly amount of hydrogen production.
         '''
-        MOLAR_RATIO_WATER = 18.01528 / 2.016
-        DENSITY_WATER_KG_PER_M3 = 997
+        self.plugin.h2_produced_per_year_kg = self.plugin.dcf.inp['Technical Operating Parameters and Specifications']['Output per Year']['Value']
 
-        output_per_year_kg_H2 = self.plugin.dcf.inp['Technical Operating Parameters and Specifications']['Output per Year']['Value']
+        self.plugin.fresh_water_demand_kg = self.plugin.h2_produced_per_year_kg * MOLAR_RATIO_WATER
+        fresh_water_demand_m3 = self.plugin.fresh_water_demand_kg / DENSITY_WATER_KG_PER_M3
 
-        fresh_water_demand_kg = output_per_year_kg_H2 * MOLAR_RATIO_WATER
-        fresh_water_demand_m3 = fresh_water_demand_kg / DENSITY_WATER_KG_PER_M3
+        self.plugin.sea_water_demand_m3 = fresh_water_demand_m3 / self.plugin.dcf.inp['Reverse Osmosis']['Recovery Rate']['Value']
 
-        self.sea_water_demand_m3 = fresh_water_demand_m3 / self.plugin.dcf.inp['Reverse Osmosis']['Recovery Rate']['Value']
-
-        electricity_demand_kWh = self.sea_water_demand_m3 * self.plugin.dcf.inp['Reverse Osmosis']['Power Demand (kWh/m3)']['Value']
+        electricity_demand_kWh = self.plugin.sea_water_demand_m3 * self.plugin.dcf.inp['Reverse Osmosis']['Power Demand (kWh/m3)']['Value']
         self.electricity_demand_kWh = electricity_demand_kWh[self.plugin.dcf.inp['Financial Input Values']['construction time']['Value']:]
 
         self.plugin.insert_queue.append(
@@ -92,9 +102,9 @@ class ReverseOsmosisPluginTEA:
         yearly_operating_hours = average_daily_operating_hours * DAYS_IN_A_YEAR
         
         try:
-            maximum_yearly_sea_water_demand_m3 = max(self.sea_water_demand_m3)
+            maximum_yearly_sea_water_demand_m3 = max(self.plugin.sea_water_demand_m3)
         except TypeError:
-            maximum_yearly_sea_water_demand_m3 = self.sea_water_demand_m3
+            maximum_yearly_sea_water_demand_m3 = self.plugin.sea_water_demand_m3
 
         maximum_sea_water_processing_m3_per_hour = maximum_yearly_sea_water_demand_m3 / yearly_operating_hours
         self.plugin.insert_queue.append(
@@ -102,3 +112,27 @@ class ReverseOsmosisPluginTEA:
         )
         insert(self.plugin.dcf, 'Power Consumption', 'Reverse Osmosis Consumption (kWh, yearly)', 'Type',
                 'flexible', __name__, print_info = self.plugin.dcf.print_info)
+        
+class ReverseOsmosisPluginLCA:
+
+    def __init__(
+            self, 
+            plugin: ReverseOsmosisPlugin
+            ) -> None:
+        self.plugin = plugin
+    
+    def calculate_amount_brine(self):
+        total_demand_sea_water_m3 = np.sum(self.plugin.sea_water_demand_m3)
+        total_demand_fresh_water_m3 = np.sum(self.plugin.fresh_water_demand_kg)
+        total_demand_brine_kg = total_demand_fresh_water_m3 * 0.035
+        self.plugin.insert_queue.extend([
+            ('LCA Parameters Photovoltaic', 'Sea water demand (m3)', total_demand_sea_water_m3),
+			('LCA Parameters Photovoltaic', 'Mass of brine (kg)', total_demand_brine_kg),
+			('LCA Parameters Photovoltaic', 'Amount of fresh water (m3)', total_demand_fresh_water_m3)
+        ])
+    
+    def calculate_amount_o2(self):
+        total_o2_produced_kg = np.sum(1/2 * self.plugin.h2_produced_per_year_kg * MOLAR_RATIO_O2_H2)
+        self.plugin.insert_queue.append(
+            ('LCA Parameters Photovoltaic', 'O2 produced (kg)', total_o2_produced_kg)
+        )

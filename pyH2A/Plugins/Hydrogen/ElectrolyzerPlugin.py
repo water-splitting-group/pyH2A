@@ -2,6 +2,7 @@ from pyH2A.Utilities.input_modification import hourly_to_daily_power, insert
 from pyH2A.Plugins.Plugin import Plugin
 from pyH2A.DiscountedCashFlow import DiscountedCashFlow
 import numpy as np
+import logging
 
 class ElectrolyzerPlugin(Plugin):
     '''Simulation of hydrogen production using electrolysis.
@@ -60,6 +61,10 @@ class ElectrolyzerPlugin(Plugin):
             dcf: DiscountedCashFlow
             ) -> None:
         super().__init__(dcf)
+
+        self.logger: logging.Logger = logging.getLogger("pyH2A.Plugins.Hydrogen.ElectrolyserPlugin")
+        self.logger.info("Starting ElectrolyserPlugin")
+
         table_keys = ['Financial Input Values', 'CAPEX Multiplier', 'Electrolyzer', 'Power Generation']
         self.process_table(table_keys)
         self.run_plugin()
@@ -69,9 +74,12 @@ class ElectrolyzerPlugin(Plugin):
             self
             ) -> None:
         tea = ElectrolyserPluginTEA(self)
+        lca = ElectrolyserPluginLCA(self)
 
         tea.calculate_H2_production()
-        tea.calculate_replacement()
+        lca.calculate_h2_production()
+        tea.calculate_replacement_frequency()
+        lca.calculate_production_maintenance()
         tea.calculate_scaling_factors()
 
 class ElectrolyserPluginTEA:
@@ -90,18 +98,20 @@ class ElectrolyserPluginTEA:
         H2 production is calculated.
         '''
 
-        power_generation_yearly_data = self.plugin.dcf.inp['Power Generation']['Available Power (hourly, kWh)']['Value']
+        power_generation_yearly_data: dict[np.ndarray] = self.plugin.dcf.inp['Power Generation']['Available Power (hourly, kWh)']['Value']
 
-        yearly_data = []
-        yearly_data_unused_power = {}
-        yearly_data_unused_power_daily = {}
+        yearly_data: list = []
+        yearly_data_unused_power: dict = {}
+        yearly_data_unused_power_daily: dict = {}
 
         for year in self.plugin.dcf.operation_years:
 
-            power_generation = power_generation_yearly_data[year]
+            power_generation: np.ndarray = power_generation_yearly_data[year]
 
-            (electrolyzer_power_demand, 
-             power_increase) = calculate_electrolyzer_power_demand(
+            (
+                electrolyzer_power_demand, 
+                power_increase
+            ) = calculate_electrolyzer_power_demand(
                 self.plugin.dcf.inp['Electrolyzer']['Power requirement increase per year']['Value'],
                 self.plugin.dcf.inp['Electrolyzer']['Nominal Power (kW)']['Value'],
                 year
@@ -130,16 +140,16 @@ class ElectrolyserPluginTEA:
             yearly_data_unused_power[year] = unused_power
             yearly_data_unused_power_daily[year] = hourly_to_daily_power(unused_power)
 
-        yearly_data = np.asarray(yearly_data)
-        self.operation_hours = yearly_data[:,2]
-        self.h2_production = np.concatenate([
+        yearly_data: np.ndarray = np.asarray(yearly_data)
+        self.plugin.operation_hours = yearly_data[:,2]
+        self.plugin.h2_production = np.concatenate([
             np.zeros(self.plugin.dcf.inp['Financial Input Values']['construction time']['Value']), 
             yearly_data[:,1]
         ])
 
         self.plugin.insert_queue.extend([
-            ('Electrolyzer','H2 Production (yearly, kg)', self.h2_production),
-            ('Technical Operating Parameters and Specifications', 'Plant Design Capacity (kg of H2/day)', self.h2_production/365.),
+            ('Electrolyzer','H2 Production (yearly, kg)', self.plugin.h2_production),
+            ('Technical Operating Parameters and Specifications', 'Plant Design Capacity (kg of H2/day)', self.plugin.h2_production/365.),
             ('Technical Operating Parameters and Specifications', 'Operating Capacity Factor (%)', 1.),
             ('Electrolyzer', 'Yearly Operation Data', yearly_data),
             ('Power Generation', 'Available Power (hourly, kWh)', yearly_data_unused_power),
@@ -168,18 +178,40 @@ class ElectrolyserPluginTEA:
 
         return self.plugin.dcf.inp['CAPEX Multiplier']['Multiplier']['Value'] ** number_of_tenfold_increases
     
-    def calculate_replacement(
+    def calculate_replacement_frequency(
             self
             ) -> None:
-        replacement_frequency = calculate_stack_replacement(
-            self.operation_hours, 
+        '''Calculation of stack replacement frequency for electrolyzer.
+        '''
+        replacement_frequency, self.plugin.number_of_replacements = calculate_stack_replacement(
+            self.plugin.operation_hours, 
             self.plugin.dcf.inp['Electrolyzer']['Replacement time (h)']['Value']
         )
         insert(self.plugin.dcf, 
             'Planned Replacement', 'Electrolyzer Stack Replacement', 'Frequency (years)', replacement_frequency, 
             __name__, print_info = self.plugin.dcf.print_info, add_processed = False, insert_path = False
         )
-        
+
+class ElectrolyserPluginLCA:
+
+    def __init__(
+            self, 
+            plugin: ElectrolyzerPlugin
+            ) -> None:
+        self.plugin = plugin
+
+    def calculate_production_maintenance(
+            self
+            ) -> None:
+        production_maintenance_electrolyser = 1 + self.plugin.number_of_replacements
+        self.plugin.insert_queue.append(('LCA Parameters Photovoltaic', 'Production and maintenance electrolyzer', production_maintenance_electrolyser))
+    
+    def calculate_h2_production(self):
+        total_h2_produced = np.sum(self.plugin.h2_production)
+        self.plugin.insert_queue.append(
+            ('LCA Parameters Photovoltaic', 'H2 produced (kg)', total_h2_produced)
+        )
+
 def calculate_stack_replacement(
         operating_hours,
         replacement_time
@@ -191,8 +223,7 @@ def calculate_stack_replacement(
 
     number_of_replacements = np.floor_divide(stack_usage[-1], 1)
     replacement_frequency = len(stack_usage) / (number_of_replacements + 1.)
-    return replacement_frequency
-    
+    return replacement_frequency, number_of_replacements
 
 def calculate_hydrogen_production(
         power_consumption,
@@ -210,7 +241,7 @@ def calculate_electrolyzer_power_demand(
         power_requirement_increase,
         nominal_power,
         year
-        ) -> None:
+        ) -> tuple[float,float]:
     '''Calculation of yearly increase in electrolyzer power demand.
     '''
     increase = (1. + power_requirement_increase) ** year

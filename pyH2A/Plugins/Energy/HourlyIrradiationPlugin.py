@@ -93,7 +93,7 @@ def converter_function(
 		string: str
 		) -> float:
 	'''Converter function for datetime of hourly irradiation data.'''
-	split = string.split(':')
+	split = str(string).split(':')
 	return float(split[1][:2]) #- 0.5
 
 def import_Chang_data(

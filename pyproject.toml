@@ -16,7 +16,8 @@ dependencies = [
     "numpydoc",
     "autodocsumm",
     "furo",
-    "pint"
+    "pint",
+    "nptyping"
 ]
 
 [tool.setuptools]

@@ -4,6 +4,8 @@ from pyH2A.Utilities.input_modification import daily_to_yearly_power, insert
 from pyH2A.Plugins.Hydrogen.ElectrolyzerPlugin import calculate_electrolyzer_power_demand, calculate_hydrogen_production, calculate_stack_replacement
 import numpy as np
 
+HOURS_IN_A_YEAR = 8760
+
 class StoredPowerElectrolysisPlugin(Plugin):
     '''Simulation of hydrogen production using electrolysis.
 
@@ -74,7 +76,6 @@ class StoredPowerElectrolysisPluginTEA:
             ) -> None:
         '''
         '''
-        HOURS_IN_A_YEAR = 8760
 
         electrolyzer_yearly_data = self.plugin.dcf.inp['Electrolyzer']['Yearly Operation Data']['Value']
         remaining_run_time_per_year_in_hours = HOURS_IN_A_YEAR - electrolyzer_yearly_data[:,2]
@@ -119,7 +120,7 @@ class StoredPowerElectrolysisPluginTEA:
     def calculate_replacement(
             self
             ) -> None:
-        replacement_frequency = calculate_stack_replacement(
+        replacement_frequency, _ = calculate_stack_replacement(
             self.operation_hours, 
             self.plugin.dcf.inp['Electrolyzer']['Replacement time (h)']['Value']
         )
@@ -128,3 +129,13 @@ class StoredPowerElectrolysisPluginTEA:
                 insert_path = False)
         insert(self.plugin.dcf, 'Power Consumption', 'Stored Power Electrolysis (kWh, yearly)', 'Type',
                 'on_demand', __name__, print_info = self.plugin.dcf.print_info)
+
+class StoredPowerElectrolysisPlugin:
+
+    def __init__(
+            self, 
+            plugin: StoredPowerElectrolysisPlugin
+            ) -> None:
+        self.plugin = plugin
+    
+    def 
