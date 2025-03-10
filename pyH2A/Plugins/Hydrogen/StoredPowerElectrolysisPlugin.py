@@ -137,5 +137,3 @@ class StoredPowerElectrolysisPlugin:
             plugin: StoredPowerElectrolysisPlugin
             ) -> None:
         self.plugin = plugin
-    
-    def 
