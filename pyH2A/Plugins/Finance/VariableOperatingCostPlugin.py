@@ -3,6 +3,8 @@ from pyH2A.DiscountedCashFlow import DiscountedCashFlow
 from pyH2A.Plugins.Plugin import Plugin
 import pyH2A.Utilities.find_nearest as fn
 import numpy as np
+import logging
+
 
 class VariableOperatingCostPlugin(Plugin):
 	'''Calculation of variable operating costs.
@@ -45,6 +47,10 @@ class VariableOperatingCostPlugin(Plugin):
 			dcf: DiscountedCashFlow
 			) -> None:
 		super().__init__(dcf)
+
+		self.logger = logging.getLogger("pyH2A.Plugins.Finance.VariableOperatingCostPlugin")
+		self.logger.info("Starting VariableOperatingCostPlugin")
+
 		table_keys = ['Technical Operating Parameters and Specifications']
 		self.process_table(table_keys)
 		process_table(self.dcf.inp, 'Utilities', ['Cost', 'Usage per kg H2'], path_key = ['Path', 'Usage Path'])
@@ -81,10 +87,10 @@ class VariableOperatingCostPlugin(Plugin):
 			) -> None:
 		'''Applying ``sum_all_tables()`` to "Other Variable Operating Cost" group.
 		'''
-
 		self.other = self.dcf.chemical_inflator * sum_all_tables(self.dcf.inp, 'Other Variable Operating Cost', 'Value', 
 																insert_total = True, class_object = self.dcf, 
 																print_info = self.dcf.print_info)
+
 
 class Utility:
 	'''Individual utility objects.

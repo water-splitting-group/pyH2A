@@ -4,6 +4,7 @@ from pyH2A.Plugins.Plugin import Plugin
 import numpy as np
 import logging
 
+
 class PhotovoltaicPlugin(Plugin):
 	'''Simulation of electricity production using PV.
 
@@ -76,6 +77,7 @@ class PhotovoltaicPlugin(Plugin):
 		tea.calculate_area()
 		lca.calculate_amount_of_PV()
 		lca.calculate_total_power_generation()
+
 
 class PhotovoltaicPluginTEA:
 	'''Handles techno-economic analysis calculations for the photovoltaic plugin.'''

@@ -3,6 +3,8 @@ from pyH2A.DiscountedCashFlow import DiscountedCashFlow
 from pyH2A.Plugins.Plugin import Plugin
 from pyH2A.Utilities.Energy_Conversion import Energy, kWh, eV
 from pyH2A.Utilities.input_modification import insert
+import logging
+
 
 class PhotocatalyticPlugin(Plugin):
 	'''Simulating H2 production using photocatalytic water splitting in plastic baggie reactors.
@@ -87,6 +89,9 @@ class PhotocatalyticPlugin(Plugin):
 			) -> None:
 		super().__init__(dcf)
 
+		self.logger: logging.Logger = logging.getLogger("pyH2A.Plugins.Hydrogen.PhotocatalyticPlugin")
+		self.logger.info("Starting PhotocatalyticPlugin")
+
 		table_keys = ['Reactor Baggies', 'Solar Input', 'Solar-to-Hydrogen Efficiency']
 		self.process_table(table_keys)
 		self.run_plugin()
@@ -107,7 +112,6 @@ class PhotocatalyticPlugin(Plugin):
 		tea.catalyst_cost()
 		tea.land_area()
 		tea.catalyst_activity()
-
 		
 
 class PhotocatalyticPluginTEA:
@@ -257,3 +261,12 @@ class PhotocatalyticPluginTEA:
 			('Non-Depreciable Capital Costs', 'Land required (acres)', total_land_area_acres),
 			('Non-Depreciable Capital Costs', 'Solar Collection Area (m2)', baggie_land_area)
 		])
+
+
+class PhotocatalyticPluginLCA:
+	
+    def __init__(
+            self, 
+            plugin: PhotocatalyticPlugin
+            ) -> None:
+        self.plugin: PhotocatalyticPlugin = plugin

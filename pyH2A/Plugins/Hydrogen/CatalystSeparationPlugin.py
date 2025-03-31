@@ -1,5 +1,7 @@
 from pyH2A.Plugins.Plugin import Plugin
 from pyH2A.DiscountedCashFlow import DiscountedCashFlow
+import logging
+
 
 class CatalystSeparationPlugin(Plugin):
 	'''Calculation of cost for catalyst separation (e.g. via nanofiltration).
@@ -25,6 +27,9 @@ class CatalystSeparationPlugin(Plugin):
 			) -> None:
 		super().__init__(dcf)
 
+		self.logger: logging.Logger = logging.getLogger("pyH2A.Plugins.Hydrogen.CatalystSeparationPlugin")
+		self.logger.info("Starting CatalystSeparationPlugin")
+
 		table_keys = ['Water Volume', 'Catalyst Separation']
 		self.process_table(table_keys)
 		self.run_plugin()
@@ -37,7 +42,6 @@ class CatalystSeparationPlugin(Plugin):
 		tea = CatalystSeparationPluginTEA(self)
 		tea.calculate_yearly_filtration_volume()
 		tea.calculate_filtration_cost()
-
 
 
 class CatalystSeparationPluginTEA:
@@ -72,7 +76,10 @@ class CatalystSeparationPluginTEA:
 		)
 
 
+class CatalystSeparationPluginLCA:
 
-
-
-
+    def __init__(
+            self, 
+            plugin: CatalystSeparationPlugin
+            ) -> None:
+        self.plugin: CatalystSeparationPlugin = plugin

@@ -17,6 +17,7 @@ from pyH2A import DiscountedCashFlow
 from pyH2A.LCA.LCA_lib import ExportFolder, Matrix, solve 
 from pyH2A.Utilities.input_modification import process_table
 import pprint as pp
+import logging
 
 class LCA:
     '''Wrapper class for life-cycle assessment.
@@ -24,6 +25,8 @@ class LCA:
 
     def __init__(self, matrix_folder: str, dcf: DiscountedCashFlow):
         '''Initializes the LCA calculation.'''
+        self.logger: logging.Logger = logging.getLogger("pyH2A.LCA.LCA")
+        self.logger.info("Starting LCA")
 
         self.folder = self.import_folder(matrix_folder)
         self.tech_index_dict = self.folder.tech_index()
@@ -40,7 +43,7 @@ class LCA:
         export_folder = ExportFolder(folder)
 
         if not export_folder.has_impacts():
-            print('error: no impacts in your export')
+            self.logger.error('no impacts in your export')
             return
         else:
             return export_folder
@@ -84,7 +87,7 @@ class LCA:
         h = self.C @ g
 
         for i in self.folder.impact_index():
-            print('%s , %.5f , %s' % (i.impact_name, h[i.index], i.impact_unit))
+            self.logger(f'{i.impact_name} , {h[i.index]} , {i.impact_unit}')
             
 
 def process_LCA_table(scaling_vector : np.ndarray, input_table : dict, tech_index_dict : dict):
@@ -131,7 +134,6 @@ def lcia_example():
     # calculate the LCIA result
     scaling = solve(A, f)
     g = B @ scaling
-    print(f)
     h = C @ g
 
     for i in folder.impact_index():

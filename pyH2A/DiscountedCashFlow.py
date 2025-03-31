@@ -2,6 +2,7 @@ import copy
 import numbers
 from functools import lru_cache
 import numpy as np
+import logging
 
 from pyH2A.Utilities.input_modification import convert_input_to_dictionary, process_input, process_table, insert, read_textfile, set_by_path, execute_plugin
 from pyH2A.LCA.LCA import LCA
@@ -264,6 +265,9 @@ class DiscountedCashFlow:
 			print_info: bool = True, 
 			check_processing: bool = True
 			) -> None:
+		
+		self.logger: logging.Logger = logging.getLogger("pyH2A.DiscountedCashFlow")
+		self.logger.info("Starting DiscountedCashFlow")
 
 		if isinstance(input_file, str):
 			self.inp = convert_input_to_dictionary(input_file)
@@ -688,7 +692,7 @@ class DiscountedCashFlow:
 		npv_after_tax_post_depreciation = numpy_npv(self.after_tax_nominal_irr, after_tax_post_depreciation_cash_flow)
 
 		if abs(npv_after_tax_post_depreciation) > 1e-6:
-			print('Warning: NPV of After tax post-depreciation cash flow is not 0, possible error. NPV: {0}'.format(npv_after_tax_post_depreciation))
+			self.logger.warning('NPV of After tax post-depreciation cash flow is not 0, possible error. NPV: {0}'.format(npv_after_tax_post_depreciation))
 
 		cummulative_cash_flow = np.cumsum(after_tax_post_depreciation_cash_flow)
 
@@ -739,5 +743,5 @@ class DiscountedCashFlow:
 			if top_key not in exceptions and 'Analysis' not in top_key:
 				for middle_key in self.inp[top_key]:
 					if 'Processed' not in self.inp[top_key][middle_key]:
-						print('Warning: "{0} > {1}" has not been processed'.format(top_key, middle_key))
+						self.logger.warning(f'"{top_key} > {middle_key}" has not been processed')
 

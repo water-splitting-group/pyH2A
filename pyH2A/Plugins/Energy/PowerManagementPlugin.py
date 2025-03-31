@@ -2,6 +2,8 @@ from pyH2A.Utilities.input_modification import daily_to_yearly_power
 from pyH2A.DiscountedCashFlow import DiscountedCashFlow
 from pyH2A.Plugins.Plugin import Plugin
 import numpy as np
+import logging
+
 
 class PowerManagementPlugin(Plugin):
     '''Management of electricity production and consumption.
@@ -45,10 +47,13 @@ class PowerManagementPlugin(Plugin):
             dcf: DiscountedCashFlow
             ) -> None:
         super().__init__(dcf)
+
+        self.logger: logging.Logger = logging.getLogger("pyH2A.Plugins.Energy.PowerManagementPlugin")
+        self.logger.info("Starting PowerManagementPlugin")
+
         table_keys = []
         if 'Power Generation' in dcf.inp:
             table_keys.append('Power Generation')
-
         if 'Power Consumption' in dcf.inp:
             table_keys.extend(['Power Consumption', 'Grid Electricity'])
         self.process_table(table_keys)
@@ -62,7 +67,6 @@ class PowerManagementPlugin(Plugin):
         tea.calculate_consumers()
         tea.calculate_electricity_cost()
 
-        
         
 class PowerManagementPluginTEA:
     '''Handles life-cycle assessment (LCA) calculations for the stored power management plugin.

@@ -3,6 +3,8 @@ from pyH2A.DiscountedCashFlow import DiscountedCashFlow
 from pyH2A.Plugins.Plugin import Plugin
 from pyH2A.Utilities.Energy_Conversion import Energy, kWh, eV
 from pyH2A.Utilities.input_modification import insert, process_table
+import logging
+
 
 class PECPlugin(Plugin):
 	'''Simulating H2 production using photoelectrochemical water splitting.
@@ -55,6 +57,9 @@ class PECPlugin(Plugin):
 			) -> None:
 		super().__init__(dcf)
 
+		self.logger: logging.Logger = logging.getLogger("pyH2A.Plugins.Hydrogen.PECPlugin")
+		self.logger.info("Starting PECPlugin")
+
 		table_keys = [
 			'Solar Input', 
 			'Solar-to-Hydrogen Efficiency', 
@@ -75,7 +80,8 @@ class PECPlugin(Plugin):
 		tea.hydrogen_production()
 		tea.PEC_cost()
 		tea.land_area()
-		
+
+
 class PECPluginTEA:
 	'''Handles life-cycle assessment (LCA) calculations for the PEC plugin.
 	'''
@@ -132,3 +138,12 @@ class PECPluginTEA:
 			('Non-Depreciable Capital Costs', 'Land required (acres)', total_land_area_acres),
 			( 'Non-Depreciable Capital Costs', 'Solar Collection Area (m2)', total_solar_collection_area)
 		])
+
+
+class PECPluginLCA:
+	
+    def __init__(
+            self, 
+            plugin: PECPlugin
+            ) -> None:
+        self.plugin: PECPlugin = plugin

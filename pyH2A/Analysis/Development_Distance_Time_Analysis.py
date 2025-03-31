@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from copy import deepcopy
 from scipy.optimize import least_squares
+import logging
 
 from pyH2A.Analysis.Monte_Carlo_Analysis import Monte_Carlo_Analysis, calculate_distance
 from pyH2A.Utilities.find_nearest import find_nearest
@@ -88,6 +89,9 @@ class Development_Distance_Time_Analysis:
 			self, 
 			input_file : str
 			) -> None:
+		
+		self.logger: logging.Logger = logging.getLogger("pyH2A.Analysis.Development_Distance_Time_Analysis")
+		self.logger.info("Starting Development_Distance_Time_Analysis")
 		# Initialize the development distance time analysis with the provided input file
 		self.inp = convert_input_to_dictionary(input_file)
 		self.monte_carlo = Monte_Carlo_Analysis(input_file)
@@ -176,7 +180,7 @@ class Development_Distance_Time_Analysis:
 
 				max_column_index += 1
 
-				print(f'{__name__} is adding {name} (set to reference value) to historical development distance analysis parameters.')
+				self.logger.info(f'{__name__} is adding {name} (set to reference value) to historical development distance analysis parameters.')
 
 		assert sorted(list(self.parameters_time)) == sorted(list(self.mc_parameters)), 'Monte Carlo parameters differ from historical parameter data.'
 

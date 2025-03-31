@@ -3,6 +3,8 @@ from pyH2A.DiscountedCashFlow import DiscountedCashFlow
 from pyH2A.Utilities.input_modification import daily_to_yearly_power, insert
 from pyH2A.Plugins.Hydrogen.ElectrolyzerPlugin import calculate_electrolyzer_power_demand, calculate_hydrogen_production, calculate_stack_replacement
 import numpy as np
+import logging
+
 
 HOURS_IN_A_YEAR = 8760
 
@@ -50,6 +52,10 @@ class StoredPowerElectrolysisPlugin(Plugin):
             dcf: DiscountedCashFlow
             ) -> None:
         super().__init__(dcf)
+
+        self.logger: logging.Logger = logging.getLogger("pyH2A.Plugins.Hydrogen.StoredPowerElectrolysisPlugin")
+        self.logger.info("Starting StoredPowerElectrolysisPlugin")
+
         table_keys = ['Electrolysis Using Stored Power', 'Power Generation', 'Electrolyzer']
         self.process_table(table_keys)
         self.run_plugin()
@@ -62,6 +68,7 @@ class StoredPowerElectrolysisPlugin(Plugin):
         tea.calculate_H2_production()
         tea.calculate_replacement()
         
+
 class StoredPowerElectrolysisPluginTEA:
     '''Handles life-cycle assessment (LCA) calculations for the stored power electrolysis plugin.
 	'''
@@ -130,10 +137,11 @@ class StoredPowerElectrolysisPluginTEA:
         insert(self.plugin.dcf, 'Power Consumption', 'Stored Power Electrolysis (kWh, yearly)', 'Type',
                 'on_demand', __name__, print_info = self.plugin.dcf.print_info)
 
-class StoredPowerElectrolysisPlugin:
+
+class StoredPowerElectrolysisPluginLCA:
 
     def __init__(
             self, 
             plugin: StoredPowerElectrolysisPlugin
             ) -> None:
-        self.plugin = plugin
+        self.plugin: StoredPowerElectrolysisPlugin = plugin

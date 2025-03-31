@@ -1,7 +1,12 @@
+from pyH2A.Plugins.Energy import SolarConcentratorPlugin
 from pyH2A.Utilities.Energy_Conversion import Energy, kWh, eV
 from pyH2A.Utilities.input_modification import insert, process_table
+from pyH2A.DiscountedCashFlow import DiscountedCashFlow
+from pyH2A.Plugins.Plugin import Plugin
+import logging
 
-class SolarThermalPlugin:
+
+class SolarThermalPlugin(Plugin):
 	'''Simulation of hydrogen production using solar thermal water splitting.
 
 	Parameters
@@ -23,17 +28,34 @@ class SolarThermalPlugin:
 		Total land requirement in acres.
 	'''
 	
-	def __init__(self, dcf, print_info):
-		self.dcf = dcf
+	def __init__(
+			self, 
+			dcf: DiscountedCashFlow
+			) -> None:
+		super().__init__(dcf)
 
-		process_table(self.dcf.inp, 'Technical Operating Parameters and Specifications', 'Value')
-		process_table(self.dcf.inp, 'Solar-to-Hydrogen Efficiency', 'Value')
-		process_table(self.dcf.inp, 'Solar Input', 'Value')
-		process_table(self.dcf.inp, 'Non-Depreciable Capital Costs', 'Value')
+		self.logger: logging.Logger = logging.getLogger("pyH2A.Plugins.Hydrogen.SolarThermalPlugin")
+		self.logger.info("Starting SolarThermalPlugin")
 
-		self.calculate_land_area()
+		table_keys = ['Technical Operating Parameters and Specifications', 'Solar-to-Hydrogen Efficiency', 'Solar Input', 'Non-Depreciable Capital Costs']
+		self.process_table(table_keys)
+		self.run_plugin()
+		self.insert_table()
+		
+	def run_plugin(
+			self
+			) -> None:
+		tea = SolarThermalPluginTEA(self)
+		tea.calculate_land_area()
 
-		insert(self.dcf, 'Non-Depreciable Capital Costs', 'Land required (acres)', 'Value', self.area_acres, __name__, print_info = print_info)
+
+class SolarThermalPluginTEA:
+
+	def __init__(
+			self,
+			plugin: SolarThermalPlugin
+			) -> None:
+		self.plugin: SolarThermalPlugin = plugin
 
 	def calculate_land_area(self):
 		'''Calculation of required land area based on solar input, solar-to-hydrogen efficiency
@@ -47,5 +69,17 @@ class SolarThermalPlugin:
 
 		required_area_m2 = self.dcf.inp['Technical Operating Parameters and Specifications']['Design Output per Day']['Value'] / kg_H2_per_m2_per_day
 
-		self.area_m2 = required_area_m2 * (1. + self.dcf.inp['Non-Depreciable Capital Costs']['Additional Land Area (%)']['Value'])
-		self.area_acres = self.area_m2 * 0.000247105
+		area_m2 = required_area_m2 * (1. + self.dcf.inp['Non-Depreciable Capital Costs']['Additional Land Area (%)']['Value'])
+		area_acres = area_m2 * 0.000247105
+		self.plugin.insert_queue.append(
+			('Non-Depreciable Capital Costs', 'Land required (acres)', area_acres)
+		)
+
+
+class SolarThermalPluginLCA:
+	
+    def __init__(
+            self, 
+            plugin: SolarThermalPlugin
+            ) -> None:
+        self.plugin: SolarThermalPlugin = plugin

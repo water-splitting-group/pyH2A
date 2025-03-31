@@ -3,6 +3,7 @@ from pyH2A.DiscountedCashFlow import DiscountedCashFlow
 from pyH2A.Plugins.Plugin import Plugin
 import logging
 
+
 class FixedOperatingCostPlugin(Plugin):
 	'''Calculation of yearly fixed operating costs.
 
@@ -26,7 +27,6 @@ class FixedOperatingCostPlugin(Plugin):
 	Fixed Operating Costs > Total > Value : float
 		Sum of total yearly labor costs and yearly other fixed operating costs.
 	'''
-
 
 	def __init__(
 			self, 

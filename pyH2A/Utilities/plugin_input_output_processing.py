@@ -2,6 +2,7 @@ from pathlib import Path
 
 from pyH2A.Utilities.input_modification import insert, convert_input_to_dictionary, check_for_meta_module, import_plugin, merge, parse_parameter
 from pyH2A.DiscountedCashFlow import DiscountedCashFlow
+import logging
 
 def is_parameter_or_output(line, spaces_for_tab = 4, spaces_cutoff = 5):
 	'''Detection of parameters and output values in line based on presence of more than `spaces_cuttoff`
@@ -113,6 +114,10 @@ class Generate_Template_Input_File:
 
 	def __init__(self, input_file_stub, output_file, 
 				 origin = False, comment = False):
+		
+		self.logger = logging.getLogger("pyH2A.Utilities.Generate_Template_Input_File")
+		self.logger.info("Starting Generate_Template_Input_File")
+	
 		if isinstance(input_file_stub, str):
 			self.inp_stub = convert_input_to_dictionary(input_file_stub)
 		else:
@@ -221,7 +226,7 @@ class Generate_Template_Input_File:
 
 				try:
 					if output[key]['Type'] != item['Type']:
-						print('Warning: type of output and requirement differs for: `{0}`. `{1}` required, `{2}` provided'.format(key, item['Type'], output[key]['Type']))
+						self.logger.warning('type of output and requirement differs for: `{0}`. `{1}` required, `{2}` provided'.format(key, item['Type'], output[key]['Type']))
 				except KeyError:
 					pass
 

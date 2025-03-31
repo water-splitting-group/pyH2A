@@ -52,7 +52,6 @@ class HourlyIrradiationPlugin(Plugin):
 		self.logger = logging.getLogger("pyH2A.Plugins.Energy.HourlyIrradiationPlugin")
 		self.logger.info("Starting HourlyIrradiationPlugin")
 
-
 		table_keys = ['Hourly Irradiation']
 		self.process_table(table_keys)
 

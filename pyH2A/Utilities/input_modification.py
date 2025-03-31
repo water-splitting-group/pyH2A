@@ -8,6 +8,11 @@ import operator
 import numpy as np
 from pyH2A import DiscountedCashFlow
 import pint
+import logging
+
+
+logger = logging.getLogger("pyH2A.Utilities.input_modification")
+logger.info("Starting input_modification")
 
 def import_plugin(plugin_name, plugin_module):
 	'''Importing module.
@@ -428,21 +433,21 @@ def insert(
 		if insert_path is True: 
 			class_object.inp[top_key][middle_key]['Path'] = 'None' # setting path to "None" to avoid processing
 		if print_info is True: 
-			print(f"'{top_key} > {middle_key} > {bottom_key}' is being overwritten by {name}")
+			logger.warning(f"'{top_key} > {middle_key} > {bottom_key}' is being overwritten by {name}")
 
 	except KeyError:
 		try:
 			class_object.inp[top_key][middle_key] = {}
 			class_object.inp[top_key][middle_key][bottom_key] = value
 			if print_info is True:
-				print(f"'{top_key} > {middle_key}' is being created by {name}")
+				logger.info(f"'{top_key} > {middle_key}' is being created by {name}")
 
 		except KeyError:
 			class_object.inp[top_key] = {}
 			class_object.inp[top_key][middle_key] = {}
 			class_object.inp[top_key][middle_key][bottom_key] = value
 			if print_info is True:
-				print(f"'{top_key}' is being created by {name}")
+				logger.info(f"'{top_key}' is being created by {name}")
 
 	if add_processed is True:
 		class_object.inp[top_key][middle_key]['Processed'] = 'Yes'
@@ -555,26 +560,26 @@ def process_path(dictionary, path, top_key, key, bottom_key, print_processing_wa
 			target_value = get_by_path(dictionary, parsed_path)
 
 			if 'Processed' not in dictionary[parsed_path[0]][parsed_path[1]] and print_processing_warning is True:
-				print('Warning: Unprocessed value is being used at "{0} > {1} > {2}" (by "{3} > {4}")'
+				logger.warning('Unprocessed value is being used at "{0} > {1} > {2}" (by "{3} > {4}")'
 					  .format(parsed_path[0], parsed_path[1], parsed_path[2], top_key, key))
 
 			if not isinstance(target_value, numbers.Number):
 				if isinstance(target_value, list) or type(target_value).__module__ == np.__name__:
 					pass
 				else:
-					print('Warning: Non-numerical value retrieved at "{0} > {1} > {2}" (by "{3} > {4}"), setting to 1'
+					logger.warning('Non-numerical value retrieved at "{0} > {1} > {2}" (by "{3} > {4}"), setting to 1'
 						  .format(parsed_path[0], parsed_path[1], parsed_path[2], top_key, key))
 					target_value = 1.
 
 		except KeyError:
-			print('Warning: Invalid path specified for "{0}" (at "{1} > {2} > {3}"), setting to 1'
+			logger.warning('Invalid path specified for "{0}" (at "{1} > {2} > {3}"), setting to 1'
 				  .format(path, top_key, key, bottom_key))
 			target_value = 1.
 
 		return target_value
 
 	else:
-		print('Warning: Invalid path specified for "{0}" (at "{1} > {2} > {3}"), setting to 1'
+		logger.warning('Invalid path specified for "{0}" (at "{1} > {2} > {3}"), setting to 1'
 			   .format(path, top_key, key, bottom_key))
 		return 1.
 
@@ -617,7 +622,7 @@ def process_cell(dictionary, top_key, key, bottom_key, cell = None, print_proces
 			return num(cell)
 		else:
 			if cell != 'None':
-				print(f'Warning: Value at "{top_key} > {key} > {bottom_key}" is not numerical (value is "{cell}"), setting to 1.')
+				logger.warning(f'Value at "{top_key} > {key} > {bottom_key}" is not numerical (value is "{cell}"), setting to 1.')
 			return 1.
 
 

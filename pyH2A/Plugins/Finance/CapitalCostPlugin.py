@@ -3,6 +3,7 @@ from pyH2A.Plugins.Plugin import Plugin
 from pyH2A.Utilities.input_modification import sum_all_tables
 import logging
 
+
 class CapitalCostPlugin(Plugin):
 	'''
 	Parameters
@@ -76,6 +77,7 @@ class CapitalCostPlugin(Plugin):
 		tea.indirect_capital_costs()
 		tea.non_depreciable_capital_costs()
 		tea.total_cost()
+
 
 class CapitalCostPluginTEA:
 	'''Handles life-cycle assessment (LCA) calculations for the capital cost plugin.

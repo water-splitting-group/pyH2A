@@ -70,7 +70,7 @@ class Optimization_Analysis:
 								   bounds = self.bounds,
 								   args = (self.parameters, self.inp))
 
-		print('Optimization results:')
+		"""print('Optimization results:')
 		print('--------------------------------------------------------------------------------')
 		print(p)
 		print('--------------------------------------------------------------------------------')
@@ -79,4 +79,4 @@ class Optimization_Analysis:
 			print(f'{parameter[0]} > {parameter[1]} > {parameter[2]}	 optimal value is {p.x[counter]}')
 
 		print(f'Optimal levelized cost of hydrogen: {p.fun} $/kg')
-		print('--------------------------------------------------------------------------------')
+		print('--------------------------------------------------------------------------------')"""

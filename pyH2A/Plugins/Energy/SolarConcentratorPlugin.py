@@ -2,6 +2,7 @@ import numpy as np
 from pyH2A.Plugins.Plugin import Plugin
 import logging
 
+
 class SolarConcentratorPlugin(Plugin):
 	'''Simulation of solar concentration (used in combination with PEC cells).
 
@@ -43,11 +44,25 @@ class SolarConcentratorPlugin(Plugin):
 
 		table_keys = ['Solar Concentrator', 'PEC Cells', 'Land Area Requirement', 'Non-Depreciable Capital Costs']
 		self.process_table(table_keys)
-
-		self.land_area()
-		self.calculate_cost()
-
+		self.run_plugin()
 		self.insert_table()
+
+	def run_plugin(
+			self
+			) -> None:
+		tea = SolarConcentratorPluginTEA(self)
+		tea.land_area()
+		tea.calculate_cost()
+
+
+class SolarConcentratorPluginTEA:
+	'''Handles life-cycle assessment (LCA) calculations for the solar concentrator plugin.
+	'''
+	def __init__(
+			self,
+			plugin: SolarConcentratorPlugin
+			) -> None:
+		self.plugin: SolarConcentratorPlugin = plugin  
 
 	def land_area(
 			self
@@ -57,11 +72,11 @@ class SolarConcentratorPlugin(Plugin):
 		on number of PEC cells and spacing of solar concentrators.
 		'''
 
-		land = self.dcf.inp['Land Area Requirement']
+		land = self.plugin.dcf.inp['Land Area Requirement']
 
-		self.total_solar_collection_area_m2 = self.dcf.inp['Solar Concentrator']['Concentration Factor']['Value'] * self.dcf.inp['Non-Depreciable Capital Costs']['Solar Collection Area (m2)']['Value']
+		self.plugin.total_solar_collection_area_m2 = self.plugin.dcf.inp['Solar Concentrator']['Concentration Factor']['Value'] * self.plugin.dcf.inp['Non-Depreciable Capital Costs']['Solar Collection Area (m2)']['Value']
 
-		area_per_element_m2 = self.total_solar_collection_area_m2 / self.dcf.inp['PEC Cells']['Number']['Value']
+		area_per_element_m2 = self.plugin.total_solar_collection_area_m2 / self.plugin.dcf.inp['PEC Cells']['Number']['Value']
 		side_length_m = np.sqrt(area_per_element_m2)
 
 		x_length_m = side_length_m + land['East/West Spacing (m)']['Value']/2.
@@ -69,11 +84,11 @@ class SolarConcentratorPlugin(Plugin):
 
 		spaced_area_per_element_m2 = x_length_m * y_length_m
 
-		total_land_area_m2 = spaced_area_per_element_m2 * self.dcf.inp['PEC Cells']['Number']['Value']
+		total_land_area_m2 = spaced_area_per_element_m2 * self.plugin.dcf.inp['PEC Cells']['Number']['Value']
 		#total_land_area_m2 = self.total_solar_collection_area_m2 + land['South Spacing (m)']['Value'] * land['East/West Spacing (m)']['Value'] * dcf.inp['PEC Cells']['Number']['Value']
 		total_land_area_acres = total_land_area_m2 * 0.000247105
-		self.insert_queue.extend([
-			('Non-Depreciable Capital Costs', 'Solar Collection Area (m2)', self.total_solar_collection_area_m2),
+		self.plugin.insert_queue.extend([
+			('Non-Depreciable Capital Costs', 'Solar Collection Area (m2)', self.plugin.total_solar_collection_area_m2),
 			('Non-Depreciable Capital Costs', 'Land required (m2)', total_land_area_m2),
 			('Non-Depreciable Capital Costs', 'Land required (acres)', total_land_area_acres)
 		])
@@ -84,5 +99,5 @@ class SolarConcentratorPlugin(Plugin):
 		'''Calculation of solar concentrator cost based on cost per m2 and total solar collection area.
 		'''
 
-		concentrator_cost = self.dcf.inp['Solar Concentrator']['Cost ($/m2)']['Value'] * self.total_solar_collection_area_m2
-		self.insert_queue.append(('Direct Capital Costs - Solar Concentrator', 'Solar Concentrator Cost ($)', concentrator_cost))
+		concentrator_cost = self.plugin.dcf.inp['Solar Concentrator']['Cost ($/m2)']['Value'] * self.plugin.total_solar_collection_area_m2
+		self.plugin.insert_queue.append(('Direct Capital Costs - Solar Concentrator', 'Solar Concentrator Cost ($)', concentrator_cost))
