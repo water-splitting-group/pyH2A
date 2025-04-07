@@ -1,7 +1,6 @@
 from pyH2A.DiscountedCashFlow import DiscountedCashFlow
 from pyH2A.Plugins.Plugin import Plugin
 from pyH2A.Utilities.input_modification import sum_all_tables
-import logging
 
 
 class CapitalCostPlugin(Plugin):
@@ -57,13 +56,10 @@ class CapitalCostPlugin(Plugin):
 
 		super().__init__(dcf)
 
-		self.logger = logging.getLogger("pyH2A.Plugins.Finance.CapitalCostPlugin")
-		self.logger.info("Starting CapitalCostPlugin")
-
 		table_keys = ['Non-Depreciable Capital Costs']
 		self.process_table(table_keys)
 		self.run_plugin()
-		self.insert_table()
+		self.process_insert_queue()
 
 	def run_plugin(
 			self
@@ -72,7 +68,7 @@ class CapitalCostPlugin(Plugin):
 		tea = CapitalCostPluginTEA(self)
 
 		tea.direct_capital_costs()  
-		self.insert_table()
+		self.process_insert_queue()
 
 		tea.indirect_capital_costs()
 		tea.non_depreciable_capital_costs()
@@ -100,11 +96,13 @@ class CapitalCostPluginTEA:
 												)
 		self.direct_inflated = self.direct * self.plugin.dcf.combined_inflator
 		self.plugin.insert_queue.extend([
-			('Direct Capital Costs', 'Total', self.direct),
-			('Direct Capital Costs', 'Inflated', self.direct_inflated)
+			{'key': 'Direct Capital Costs', 'subkey': 'Total', 'value': self.direct},
+			{'key': 'Direct Capital Costs', 'subkey': 'Inflated', 'value': self.direct_inflated}
 		])
 
-	def indirect_capital_costs(self):
+	def indirect_capital_costs(
+			self
+			) -> None:
 		'''Calculation of indirect capital costs by applying ``sum_all_tables()`` to "Indirect Capital Cost" group.'''
 		self.indirect = sum_all_tables(self.plugin.dcf.inp, 'Indirect Capital Cost', 'Value', insert_total = True, 
 									   class_object = self.plugin.dcf, print_info = self.plugin.dcf.print_info)
@@ -112,9 +110,9 @@ class CapitalCostPluginTEA:
 		self.depreciable = self.direct + self.indirect
 		self.depreciable_inflated = self.direct_inflated + indirect_inflated
 		self.plugin.insert_queue.extend([
-			('Indirect Capital Costs', 'Inflated', indirect_inflated),
-			('Depreciable Capital Costs', 'Total', self.depreciable),
-			('Depreciable Capital Costs', 'Inflated', self.depreciable_inflated)
+			{'key': 'Indirect Capital Costs', 'subkey': 'Inflated', 'value': indirect_inflated},
+			{'key': 'Depreciable Capital Costs', 'subkey': 'Total', 'value': self.depreciable},
+			{'key': 'Depreciable Capital Costs', 'subkey': 'Inflated', 'value': self.depreciable_inflated}
 		])
 
 	def non_depreciable_capital_costs(
@@ -130,8 +128,8 @@ class CapitalCostPluginTEA:
 		self.non_depreciable_inflated = self.non_depreciable * self.plugin.dcf.ci_inflator
 
 		self.plugin.insert_queue.extend([
-			('Non-Depreciable Capital Costs', 'Total', self.non_depreciable),
-			('Non-Depreciable Capital Costs', 'Inflated', self.non_depreciable_inflated),
+			{'key': 'Non-Depreciable Capital Costs', 'subkey': 'Total', 'value': self.non_depreciable},
+			{'key': 'Non-Depreciable Capital Costs', 'subkey': 'Inflated', 'value': self.non_depreciable_inflated},
 		])
 
 	def total_cost(
@@ -141,6 +139,6 @@ class CapitalCostPluginTEA:
 		total_inflated = self.depreciable_inflated + self.non_depreciable_inflated
 
 		self.plugin.insert_queue.extend([
-			('Total Capital Costs', 'Total', total),
-			('Total Capital Costs', 'Inflated', total_inflated)
+			{'key': 'Total Capital Costs', 'subkey': 'Total', 'value': total},
+			{'key': 'Total Capital Costs', 'subkey': 'Inflated', 'value': total_inflated}
 		])

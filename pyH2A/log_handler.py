@@ -28,11 +28,7 @@ def setup_logging(log_file=None):
     # Get the root logger (or a specific logger, e.g., 'pyH2A')
     logger = logging.getLogger("pyH2A")
     logger.setLevel(logging.DEBUG)
-
-    # Clear all existing handlers from this logger
-    for handler in logger.handlers[:]:
-        logger.removeHandler(handler)
-        handler.close()
+    logger.handlers.clear() 
 
     # Prevent propagation for noisy third-party libraries
     logging.getLogger("PIL").propagate = False
@@ -40,7 +36,7 @@ def setup_logging(log_file=None):
 
     # Create a formatter using python-json-logger
     formatter = json.JsonFormatter(
-        '%(asctime)s %(module)s %(levelname)s %(message)s',
+        '%(asctime)s %(name)s %(levelname)s %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S'
     )
 

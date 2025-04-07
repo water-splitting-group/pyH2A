@@ -1,7 +1,6 @@
 from pyH2A.DiscountedCashFlow import DiscountedCashFlow
 from pyH2A.Plugins.Plugin import Plugin
 import numpy as np
-import logging
 
 
 class BatteryPlugin(Plugin):
@@ -28,35 +27,30 @@ class BatteryPlugin(Plugin):
         Power stored in battery daily in kWh (dictionary of years).
     Power Generation > Available Power (daily, kWh) > Value : dict
         Available power, daily basis, dictionary of years (in kWh) - power which 
-        has not been stored in battery
+        has not been stored in battery.
     Power Generation > Available Power (hourly, kWh) > Value : float
         Available power (hourly, kWh) is set to zero, since available power is now 
-        only in daily format. 
+        only in daily format.
     '''
     def __init__(
             self, 
-            dcf : DiscountedCashFlow
+            dcf: DiscountedCashFlow
             ) -> None:
         super().__init__(dcf)
-
-        self.logger = logging.getLogger("pyH2A.Plugins.Energy.BatteryPlugin")
-        self.logger.info("Starting BatteryPlugin")
 
         table_keys = ['Power Generation', 'Battery']
         self.process_table(table_keys)
         self.run_plugin()
-        self.insert_table()
+        self.process_insert_queue()
 
     def run_plugin(
             self
             ) -> None:
-        
         tea = BatteryPluginTEA(self)
         tea.calculate_electricity_storage()
 
 
 class BatteryPluginTEA:
-
     def __init__(
             self, 
             plugin: BatteryPlugin
@@ -66,10 +60,8 @@ class BatteryPluginTEA:
     def calculate_electricity_storage(
             self
             ) -> None:
-        '''Using hourly power generation data and electrolyzer parameters,
-        H2 production is calculated.
+        '''Calculates electricity storage using daily available power.
         '''
-
         available_power_yearly = self.plugin.dcf.inp['Power Generation']['Available Power (daily, kWh)']['Value']
 
         yearly_recovered_power = {}
@@ -79,36 +71,52 @@ class BatteryPluginTEA:
             daily_available_power = available_power_yearly[year]
 
             capacity, capacity_decrease = self.calculate_battery_capacity(year)
-
-            capacity *= np.ones(len(daily_available_power))
-            daily_stored_power = np.amin(np.c_[daily_available_power, capacity], axis = 1)
+            # Create an array for capacity that matches the daily available power shape.
+            capacity_array = capacity * np.ones(len(daily_available_power))
+            # Battery can store at most the minimum of available power and capacity.
+            daily_stored_power = np.amin(np.c_[daily_available_power, capacity_array], axis=1)
             daily_recovered_power = daily_stored_power * self.plugin.dcf.inp['Battery']['Round trip efficiency']['Value']
 
             unstored_power = daily_available_power - daily_stored_power
 
             yearly_recovered_power[year] = daily_recovered_power
-            yearly_unstored_power[year] = unstored_power  
-      
+            yearly_unstored_power[year] = unstored_power
+
+        # Append dictionary-based insert queue entries
         self.plugin.insert_queue.extend([
-            ('Power Generation', 'Stored Power (daily, kWh)', yearly_recovered_power),
-            ('Power Generation', 'Available Power (daily, kWh)', yearly_unstored_power),
-            ('Power Generation', 'Available Power (hourly, kWh)', 0)
+            {'key': 'Power Generation', 'subkey': 'Stored Power (daily, kWh)', 'value': yearly_recovered_power},
+            {'key': 'Power Generation', 'subkey': 'Available Power (daily, kWh)', 'value': yearly_unstored_power},
+            {'key': 'Power Generation', 'subkey': 'Available Power (hourly, kWh)', 'value': 0}
         ])
     
-    def calculate_battery_capacity(self, year):
-
+    def calculate_battery_capacity(
+            self, 
+            year: int
+            ) -> tuple:
         capacity_decrease = (1. - self.plugin.dcf.inp['Battery']['Capacity loss per year']['Value']) ** year
-        nominal_capacity = self.plugin.dcf.inp['Battery']['Design Capacity (kWh)']['Value'] * (1. - self.plugin.dcf.inp['Battery']['Lowest discharge level']['Value'])
-
+        nominal_capacity = self.plugin.dcf.inp['Battery']['Design Capacity (kWh)']['Value'] * (
+            1. - self.plugin.dcf.inp['Battery']['Lowest discharge level']['Value']
+        )
         capacity = nominal_capacity * capacity_decrease
 
         return capacity, capacity_decrease
     
 
 class BatteryPluginLCA:
-	
     def __init__(
             self, 
             plugin: BatteryPlugin
             ) -> None:
         self.plugin: BatteryPlugin = plugin
+
+    def export_battery_weight(
+            self
+            ) -> None:
+        '''Export the weight of the battery.'''
+        battery_weight = (
+            self.plugin.dcf.inp['Battery']['Weight per capacity (kg/kWh)']['Value'] *
+            self.plugin.dcf.inp['Battery']['Design Capacity (kWh)']['Value']
+        )
+        self.plugin.insert_queue.append(
+            {'key': 'LCA - Exports', 'subkey': 'Battery Weight', 'value': battery_weight}
+        )

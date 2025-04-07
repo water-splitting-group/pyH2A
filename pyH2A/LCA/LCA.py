@@ -23,7 +23,11 @@ class LCA:
     '''Wrapper class for life-cycle assessment.
     '''
 
-    def __init__(self, matrix_folder: str, dcf: DiscountedCashFlow):
+    def __init__(
+            self, 
+            matrix_folder: str, 
+            dcf: DiscountedCashFlow
+            ) -> None:
         '''Initializes the LCA calculation.'''
         self.logger: logging.Logger = logging.getLogger("pyH2A.LCA.LCA")
         self.logger.info("Starting LCA")
@@ -36,7 +40,10 @@ class LCA:
         self.perform_LCA()
         
 
-    def import_folder(self, folder: str) -> ExportFolder:
+    def import_folder(
+            self, 
+            folder: str
+            ) -> ExportFolder:
         '''Imports the LCA data folder and checks if it has impacts.
         '''
 
@@ -48,7 +55,9 @@ class LCA:
         else:
             return export_folder
 
-    def load_matrices(self):
+    def load_matrices(
+            self
+            ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         '''Loads the matrices from the LCA data folder.
         '''
 
@@ -59,7 +68,10 @@ class LCA:
 
         return A, B, C, f
     
-    def build_scaling_vector(self, dcf):
+    def build_scaling_vector(
+            self, 
+            dcf: DiscountedCashFlow
+            ) -> None:
         '''Builds the scaling vector for the LCA calculation.
 
         ### Adding check that scaling vector is completely populated with data (no zeros).
@@ -72,11 +84,14 @@ class LCA:
         self.scaling_vector[0] = total_H2_production
 
         for key in dcf.inp:
+            print(key)
             if table_group in key:
                 process_table(dcf.inp, key, 'Value')
-                process_LCA_table(self.scaling_vector, dcf.inp[key], self.tech_index_dict)
+                process_LCA_table(self.scaling_vector, dcf.inp[key], self.tech_index_dict, self.logger)
 
-    def perform_LCA(self):
+    def perform_LCA(
+            self
+            ) -> None:
         '''Performs the LCA calculation.
 
         ### Adding real data export into LCA class instance instead of printing results
@@ -87,23 +102,31 @@ class LCA:
         h = self.C @ g
 
         for i in self.folder.impact_index():
-            self.logger(f'{i.impact_name} , {h[i.index]} , {i.impact_unit}')
+            self.logger.debug(f'{i.impact_name} , {h[i.index]} , {i.impact_unit}')
             
 
-def process_LCA_table(scaling_vector : np.ndarray, input_table : dict, tech_index_dict : dict):
+def process_LCA_table(
+        scaling_vector : np.ndarray, 
+        input_table : dict, 
+        tech_index_dict : dict,
+        logger: logging.Logger
+        ) -> None:
     '''Processes the an LCA table and builds the scaling vector.
 
     ### Adding unit check and conversion for the scaling vector.
 
     '''
-
     for key in input_table:
         uuid = input_table[key]['UUID']
         value = input_table[key]['Value']
 
-        tech_index = tech_index_dict[uuid].index 
-
-        scaling_vector[tech_index] = value
+        if uuid in tech_index_dict:
+            tech_index = tech_index_dict[uuid].index
+            scaling_vector[tech_index] = value
+        else:
+            logger.error(f'UUID {uuid} not found in tech_index_dict')
+            continue
+        
         
 
 

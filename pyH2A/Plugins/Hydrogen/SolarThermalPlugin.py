@@ -1,9 +1,6 @@
-from pyH2A.Plugins.Energy import SolarConcentratorPlugin
 from pyH2A.Utilities.Energy_Conversion import Energy, kWh, eV
-from pyH2A.Utilities.input_modification import insert, process_table
 from pyH2A.DiscountedCashFlow import DiscountedCashFlow
 from pyH2A.Plugins.Plugin import Plugin
-import logging
 
 
 class SolarThermalPlugin(Plugin):
@@ -33,9 +30,6 @@ class SolarThermalPlugin(Plugin):
 			dcf: DiscountedCashFlow
 			) -> None:
 		super().__init__(dcf)
-
-		self.logger: logging.Logger = logging.getLogger("pyH2A.Plugins.Hydrogen.SolarThermalPlugin")
-		self.logger.info("Starting SolarThermalPlugin")
 
 		table_keys = ['Technical Operating Parameters and Specifications', 'Solar-to-Hydrogen Efficiency', 'Solar Input', 'Non-Depreciable Capital Costs']
 		self.process_table(table_keys)
@@ -72,7 +66,7 @@ class SolarThermalPluginTEA:
 		area_m2 = required_area_m2 * (1. + self.dcf.inp['Non-Depreciable Capital Costs']['Additional Land Area (%)']['Value'])
 		area_acres = area_m2 * 0.000247105
 		self.plugin.insert_queue.append(
-			('Non-Depreciable Capital Costs', 'Land required (acres)', area_acres)
+			{'key': 'Non-Depreciable Capital Costs', 'subkey': 'Land required (acres)', 'value': area_acres}
 		)
 
 

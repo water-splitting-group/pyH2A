@@ -1,7 +1,6 @@
 from pyH2A.Utilities.input_modification import sum_all_tables
 from pyH2A.DiscountedCashFlow import DiscountedCashFlow
 from pyH2A.Plugins.Plugin import Plugin
-import logging
 
 
 class FixedOperatingCostPlugin(Plugin):
@@ -34,35 +33,36 @@ class FixedOperatingCostPlugin(Plugin):
 			) -> None:
 		super().__init__(dcf)
 
-		self.logger = logging.getLogger("pyH2A.Plugins.Finance.FixedOperatingCostPlugin")
-		self.logger.info("Starting FixedOperatingCostPlugin")
-
 		table_keys = ['Fixed Operating Costs']
 		self.process_table(table_keys)
 		self.run_plugin()
-		self.insert_table()
+		self.process_insert_queue()
 
 	def run_plugin(
 			self
 			) -> None:
 		self.labor_cost()
-		self.insert_table()
+		self.process_insert_queue()
 		self.other_cost()
 
-	def labor_cost(self):
+	def labor_cost(
+			self
+			) -> None:
 		'''Calculation of yearly labor costs by multiplying number of staff times hourly labor cost.'''
 		self.labor_uninflated = self.dcf.inp['Fixed Operating Costs']['staff']['Value'] * self.dcf.inp['Fixed Operating Costs']['hourly labor cost']['Value'] * 2080.
 		self.labor = self.labor_uninflated * self.dcf.labor_inflator
 
 		self.insert_queue.extend([
-			('Fixed Operating Costs', 'Labor Cost - Uninflated', self.labor_uninflated),
-			('Fixed Operating Costs', 'Labor Cost', self.labor)
+			{'key': 'Fixed Operating Costs', 'subkey': 'Labor Cost - Uninflated', 'value': self.labor_uninflated},
+			{'key': 'Fixed Operating Costs', 'subkey': 'Labor Cost', 'value': self.labor}
 		])
 	
-	def other_cost(self):
+	def other_cost(
+			self
+			) -> None:
 		'''Calculation of yearly other fixed operating costs by applying ``sum_all_tables()`` 
 		to "Other Fixed Operating Cost" group.'''
 		self.other = sum_all_tables(self.dcf.inp, 'Other Fixed Operating Cost', 'Value', insert_total = True, class_object = self.dcf, print_info = self.dcf.print_info) * self.dcf.combined_inflator
 		self.insert_queue.append(
-			('Fixed Operating Costs', 'Total', self.labor + self.other)
+			{'key': 'Fixed Operating Costs', 'subkey': 'Total', 'value': self.labor + self.other}
 		)

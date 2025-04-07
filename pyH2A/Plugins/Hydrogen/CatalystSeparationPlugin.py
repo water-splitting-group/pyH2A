@@ -1,6 +1,5 @@
 from pyH2A.Plugins.Plugin import Plugin
 from pyH2A.DiscountedCashFlow import DiscountedCashFlow
-import logging
 
 
 class CatalystSeparationPlugin(Plugin):
@@ -27,13 +26,10 @@ class CatalystSeparationPlugin(Plugin):
 			) -> None:
 		super().__init__(dcf)
 
-		self.logger: logging.Logger = logging.getLogger("pyH2A.Plugins.Hydrogen.CatalystSeparationPlugin")
-		self.logger.info("Starting CatalystSeparationPlugin")
-
 		table_keys = ['Water Volume', 'Catalyst Separation']
 		self.process_table(table_keys)
 		self.run_plugin()
-		self.insert_table()
+		self.process_insert_queue()
 
 
 	def run_plugin(
@@ -72,7 +68,7 @@ class CatalystSeparationPluginTEA:
 
 		yearly_cost = self.yearly_filtration_volume_m3 * self.plugin.dcf.inp['Catalyst Separation']['Filtration cost ($/m3)']['Value']
 		self.plugin.insert_queue.append(
-			('Other Variable Operating Cost - Catalyst Separation', 'Catalyst Separation (yearly cost)', yearly_cost)
+			{'key': 'Other Variable Operating Cost - Catalyst Separation', 'subkey': 'Catalyst Separation (yearly cost)', 'value': yearly_cost}
 		)
 
 

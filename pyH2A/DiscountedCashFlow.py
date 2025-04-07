@@ -3,6 +3,8 @@ import numbers
 from functools import lru_cache
 import numpy as np
 import logging
+import pickle
+import os
 
 from pyH2A.Utilities.input_modification import convert_input_to_dictionary, process_input, process_table, insert, read_textfile, set_by_path, execute_plugin
 from pyH2A.LCA.LCA import LCA
@@ -263,7 +265,8 @@ class DiscountedCashFlow:
 			self, 
 			input_file: str, 
 			print_info: bool = True, 
-			check_processing: bool = True
+			check_processing: bool = True,
+			store_snapshots: bool = False
 			) -> None:
 		
 		self.logger: logging.Logger = logging.getLogger("pyH2A.DiscountedCashFlow")
@@ -275,6 +278,7 @@ class DiscountedCashFlow:
 			self.inp = input_file
 
 		self.print_info = print_info
+		self.store_snapshots = store_snapshots
 
 		process_table(self.inp, 'Financial Input Values', 'Value')
 		self.fin = self.inp['Financial Input Values']
@@ -358,7 +362,17 @@ class DiscountedCashFlow:
 			if inp['Workflow'][key]['Type'] == 'function':
 				self.execute_function(key, npv_dict)
 			else:
+				if self.store_snapshots:
+					plugin_name = key if "." not in key else key.split(".")[1]
+					log_directory = f"tests/snapshots/"
+					if not os.path.exists(log_directory):
+						os.makedirs(log_directory)
+					with open(f"{log_directory}{plugin_name}-snapshot_before.pkl", "wb") as f:
+						pickle.dump(self, f)
 				execute_plugin(key, plugs_dict, dcf = self)
+				if self.store_snapshots:
+					with open(f"{log_directory}{plugin_name}-snapshot_after.pkl", "wb") as f:
+						pickle.dump(self, f)
 
 	def post_workflow(self):
 		'''Functions executed after workflow.

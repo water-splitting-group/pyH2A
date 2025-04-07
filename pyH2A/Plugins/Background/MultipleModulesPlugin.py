@@ -1,7 +1,6 @@
 import numpy as np
 from pyH2A.Plugins.Plugin import Plugin
 from pyH2A.DiscountedCashFlow import DiscountedCashFlow
-import logging
 
 class MultipleModulesPlugin(Plugin):
 	''' Simulating mutliple plant modules which are operated together, assuming that only labor cost is reduced. 
@@ -32,17 +31,16 @@ class MultipleModulesPlugin(Plugin):
 			):
 		super().__init__(dcf)
 
-		self.logger = logging.getLogger("pyH2A.Plugins.Background.MultipleModulesPlugin")
-		self.logger.info("Starting MultipleModulesPlugin")
-
 		table_keys = ['Technical Operating Parameters and Specifications', 'Non-Depreciable Capital Costs', 'Fixed Operating Costs']
 		self.process_table(table_keys)
 
 		self.required_staff()
 
-		self.insert_table()
+		self.process_insert_queue()
 
-	def required_staff(self):
+	def required_staff(
+			self
+			) -> None:
 		'''Calculation of total required staff for all plant modules, then scaling down to staff
 		requirements for one module.'''
 
@@ -52,4 +50,6 @@ class MultipleModulesPlugin(Plugin):
 		staff = staff * self.dcf.inp['Fixed Operating Costs']['shifts']['Value']
 
 		staff_per_module = staff / self.dcf.inp['Technical Operating Parameters and Specifications']['Plant Modules']['Value']
-		self.insert_queue.append(('Fixed Operating Costs', 'staff', staff_per_module))
+		self.insert_queue.append(
+			{'key': 'Fixed Operating Costs', 'subkey': 'staff', 'value': staff_per_module}
+		)

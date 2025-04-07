@@ -1,3 +1,20 @@
+# Life Cycle Assessment 
+
+Name | Value
+--- | ---
+Matrix Folder | pyH2A/LCA/LCA_Test_Data
+
+# LCA - Exports
+
+Name | Value | Unit | UUID
+--- | --- | --- | ---
+Polyethylene foil | 450.5 | kg | 238013c6-bac6-3768-b6ff-177fc2d89d57
+Ammonium hydroxide | 20000.5 | kg | 83cae1ae-4cd2-3b5e-8c06-4001a3f38ab7
+Electrolyzer Nominal Power | 1 | kW | 93194bf5-7180-4d48-988d-01d23428d87f
+PV Nominal Power | 1 | kW | 2f30911b-0585-4994-b32a-51ec4e49c229
+Deionised Water Weight | 1 | kg | 360e2eb0-f81c-4e4b-ba6b-c7a690f31275
+Battery Weight | 1 | kg | 30356682-176b-4268-8302-59a1fa592a51
+
 # Workflow
 
 Name | Type | Position
@@ -94,6 +111,7 @@ Design Capacity (kWh) | 800000 | Full design capacity
 Lowest discharge level | 20% | Lowest level to which battery can be discharged
 Capacity loss per year | 1% | Loss of capacity per year
 Round trip efficiency | 100% | For lithium ion battery
+Weight per capacity (kg/kWh) | 6.94
 
 # Reverse Osmosis
 

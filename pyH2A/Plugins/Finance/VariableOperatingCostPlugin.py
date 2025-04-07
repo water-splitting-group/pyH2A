@@ -3,7 +3,6 @@ from pyH2A.DiscountedCashFlow import DiscountedCashFlow
 from pyH2A.Plugins.Plugin import Plugin
 import pyH2A.Utilities.find_nearest as fn
 import numpy as np
-import logging
 
 
 class VariableOperatingCostPlugin(Plugin):
@@ -48,14 +47,11 @@ class VariableOperatingCostPlugin(Plugin):
 			) -> None:
 		super().__init__(dcf)
 
-		self.logger = logging.getLogger("pyH2A.Plugins.Finance.VariableOperatingCostPlugin")
-		self.logger.info("Starting VariableOperatingCostPlugin")
-
 		table_keys = ['Technical Operating Parameters and Specifications']
 		self.process_table(table_keys)
 		process_table(self.dcf.inp, 'Utilities', ['Cost', 'Usage per kg H2'], path_key = ['Path', 'Usage Path'])
 		self.run_plugin()
-		self.insert_table()
+		self.process_insert_queue()
 
 	def run_plugin(
 			self
@@ -64,9 +60,9 @@ class VariableOperatingCostPlugin(Plugin):
 		self.other_variable_costs()
 
 		self.insert_queue.extend([
-			('Variable Operating Costs', 'Total', self.utilities + self.other),
-			('Variable Operating Costs', 'Utilities', self.utilities),
-			('Variable Operating Costs', 'Other', self.other)
+			{'key': 'Variable Operating Costs', 'subkey': 'Total', 'value': self.utilities + self.other},
+			{'key': 'Variable Operating Costs', 'subkey': 'Utilities', 'value': self.utilities},
+			{'key': 'Variable Operating Costs', 'subkey': 'Other', 'value': self.other}
 		])
 
 	def calculate_utilities_cost(
@@ -101,12 +97,21 @@ class Utility:
 		Calculation of utility cost per kg of H2 with inflation correction.
 	'''
 
-	def __init__(self, dictionary, dcf):
+	def __init__(
+			self, 
+			dictionary: dict, 
+			dcf: DiscountedCashFlow
+			) -> None:
+		'''Individual utility objects.
+		'''
 		self.dcf = dcf
 
 		self.calculate_cost_per_kg_H2(dictionary)
 
-	def calculate_cost_per_kg_H2(self, dictionary):
+	def calculate_cost_per_kg_H2(
+			self, 
+			dictionary: dict
+			) -> None:
 		'''Calculation of utility cost per kg of H2 with inflation correction.
 		'''
 		

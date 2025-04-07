@@ -3,7 +3,6 @@ from pyH2A.Plugins.Plugin import Plugin
 from pyH2A.DiscountedCashFlow import DiscountedCashFlow
 import pyH2A.Utilities.find_nearest as fn
 import numpy as np
-import logging
 
 class ReplacementPlugin(Plugin):
 	'''Calculating yearly overall replacement costs based on one-time replacement costs and frequency.
@@ -38,9 +37,6 @@ class ReplacementPlugin(Plugin):
 
 		super().__init__(dcf)
 
-		self.logger = logging.getLogger("pyH2A.Plugins.Background.ReplacementPlugin")
-		self.logger.info("Starting ReplacementPlugin")
-
 		self.initialize_yearly_costs()
 		self.initialize_contributions()
 		self.calculate_planned_replacement()
@@ -50,23 +46,31 @@ class ReplacementPlugin(Plugin):
 		
 		yearly_inflated = self.yearly * self.dcf.inflation_correction * self.dcf.inflation_factor
 
-		self.insert_queue.append(('Replacement', 'Total', yearly_inflated))
-		self.insert_table()
+		self.insert_queue.append(
+			{'key': 'Replacement', 'subkey': 'Total', 'value': yearly_inflated}
+		)
+		self.process_insert_queue()
 
-	def initialize_yearly_costs(self):
+	def initialize_yearly_costs(
+			self
+			) -> None:
 		'''Initializes ndarray filled with zeros with same length as dcf.inflation_factor.
 		'''
 
 		self.yearly = np.zeros(len(self.dcf.inflation_factor))
 
-	def initialize_contributions(self):
+	def initialize_contributions(
+			self
+			) -> None:
 		'''Initializes contributions to replacement costs.
 		'''
 		self.contributions = {}
 		self.contributions['Data'] = {}
 		self.contributions['Table Group'] = 'Replacement Costs'
 
-	def calculate_planned_replacement(self):
+	def calculate_planned_replacement(
+			self
+			) -> None:
 		'''Calculation of yearly replacement costs by iterating over all entries of 
 		`Planned Replacement`.
 		'''
@@ -76,7 +80,9 @@ class ReplacementPlugin(Plugin):
 			self.yearly[planned_replacement.years_idx] += planned_replacement.cost
 			self.contributions['Data'][key] = planned_replacement.total_cost
 
-	def unplanned_replacement(self):
+	def unplanned_replacement(
+			self
+			) -> None:
 		'''Calculating unplanned replacement costs by appling ``sum_all_tables()`` to 
 		"Unplanned Replacement" group.
 		'''
@@ -97,7 +103,12 @@ class PlannedReplacement:
 		Calculation of yearly costs from one-time cost and replacement frequency.
 	'''
 
-	def __init__(self, dictionary, key, dcf):
+	def __init__(
+			self, 
+			dictionary: dict, 
+			key: str, 
+			dcf: DiscountedCashFlow
+			) -> None:
 		self.dcf = dcf 
 
 		self.calculate_yearly_cost(dictionary, key)

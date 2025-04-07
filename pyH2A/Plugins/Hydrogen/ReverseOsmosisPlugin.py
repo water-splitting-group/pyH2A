@@ -1,8 +1,6 @@
 from pyH2A.Plugins.Plugin import Plugin
 from pyH2A.DiscountedCashFlow import DiscountedCashFlow
-from pyH2A.Utilities.input_modification import insert, process_table
 import numpy as np
-import logging
 
 MOLAR_RATIO_WATER = 18.01528 / 2.016
 MOLAR_RATIO_O2_H2 = 31.999 / 2.016
@@ -36,17 +34,14 @@ class ReverseOsmosisPlugin(Plugin):
 
     def __init__(
             self, 
-            dcf
+            dcf: DiscountedCashFlow
             ) -> None:
         super().__init__(dcf)
-
-        self.logger: logging.Logger = logging.getLogger("pyH2A.Plugins.Hydrogen.ReverseOsmosisPlugin")
-        self.logger.info("Starting ReverseOsmosisPlugin")
 
         table_keys = ['Reverse Osmosis', 'Technical Operating Parameters and Specifications']
         self.process_table(table_keys)
         self.run_plugin()
-        self.insert_table()
+        self.process_insert_queue()
 
     def run_plugin(
             self
@@ -56,8 +51,7 @@ class ReverseOsmosisPlugin(Plugin):
 
         tea.calculate_electricity_demand()
         tea.calculate_reverse_osmosis_scaling()
-        lca.calculate_amount_brine()
-        lca.calculate_amount_o2()
+        lca.export_fresh_water_weight()
         
 class ReverseOsmosisPluginTEA:
     '''Handles life-cycle assessment (LCA) calculations for the reverse osmosis plugin.
@@ -85,7 +79,7 @@ class ReverseOsmosisPluginTEA:
         self.electricity_demand_kWh = electricity_demand_kWh[self.plugin.dcf.inp['Financial Input Values']['construction time']['Value']:]
 
         self.plugin.insert_queue.append(
-            ('Power Consumption', 'Reverse Osmosis Consumption (kWh, yearly)', self.electricity_demand_kWh)
+            {'key': 'Power Consumption', 'subkey': 'Reverse Osmosis Consumption (kWh, yearly)', 'value': self.electricity_demand_kWh}
         )
 
     def calculate_reverse_osmosis_scaling(
@@ -107,11 +101,10 @@ class ReverseOsmosisPluginTEA:
             maximum_yearly_sea_water_demand_m3 = self.plugin.sea_water_demand_m3
 
         maximum_sea_water_processing_m3_per_hour = maximum_yearly_sea_water_demand_m3 / yearly_operating_hours
-        self.plugin.insert_queue.append(
-            ('Reverse Osmosis', 'Capacity (m3/h)', maximum_sea_water_processing_m3_per_hour)
-        )
-        insert(self.plugin.dcf, 'Power Consumption', 'Reverse Osmosis Consumption (kWh, yearly)', 'Type',
-                'flexible', __name__, print_info = self.plugin.dcf.print_info)
+        self.plugin.insert_queue.extend([
+            {'key': 'Reverse Osmosis', 'subkey': 'Capacity (m3/h)', 'value': maximum_sea_water_processing_m3_per_hour},
+            {'key': 'Power Consumption', 'subkey': 'Reverse Osmosis Consumption (kWh, yearly)', 'field': 'Type', 'value': 'flexible', 'mod': __name__}
+        ])
         
 class ReverseOsmosisPluginLCA:
 
@@ -121,18 +114,11 @@ class ReverseOsmosisPluginLCA:
             ) -> None:
         self.plugin = plugin
     
-    def calculate_amount_brine(self):
-        total_demand_sea_water_m3 = np.sum(self.plugin.sea_water_demand_m3)
-        total_demand_fresh_water_m3 = np.sum(self.plugin.fresh_water_demand_kg)
-        total_demand_brine_kg = total_demand_fresh_water_m3 * 0.035
-        self.plugin.insert_queue.extend([
-            ('LCA Parameters Photovoltaic', 'Sea water demand (m3)', total_demand_sea_water_m3),
-			('LCA Parameters Photovoltaic', 'Mass of brine (kg)', total_demand_brine_kg),
-			('LCA Parameters Photovoltaic', 'Amount of fresh water (m3)', total_demand_fresh_water_m3)
-        ])
-    
-    def calculate_amount_o2(self):
-        total_o2_produced_kg = np.sum(1/2 * self.plugin.h2_produced_per_year_kg * MOLAR_RATIO_O2_H2)
+    def export_fresh_water_weight(
+            self
+            ) -> None:
+        '''Export the weight of the fresh water.'''
+        fresh_water_weight = np.sum(self.plugin.fresh_water_demand_kg)
         self.plugin.insert_queue.append(
-            ('LCA Parameters Photovoltaic', 'O2 produced (kg)', total_o2_produced_kg)
+            {'key': 'LCA - Exports', 'subkey': 'Deionised Water Weight', 'value': fresh_water_weight}
         )

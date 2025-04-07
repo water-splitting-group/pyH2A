@@ -1,10 +1,12 @@
 from pyH2A.Plugins.Plugin import Plugin
 from pyH2A.DiscountedCashFlow import DiscountedCashFlow
-from pyH2A.Utilities.input_modification import daily_to_yearly_power, insert
-from pyH2A.Plugins.Hydrogen.ElectrolyzerPlugin import calculate_electrolyzer_power_demand, calculate_hydrogen_production, calculate_stack_replacement
+from pyH2A.Utilities.input_modification import daily_to_yearly_power
+from pyH2A.Plugins.Hydrogen.ElectrolyzerPlugin import (
+    calculate_electrolyzer_power_demand,
+    calculate_hydrogen_production,
+    calculate_stack_replacement
+)
 import numpy as np
-import logging
-
 
 HOURS_IN_A_YEAR = 8760
 
@@ -46,20 +48,16 @@ class StoredPowerElectrolysisPlugin(Plugin):
     Power Consumption > Stored Power Electrolysis (kWh, yearly) > Type : str
         Type of power consumer, type is 'on_demand' (only uses stored power).
     '''
-
     def __init__(
             self, 
             dcf: DiscountedCashFlow
             ) -> None:
         super().__init__(dcf)
 
-        self.logger: logging.Logger = logging.getLogger("pyH2A.Plugins.Hydrogen.StoredPowerElectrolysisPlugin")
-        self.logger.info("Starting StoredPowerElectrolysisPlugin")
-
         table_keys = ['Electrolysis Using Stored Power', 'Power Generation', 'Electrolyzer']
         self.process_table(table_keys)
         self.run_plugin()
-        self.insert_table()
+        self.process_insert_queue()
 
     def run_plugin(
             self
@@ -67,28 +65,20 @@ class StoredPowerElectrolysisPlugin(Plugin):
         tea = StoredPowerElectrolysisPluginTEA(self)
         tea.calculate_H2_production()
         tea.calculate_replacement()
-        
+
 
 class StoredPowerElectrolysisPluginTEA:
-    '''Handles life-cycle assessment (LCA) calculations for the stored power electrolysis plugin.
-	'''
-    def __init__(
-			self,
-			plugin: StoredPowerElectrolysisPlugin
-			) -> None:
+    '''Handles life-cycle assessment (LCA) calculations for the stored power electrolysis plugin.'''
+    def __init__(self, plugin: StoredPowerElectrolysisPlugin) -> None:
         self.plugin: StoredPowerElectrolysisPlugin = plugin
 
     def calculate_H2_production(
             self
             ) -> None:
-        '''
-        '''
-
         electrolyzer_yearly_data = self.plugin.dcf.inp['Electrolyzer']['Yearly Operation Data']['Value']
-        remaining_run_time_per_year_in_hours = HOURS_IN_A_YEAR - electrolyzer_yearly_data[:,2]
+        remaining_run_time_per_year_in_hours = HOURS_IN_A_YEAR - electrolyzer_yearly_data[:, 2]
         
-        (electrolyzer_power_demand, 
-         power_increase) = calculate_electrolyzer_power_demand(
+        (electrolyzer_power_demand, power_increase) = calculate_electrolyzer_power_demand(
             self.plugin.dcf.inp['Electrolyzer']['Power requirement increase per year']['Value'],
             self.plugin.dcf.inp['Electrolyzer']['Nominal Power (kW)']['Value'],
             self.plugin.dcf.operation_years
@@ -103,25 +93,25 @@ class StoredPowerElectrolysisPluginTEA:
 
         power_consumption_kWh = np.minimum(maximum_consumable_power_kWh, stored_power_yearly_available_for_use)
 
-        # Updating H2 production
-
-        additional_h2_production_kg = calculate_hydrogen_production(power_consumption_kWh, 
-                                                         self.plugin.dcf.inp['Electrolyzer']['Conversion efficiency (kg H2/kWh)']['Value'],
-                                                         power_increase)
+        # Update hydrogen production
+        additional_h2_production_kg = calculate_hydrogen_production(
+            power_consumption_kWh, 
+            self.plugin.dcf.inp['Electrolyzer']['Conversion efficiency (kg H2/kWh)']['Value'],
+            power_increase
+        )
         
         old_h2_production_kg = self.plugin.dcf.inp['Electrolyzer']['H2 Production (yearly, kg)']['Value']
-
         new_h2_production_kg = old_h2_production_kg.copy()
         new_h2_production_kg[-len(additional_h2_production_kg):] += additional_h2_production_kg
         
-        # Updating operation hours
-
+        # Update operation hours
         additional_operation_hours = power_consumption_kWh / electrolyzer_power_demand
-        self.operation_hours = additional_operation_hours + electrolyzer_yearly_data[:,2]
+        self.operation_hours = additional_operation_hours + electrolyzer_yearly_data[:, 2]
 
+        # Add insert queue entries as dictionaries
         self.plugin.insert_queue.extend([
-            ('Power Consumption', 'Stored Power Electrolysis (kWh, yearly)', power_consumption_kWh),
-            ('Technical Operating Parameters and Specifications', 'Plant Design Capacity (kg of H2/day)', new_h2_production_kg/365.)
+            {'key': 'Power Consumption', 'subkey': 'Stored Power Electrolysis (kWh, yearly)', 'value': power_consumption_kWh},
+            {'key': 'Technical Operating Parameters and Specifications', 'subkey': 'Plant Design Capacity (kg of H2/day)', 'value': new_h2_production_kg / 365.}
         ])
 
     def calculate_replacement(
@@ -131,15 +121,16 @@ class StoredPowerElectrolysisPluginTEA:
             self.operation_hours, 
             self.plugin.dcf.inp['Electrolyzer']['Replacement time (h)']['Value']
         )
-        insert(self.plugin.dcf, 'Planned Replacement', 'Electrolyzer Stack Replacement', 'Frequency (years)', 
-                replacement_frequency, __name__, print_info = self.plugin.dcf.print_info, add_processed = False,
-                insert_path = False)
-        insert(self.plugin.dcf, 'Power Consumption', 'Stored Power Electrolysis (kWh, yearly)', 'Type',
-                'on_demand', __name__, print_info = self.plugin.dcf.print_info)
+        # Instead of direct insert calls, add dictionary entries with extra parameters if needed.
+        self.plugin.insert_queue.append(
+            {'key': 'Planned Replacement', 'subkey': 'Electrolyzer Stack Replacement', 'value': replacement_frequency, 'field': 'Frequency (years)', 'mod': __name__, 'add_processed': False, 'insert_path': False}
+        )
+        self.plugin.insert_queue.append(
+            {'key': 'Power Consumption', 'subkey': 'Stored Power Electrolysis (kWh, yearly)', 'value': 'on_demand', 'field': 'Type', 'mod': __name__}
+        )
 
 
 class StoredPowerElectrolysisPluginLCA:
-
     def __init__(
             self, 
             plugin: StoredPowerElectrolysisPlugin

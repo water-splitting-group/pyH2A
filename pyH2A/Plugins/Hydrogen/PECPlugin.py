@@ -2,8 +2,6 @@ import numpy as np
 from pyH2A.DiscountedCashFlow import DiscountedCashFlow
 from pyH2A.Plugins.Plugin import Plugin
 from pyH2A.Utilities.Energy_Conversion import Energy, kWh, eV
-from pyH2A.Utilities.input_modification import insert, process_table
-import logging
 
 
 class PECPlugin(Plugin):
@@ -57,9 +55,6 @@ class PECPlugin(Plugin):
 			) -> None:
 		super().__init__(dcf)
 
-		self.logger: logging.Logger = logging.getLogger("pyH2A.Plugins.Hydrogen.PECPlugin")
-		self.logger.info("Starting PECPlugin")
-
 		table_keys = [
 			'Solar Input', 
 			'Solar-to-Hydrogen Efficiency', 
@@ -71,7 +66,7 @@ class PECPlugin(Plugin):
 			table_keys.append('Solar Concentrator')
 		self.process_table(table_keys)
 		self.run_plugin()
-		self.insert_table()
+		self.process_insert_queue()
 
 	def run_plugin(
 			self
@@ -91,7 +86,9 @@ class PECPluginTEA:
 			) -> None:
 		self.plugin: PECPlugin = plugin
 
-	def hydrogen_production(self):
+	def hydrogen_production(
+			self
+			) -> None:
 		'''Calculation of (kg of H2)/day produced by single PEC cell.
 		'''
 		pec = self.plugin.dcf.inp['PEC Cells']
@@ -103,7 +100,9 @@ class PECPluginTEA:
 		self.kg_H2_per_cell = (2 * mol_H2_per_cell) / 1000.
 		self.mol_H2_per_m2_per_day = mol_H2_per_cell / self.cell_area
 
-	def PEC_cost(self):
+	def PEC_cost(
+			self
+			) -> None:
 		'''Calculation of cost per cell, number of required cells and total cell cost.
 		'''
 
@@ -112,15 +111,15 @@ class PECPluginTEA:
 		self.cell_cost = self.cell_number * cost_per_cell
 
 		self.plugin.insert_queue.extend([
-			('PEC Cells', 'Number', self.cell_number),
-			('Direct Capital Costs - PEC Cells', 'PEC Cell Cost ($)', self.cell_cost)
+			{'key': 'PEC Cells', 'subkey': 'Number', 'value': self.cell_number},
+			{'key': 'Direct Capital Costs - PEC Cells', 'subkey': 'PEC Cell Cost ($)', 'value': self.cell_cost},
+			{'key': 'Planned Replacement', 'subkey': 'Planned Replacement PEC Cells', 'field': 'Cost ($)', 'value': self.cell_cost, 'mod': __name__, 'print_info': self.plugin.dcf.print_info},
+			{'key': 'Planned Replacement', 'subkey': 'Planned Replacement PEC Cells', 'field': 'Frequency (years)', 'value': self.plugin.dcf.inp['PEC Cells']['Lifetime (years)']['Value'], 'mod': __name__, 'print_info': self.plugin.dcf.print_info}
 		])
-		insert(self.plugin.dcf, 'Planned Replacement', 'Planned Replacement PEC Cells', 'Cost ($)', 
-			   self.cell_cost, __name__, print_info = self.plugin.dcf.print_info)
-		insert(self.plugin.dcf, 'Planned Replacement', 'Planned Replacement PEC Cells', 'Frequency (years)', 
-			   self.plugin.dcf.inp['PEC Cells']['Lifetime (years)']['Value'], __name__, print_info = self.plugin.dcf.print_info)
 
-	def land_area(self):
+	def land_area(
+			self
+			) -> None:
 		'''Calculation of total required land area and solar collection area.
 		'''
 		land = self.plugin.dcf.inp['Land Area Requirement']
@@ -135,8 +134,8 @@ class PECPluginTEA:
 		self.total_land_area = total_width * total_length * self.cell_number
 		total_land_area_acres = self.total_land_area * 0.000247105
 		self.plugin.insert_queue.extend([
-			('Non-Depreciable Capital Costs', 'Land required (acres)', total_land_area_acres),
-			( 'Non-Depreciable Capital Costs', 'Solar Collection Area (m2)', total_solar_collection_area)
+			{'key': 'Non-Depreciable Capital Costs', 'subkey': 'Land required (acres)', 'value': total_land_area_acres},
+			{'key': 'Non-Depreciable Capital Costs', 'subkey': 'Solar Collection Area (m2)', 'value': total_solar_collection_area}
 		])
 
 

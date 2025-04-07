@@ -1,6 +1,5 @@
 import numpy as np
 from pyH2A.Plugins.Plugin import Plugin
-import logging
 
 
 class SolarConcentratorPlugin(Plugin):
@@ -39,13 +38,10 @@ class SolarConcentratorPlugin(Plugin):
 			) -> None:
 		super().__init__(dcf)
 
-		self.logger = logging.getLogger("pyH2A.Plugins.Energy.SolarConcentratorPlugin")
-		self.logger.info("Starting SolarConcentratorPlugin")
-
 		table_keys = ['Solar Concentrator', 'PEC Cells', 'Land Area Requirement', 'Non-Depreciable Capital Costs']
 		self.process_table(table_keys)
 		self.run_plugin()
-		self.insert_table()
+		self.process_insert_queue()
 
 	def run_plugin(
 			self
@@ -88,9 +84,9 @@ class SolarConcentratorPluginTEA:
 		#total_land_area_m2 = self.total_solar_collection_area_m2 + land['South Spacing (m)']['Value'] * land['East/West Spacing (m)']['Value'] * dcf.inp['PEC Cells']['Number']['Value']
 		total_land_area_acres = total_land_area_m2 * 0.000247105
 		self.plugin.insert_queue.extend([
-			('Non-Depreciable Capital Costs', 'Solar Collection Area (m2)', self.plugin.total_solar_collection_area_m2),
-			('Non-Depreciable Capital Costs', 'Land required (m2)', total_land_area_m2),
-			('Non-Depreciable Capital Costs', 'Land required (acres)', total_land_area_acres)
+			{'key': 'Non-Depreciable Capital Costs', 'subkey': 'Solar Collection Area (m2)', 'value': self.plugin.total_solar_collection_area_m2},
+			{'key': 'Non-Depreciable Capital Costs', 'subkey': 'Land required (m2)', 'value': total_land_area_m2},
+			{'key': 'Non-Depreciable Capital Costs', 'subkey': 'Land required (acres)', 'value': total_land_area_acres}
 		])
 
 	def calculate_cost(
@@ -100,4 +96,6 @@ class SolarConcentratorPluginTEA:
 		'''
 
 		concentrator_cost = self.plugin.dcf.inp['Solar Concentrator']['Cost ($/m2)']['Value'] * self.plugin.total_solar_collection_area_m2
-		self.plugin.insert_queue.append(('Direct Capital Costs - Solar Concentrator', 'Solar Concentrator Cost ($)', concentrator_cost))
+		self.plugin.insert_queue.append(
+			{'key': 'Direct Capital Costs - Solar Concentrator', 'subkey': 'Solar Concentrator Cost ($)', 'value': concentrator_cost}
+		)

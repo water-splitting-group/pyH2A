@@ -2,8 +2,6 @@ import numpy as np
 from pyH2A.DiscountedCashFlow import DiscountedCashFlow
 from pyH2A.Plugins.Plugin import Plugin
 from pyH2A.Utilities.Energy_Conversion import Energy, kWh, eV
-from pyH2A.Utilities.input_modification import insert
-import logging
 
 
 class PhotocatalyticPlugin(Plugin):
@@ -89,13 +87,10 @@ class PhotocatalyticPlugin(Plugin):
 			) -> None:
 		super().__init__(dcf)
 
-		self.logger: logging.Logger = logging.getLogger("pyH2A.Plugins.Hydrogen.PhotocatalyticPlugin")
-		self.logger.info("Starting PhotocatalyticPlugin")
-
 		table_keys = ['Reactor Baggies', 'Solar Input', 'Solar-to-Hydrogen Efficiency']
 		self.process_table(table_keys)
 		self.run_plugin()
-		self.insert_table()
+		self.process_insert_queue()
 
 	def run_plugin(
 			self
@@ -139,7 +134,9 @@ class PhotocatalyticPluginTEA:
 
 		self.kg_H2_per_baggie = (2 * mol_H2_per_baggie)/1000.
 
-	def catalyst_activity(self):
+	def catalyst_activity(
+			self
+			) -> None:
 		'''Calculation of detailed catalyst properties based on provided parameters. If "Molar Weight (g/mol)"
 		is specified in "Catalyst" table properties of a homogeneous catalyst are also calculated. Furthermore,
 		if "Molar Attenuation Coefficient (M^-1 cm^-1)" is also provided, the light absorption properties 
@@ -199,9 +196,13 @@ class PhotocatalyticPluginTEA:
 
 			assert abs(kg_H2_per_day_TOF_calculation - kg_H2_per_day_baggie_calculation) < 1e-6, 'Difference between baggie and TOF calculation for daily H2 production: TOF: {0}, Baggie: {0}.'.format(
 					kg_H2_per_day_TOF_calculation, kg_H2_per_day_baggie_calculation)
-		self.plugin.insert_queue.append(('Catalyst', 'Properties', catalyst_properties))
+		self.plugin.insert_queue.append(
+			{'key': 'Catalyst', 'subkey': 'Properties', 'value': catalyst_properties}
+		)
 
-	def baggie_cost(self):
+	def baggie_cost(
+			self
+			) -> None:
 		'''Calculation of cost per baggie, number of required baggies and total baggie cost.
 		'''
 
@@ -214,11 +215,14 @@ class PhotocatalyticPluginTEA:
 
 		self.baggie_number = np.ceil(self.plugin.dcf.inp['Technical Operating Parameters and Specifications']['Design Output per Day']['Value'] / self.kg_H2_per_baggie)
 		baggies_cost = self.baggie_number * cost_per_baggie
-		self.plugin.insert_queue.append(('Direct Capital Costs - Reactor Baggies', 'Baggie Cost ($)', baggies_cost))
-		insert(self.plugin.dcf, 'Planned Replacement', 'Planned Replacement Baggie', 'Cost ($)', 
-			baggies_cost, __name__, print_info = self.plugin.dcf.print_info)
+		self.plugin.insert_queue.extend([
+			{'key': 'Direct Capital Costs - Reactor Baggies', 'subkey': 'Baggie Cost ($)', 'value': baggies_cost},
+			{'key': 'Planned Replacement', 'subkey': 'Planned Replacement Baggie', 'field': 'Cost ($)', 'value': baggies_cost, 'mod': __name__, 'print_info': self.plugin.dcf.print_info}
+		])
 
-	def catalyst_cost(self):
+	def catalyst_cost(
+			self
+			) -> None:
 		'''Calculation of individual baggie volume, catalyst amount per baggie, total catalyst amount 
 		and total catalyst cost.
 		'''
@@ -237,17 +241,16 @@ class PhotocatalyticPluginTEA:
 
 		
 		self.plugin.insert_queue.extend([
-			('Direct Capital Costs - Photocatalyst', 'Catalyst Cost ($)', catalyst_cost),
-			('Water Volume', 'Volume (liters)', total_volume_liters)
+			{'key': 'Direct Capital Costs - Photocatalyst', 'subkey': 'Catalyst Cost ($)', 'value': catalyst_cost},
+			{'key': 'Water Volume', 'subkey': 'Volume (liters)', 'value': total_volume_liters},
+			{'key': 'Planned Replacement', 'subkey': 'Planned Replacement Catalyst', 'field': 'Cost ($)', 'value': catalyst_cost, 'mod': __name__, 'print_info': self.plugin.dcf.print_info},
+			{'key': 'Planned Replacement', 'subkey': 'Planned Replacement Catalyst', 'field': 'Frequency (years)', 'value': self.plugin.dcf.inp['Catalyst']['Lifetime (years)']['Value'], 'mod': __name__, 'print_info': self.plugin.dcf.print_info},
+			{'key': 'Planned Replacement', 'subkey': 'Planned Replacement Baggie', 'field': 'Frequency (years)', 'value': self.plugin.dcf.inp['Reactor Baggies']['Lifetime (years)']['Value'], 'mod': __name__, 'print_info': self.plugin.dcf.print_info}
 		])
-		insert(self.plugin.dcf, 'Planned Replacement', 'Planned Replacement Catalyst', 'Cost ($)', 
-				catalyst_cost, __name__, print_info = self.plugin.dcf.print_info)
-		insert(self.plugin.dcf, 'Planned Replacement', 'Planned Replacement Catalyst', 'Frequency (years)', 
-				self.plugin.dcf.inp['Catalyst']['Lifetime (years)']['Value'], __name__, print_info = self.plugin.dcf.print_info)
-		insert(self.plugin.dcf, 'Planned Replacement', 'Planned Replacement Baggie', 'Frequency (years)', 
-				self.plugin.dcf.inp['Reactor Baggies']['Lifetime (years)']['Value'], __name__, print_info = self.plugin.dcf.print_info)
 
-	def land_area(self):
+	def land_area(
+			self
+			) -> None:
 		'''Calculation of total required land area and solar collection area.
 		'''
 
@@ -257,9 +260,9 @@ class PhotocatalyticPluginTEA:
 		total_land_area_acres = total_land_area * 0.000247105
 
 		self.plugin.insert_queue.extend([
-			('Reactor Baggies', 'Number', self.baggie_number),
-			('Non-Depreciable Capital Costs', 'Land required (acres)', total_land_area_acres),
-			('Non-Depreciable Capital Costs', 'Solar Collection Area (m2)', baggie_land_area)
+			{'key': 'Reactor Baggies', 'subkey': 'Number', 'value': self.baggie_number},
+			{'key': 'Non-Depreciable Capital Costs', 'subkey': 'Land required (acres)', 'value': total_land_area_acres},
+			{'key': 'Non-Depreciable Capital Costs', 'subkey': 'Solar Collection Area (m2)', 'value': baggie_land_area}
 		])
 
 
