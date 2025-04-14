@@ -29,7 +29,9 @@ class ReverseOsmosisPlugin(Plugin):
     Power Consumption > Reverse Osmosis Consumption (kWh, yearly) > Type : str
         Type of power consumer, type is 'flexible', uses both stored and available power.
     Reverse Osmosis > Capacity (m3/h) > Value : float
-        Maximum sea water processing capacity per hour of reverse osmosis plant.   
+        Maximum sea water processing capacity per hour of reverse osmosis plant.
+    LCA - Exports > Deionised Water Weight > Value : float
+        Weight of deionised water produced in kg.
     '''
 
     def __init__(
