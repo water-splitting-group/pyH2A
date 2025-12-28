@@ -1,5 +1,30 @@
 from pyH2A.Utilities.input_modification import insert, process_table
 
+catalyst_separation_input_dict = {
+	'total_water_volume': {
+		'top_level' : 'Water Volume',
+		'mid_level' : 'Volume (liters)',
+		'lower_level' : 'Value',
+		'unit_key' : 'Unit',		
+	},
+	'lifetime_catalysts': {
+		'top_level' : 'Catalyst',
+		'mid_level' : 'Lifetime (years)',
+		'lower_level' : 'Value',
+		'unit_key' : 'Unit',		
+	},
+	'cost_filteration': {
+		'top_level' : 'Catalyst Separation',
+		'mid_level' : 'Filtration cost ($/m3)',
+		'lower_level' : 'Value',
+		'unit_key' : 'Unit',		
+	} 
+}
+
+catalyst_separation_output_dict = {
+	
+}
+
 class Catalyst_Separation_Plugin:
 	'''Calculation of cost for catalyst separation (e.g. via nanofiltration).
 

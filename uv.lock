@@ -1695,7 +1695,7 @@ wheels = [
 
 [[package]]
 name = "pyh2a"
-version = "1"
+version = "0.0a8"
 source = { virtual = "." }
 dependencies = [
     { name = "autodocsumm" },
