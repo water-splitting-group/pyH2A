@@ -1,9 +1,6 @@
 from pyH2A.Utilities.input_modification import insert, process_table
 import numpy as np
 
-from pyH2A.Utilities.input_modification import insert, process_table
-import numpy as np
-
 battery_input_dict = {
     'available_power_daily': {
         'top_level': 'Power Generation',
@@ -21,19 +18,19 @@ battery_input_dict = {
         'top_level': 'Battery',
         'mid_level': 'Lowest discharge level',
         'lower_level': 'Value',
-        'unit_key': None
+        'unit_key': 'Unit'
     },
     'capacity_loss_per_year': {
         'top_level': 'Battery',
         'mid_level': 'Capacity loss per year',
         'lower_level': 'Value',
-        'unit_key': None
+        'unit_key': 'Unit'
     },
     'round_trip_efficiency': {
         'top_level': 'Battery',
         'mid_level': 'Round trip efficiency',
         'lower_level': 'Value',
-        'unit_key': None
+        'unit_key': 'Unit'
     },
 }
 
