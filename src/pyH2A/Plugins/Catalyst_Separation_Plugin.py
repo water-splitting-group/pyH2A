@@ -7,13 +7,13 @@ catalyst_separation_input_dict = {
 		'lower_level': 'Value',
 		'unit_key': 'unit',
 	},
-	'total_water': {
+	'lifetime_catalyst': {
 		'top_level': 'Catalyst',
 		'mid_level': 'Lifetime (years)',
 		'lower_level': 'Value',
 		'unit_key': 'unit',
 	},
-	'total_water': {
+	'cost_filteration': {
 		'top_level': 'Catalyst Separation',
 		'mid_level': 'Filtration cost ($/m3)',
 		'lower_level': 'Value',
@@ -22,8 +22,8 @@ catalyst_separation_input_dict = {
 }
 
 catalyst_separation_output_dict = {
-	'yearly_cost_catalyst_separation': {
-		'top_level': 'Catalyst Separation',
+	'yearly_cost': {
+		'top_level': 'Other Variable Operating Cost - Catalyst Separation',
 		'mid_level': 'Catalyst Separation (yearly cost)',
 		'lower_level': 'Value',
 		'unit_key': 'unit',
@@ -80,7 +80,6 @@ def output_resolver(output_dict, values, dcf, print_info):
                 __name__,
                 print_info=print_info
             )
-
 
 class Catalyst_Separation_Plugin:
 	'''Calculation of cost for catalyst separation (e.g. via nanofiltration).
