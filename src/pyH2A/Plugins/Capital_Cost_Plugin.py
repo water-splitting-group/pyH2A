@@ -1,5 +1,161 @@
 from pyH2A.Utilities.input_modification import insert, sum_all_tables, process_table
 
+capital_cost_input_dict = {
+	'direct_capital_costs': {
+		'top_level': 'Direct Capital Cost',
+		'mid_level': 'Repeatable rows',
+		'lower_level': 'Value',
+		'unit_key': 'unit',
+	},
+	'indirect_capital_costs': {
+		'top_level': 'Indirect Capital Cost',
+		'mid_level': 'Repeatable rows',
+		'lower_level': 'Value',
+		'unit_key': 'unit',
+	},
+	'land_cost_per_acre': {
+		'top_level': 'Non-Depreciable Capital Costs',
+		'mid_level': 'Cost of land ($ per acre)',
+		'lower_level': 'Value',
+		'unit_key': 'unit',
+	},
+	'land_required': {
+		'top_level': 'Non-Depreciable Capital Costs',
+		'mid_level': 'Land required (acres)',
+		'lower_level': 'Value',
+		'unit_key': 'unit',
+	},
+	'other_non_depreciable_capital_costs': {
+		'top_level': 'Other Non-Depreciable Capital Cost',
+		'mid_level': 'Repeatable rows',
+		'lower_level': 'Value',
+		'unit_key': 'unit',
+	},
+}
+
+capital_cost_output_dict = {
+	'direct_capital_total': {
+		'top_level': 'Direct Capital Costs',
+		'mid_level': 'Total',
+		'lower_level': 'Value',
+		'unit_key': 'unit',
+	},
+	'direct_capital_inflated': {
+		'top_level': 'Direct Capital Costs',
+		'mid_level': 'Inflated',
+		'lower_level': 'Value',
+		'unit_key': 'unit',
+	},
+	'indirect_capital_total': {
+		'top_level': 'Indirect Capital Costs',
+		'mid_level': 'Total',
+		'lower_level': 'Value',
+		'unit_key': 'unit',
+	},
+	'indirect_capital_inflated': {
+		'top_level': 'Indirect Capital Costs',
+		'mid_level': 'Inflated',
+		'lower_level': 'Value',
+		'unit_key': 'unit',
+	},
+	'depreciable_capital_total': {
+		'top_level': 'Depreciable Capital Costs',
+		'mid_level': 'Total',
+		'lower_level': 'Value',
+		'unit_key': 'unit',
+	},
+	'depreciable_capital_inflated': {
+		'top_level': 'Depreciable Capital Costs',
+		'mid_level': 'Inflated',
+		'lower_level': 'Value',
+		'unit_key': 'unit',
+	},
+	'non_depreciable_capital_total': {
+		'top_level': 'Non-Depreciable Capital Costs',
+		'mid_level': 'Total',
+		'lower_level': 'Value',
+		'unit_key': 'unit',
+	},
+	'non_depreciable_capital_inflated': {
+		'top_level': 'Non-Depreciable Capital Costs',
+		'mid_level': 'Inflated',
+		'lower_level': 'Value',
+		'unit_key': 'unit',
+	},
+	'total_capital_cost_total': {
+		'top_level': 'Total Capital Costs',
+		'mid_level': 'Total',
+		'lower_level': 'Value',
+		'unit_key': 'unit',
+	},
+	'total_capital_cost_inflated': {
+		'top_level': 'Total Capital Costs',
+		'mid_level': 'Inflated',
+		'lower_level': 'Value',
+		'unit_key': 'unit',
+	},
+}
+
+from pyH2A.Utilities.input_modification import process_table, insert
+
+
+def input_resolver(input_dict, dcf):
+	"""
+	Resolve inputs from dcf.inp using an I/O specification dictionary.
+	Supports both single-row and repeatable-row inputs.
+	(Value-only; unit handling is out of scope.)
+	"""
+	resolved = {}
+
+	for name, spec in input_dict.items():
+		top = spec['top_level']
+		mid = spec['mid_level']
+		low = spec['lower_level']
+
+		process_table(dcf.inp, top, low)
+
+		if mid.lower().startswith('repeatable'):
+			values = []
+			for row in dcf.inp[top].values():
+				if isinstance(row, dict) and low in row:
+					values.append(row[low])
+			resolved[name] = values
+		else:
+			resolved[name] = dcf.inp[top][mid][low]
+
+	return resolved
+
+def output_resolver(output_dict, values, dcf, print_info):
+	"""
+	Insert outputs back into dcf.inp using output specification dictionary.
+	"""
+	for name, spec in output_dict.items():
+		top = spec['top_level']
+		mid = spec['mid_level']
+		low = spec['lower_level']
+		unit = spec.get('unit_key')
+
+		insert(
+			dcf,
+			top,
+			mid,
+			low,
+			values[name],
+			__name__,
+			print_info=print_info
+		)
+
+		if unit is not None:
+			insert(
+				dcf,
+				top,
+				mid,
+				unit,
+				unit,
+				__name__,
+				print_info=print_info
+			)
+
 class Capital_Cost_Plugin:
 	'''
 
