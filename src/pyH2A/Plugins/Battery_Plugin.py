@@ -112,7 +112,6 @@ class Battery_Plugin:
 
         inputs = input_resolver(battery_input_dict, dcf)
 
-        # Strip magnitudes for numerical work
         self.available_power_yearly = inputs['available_power_daily']
         self.design_capacity = inputs['design_capacity']
 

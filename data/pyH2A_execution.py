@@ -135,18 +135,17 @@ def lca():
 def main():
 	#dcf_test()
 	#optimization_test()
-	pv_e_base()
+	#pv_e_base()
 	#pv_e_limit()
 	#pv_e_distance_time()
 	#pec_base()
 	#pec_limit()
 	#pec_limit_no_concentration()
 	#photocatalytic_base()
-	#photocatalytic_limit()
+	photocatalytic_limit()
 	#technology_comparison()
 	#test()
 	#lca()
-
 	
 if __name__ == '__main__':
 	main()
