@@ -68,7 +68,7 @@ def input_resolver(io_dict, dcf):
         low = spec['lower_level']
 
         # Ensure tables are expanded
-        process_table(dcf.inp, top, 'Value')
+        process_table(dcf.inp, top, low)
 
         resolved[name] = dcf.inp[top][mid][low]
 
