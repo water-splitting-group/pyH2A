@@ -1,6 +1,67 @@
 from pyH2A.Utilities.input_modification import insert, process_table, daily_to_yearly_power
 import numpy as np
 
+input_dict_pm = {
+    'available_power_daily': {
+        'top_level': 'Power Generation',
+        'mid_level': 'Available Power (daily, kWh)',
+        'lower_level': 'Value'
+    },
+    'stored_power_daily': {
+        'top_level': 'Power Generation',
+        'mid_level': 'Stored Power (daily, kWh)',
+        'lower_level': 'Value'
+    },
+    'consumers': {
+        'top_level': 'Power Consumption',
+        'mid_level': 'repeatable',  
+        'lower_level': 'Value'
+    },
+    'consumer_type': {
+        'top_level': 'Power Consumption',
+        'mid_level': 'repeatable',  
+        'lower_level': 'Type'
+    },
+    'grid_cost': {
+        'top_level': 'Grid Electricity',
+        'mid_level': 'Cost ($/kWh)',
+        'lower_level': 'Value'
+    }
+}
+
+pm_output_dict = {
+    'remaining_available_power': {
+        'top_level': 'Power Generation',
+        'mid_level': 'Available Power (yearly, kWh)',
+        'lower_level': 'Value',
+    },
+    'remaining_stored_power': {
+        'top_level': 'Power Generation',
+        'mid_level': 'Stored Power (yearly, kWh)',
+        'lower_level': 'Value',
+    },
+    'zero_daily_available': {
+        'top_level': 'Power Generation',
+        'mid_level': 'Available Power (daily, kWh)',
+        'lower_level': 'Value',
+    },
+    'zero_daily_stored': {
+        'top_level': 'Power Generation',
+        'mid_level': 'Stored Power (daily, kWh)',
+        'lower_level': 'Value',
+    },
+    'used_grid_electricity': {
+        'top_level': 'Grid Electricity',
+        'mid_level': 'Used grid electricity (yearly, kWh)',
+        'lower_level': 'Value',
+    },
+    'electricity_cost': {
+        'top_level': 'Other Variable Operating Cost - Grid Electricity',
+        'mid_level': 'Cost of grid electricity (yearly, $)',
+        'lower_level': 'Value',
+    },
+}
+
 class Power_Management_Plugin:
     '''Management of electricity production and consumption.
     

@@ -67,7 +67,6 @@ pv_output_dict = {
     },
 }
 
-
 class Photovoltaic_Plugin:
 	'''Simulation of electricity production using PV.
 
