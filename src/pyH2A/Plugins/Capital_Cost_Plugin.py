@@ -29,31 +29,71 @@ capital_cost_input_dict = {
 }
 
 capital_cost_output_dict = {
-	'direct_capital_total': {
-		'top_level': '[...] Direct Capital Cost [...]',
-		'mid_level': 'Summed Total',
-		'lower_level': 'Value',
-	},
-	'indirect_capital_total': {
-		'top_level': '[...] Indirect Capital Cost [...]',
-		'mid_level': 'Summed Total',
-		'lower_level': 'Value',
-	},
-	'non_depreciable_total': {
-		'top_level': 'Non-Depreciable Capital Costs',
-		'mid_level': 'Total',
-		'lower_level': 'Value',
-	},
-	'depreciable_total': {
-		'top_level': 'Depreciable Capital Costs',
-		'mid_level': 'Total',
-		'lower_level': 'Value',
-	},
-	'total_capital_costs': {
-		'top_level': 'Total Capital Costs',
-		'mid_level': 'Total',
-		'lower_level': 'Value',
-	},
+    'direct_capital_summed_total': {
+        'top_level': '[...] Direct Capital Cost [...]',
+        'mid_level': 'Summed Total',
+        'lower_level': 'Value',
+    },
+    'indirect_capital_summed_total': {
+        'top_level': '[...] Indirect Capital Cost [...]',
+        'mid_level': 'Summed Total',
+        'lower_level': 'Value',
+    },
+    'other_non_depreciable_summed_total': {
+        'top_level': '[...] Other Non-Depreciable Capital Cost [...]',
+        'mid_level': 'Summed Total',
+        'lower_level': 'Value',
+    },
+    'direct_capital_total': {
+        'top_level': 'Direct Capital Costs',
+        'mid_level': 'Total',
+        'lower_level': 'Value',
+    },
+    'direct_capital_inflated': {
+        'top_level': 'Direct Capital Costs',
+        'mid_level': 'Inflated',
+        'lower_level': 'Value',
+    },
+    'indirect_capital_total': {
+        'top_level': 'Indirect Capital Costs',
+        'mid_level': 'Total',
+        'lower_level': 'Value',
+    },
+    'indirect_capital_inflated': {
+        'top_level': 'Indirect Capital Costs',
+        'mid_level': 'Inflated',
+        'lower_level': 'Value',
+    },
+    'non_depreciable_total': {
+        'top_level': 'Non-Depreciable Capital Costs',
+        'mid_level': 'Total',
+        'lower_level': 'Value',
+    },
+    'non_depreciable_inflated': {
+        'top_level': 'Non-Depreciable Capital Costs',
+        'mid_level': 'Inflated',
+        'lower_level': 'Value',
+    },
+    'depreciable_total': {
+        'top_level': 'Depreciable Capital Costs',
+        'mid_level': 'Total',
+        'lower_level': 'Value',
+    },
+    'depreciable_inflated': {
+        'top_level': 'Depreciable Capital Costs',
+        'mid_level': 'Inflated',
+        'lower_level': 'Value',
+    },
+    'total_capital_costs': {
+        'top_level': 'Total Capital Costs',
+        'mid_level': 'Total',
+        'lower_level': 'Value',
+    },
+    'total_capital_inflated': {
+        'top_level': 'Total Capital Costs',
+        'mid_level': 'Inflated',
+        'lower_level': 'Value',
+    },
 }
 
 def resolve_top_levels(inp, pattern):
@@ -93,34 +133,48 @@ def input_resolver(input_dict, dcf):
 			resolved[name] = collected
 
 	return resolved
-
 def output_resolver(output_dict, values, dcf, print_info=True):
-	for name, spec in output_dict.items():
-		top_pattern = spec['top_level']
-		mid = spec['mid_level']
-		low = spec['lower_level']
+    for name, spec in output_dict.items():
+        top_pattern = spec['top_level']
+        mid = spec['mid_level']
+        low = spec['lower_level']
 
-		if '[...]' in top_pattern and isinstance(values[name], dict):
-			for top, val in values[name].items():
-				insert(
-					dcf,
-					top,
-					mid,
-					low,
-					val,
-					__name__,
-					print_info=print_info
-				)
-		else:
-			insert(
-				dcf,
-				top_pattern.replace('[...]', '').strip(),
-				mid,
-				low,
-				values[name],
-				__name__,
-				print_info=print_info
-			)
+        # Handle '[...]' tables
+        if '[...]' in top_pattern:
+            if isinstance(values[name], dict):
+                for top, val in values[name].items():
+                    insert(
+                        dcf,
+                        top,
+                        mid,
+                        low,
+                        val,
+                        __name__,
+                        print_info=print_info
+                    )
+            else:
+                # fallback: find matching table(s) in dcf.inp
+                for top_key in dcf.inp.keys():
+                    if re.search(top_pattern.replace('[...]', '.*'), top_key):
+                        insert(
+                            dcf,
+                            top_key,
+                            mid,
+                            low,
+                            values[name],
+                            __name__,
+                            print_info=print_info
+                        )
+        else:
+            insert(
+                dcf,
+                top_pattern,
+                mid,
+                low,
+                values[name],
+                __name__,
+                print_info=print_info
+            )
 
 class Capital_Cost_Plugin:
 	'''
