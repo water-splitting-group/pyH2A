@@ -1,4 +1,5 @@
 from pyH2A.Utilities.input_modification import insert, sum_all_tables, process_table
+import re
 
 capital_cost_input_dict = {
 	'direct_capital_costs': {
