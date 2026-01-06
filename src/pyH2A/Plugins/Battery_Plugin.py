@@ -55,57 +55,6 @@ battery_output_dict = {
     }
 }
 
-def input_resolver(io_dict, dcf):
-    """
-    Resolve inputs from dcf.inp using an I/O specification dictionary.
-    (Value-only; unit handling is out of scope.)
-    """
-    resolved = {}
-
-    for name, spec in io_dict.items():
-        top = spec['top_level']
-        mid = spec['mid_level']
-        low = spec['lower_level']
-
-        # Ensure tables are expanded
-        process_table(dcf.inp, top, low)
-
-        resolved[name] = dcf.inp[top][mid][low]
-
-    return resolved
-
-
-def output_resolver(output_dict, values, dcf, print_info):
-    """
-    Insert outputs back into dcf.inp using output specification dictionary.
-    """
-    for name, spec in output_dict.items():
-        top = spec['top_level']
-        mid = spec['mid_level']
-        low = spec['lower_level']
-        unit = spec.get('unit')
-
-        insert(
-            dcf,
-            top,
-            mid,
-            low,
-            values[name],
-            __name__,
-            print_info=print_info
-        )
-
-        if unit is not None:
-            insert(
-                dcf,
-                top,
-                mid,
-                'Unit',
-                unit,
-                __name__,
-                print_info=print_info
-            )
-
 class Battery_Plugin:
     '''Simulation of electricity storage using a battery.
     Simulation assumes that battery is charged and completely discharged every day.
