@@ -2,6 +2,67 @@ from pyH2A.Utilities.input_modification import insert, sum_all_tables, process_t
 import pyH2A.Utilities.find_nearest as fn
 import numpy as np
 
+variable_operating_cost_input_dict = {
+    'output_per_year': {
+        'top_level': 'Technical Operating Parameters and Specifications',
+        'mid_level': 'Output per Year',
+        'lower_level': 'Value',
+    },
+    'utilities_cost': {
+        'top_level': 'Utilities',
+        'mid_level': 'Repeatable rows',  
+        'lower_level': 'Cost',
+    },
+    'utilities_usage': {
+        'top_level': 'Utilities',
+        'mid_level': 'Repeatable rows',  
+        'lower_level': 'Usage per kg H2',
+    },
+    'utilities_price_conversion': {
+        'top_level': 'Utilities',
+        'mid_level': 'Repeatable rows',  
+        'lower_level': 'Price Conversion Factor',
+    },
+    'utilities_cost_path': {
+        'top_level': 'Utilities',
+        'mid_level': 'Repeatable rows',  
+        'lower_level': 'Path',
+    },
+    'utilities_usage_path': {
+        'top_level': 'Utilities',
+        'mid_level': 'Repeatable rows',  
+        'lower_level': 'Usage Path',
+    },
+    'other_variable_operating_cost': {
+        'top_level': '[...] Other Variable Operating Cost [...]',
+        'mid_level': 'Repeatable rows',
+        'lower_level': 'Value',
+    },
+}
+
+variable_operating_cost_output_dict = {
+    'other_variable_operating_cost_summed': {
+        'top_level': '[...] Other Variable Operating Cost [...]',
+        'mid_level': 'Summed Total',
+        'lower_level': 'Value',
+    },
+    'variable_operating_cost_total': {
+        'top_level': 'Variable Operating Costs',
+        'mid_level': 'Total',
+        'lower_level': 'Value',
+    },
+    'variable_operating_cost_utilities': {
+        'top_level': 'Variable Operating Costs',
+        'mid_level': 'Utilities',
+        'lower_level': 'Value',
+    },
+    'variable_operating_cost_other': {
+        'top_level': 'Variable Operating Costs',
+        'mid_level': 'Other',
+        'lower_level': 'Value',
+    }
+}
+
 class Variable_Operating_Cost_Plugin:
 	'''Calculation of variable operating costs.
 
