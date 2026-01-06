@@ -49,7 +49,6 @@ fixed_operating_cost_output_dict = {
     },
 }
 
-
 def resolve_top_levels(inp, pattern):
 	core = pattern.replace('[...]', '').strip()
 	return [k for k in inp if core in k]
@@ -87,6 +86,7 @@ def input_resolver(input_dict, dcf):
 			resolved[name] = collected
 
 	return resolved
+
 def output_resolver(output_dict, values, dcf, print_info=True):
     for name, spec in output_dict.items():
         top_pattern = spec['top_level']

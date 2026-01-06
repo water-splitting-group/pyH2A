@@ -1,5 +1,123 @@
 import numpy as np
 from pyH2A.Utilities.input_modification import insert, process_table
+import re
+
+multiple_modules_input_dict = {
+    'plant_modules': {
+        'top_level': 'Technical Operating Parameters and Specifications',
+        'mid_level': 'Plant Modules',
+        'lower_level': 'Value',
+    },
+    'solar_collection_area': {
+        'top_level': 'Non-Depreciable Capital Costs',
+        'mid_level': 'Solar Collection Area (m2)',
+        'lower_level': 'Value',
+    },
+    'area_per_staff': {
+        'top_level': 'Fixed Operating Costs',
+        'mid_level': 'area',
+        'lower_level': 'Value',
+    },
+    'shifts': {
+        'top_level': 'Fixed Operating Costs',
+        'mid_level': 'shifts',
+        'lower_level': 'Value',
+    },
+    'supervisors': {
+        'top_level': 'Fixed Operating Costs',
+        'mid_level': 'supervisor',
+        'lower_level': 'Value',
+    },
+}
+
+multiple_modules_output_dict = {
+    'staff_per_module': {
+        'top_level': 'Fixed Operating Costs',
+        'mid_level': 'staff',
+        'lower_level': 'Value',
+    },
+}
+
+def resolve_top_levels(inp, pattern):
+	core = pattern.replace('[...]', '').strip()
+	return [k for k in inp if core in k]
+
+def input_resolver(input_dict, dcf):
+	"""
+    Resolve inputs from dcf.inp using an I/O specification dictionary.
+    (Value-only; unit handling is out of scope.)
+    """
+	resolved = {}
+
+	for name, spec in input_dict.items():
+		top_pattern = spec['top_level']
+		mid = spec['mid_level']
+		low = spec['lower_level']
+
+		tops = resolve_top_levels(dcf.inp, top_pattern)
+		collected = {}
+
+		for top in tops:
+			process_table(dcf.inp, top, low)
+
+			if mid.lower().startswith('repeatable'):
+				values = []
+				for row in dcf.inp[top].values():
+					if isinstance(row, dict) and low in row:
+						values.append(row[low])
+				collected[top] = values
+			else:
+				collected[top] = dcf.inp[top][mid][low]
+
+		if len(collected) == 1:
+			resolved[name] = list(collected.values())[0]
+		else:
+			resolved[name] = collected
+
+	return resolved
+
+def output_resolver(output_dict, values, dcf, print_info=True):
+    for name, spec in output_dict.items():
+        top_pattern = spec['top_level']
+        mid = spec['mid_level']
+        low = spec['lower_level']
+
+        # Handle '[...]' tables
+        if '[...]' in top_pattern:
+            if isinstance(values[name], dict):
+                for top, val in values[name].items():
+                    insert(
+                        dcf,
+                        top,
+                        mid,
+                        low,
+                        val,
+                        __name__,
+                        print_info=print_info
+                    )
+            else:
+                # fallback: find matching table(s) in dcf.inp
+                for top_key in dcf.inp.keys():
+                    if re.search(top_pattern.replace('[...]', '.*'), top_key):
+                        insert(
+                            dcf,
+                            top_key,
+                            mid,
+                            low,
+                            values[name],
+                            __name__,
+                            print_info=print_info
+                        )
+        else:
+            insert(
+                dcf,
+                top_pattern,
+                mid,
+                low,
+                values[name],
+                __name__,
+                print_info=print_info
+            )
 
 class Multiple_Modules_Plugin:
 	''' Simulating mutliple plant modules which are operated together, assuming that only labor cost is reduced. 
