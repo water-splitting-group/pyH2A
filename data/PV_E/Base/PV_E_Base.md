@@ -10,6 +10,7 @@ Stored_Power_Electrolysis_Plugin | plugin | 0
 Reverse_Osmosis_Plugin | plugin | 2
 Power_Management_Plugin | plugin | 2
 Multiple_Modules_Plugin | plugin | 3
+Capital_Cost_Plugin | plugin | 3 
 
 # Display Parameters
 

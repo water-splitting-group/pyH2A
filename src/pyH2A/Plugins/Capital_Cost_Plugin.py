@@ -1,10 +1,6 @@
 from pyH2A.Utilities.input_modification import insert, sum_all_tables, process_table
 import re
 
-# ----------------------------
-# Capital Cost Input/Output Dictionaries
-# ----------------------------
-
 capital_cost_input_dict = {
     'direct_capital_costs': {
         'top_level': '[...] Direct Capital Cost [...]',
@@ -70,10 +66,6 @@ capital_cost_output_dict = {
         'unit_key': 'unit',
     },
 }
-
-# ----------------------------
-# Resolver Functions
-# ----------------------------
 
 def capital_input_resolver(input_dict, dcf):
     resolved = {}

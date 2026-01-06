@@ -23,13 +23,21 @@ def dcf_test():
 	plt.show()
 
 
-
 def pv_e_base():
-	
-	result = pyH2A('data/PV_E/Base/PV_E_Base.md', 'data/PV_E/Base')
+    result = pyH2A('data/PV_E/Base/PV_E_Base.md', 'data/PV_E/Base')
 
-	pprint.pprint(result.base_case.inp['Direct Capital Costs - Reverse Osmosis'])
+    # Capital Costs
+    pprint.pprint(result.base_case.inp['Direct Capital Costs - PV'])
+    pprint.pprint(result.base_case.inp['Direct Capital Costs - Electrolyzer'])
+    pprint.pprint(result.base_case.inp['Direct Capital Costs - Battery'])
+    pprint.pprint(result.base_case.inp['Direct Capital Costs - Reverse Osmosis'])
 
+    # Non-Depreciable Capital Costs
+    pprint.pprint(result.base_case.inp['Non-Depreciable Capital Costs'])
+
+    # Fixed Operating Costs
+    pprint.pprint(result.base_case.inp['Fixed Operating Costs'])
+    pprint.pprint(result.base_case.inp['Other Fixed Operating Costs'])
 	#pprint.pprint(result.base_case.inp['Technical Operating Parameters and Specifications']['Output per Year']['Value'])
 
 	#pprint.pprint(result.base_case.inp['Technical Operating Parameters and Specifications'])
@@ -135,14 +143,14 @@ def lca():
 def main():
 	#dcf_test()
 	#optimization_test()
-	#pv_e_base()
+	pv_e_base()
 	#pv_e_limit()
 	#pv_e_distance_time()
 	#pec_base()
 	#pec_limit()
 	#pec_limit_no_concentration()
 	#photocatalytic_base()
-	photocatalytic_limit()
+	#photocatalytic_limit()
 	#technology_comparison()
 	#test()
 	#lca()
