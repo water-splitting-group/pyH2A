@@ -1,5 +1,4 @@
 from pathlib import Path
-
 from pyH2A.Utilities.input_modification import insert, convert_input_to_dictionary, check_for_meta_module, import_plugin, merge, parse_parameter
 from pyH2A.Discounted_Cash_Flow import Discounted_Cash_Flow
 

@@ -2,6 +2,38 @@ from pyH2A.Utilities.input_modification import insert, process_input, sum_all_ta
 import pyH2A.Utilities.find_nearest as fn
 import numpy as np
 
+replacement_input_dict = {
+    'planned_replacement_frequency': {
+        'top_level': 'Planned Replacement',
+        'mid_level': 'Repeatable rows',
+        'lower_level': 'Frequency (years)',
+    },
+    'planned_replacement_cost': {
+        'top_level': 'Planned Replacement',
+        'mid_level': 'Repeatable rows',
+        'lower_level': 'Cost ($)',
+    },
+    'unplanned_replacement': {
+        'top_level': '[...] Unplanned Replacement [...]',
+        'mid_level': 'Repeatable rows',
+        'lower_level': 'Value',
+    }
+}
+
+replacement_output_dict = {
+    'unplanned_replacement_summed_total': {
+        'top_level': '[...] Unplanned Replacement [...]',
+        'mid_level': 'Summed Total',
+        'lower_level': 'Value',
+    },
+    'replacement_total': {
+        'top_level': 'Replacement',
+        'mid_level': 'Total',
+        'lower_level': 'Value',
+    }
+}
+
+
 class Replacement_Plugin:
 	'''Calculating yearly overall replacement costs based on one-time replacement costs and frequency.
 
