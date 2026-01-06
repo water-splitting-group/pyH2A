@@ -1,6 +1,62 @@
 import numpy as np
 from pyH2A.Utilities.input_modification import insert, process_table
 
+solar_concentrator_input_dict = {
+    'concentration_factor': {
+        'top_level': 'Solar Concentrator',
+        'mid_level': 'Concentration Factor',
+        'lower_level': 'Value',
+    },
+    'concentrator_cost_per_m2': {
+        'top_level': 'Solar Concentrator',
+        'mid_level': 'Cost ($/m2)',
+        'lower_level': 'Value',
+    },
+    'number_of_pec_cells': {
+        'top_level': 'PEC Cells',
+        'mid_level': 'Number',
+        'lower_level': 'Value',
+    },
+    'south_spacing': {
+        'top_level': 'Land Area Requirement',
+        'mid_level': 'South Spacing (m)',
+        'lower_level': 'Value',
+    },
+    'east_west_spacing': {
+        'top_level': 'Land Area Requirement',
+        'mid_level': 'East/West Spacing (m)',
+        'lower_level': 'Value',
+    },
+    'existing_collection_area_m2': {
+        'top_level': 'Non-Depreciable Capital Costs',
+        'mid_level': 'Solar Collection Area (m2)',
+        'lower_level': 'Value',
+    },
+}
+
+solar_concentrator_output_dict = {
+    'total_land_area_m2': {
+        'top_level': 'Non-Depreciable Capital Costs',
+        'mid_level': 'Land required (m2)',
+        'lower_level': 'Value',
+    },
+    'total_land_area_acres': {
+        'top_level': 'Non-Depreciable Capital Costs',
+        'mid_level': 'Land required (acres)',
+        'lower_level': 'Value',
+    },
+    'total_solar_collection_area_m2': {
+        'top_level': 'Non-Depreciable Capital Costs',
+        'mid_level': 'Solar Collection Area (m2)',
+        'lower_level': 'Value',
+    },
+    'total_concentrator_cost': {
+        'top_level': 'Direct Capital Costs - Solar Concentrator',
+        'mid_level': 'Solar Concentrator Cost ($)',
+        'lower_level': 'Value',
+    },
+}
+
 class Solar_Concentrator_Plugin:
 	'''Simulation of solar concentration (used in combination with PEC cells).
 
