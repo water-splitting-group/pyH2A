@@ -1,6 +1,179 @@
 import numpy as np
 from pyH2A.Utilities.Energy_Conversion import Energy, kWh, eV
 from pyH2A.Utilities.input_modification import insert, process_table
+import re
+
+pec_input_dict = {
+    'design_output_per_day': {
+        'top_level': 'Technical Operating Parameters and Specifications',
+        'mid_level': 'Design Output per Day',
+        'lower_level': 'Value',
+    },
+    'cell_cost_per_m2': {
+        'top_level': 'PEC Cells',
+        'mid_level': 'Cell Cost ($/m2)',
+        'lower_level': 'Value',
+    },
+    'cell_lifetime': {
+        'top_level': 'PEC Cells',
+        'mid_level': 'Lifetime (year)',
+        'lower_level': 'Value',
+    },
+    'cell_length': {
+        'top_level': 'PEC Cells',
+        'mid_level': 'Length (m)',
+        'lower_level': 'Value',
+    },
+    'cell_width': {
+        'top_level': 'PEC Cells',
+        'mid_level': 'Width (m)',
+        'lower_level': 'Value',
+    },
+    'cell_angle': {
+        'top_level': 'Land Area Requirement',
+        'mid_level': 'Cell Angle (degree)',
+        'lower_level': 'Value',
+    },
+    'south_spacing': {
+        'top_level': 'Land Area Requirement',
+        'mid_level': 'South Spacing (m)',
+        'lower_level': 'Value',
+    },
+    'east_west_spacing': {
+        'top_level': 'Land Area Requirement',
+        'mid_level': 'East/West Spacing (m)',
+        'lower_level': 'Value',
+    },
+    'sth_efficiency': {
+        'top_level': 'Solar-to-Hydrogen Efficiency',
+        'mid_level': 'STH (%)',
+        'lower_level': 'Value',
+    },
+    'mean_solar_input': {
+        'top_level': 'Solar Input',
+        'mid_level': 'Mean solar input (kWh/m2/day)',
+        'lower_level': 'Value',
+    },
+    'concentration_factor': {
+        'top_level': 'Solar Concentrator',
+        'mid_level': 'Concentration Factor',
+        'lower_level': 'Value',
+    },
+}
+
+pec_output_dict = {
+    'land_required_acres': {
+        'top_level': 'Non-Depreciable Capital Costs',
+        'mid_level': 'Land required (acres)',
+        'lower_level': 'Value',
+    },
+    'solar_collection_area_m2': {
+        'top_level': 'Non-Depreciable Capital Costs',
+        'mid_level': 'Solar Collection Area (m2)',
+        'lower_level': 'Value',
+    },
+    'planned_replacement_cost': {
+        'top_level': 'Planned Replacement',
+        'mid_level': 'Planned Replacement PEC Cells',
+        'lower_level': 'Cost ($)',
+    },
+    'planned_replacement_frequency': {
+        'top_level': 'Planned Replacement',
+        'mid_level': 'Planned Replacement PEC Cells',
+        'lower_level': 'Frequency (years)',
+    },
+    'total_pec_cell_cost': {
+        'top_level': 'Direct Capital Costs - PEC Cells',
+        'mid_level': 'PEC Cell Cost ($)',
+        'lower_level': 'Value',
+    },
+    'pec_cell_number': {
+        'top_level': 'PEC Cells',
+        'mid_level': 'Number',
+        'lower_level': 'Value',
+    },
+}
+
+def resolve_top_levels(inp, pattern):
+	core = pattern.replace('[...]', '').strip()
+	return [k for k in inp if core in k]
+
+def input_resolver(input_dict, dcf):
+	"""
+    Resolve inputs from dcf.inp using an I/O specification dictionary.
+    (Value-only; unit handling is out of scope.)
+    """
+	resolved = {}
+
+	for name, spec in input_dict.items():
+		top_pattern = spec['top_level']
+		mid = spec['mid_level']
+		low = spec['lower_level']
+
+		tops = resolve_top_levels(dcf.inp, top_pattern)
+		collected = {}
+
+		for top in tops:
+			process_table(dcf.inp, top, low)
+
+			if mid.lower().startswith('repeatable'):
+				values = []
+				for row in dcf.inp[top].values():
+					if isinstance(row, dict) and low in row:
+						values.append(row[low])
+				collected[top] = values
+			else:
+				collected[top] = dcf.inp[top][mid][low]
+
+		if len(collected) == 1:
+			resolved[name] = list(collected.values())[0]
+		else:
+			resolved[name] = collected
+
+	return resolved
+
+def output_resolver(output_dict, values, dcf, print_info=True):
+    for name, spec in output_dict.items():
+        top_pattern = spec['top_level']
+        mid = spec['mid_level']
+        low = spec['lower_level']
+
+        # Handle '[...]' tables
+        if '[...]' in top_pattern:
+            if isinstance(values[name], dict):
+                for top, val in values[name].items():
+                    insert(
+                        dcf,
+                        top,
+                        mid,
+                        low,
+                        val,
+                        __name__,
+                        print_info=print_info
+                    )
+            else:
+                # fallback: find matching table(s) in dcf.inp
+                for top_key in dcf.inp.keys():
+                    if re.search(top_pattern.replace('[...]', '.*'), top_key):
+                        insert(
+                            dcf,
+                            top_key,
+                            mid,
+                            low,
+                            values[name],
+                            __name__,
+                            print_info=print_info
+                        )
+        else:
+            insert(
+                dcf,
+                top_pattern,
+                mid,
+                low,
+                values[name],
+                __name__,
+                print_info=print_info
+            )
 
 class PEC_Plugin:
 	'''Simulating H2 production using photoelectrochemical water splitting.
