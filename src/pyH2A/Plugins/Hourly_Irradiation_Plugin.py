@@ -1,7 +1,6 @@
 import numpy as np
 from functools import lru_cache
 from pyH2A.Utilities.input_modification import insert, process_table, read_textfile, file_import
-import re
 
 hourly_irradiation_input_dict = {
     'file': {
@@ -83,48 +82,6 @@ hourly_irradiation_output_dict = {
         'lower_level': 'Value',
     },
 }
-
-def resolve_top_levels(inp, pattern):
-    core = pattern.replace('[...]', '').strip()
-    return [k for k in inp if core in k]
-
-def input_resolver(input_dict, dcf):
-    resolved = {}
-    for name, spec in input_dict.items():
-        top_pattern = spec['top_level']
-        mid = spec['mid_level']
-        low = spec['lower_level']
-
-        tops = resolve_top_levels(dcf.inp, top_pattern)
-        collected = {}
-
-        for top in tops:
-            process_table(dcf.inp, top, low)
-            collected[top] = dcf.inp[top][mid][low]
-
-        if len(collected) == 1:
-            resolved[name] = list(collected.values())[0]
-        else:
-            resolved[name] = collected
-    return resolved
-
-def output_resolver(output_dict, values, dcf, print_info=True):
-    for name, spec in output_dict.items():
-        top_pattern = spec['top_level']
-        mid = spec['mid_level']
-        low = spec['lower_level']
-
-        if '[...]' in top_pattern:
-            if isinstance(values[name], dict):
-                for top, val in values[name].items():
-                    insert(dcf, top, mid, low, val, __name__, print_info=print_info)
-            else:
-                for top_key in dcf.inp.keys():
-                    if re.search(top_pattern.replace('[...]', '.*'), top_key):
-                        insert(dcf, top_key, mid, low, values[name], __name__, print_info=print_info)
-        else:
-            insert(dcf, top_pattern, mid, low, values[name], __name__, print_info=print_info)
-
 
 class Hourly_Irradiation_Plugin:
 	'''Calculation of hourly and mean daily irradiation data with different module configurations.

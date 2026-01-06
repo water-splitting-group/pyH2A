@@ -1,5 +1,4 @@
 from pyH2A.Utilities.input_modification import insert, sum_all_tables, process_table
-import re
 
 fixed_operating_cost_input_dict = {
     'staff': {
