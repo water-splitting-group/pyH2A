@@ -6,6 +6,7 @@ from pathlib import Path
 import ast
 import operator
 import numpy as np
+import re
 
 def import_plugin(plugin_name, plugin_module):
 	'''Importing module.
@@ -849,3 +850,150 @@ def daily_to_yearly_power(dictionary):
 	yearly_power = stacked_array.sum(axis = 1)
 
 	return yearly_power
+
+def resolve_top_levels(inp, pattern):
+    """
+    Identify top-level tables in input dictionary that match a given pattern.
+
+    Parameters
+    ----------
+    inp : dict
+        Input dictionary (typically `dcf.inp`) to search for tables.
+    pattern : str
+        Pattern string, e.g., '[...] Direct Capital Cost [...]', 
+        where '[...]' acts as a wildcard.
+
+    Returns
+    -------
+    list of str
+        List of top-level keys in `inp` matching the pattern.
+    """
+    core = pattern.replace('[...]', '').strip()
+    return [k for k in inp if core in k]
+
+def input_resolver(input_dict, dcf):
+    """
+    Resolve inputs from `dcf.inp` using a specification dictionary.
+
+    Parameters
+    ----------
+    input_dict : dict
+        Dictionary specifying top-level, mid-level, and lower-level keys for inputs.
+        Example:
+        {
+            'planned_replacement_cost': {
+                'top_level': 'Planned Replacement',
+                'mid_level': 'Repeatable rows',
+                'lower_level': 'Cost ($)'
+            },
+            ...
+        }
+    dcf : object
+        DCF object containing `dcf.inp`, the hierarchical input dictionary.
+
+    Returns
+    -------
+    resolved : dict
+        Dictionary of resolved values according to the input specification.
+        For repeatable tables, values are returned as lists.
+    """
+    resolved = {}
+
+    for name, spec in input_dict.items():
+        top_pattern = spec['top_level']
+        mid = spec['mid_level']
+        low = spec['lower_level']
+
+        tops = resolve_top_levels(dcf.inp, top_pattern)
+        collected = {}
+
+        for top in tops:
+            process_table(dcf.inp, top, low)
+
+            if mid.lower().startswith('repeatable'):
+                values = []
+                for row in dcf.inp[top].values():
+                    if isinstance(row, dict) and low in row:
+                        values.append(row[low])
+                collected[top] = values
+            else:
+                collected[top] = dcf.inp[top][mid][low]
+
+        if len(collected) == 1:
+            resolved[name] = list(collected.values())[0]
+        else:
+            resolved[name] = collected
+
+    return resolved
+
+def output_resolver(output_dict, values, dcf, print_info=True):
+    """
+    Insert resolved output values into `dcf.inp` according to output specification.
+
+    Parameters
+    ----------
+    output_dict : dict
+        Dictionary specifying where outputs should be inserted.
+        Example:
+        {
+            'replacement_total': {
+                'top_level': 'Replacement',
+                'mid_level': 'Total',
+                'lower_level': 'Value'
+            },
+            ...
+        }
+    values : dict
+        Dictionary containing values to be inserted, keys matching `output_dict`.
+    dcf : object
+        DCF object containing `dcf.inp`.
+    print_info : bool, optional
+        Whether to print insert information. Default is True.
+
+    Notes
+    -----
+    - Handles repeatable top-level tables (identified by '[...]' in top_level).
+    - Inserts single values or lists depending on the table structure.
+    """
+
+    for name, spec in output_dict.items():
+        top_pattern = spec['top_level']
+        mid = spec['mid_level']
+        low = spec['lower_level']
+
+        # Handle '[...]' tables
+        if '[...]' in top_pattern:
+            if isinstance(values[name], dict):
+                for top, val in values[name].items():
+                    insert(
+                        dcf,
+                        top,
+                        mid,
+                        low,
+                        val,
+                        __name__,
+                        print_info=print_info
+                    )
+            else:
+                # fallback: find matching table(s) in dcf.inp
+                for top_key in dcf.inp.keys():
+                    if re.search(top_pattern.replace('[...]', '.*'), top_key):
+                        insert(
+                            dcf,
+                            top_key,
+                            mid,
+                            low,
+                            values[name],
+                            __name__,
+                            print_info=print_info
+                        )
+        else:
+            insert(
+                dcf,
+                top_pattern,
+                mid,
+                low,
+                values[name],
+                __name__,
+                print_info=print_info
+            )
