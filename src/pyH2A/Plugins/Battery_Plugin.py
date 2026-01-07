@@ -4,33 +4,38 @@ import numpy as np
 battery_input_dict = {
     'available_power_daily': {
         'top_level': 'Power Generation',
-        'mid_level': 'Available Power (daily, kWh)',
+        'mid_level': 'Available Power',
         'lower_level': 'Value',
-        'unit_key': 'Unit'
+        'unit_key': 'Unit',
+        'unit_category': 'Energy'  
     },
     'design_capacity': {
         'top_level': 'Battery',
-        'mid_level': 'Design Capacity (kWh)',
+        'mid_level': 'Design Capacity',
         'lower_level': 'Value',
-        'unit_key': 'Unit'
+        'unit_key': 'Unit',
+        'unit_category': 'Energy'  
     },
     'lowest_discharge_level': {
         'top_level': 'Battery',
         'mid_level': 'Lowest discharge level',
         'lower_level': 'Value',
-        'unit_key': 'Unit'
+        'unit_key': 'Unit',
+        'unit_category': 'Dimensionless'  
     },
     'capacity_loss_per_year': {
         'top_level': 'Battery',
         'mid_level': 'Capacity loss per year',
         'lower_level': 'Value',
-        'unit_key': 'Unit'
+        'unit_key': 'Unit',
+        'unit_category': 'Dimensionless'  
     },
     'round_trip_efficiency': {
         'top_level': 'Battery',
         'mid_level': 'Round trip efficiency',
         'lower_level': 'Value',
-        'unit_key': 'Unit'
+        'unit_key': 'Unit',
+        'unit_category': 'Dimensionless'  
     },
 }
 
@@ -39,21 +44,25 @@ battery_output_dict = {
         'top_level': 'Power Generation',
         'mid_level': 'Stored Power (daily, kWh)',
         'lower_level': 'Value',
-        'unit': 'kWh'
+        'unit': 'kWh',
+        'unit_category': 'Energy'
     },
     'yearly_unstored_power': {
         'top_level': 'Power Generation',
         'mid_level': 'Available Power (daily, kWh)',
         'lower_level': 'Value',
-        'unit': 'kWh'
+        'unit': 'kWh',
+        'unit_category': 'Energy'
     },
     'hourly_available_power': {
         'top_level': 'Power Generation',
         'mid_level': 'Available Power (hourly, kWh)',
         'lower_level': 'Value',
-        'unit': 'kWh'
+        'unit': 'kWh',
+        'unit_category': 'Energy'
     }
 }
+
 
 class Battery_Plugin:
     '''Simulation of electricity storage using a battery.
