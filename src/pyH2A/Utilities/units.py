@@ -55,12 +55,33 @@ unit_registry = {
 }
 
 def validate_unit(unit_category: str, unit: str, input_name: str = None):
-    """Validate that a unit belongs to a unit category in the registry."""
+    """
+    Validate that a unit belongs to a unit category in the registry.
+
+    Parameters
+    ----------
+    unit_category : str
+        The category of the unit, e.g., 'Energy_Battery'.
+    unit : str
+        The unit to validate, e.g., 'kWh'.
+    input_name : str, optional
+        Name of the input for error messages.
+
+    Raises
+    ------
+    ValueError
+        If the unit category is not found or if the unit is not allowed.
+    """
+    # Check if the category exists
     if unit_category not in unit_registry:
         raise ValueError(f"Unit category '{unit_category}' not found in unit registry.")
+
+    # Check if the unit is allowed in this category
     if unit not in unit_registry[unit_category]['allowed_units']:
-        allowed = list(unit_registry[unit_category]['allowed_units'].keys())
-        msg = f"Unit '{unit}' is not allowed in category '{unit_category}'. Allowed units: {allowed}"
+        allowed_units = list(unit_registry[unit_category]['allowed_units'].keys())
+        msg = f"Unit '{unit}' is not allowed in category '{unit_category}'. Allowed units: {allowed_units}"
         if input_name:
             msg = f"Input '{input_name}': {msg}"
+
+        # Raise the error
         raise ValueError(msg)
