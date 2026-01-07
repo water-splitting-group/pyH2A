@@ -8,6 +8,7 @@ import operator
 import numpy as np
 import re
 from pyH2A.Utilities.units import validate_unit
+from pyH2A.Utilities.conversion import to_base_unit
 
 def import_plugin(plugin_name, plugin_module):
     '''Importing module.
@@ -894,117 +895,82 @@ def resolve_top_levels(inp: dict, pattern: str):
 
     return matched_keys
 
-
 def input_resolver(input_dict, dcf):
     """
     Resolve inputs from `dcf.inp` using a specification dictionary.
 
-    Supports:
-    - Multiple top-level matches (pattern-based)
-    - Simple tables
-    - Repeatable tables
-    - Unit validation
-
     Parameters
     ----------
     input_dict : dict
-        Input specification dictionary.
-    dcf : Discounted_Cash_Flow
-        DCF object containing parsed markdown inputs.
+        Dictionary specifying top-level, mid-level, and lower-level keys for inputs.
+        Example:
+        {
+            'planned_replacement_cost': {
+                'top_level': 'Planned Replacement',
+                'mid_level': 'Repeatable rows',
+                'lower_level': 'Cost ($)'
+            },
+            ...
+        }
+    dcf : object
+        DCF object containing `dcf.inp`, the hierarchical input dictionary.
 
     Returns
     -------
     resolved : dict
-        Resolved values.
+        Dictionary of resolved values according to the input specification.
+        For repeatable tables, values are returned as lists.
     """
-
     resolved = {}
 
     for name, spec in input_dict.items():
         top_pattern = spec['top_level']
         mid = spec['mid_level']
         low = spec['lower_level']
-        unit_key = spec.get('unit_key')
-        unit_category = spec.get('unit_category')
+        unit_key = spec['unit_key']
+        unit_category = spec['unit_category']
 
         tops = resolve_top_levels(dcf.inp, top_pattern)
-
-        if not tops:
-            raise KeyError(
-                f"[ERROR] Input '{name}': no tables matched top-level pattern '{top_pattern}'."
-            )
-
         collected = {}
 
         for top in tops:
-            table = dcf.inp[top]
-
-            if isinstance(mid, str) and mid.lower().startswith('repeatable'):
-                values = []
-
-                for row_name, row in table.items():
-                    if not isinstance(row, dict):
-                        continue
-                    if low not in row:
-                        continue
-
-                    actual_unit = None
-                    if unit_key:
-                        actual_unit = row.get(unit_key)
-
-                    if unit_key and unit_category:
-                        validate_unit(
-                            unit_category,
-                            actual_unit,
-                            input_name=f"{name} ({top} > {row_name})"
-                        )
-
-                    values.append(row[low])
-
-                if not values:
-                    raise KeyError(
-                        f"[ERROR] Input '{name}': no valid rows found in repeatable table '{top}'."
-                    )
-
-                collected[top] = values
-                continue
-
-            if mid not in table:
-                raise KeyError(
-                    f"[ERROR] Input '{name}': row '{mid}' not found in table '{top}'.\n"
-                    f"Available rows: {list(table.keys())}"
-                )
-
-            row = table[mid]
-
-            if low not in row:
-                raise KeyError(
-                    f"[ERROR] Input '{name}': key '{low}' not found at '{top} > {mid}'.\n"
-                    f"Available keys: {list(row.keys())}"
-                )
-
-            value = row[low]
+            process_table(dcf.inp, top, low)
 
             actual_unit = None
             if unit_key:
-                actual_unit = row.get(unit_key)
+                actual_unit = dcf.inp[top][mid][unit_key]
+            
+            if actual_unit is None:
+                print(f"no unit found for {top} > {mid}")
 
-            if unit_key and unit_category:
-                validate_unit(
-                    unit_category,
-                    actual_unit,
-                    input_name=f"{name} ({top})"
-                )
+            if actual_unit and unit_category:
+                isvalidated = validate_unit(unit_category, actual_unit, name)
 
-            collected[top] = value
+            value = (dcf.inp[top][mid][low])
+
+            converted_value = value
+            base_unit = actual_unit
+            if isvalidated and unit_category != "Dimensionless":
+                converted_value = to_base_unit(value, actual_unit, unit_category)
+            
+            if mid.lower().startswith('repeatable'):
+                values = []
+                for row in dcf.inp[top].values():
+                    if isinstance(row, dict) and low in row:
+                        val = row[low]
+                        if isvalidated and unit_category != "Dimensionless" and actual_unit:
+                            val = to_base_unit(val, actual_unit, unit_category)
+                        values.append(val)
+                collected[top] = values
+            else:
+                collected[top] = converted_value
 
         if len(collected) == 1:
-            resolved[name] = next(iter(collected.values()))
+            resolved[name] = list(collected.values())[0]
         else:
             resolved[name] = collected
 
     return resolved
-
 
 def output_resolver(output_dict, values, dcf, print_info=True):
     """

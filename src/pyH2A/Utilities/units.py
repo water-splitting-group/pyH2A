@@ -49,12 +49,12 @@ unit_registry = {
         'base_unit': '1',
         'allowed_units': {
             'fraction': {'description': 'Fraction (0–1)', 'conversion_to_base': 1.0},
-            '%':        {'description': 'Percentage',     'conversion_to_base': 0.01}
+            '%':        {'description': 'Percentage',     'conversion_to_base': 0.01},
+            'percent':        {'description': 'Percentage',     'conversion_to_base': 0.01}
         }
     }
 }
-
-def validate_unit(unit_category: str, unit: str, input_name: str = None):
+def validate_unit(unit_category: str, unit: str, input_name: str = None) -> bool:
     """
     Validate that a unit belongs to a unit category in the registry.
 
@@ -66,6 +66,11 @@ def validate_unit(unit_category: str, unit: str, input_name: str = None):
         The unit to validate, e.g., 'kWh'.
     input_name : str, optional
         Name of the input for error messages.
+
+    Returns
+    -------
+    bool
+        True if the unit is valid in the given category.
 
     Raises
     ------
@@ -82,6 +87,7 @@ def validate_unit(unit_category: str, unit: str, input_name: str = None):
         msg = f"Unit '{unit}' is not allowed in category '{unit_category}'. Allowed units: {allowed_units}"
         if input_name:
             msg = f"Input '{input_name}': {msg}"
-
-        # Raise the error
         raise ValueError(msg)
+
+    # Unit is valid
+    return True
