@@ -39,19 +39,19 @@ battery_output_dict = {
         'top_level': 'Power Generation',
         'mid_level': 'Stored Power (daily, kWh)',
         'lower_level': 'Value',
-        'unit': 'kWh'
+        'unit_key': 'Unit'
     },
     'yearly_unstored_power': {
         'top_level': 'Power Generation',
         'mid_level': 'Available Power (daily, kWh)',
         'lower_level': 'Value',
-        'unit': 'kWh'
+        'unit_key': 'Unit'
     },
     'hourly_available_power': {
         'top_level': 'Power Generation',
         'mid_level': 'Available Power (hourly, kWh)',
         'lower_level': 'Value',
-        'unit': 'kWh'
+        'unit_key': 'Unit'
     }
 }
 

@@ -6,31 +6,37 @@ solar_concentrator_input_dict = {
         'top_level': 'Solar Concentrator',
         'mid_level': 'Concentration Factor',
         'lower_level': 'Value',
+		'unit_key': 'Unit'
     },
     'concentrator_cost_per_m2': {
         'top_level': 'Solar Concentrator',
         'mid_level': 'Cost ($/m2)',
         'lower_level': 'Value',
+		'unit_key': 'Unit'
     },
     'number_of_pec_cells': {
         'top_level': 'PEC Cells',
         'mid_level': 'Number',
         'lower_level': 'Value',
+		'unit_key': 'Unit'
     },
     'south_spacing': {
         'top_level': 'Land Area Requirement',
         'mid_level': 'South Spacing (m)',
         'lower_level': 'Value',
+		'unit_key': 'Unit'
     },
     'east_west_spacing': {
         'top_level': 'Land Area Requirement',
         'mid_level': 'East/West Spacing (m)',
         'lower_level': 'Value',
+		'unit_key': 'Unit'
     },
     'existing_collection_area_m2': {
         'top_level': 'Non-Depreciable Capital Costs',
         'mid_level': 'Solar Collection Area (m2)',
         'lower_level': 'Value',
+		'unit_key': 'Unit'
     },
 }
 
@@ -39,21 +45,25 @@ solar_concentrator_output_dict = {
         'top_level': 'Non-Depreciable Capital Costs',
         'mid_level': 'Land required (m2)',
         'lower_level': 'Value',
+		'unit_key': 'Unit'
     },
     'total_land_area_acres': {
         'top_level': 'Non-Depreciable Capital Costs',
         'mid_level': 'Land required (acres)',
         'lower_level': 'Value',
+		'unit_key': 'Unit'
     },
     'total_solar_collection_area_m2': {
         'top_level': 'Non-Depreciable Capital Costs',
         'mid_level': 'Solar Collection Area (m2)',
         'lower_level': 'Value',
+		'unit_key': 'Unit'
     },
     'total_concentrator_cost': {
         'top_level': 'Direct Capital Costs - Solar Concentrator',
         'mid_level': 'Solar Concentrator Cost ($)',
         'lower_level': 'Value',
+		'unit_key': 'Unit'
     },
 }
 

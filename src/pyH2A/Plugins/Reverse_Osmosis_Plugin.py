@@ -6,26 +6,31 @@ reverse_osmosis_input_dict = {
         'top_level': 'Financial Input Values',
         'mid_level': 'construction time',
         'lower_level': 'Value',
+		'unit_key': 'Unit'
     },
     'annual_h2_output': {
         'top_level': 'Technical Operating Parameters and Specifications',
         'mid_level': 'Output per Year',
         'lower_level': 'Value',
+		'unit_key': 'Unit'
     },
     'power_demand_per_m3': {
         'top_level': 'Reverse Osmosis',
         'mid_level': 'Power Demand (kWh/m3)',
         'lower_level': 'Value',
+		'unit_key': 'Unit'
     },
     'average_daily_operating_hours': {
         'top_level': 'Reverse Osmosis',
         'mid_level': 'Average daily operating hours',
         'lower_level': 'Value',
+		'unit_key': 'Unit'
     },
     'recovery_rate': {
         'top_level': 'Reverse Osmosis',
         'mid_level': 'Recovery Rate',
         'lower_level': 'Value',
+		'unit_key': 'Unit'
     },
 }
 
@@ -34,16 +39,19 @@ reverse_osmosis_output_dict = {
         'top_level': 'Power Consumption',
         'mid_level': 'Reverse Osmosis Consumption (kWh, yearly)',
         'lower_level': 'Value',
+		'unit_key': 'Unit'
     },
     'reverse_osmosis_type': {
         'top_level': 'Power Consumption',
         'mid_level': 'Reverse Osmosis Consumption (kWh, yearly)',
         'lower_level': 'Type',
+        'unit_key': 'Unit'
     },
     'reverse_osmosis_capacity': {
         'top_level': 'Reverse Osmosis',
         'mid_level': 'Capacity (m3/h)',
         'lower_level': 'Value',
+		'unit_key': 'Unit'
     },
 }
 

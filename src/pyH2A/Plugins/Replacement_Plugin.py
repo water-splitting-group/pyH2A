@@ -7,16 +7,19 @@ replacement_input_dict = {
         'top_level': 'Planned Replacement',
         'mid_level': 'Repeatable rows',
         'lower_level': 'Frequency (years)',
+		'unit_key': 'Unit'
     },
     'planned_replacement_cost': {
         'top_level': 'Planned Replacement',
         'mid_level': 'Repeatable rows',
         'lower_level': 'Cost ($)',
+		'unit_key': 'Unit'
     },
     'unplanned_replacement': {
         'top_level': '[...] Unplanned Replacement [...]',
         'mid_level': 'Repeatable rows',
         'lower_level': 'Value',
+		'unit_key': 'Unit'
     }
 }
 
@@ -25,11 +28,13 @@ replacement_output_dict = {
         'top_level': '[...] Unplanned Replacement [...]',
         'mid_level': 'Summed Total',
         'lower_level': 'Value',
+		'unit_key': 'Unit'
     },
     'replacement_total': {
         'top_level': 'Replacement',
         'mid_level': 'Total',
         'lower_level': 'Value',
+		'unit_key': 'Unit'
     }
 }
 

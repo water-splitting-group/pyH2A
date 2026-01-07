@@ -6,26 +6,31 @@ multiple_modules_input_dict = {
         'top_level': 'Technical Operating Parameters and Specifications',
         'mid_level': 'Plant Modules',
         'lower_level': 'Value',
+		'unit_key': 'Unit'
     },
     'solar_collection_area': {
         'top_level': 'Non-Depreciable Capital Costs',
         'mid_level': 'Solar Collection Area (m2)',
         'lower_level': 'Value',
+		'unit_key': 'Unit'
     },
     'area_per_staff': {
         'top_level': 'Fixed Operating Costs',
         'mid_level': 'area',
         'lower_level': 'Value',
+		'unit_key': 'Unit'
     },
     'shifts': {
         'top_level': 'Fixed Operating Costs',
         'mid_level': 'shifts',
         'lower_level': 'Value',
+		'unit_key': 'Unit'
     },
     'supervisors': {
         'top_level': 'Fixed Operating Costs',
         'mid_level': 'supervisor',
         'lower_level': 'Value',
+		'unit_key': 'Unit'
     },
 }
 
@@ -34,6 +39,7 @@ multiple_modules_output_dict = {
         'top_level': 'Fixed Operating Costs',
         'mid_level': 'staff',
         'lower_level': 'Value',
+		'unit_key': 'Unit'
     },
 }
 
