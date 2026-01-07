@@ -89,10 +89,10 @@ Efficiency | 22% | None | Only used for area calculation.
 
 Name | Value | Unit | Comment
 --- | --- | --- | ---
-Design Capacity (kWh) | 800000 | kWh | Full design capacity
-Lowest discharge level | 20% | % | Lowest level to which battery can be discharged
-Capacity loss per year | 1% | % | Loss of capacity per year
-Round trip efficiency | 100% | % | For lithium ion battery
+Design Capacity (kWh) | 800 | MWh | Full design capacity
+Lowest discharge level | 20% | percent | Lowest level to which battery can be discharged
+Capacity loss per year | 1% | percent | Loss of capacity per year
+Round trip efficiency | 100% | percent | For lithium ion battery
 
 # Reverse Osmosis
 
