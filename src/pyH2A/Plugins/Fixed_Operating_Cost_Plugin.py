@@ -14,7 +14,7 @@ fixed_operating_cost_input_dict = {
         'unit_key': 'unit'
     },
     'other_fixed_operating_costs': {
-        'top_level': '[...] Other Fixed Operating Cost [...]',
+        'top_level': '<...> Other Fixed Operating Cost <...>',
         'mid_level': 'Repeatable rows',
         'lower_level': 'Value',
         'unit_key': 'unit'
@@ -23,7 +23,7 @@ fixed_operating_cost_input_dict = {
 
 fixed_operating_cost_output_dict = {
     'other_fixed_operating_cost_total': {
-        'top_level': '[...] Other Fixed Operating Cost [...]',
+        'top_level': '<...> Other Fixed Operating Cost <...>',
         'mid_level': 'Summed Total',
         'lower_level': 'Value',
         'unit_key': 'unit'

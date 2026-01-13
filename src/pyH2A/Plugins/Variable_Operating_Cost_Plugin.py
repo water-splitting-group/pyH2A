@@ -39,7 +39,7 @@ variable_operating_cost_input_dict = {
 		'unit_key': 'Unit'
     },
     'other_variable_operating_cost': {
-        'top_level': '[...] Other Variable Operating Cost [...]',
+        'top_level': '<...> Other Variable Operating Cost <...>',
         'mid_level': 'Repeatable rows',
         'lower_level': 'Value',
 		'unit_key': 'Unit'
@@ -48,7 +48,7 @@ variable_operating_cost_input_dict = {
 
 variable_operating_cost_output_dict = {
     'other_variable_operating_cost_summed': {
-        'top_level': '[...] Other Variable Operating Cost [...]',
+        'top_level': '<...> Other Variable Operating Cost <...>',
         'mid_level': 'Summed Total',
         'lower_level': 'Value',
 		'unit_key': 'Unit'

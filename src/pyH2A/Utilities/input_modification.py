@@ -868,7 +868,7 @@ def resolve_top_levels(inp, pattern):
     list of str
         List of top-level keys in `inp` matching the pattern.
     """
-    core = pattern.replace('[...]', '').strip()
+    core = pattern.replace('<...>', '').strip()
     return [k for k in inp if core in k]
 
 def input_resolver(input_dict, dcf):
@@ -962,7 +962,7 @@ def output_resolver(output_dict, values, dcf, print_info=True):
         low = spec['lower_level']
 
         # Handle '[...]' tables
-        if '[...]' in top_pattern:
+        if '<...>' in top_pattern:
             if isinstance(values[name], dict):
                 for top, val in values[name].items():
                     insert(

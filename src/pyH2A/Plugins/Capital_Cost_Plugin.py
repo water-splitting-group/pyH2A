@@ -2,13 +2,13 @@ from pyH2A.Utilities.input_modification import insert, sum_all_tables, process_t
 
 capital_cost_input_dict = {
 	'direct_capital_costs': {
-		'top_level': '[...] Direct Capital Cost [...]',
+		'top_level': '<...> Direct Capital Cost <...>',
 		'mid_level': 'Repeatable rows',
 		'lower_level': 'Value',
 		'unit_key': 'Unit'
 	},
 	'indirect_capital_costs': {
-		'top_level': '[...] Indirect Capital Cost [...]',
+		'top_level': '<...> Indirect Capital Cost <...>',
 		'mid_level': 'Repeatable rows',
 		'lower_level': 'Value',
         'unit_key': 'Unit'
@@ -26,7 +26,7 @@ capital_cost_input_dict = {
 		'unit_key': 'Unit'
 	},
 	'other_non_depreciable': {
-		'top_level': '[...] Other Non-Depreciable Capital Cost [...]',
+		'top_level': '<...> Other Non-Depreciable Capital Cost <...>',
 		'mid_level': 'Repeatable rows',
 		'lower_level': 'Value',
 		'unit_key': 'Unit'
@@ -35,19 +35,19 @@ capital_cost_input_dict = {
 
 capital_cost_output_dict = {
     'direct_capital_summed_total': {
-        'top_level': '[...] Direct Capital Cost [...]',
+        'top_level': '<...> Direct Capital Cost <...>',
         'mid_level': 'Summed Total',
         'lower_level': 'Value',
 		'unit_key': 'Unit'
     },
     'indirect_capital_summed_total': {
-        'top_level': '[...] Indirect Capital Cost [...]',
+        'top_level': '<...> Indirect Capital Cost <...>',
         'mid_level': 'Summed Total',
         'lower_level': 'Value',
 		'unit_key': 'Unit'
     },
     'other_non_depreciable_summed_total': {
-        'top_level': '[...] Other Non-Depreciable Capital Cost [...]',
+        'top_level': '<...> Other Non-Depreciable Capital Cost <...>',
         'mid_level': 'Summed Total',
         'lower_level': 'Value',
 		'unit_key': 'Unit'

@@ -16,7 +16,7 @@ replacement_input_dict = {
 		'unit_key': 'Unit'
     },
     'unplanned_replacement': {
-        'top_level': '[...] Unplanned Replacement [...]',
+        'top_level': '<...> Unplanned Replacement <...>',
         'mid_level': 'Repeatable rows',
         'lower_level': 'Value',
 		'unit_key': 'Unit'
@@ -25,7 +25,7 @@ replacement_input_dict = {
 
 replacement_output_dict = {
     'unplanned_replacement_summed_total': {
-        'top_level': '[...] Unplanned Replacement [...]',
+        'top_level': '<...> Unplanned Replacement <...>',
         'mid_level': 'Summed Total',
         'lower_level': 'Value',
 		'unit_key': 'Unit'
