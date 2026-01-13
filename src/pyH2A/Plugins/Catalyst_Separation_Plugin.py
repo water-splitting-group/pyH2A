@@ -4,17 +4,20 @@ catalyst_separation_input_dict = {
 	'total_water': {
 		'top_level': 'Water Volume',
 		'mid_level': 'Volume (liters)',
-		'lower_level': 'Value'
+		'lower_level': 'Value',
+        'dimension': ''
 	},
 	'lifetime_catalyst': {
 		'top_level': 'Catalyst',
 		'mid_level': 'Lifetime (years)',
-		'lower_level': 'Value'
+		'lower_level': 'Value',
+        'dimension': ''
 	},
 	'cost_filteration': {
 		'top_level': 'Catalyst Separation',
 		'mid_level': 'Filtration cost ($/m3)',
-		'lower_level': 'Value'
+		'lower_level': 'Value',
+        'dimension': ''
 	}
 }
 
@@ -22,7 +25,8 @@ catalyst_separation_output_dict = {
 	'yearly_cost': {
 		'top_level': 'Other Variable Operating Cost - Catalyst Separation',
 		'mid_level': 'Catalyst Separation (yearly cost)',
-		'lower_level': 'Value'
+		'lower_level': 'Value',
+        'dimension': ''
 	}
 }
 

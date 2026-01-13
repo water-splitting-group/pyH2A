@@ -5,27 +5,32 @@ battery_input_dict = {
     'available_power_daily': {
         'top_level': 'Power Generation',
         'mid_level': 'Available Power (daily, kWh)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'design_capacity': {
         'top_level': 'Battery',
         'mid_level': 'Design Capacity (kWh)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'lowest_discharge_level': {
         'top_level': 'Battery',
         'mid_level': 'Lowest discharge level',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'capacity_loss_per_year': {
         'top_level': 'Battery',
         'mid_level': 'Capacity loss per year',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'round_trip_efficiency': {
         'top_level': 'Battery',
         'mid_level': 'Round trip efficiency',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
 }
 
@@ -33,17 +38,20 @@ battery_output_dict = {
     'yearly_recovered_power': {
         'top_level': 'Power Generation',
         'mid_level': 'Stored Power (daily, kWh)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'yearly_unstored_power': {
         'top_level': 'Power Generation',
         'mid_level': 'Available Power (daily, kWh)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'hourly_available_power': {
         'top_level': 'Power Generation',
         'mid_level': 'Available Power (hourly, kWh)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     }
 }
 

@@ -4,37 +4,44 @@ scaling_input_dict = {
     'plant_design_capacity': {
         'top_level': 'Technical Operating Parameters and Specifications',
         'mid_level': 'Plant Design Capacity (kg of H2/day)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'operating_capacity_factor': {
         'top_level': 'Technical Operating Parameters and Specifications',
         'mid_level': 'Operating Capacity Factor (%)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'max_output_at_gate': {
         'top_level': 'Technical Operating Parameters and Specifications',
         'mid_level': 'Maximum Output at Gate',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'new_plant_design_capacity': {
         'top_level': 'Technical Operating Parameters and Specifications',
         'mid_level': 'New Plant Design Capacity (kg of H2/day)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'scaling_ratio': {
         'top_level': 'Technical Operating Parameters and Specifications',
         'mid_level': 'Scaling Ratio',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'capital_scaling_exponent': {
         'top_level': 'Technical Operating Parameters and Specifications',
         'mid_level': 'Capital Scaling Exponent',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'labor_scaling_exponent': {
         'top_level': 'Technical Operating Parameters and Specifications',
         'mid_level': 'Labor Scaling Exponent',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     }
 }
 
@@ -42,37 +49,44 @@ scaling_output_dict = {
     'design_output_per_day': {
         'top_level': 'Technical Operating Parameters and Specifications',
         'mid_level': 'Design Output per Day',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'max_gate_output_per_day': {
         'top_level': 'Technical Operating Parameters and Specifications',
         'mid_level': 'Max Gate Output per Day',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'output_per_year': {
         'top_level': 'Technical Operating Parameters and Specifications',
         'mid_level': 'Output per Year',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'output_per_year_at_gate': {
         'top_level': 'Technical Operating Parameters and Specifications',
         'mid_level': 'Output per Year at Gate',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'scaling_ratio_returned': {
         'top_level': 'Technical Operating Parameters and Specifications',
         'mid_level': 'Scaling Ratio',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'capital_scaling_factor': {
         'top_level': 'Scaling',
         'mid_level': 'Capital Scaling Factor',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'labor_scaling_factor': {
         'top_level': 'Scaling',
         'mid_level': 'Labor Scaling Factor',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     }
 }
 

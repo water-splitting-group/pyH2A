@@ -5,27 +5,32 @@ input_dict_pm = {
     'available_power_daily': {
         'top_level': 'Power Generation',
         'mid_level': 'Available Power (daily, kWh)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
      },
     'stored_power_daily': {
         'top_level': 'Power Generation',
         'mid_level': 'Stored Power (daily, kWh)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'consumers': {
         'top_level': 'Power Consumption',
         'mid_level': 'repeatable',  
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': '',
     },
     'consumer_type': {
         'top_level': 'Power Consumption',
         'mid_level': 'repeatable',  
-        'lower_level': 'Type'
+        'lower_level': 'Type',
+        'dimension': ''
     },
     'grid_cost': {
         'top_level': 'Grid Electricity',
         'mid_level': 'Cost ($/kWh)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     }
 }
 
@@ -33,32 +38,38 @@ pm_output_dict = {
     'remaining_available_power': {
         'top_level': 'Power Generation',
         'mid_level': 'Available Power (yearly, kWh)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'remaining_stored_power': {
         'top_level': 'Power Generation',
         'mid_level': 'Stored Power (yearly, kWh)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'zero_daily_available': {
         'top_level': 'Power Generation',
         'mid_level': 'Available Power (daily, kWh)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'zero_daily_stored': {
         'top_level': 'Power Generation',
         'mid_level': 'Stored Power (daily, kWh)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'used_grid_electricity': {
         'top_level': 'Grid Electricity',
         'mid_level': 'Used grid electricity (yearly, kWh)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'electricity_cost': {
         'top_level': 'Other Variable Operating Cost - Grid Electricity',
         'mid_level': 'Cost of grid electricity (yearly, $)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
 }
 

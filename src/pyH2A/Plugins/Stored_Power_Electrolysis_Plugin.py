@@ -6,47 +6,56 @@ stored_power_electrolysis_input_dict = {
     'fraction_stored_power': {
         'top_level': 'Electrolysis Using Stored Power',
         'mid_level': 'Fraction of stored power used for electrolysis',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'stored_power_daily': {
         'top_level': 'Power Generation',
         'mid_level': 'Stored Power (daily, kWh)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'nominal_power': {
         'top_level': 'Electrolyzer',
         'mid_level': 'Nominal Power (kW)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'power_increase_per_year': {
         'top_level': 'Electrolyzer',
         'mid_level': 'Power requirement increase per year',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'minimum_capacity': {
         'top_level': 'Electrolyzer',
         'mid_level': 'Minimum capacity',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'conversion_efficiency': {
         'top_level': 'Electrolyzer',
         'mid_level': 'Conversion efficiency (kg H2/kWh)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'replacement_time': {
         'top_level': 'Electrolyzer',
         'mid_level': 'Replacement time (h)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'yearly_operation_data': {
         'top_level': 'Electrolyzer',
         'mid_level': 'Yearly Operation Data',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'h2_production_yearly': {
         'top_level': 'Electrolyzer',
         'mid_level': 'H2 Production (yearly, kg)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
 }
 
@@ -54,22 +63,26 @@ stored_power_electrolysis_output_dict = {
     'plant_design_capacity': {
         'top_level': 'Technical Operating Parameters and Specifications',
         'mid_level': 'Plant Design Capacity (kg of H2/day)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'electrolyzer_stack_replacement_frequency': {
         'top_level': 'Planned Replacement',
         'mid_level': 'Electrolyzer Stack Replacement',
-        'lower_level': 'Frequency (years)'
+        'lower_level': 'Frequency (years)',
+        'dimension': ''
     },
     'stored_power_electrolysis_consumption': {
         'top_level': 'Power Consumption',
         'mid_level': 'Stored Power Electrolysis (kWh, yearly)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'stored_power_electrolysis_type': {
         'top_level': 'Power Consumption',
         'mid_level': 'Stored Power Electrolysis (kWh, yearly)',
-        'lower_level': 'Type'
+        'lower_level': 'Type',
+        'dimension': ''
     }
 }
 

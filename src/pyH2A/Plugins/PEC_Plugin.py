@@ -6,57 +6,68 @@ pec_input_dict = {
     'design_output_per_day': {
         'top_level': 'Technical Operating Parameters and Specifications',
         'mid_level': 'Design Output per Day',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'cell_cost_per_m2': {
         'top_level': 'PEC Cells',
         'mid_level': 'Cell Cost ($/m2)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'cell_lifetime': {
         'top_level': 'PEC Cells',
         'mid_level': 'Lifetime (year)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'cell_length': {
         'top_level': 'PEC Cells',
         'mid_level': 'Length (m)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'cell_width': {
         'top_level': 'PEC Cells',
         'mid_level': 'Width (m)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'cell_angle': {
         'top_level': 'Land Area Requirement',
         'mid_level': 'Cell Angle (degree)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'south_spacing': {
         'top_level': 'Land Area Requirement',
         'mid_level': 'South Spacing (m)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'east_west_spacing': {
         'top_level': 'Land Area Requirement',
         'mid_level': 'East/West Spacing (m)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'sth_efficiency': {
         'top_level': 'Solar-to-Hydrogen Efficiency',
         'mid_level': 'STH (%)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'mean_solar_input': {
         'top_level': 'Solar Input',
         'mid_level': 'Mean solar input (kWh/m2/day)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'concentration_factor': {
         'top_level': 'Solar Concentrator',
         'mid_level': 'Concentration Factor',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
 }
 
@@ -64,32 +75,38 @@ pec_output_dict = {
     'land_required_acres': {
         'top_level': 'Non-Depreciable Capital Costs',
         'mid_level': 'Land required (acres)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'solar_collection_area_m2': {
         'top_level': 'Non-Depreciable Capital Costs',
         'mid_level': 'Solar Collection Area (m2)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': '',
     },
     'planned_replacement_cost': {
         'top_level': 'Planned Replacement',
         'mid_level': 'Planned Replacement PEC Cells',
-        'lower_level': 'Cost ($)'
+        'lower_level': 'Cost ($)',
+		'dimension': ''
     },
     'planned_replacement_frequency': {
         'top_level': 'Planned Replacement',
         'mid_level': 'Planned Replacement PEC Cells',
-        'lower_level': 'Frequency (years)'
+        'lower_level': 'Frequency (years)',
+		'dimension': ''
     },
     'total_pec_cell_cost': {
         'top_level': 'Direct Capital Costs - PEC Cells',
         'mid_level': 'PEC Cell Cost ($)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'pec_cell_number': {
         'top_level': 'PEC Cells',
         'mid_level': 'Number',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
 }
 

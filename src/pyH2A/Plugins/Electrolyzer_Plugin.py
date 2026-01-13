@@ -5,47 +5,56 @@ electrolyzer_input_dict = {
     'construction_time': {
         'top_level': 'Financial Input Values',
         'mid_level': 'construction time',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'capex_multiplier': {
         'top_level': 'CAPEX Multiplier',
         'mid_level': 'Multiplier',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'nominal_power': {
         'top_level': 'Electrolyzer',
         'mid_level': 'Nominal Power (kW)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'reference_power': {
         'top_level': 'Electrolyzer',
         'mid_level': 'CAPEX Reference Power (kW)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'power_increase': {
         'top_level': 'Electrolyzer',
         'mid_level': 'Power requirement increase per year',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'minimum_capacity': {
         'top_level': 'Electrolyzer',
         'mid_level': 'Minimum capacity',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'conversion_efficiency': {
         'top_level': 'Electrolyzer',
         'mid_level': 'Conversion efficiency (kg H2/kWh)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'replacement_time': {
         'top_level': 'Electrolyzer',
         'mid_level': 'Replacement time (h)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'available_power_hourly': {
         'top_level': 'Power Generation',
         'mid_level': 'Available Power (hourly, kWh)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
 }
 
@@ -53,42 +62,50 @@ electrolyzer_output_dict = {
     'plant_design_capacity': {
         'top_level': 'Technical Operating Parameters and Specifications',
         'mid_level': 'Plant Design Capacity (kg of H2/day)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'capacity_factor': {
         'top_level': 'Technical Operating Parameters and Specifications',
         'mid_level': 'Operating Capacity Factor (%)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'stack_replacement_frequency': {
         'top_level': 'Planned Replacement',
         'mid_level': 'Electrolyzer Stack Replacement',
-        'lower_level': 'Frequency (years)'
+        'lower_level': 'Frequency (years)',
+        'dimension': ''
     },
     'scaling_factor': {
         'top_level': 'Electrolyzer',
         'mid_level': 'Scaling Factor',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'yearly_operation_data': {
         'top_level': 'Electrolyzer',
         'mid_level': 'Yearly Operation Data',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'yearly_h2_production': {
         'top_level': 'Electrolyzer',
         'mid_level': 'H2 Production (yearly, kg)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'unused_power_hourly': {
         'top_level': 'Power Generation',
         'mid_level': 'Available Power (hourly, kWh)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'unused_power_daily': {
         'top_level': 'Power Generation',
         'mid_level': 'Available Power (daily, kWh)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
 }
 

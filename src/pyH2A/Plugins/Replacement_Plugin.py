@@ -6,17 +6,20 @@ replacement_input_dict = {
     'planned_replacement_frequency': {
         'top_level': 'Planned Replacement',
         'mid_level': 'Repeatable rows',
-        'lower_level': 'Frequency (years)'
+        'lower_level': 'Frequency (years)',
+		'dimension': ''
     },
     'planned_replacement_cost': {
         'top_level': 'Planned Replacement',
         'mid_level': 'Repeatable rows',
-        'lower_level': 'Cost ($)'
+        'lower_level': 'Cost ($)',
+		'dimension': ''
     },
     'unplanned_replacement': {
         'top_level': '<...> Unplanned Replacement <...>',
         'mid_level': 'Repeatable rows',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     }
 }
 
@@ -24,12 +27,14 @@ replacement_output_dict = {
     'unplanned_replacement_summed_total': {
         'top_level': '<...> Unplanned Replacement <...>',
         'mid_level': 'Summed Total',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'replacement_total': {
         'top_level': 'Replacement',
         'mid_level': 'Total',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     }
 }
 

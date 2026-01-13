@@ -4,17 +4,20 @@ fixed_operating_cost_input_dict = {
     'staff': {
         'top_level': 'Fixed Operating Costs',
         'mid_level': 'staff',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'hourly_labor_cost': {
         'top_level': 'Fixed Operating Costs',
         'mid_level': 'hourly labor cost',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'other_fixed_operating_costs': {
         'top_level': '<...> Other Fixed Operating Cost <...>',
         'mid_level': 'Repeatable rows',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
 }
 
@@ -22,22 +25,26 @@ fixed_operating_cost_output_dict = {
     'other_fixed_operating_cost_total': {
         'top_level': '<...> Other Fixed Operating Cost <...>',
         'mid_level': 'Summed Total',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'labor_cost_uninflated': {
         'top_level': 'Fixed Operating Costs',
         'mid_level': 'Labor Cost - Uninflated',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'labor_cost_inflated': {
         'top_level': 'Fixed Operating Costs',
         'mid_level': 'Labor Cost',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'fixed_operating_cost_total': {
         'top_level': 'Fixed Operating Costs',
         'mid_level': 'Total',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
 }
 

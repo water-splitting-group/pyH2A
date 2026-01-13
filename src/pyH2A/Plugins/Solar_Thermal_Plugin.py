@@ -5,22 +5,26 @@ solar_thermal_input_dict = {
     'design_output_per_day': {
         'top_level': 'Technical Operating Parameters and Specifications',
         'mid_level': 'Design Output per Day',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'sth_efficiency': {
         'top_level': 'Solar-to-Hydrogen Efficiency',
         'mid_level': 'STH (%)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'mean_solar_input': {
         'top_level': 'Solar Input',
         'mid_level': 'Mean solar input (kWh/m2/day)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'additional_land_area': {
         'top_level': 'Non-Depreciable Capital Costs',
         'mid_level': 'Additional Land Area (%)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
 }
 
@@ -28,7 +32,8 @@ solar_thermal_output_dict = {
     'land_required_acres': {
         'top_level': 'Non-Depreciable Capital Costs',
         'mid_level': 'Land required (acres)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     }
 }
 

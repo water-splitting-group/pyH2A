@@ -7,36 +7,43 @@ variable_operating_cost_input_dict = {
         'top_level': 'Technical Operating Parameters and Specifications',
         'mid_level': 'Output per Year',
         'lower_level': 'Value',
+        'dimension': '',
     },
     'utilities_cost': {
         'top_level': 'Utilities',
         'mid_level': 'Repeatable rows',  
         'lower_level': 'Cost',
+		'dimension': ''
     },
     'utilities_usage': {
         'top_level': 'Utilities',
         'mid_level': 'Repeatable rows',  
         'lower_level': 'Usage per kg H2',
+		'dimension': ''
     },
     'utilities_price_conversion': {
         'top_level': 'Utilities',
         'mid_level': 'Repeatable rows',  
         'lower_level': 'Price Conversion Factor',
+		'dimension': ''
     },
     'utilities_cost_path': {
         'top_level': 'Utilities',
         'mid_level': 'Repeatable rows',  
         'lower_level': 'Path',
+		'dimension': ''
     },
     'utilities_usage_path': {
         'top_level': 'Utilities',
         'mid_level': 'Repeatable rows',  
         'lower_level': 'Usage Path',
+		'dimension': ''
     },
     'other_variable_operating_cost': {
         'top_level': '<...> Other Variable Operating Cost <...>',
         'mid_level': 'Repeatable rows',
         'lower_level': 'Value',
+        'dimension': '',
     },
 }
 
@@ -45,21 +52,25 @@ variable_operating_cost_output_dict = {
         'top_level': '<...> Other Variable Operating Cost <...>',
         'mid_level': 'Summed Total',
         'lower_level': 'Value',
+        'dimension': '',
     },
     'variable_operating_cost_total': {
         'top_level': 'Variable Operating Costs',
         'mid_level': 'Total',
         'lower_level': 'Value',
+        'dimension': '',
     },
     'variable_operating_cost_utilities': {
         'top_level': 'Variable Operating Costs',
         'mid_level': 'Utilities',
         'lower_level': 'Value',
+        'dimension': '',
     },
     'variable_operating_cost_other': {
         'top_level': 'Variable Operating Costs',
         'mid_level': 'Other',
         'lower_level': 'Value',
+        'dimension': '',
     }
 }
 

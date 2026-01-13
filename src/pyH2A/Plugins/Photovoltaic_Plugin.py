@@ -5,32 +5,38 @@ pv_input_dict = {
     'irradiation_data': {
         'top_level': 'Irradiation Used',
         'mid_level': 'Data',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'capex_multiplier': {
         'top_level': 'CAPEX Multiplier',
         'mid_level': 'Multiplier',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'nominal_power': {
         'top_level': 'Photovoltaic',
         'mid_level': 'Nominal Power (kW)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'reference_power': {
         'top_level': 'Photovoltaic',
         'mid_level': 'CAPEX Reference Power (kW)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'power_loss_per_year': {
         'top_level': 'Photovoltaic',
         'mid_level': 'Power loss per year',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'efficiency': {
         'top_level': 'Photovoltaic',
         'mid_level': 'Efficiency',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
 }
 
@@ -38,32 +44,38 @@ pv_output_dict = {
     'pv_scaling_factor': {
         'top_level': 'Photovoltaic',
         'mid_level': 'Scaling Factor',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'power_generation_hourly': {
         'top_level': 'Power Generation',
         'mid_level': 'PV Hourly Power Generation (kWh)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'available_power_hourly': {
         'top_level': 'Power Generation',
         'mid_level': 'Available Power (hourly, kWh)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'available_power_daily': {
         'top_level': 'Power Generation',
         'mid_level': 'Available Power (daily, kWh)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'area_acres': {
         'top_level': 'Non-Depreciable Capital Costs',
         'mid_level': 'Land required (acres)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'area_m2': {
         'top_level': 'Non-Depreciable Capital Costs',
         'mid_level': 'Solar Collection Area (m2)',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
 }
 

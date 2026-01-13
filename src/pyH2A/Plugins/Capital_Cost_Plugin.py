@@ -4,27 +4,32 @@ capital_cost_input_dict = {
 	'direct_capital_costs': {
 		'top_level': '<...> Direct Capital Cost <...>',
 		'mid_level': 'Repeatable rows',
-		'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
 	},
 	'indirect_capital_costs': {
 		'top_level': '<...> Indirect Capital Cost <...>',
 		'mid_level': 'Repeatable rows',
-		'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
 	},
 	'land_cost': {
 		'top_level': 'Non-Depreciable Capital Costs',
 		'mid_level': 'Cost of land ($ per acre)',
-		'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
 	},
 	'land_area': {
 		'top_level': 'Non-Depreciable Capital Costs',
 		'mid_level': 'Land required (acres)',
-		'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
 	},
 	'other_non_depreciable': {
 		'top_level': '<...> Other Non-Depreciable Capital Cost <...>',
 		'mid_level': 'Repeatable rows',
-		'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
 	},
 }
 
@@ -32,67 +37,80 @@ capital_cost_output_dict = {
     'direct_capital_summed_total': {
         'top_level': '<...> Direct Capital Cost <...>',
         'mid_level': 'Summed Total',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'indirect_capital_summed_total': {
         'top_level': '<...> Indirect Capital Cost <...>',
         'mid_level': 'Summed Total',
-		'lower_level': 'Value'    
+        'lower_level': 'Value',
+        'dimension': ''    
 	},
     'other_non_depreciable_summed_total': {
         'top_level': '<...> Other Non-Depreciable Capital Cost <...>',
         'mid_level': 'Summed Total',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'direct_capital_total': {
         'top_level': 'Direct Capital Costs',
         'mid_level': 'Total',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'direct_capital_inflated': {
         'top_level': 'Direct Capital Costs',
         'mid_level': 'Inflated',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'indirect_capital_total': {
         'top_level': 'Indirect Capital Costs',
         'mid_level': 'Total',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'indirect_capital_inflated': {
         'top_level': 'Indirect Capital Costs',
         'mid_level': 'Inflated',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'non_depreciable_total': {
         'top_level': 'Non-Depreciable Capital Costs',
         'mid_level': 'Total',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'non_depreciable_inflated': {
         'top_level': 'Non-Depreciable Capital Costs',
         'mid_level': 'Inflated',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'depreciable_total': {
         'top_level': 'Depreciable Capital Costs',
         'mid_level': 'Total',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'depreciable_inflated': {
         'top_level': 'Depreciable Capital Costs',
         'mid_level': 'Inflated',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'total_capital_costs': {
         'top_level': 'Total Capital Costs',
         'mid_level': 'Total',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
     'total_capital_inflated': {
         'top_level': 'Total Capital Costs',
         'mid_level': 'Inflated',
-        'lower_level': 'Value'
+        'lower_level': 'Value',
+        'dimension': ''
     },
 }
 
