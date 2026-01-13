@@ -6,44 +6,37 @@ hourly_irradiation_input_dict = {
     'file': {
         'top_level': 'Hourly Irradiation',
         'mid_level': 'File',
-        'lower_level': 'Value',
-		'unit_key': 'Unit'
+        'lower_level': 'Value'
     },
     'module_tilt': {
         'top_level': 'Irradiance Area Parameters',
         'mid_level': 'Module Tilt (degrees)',
-        'lower_level': 'Value',
-		'unit_key': 'Unit'
+        'lower_level': 'Value'
     },
     'array_azimuth': {
         'top_level': 'Irradiance Area Parameters',
         'mid_level': 'Array Azimuth (degrees)',
-        'lower_level': 'Value',
-		'unit_key': 'Unit'
+        'lower_level': 'Value'
     },
     'nominal_operating_temp': {
         'top_level': 'Irradiance Area Parameters',
         'mid_level': 'Nominal Operating Temperature (Celsius)',
-        'lower_level': 'Value',
-		'unit_key': 'Unit'
+        'lower_level': 'Value'
     },
     'mismatch_derating': {
         'top_level': 'Irradiance Area Parameters',
         'mid_level': 'Mismatch Derating',
-        'lower_level': 'Value',
-		'unit_key': 'Unit'
+        'lower_level': 'Value'
     },
     'dirt_derating': {
         'top_level': 'Irradiance Area Parameters',
         'mid_level': 'Dirt Derating',
-        'lower_level': 'Value',
-		'unit_key': 'Unit'
+        'lower_level': 'Value'
     },
     'temperature_coefficient': {
         'top_level': 'Irradiance Area Parameters',
         'mid_level': 'Temperature Coefficient (per Celsius)',
-        'lower_level': 'Value',
-		'unit_key': 'Unit'
+        'lower_level': 'Value'
     },
 }
 
@@ -51,50 +44,42 @@ hourly_irradiation_output_dict = {
     'no_tracking': {
         'top_level': 'Hourly Irradiation',
         'mid_level': 'No Tracking (kW)',
-        'lower_level': 'Value',
-		'unit_key': 'Unit'
+        'lower_level': 'Value'
     },
     'single_axis_tracking': {
         'top_level': 'Hourly Irradiation',
         'mid_level': 'Horizontal Single Axis Tracking (kW)',
-        'lower_level': 'Value',
-		'unit_key': 'Unit'
+        'lower_level': 'Value'
     },
     'two_axis_tracking': {
         'top_level': 'Hourly Irradiation',
         'mid_level': 'Two Axis Tracking (kW)',
-        'lower_level': 'Value',
-		'unit_key': 'Unit'
+        'lower_level': 'Value'
     },
     'mean_no_tracking': {
         'top_level': 'Hourly Irradiation',
         'mid_level': 'Mean solar input no tracking (kWh/m2/day)',
-        'lower_level': 'Value',
-		'unit_key': 'Unit'
+        'lower_level': 'Value'
     },
     'mean_single_axis': {
         'top_level': 'Hourly Irradiation',
         'mid_level': 'Mean solar input single axis tracking (kWh/m2/day)',
-        'lower_level': 'Value',
-		'unit_key': 'Unit'
+        'lower_level': 'Value'
     },
     'mean_two_axis': {
         'top_level': 'Hourly Irradiation',
         'mid_level': 'Mean solar input two axis tracking (kWh/m2/day)',
-        'lower_level': 'Value',
-		'unit_key': 'Unit'
+        'lower_level': 'Value'
     },
     'latitude': {
         'top_level': 'Hourly Irradiation',
         'mid_level': 'Latitude',
-        'lower_level': 'Value',
-		'unit_key': 'Unit'
+        'lower_level': 'Value'
     },
     'longitude': {
         'top_level': 'Hourly Irradiation',
         'mid_level': 'Longitude',
-        'lower_level': 'Value',
-		'unit_key': 'Unit'
+        'lower_level': 'Value'
     },
 }
 

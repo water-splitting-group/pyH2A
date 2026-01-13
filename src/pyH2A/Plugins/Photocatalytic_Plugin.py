@@ -6,116 +6,97 @@ photocatalytic_input_dict = {
     'design_output_per_day': {
         'top_level': 'Technical Operating Parameters and Specifications',
         'mid_level': 'Design Output per Day',
-        'lower_level': 'Value',
-		'unit_key': 'Unit'
+        'lower_level': 'Value'
     },
     'baggie_cost_top': {
         'top_level': 'Reactor Baggies',
         'mid_level': 'Cost Material Top ($/m2)',
-        'lower_level': 'Value',
-		'unit_key': 'Unit'
+        'lower_level': 'Value'
     },
     'baggie_cost_bottom': {
         'top_level': 'Reactor Baggies',
         'mid_level': 'Cost Material Bottom ($/m2)',
-        'lower_level': 'Value',
-		'unit_key': 'Unit'
+        'lower_level': 'Value'
     },
     'baggie_ports': {
         'top_level': 'Reactor Baggies',
         'mid_level': 'Number of ports',
-        'lower_level': 'Value',
-		'unit_key': 'Unit'
+        'lower_level': 'Value'
     },
     'baggie_other_costs': {
         'top_level': 'Reactor Baggies',
         'mid_level': 'Other Costs ($)',
-        'lower_level': 'Value',
-		'unit_key': 'Unit'
+        'lower_level': 'Value'
     },
     'baggie_markup': {
         'top_level': 'Reactor Baggies',
         'mid_level': 'Markup factor',
-        'lower_level': 'Value',
-		'unit_key': 'Unit'
+        'lower_level': 'Value'
     },
     'baggie_length': {
         'top_level': 'Reactor Baggies',
         'mid_level': 'Length (m)',
-        'lower_level': 'Value',
-		'unit_key': 'Unit'
+        'lower_level': 'Value'
     },
     'baggie_width': {
         'top_level': 'Reactor Baggies',
         'mid_level': 'Width (m)',
-        'lower_level': 'Value',
-		'unit_key': 'Unit'
+        'lower_level': 'Value'
     },
     'baggie_height': {
         'top_level': 'Reactor Baggies',
         'mid_level': 'Height (m)',
-        'lower_level': 'Value',
-		'unit_key': 'Unit'
+        'lower_level': 'Value'
     },
     'baggie_additional_land': {
         'top_level': 'Reactor Baggies',
         'mid_level': 'Additional land area (%)',
-        'lower_level': 'Value',
-		'unit_key': 'Unit'
+        'lower_level': 'Value'
     },
     'baggie_lifetime': {
         'top_level': 'Reactor Baggies',
         'mid_level': 'Lifetime (years)',
-        'lower_level': 'Value',
-		'unit_key': 'Unit'
+        'lower_level': 'Value'
     },
     'catalyst_cost_per_kg': {
         'top_level': 'Catalyst',
         'mid_level': 'Cost per kg ($)',
-        'lower_level': 'Value',
-		'unit_key': 'Unit'
+        'lower_level': 'Value'
     },
     'catalyst_concentration': {
         'top_level': 'Catalyst',
         'mid_level': 'Concentration (g/L)',
-        'lower_level': 'Value',
-		'unit_key': 'Unit'
+        'lower_level': 'Value'
     },
     'catalyst_lifetime': {
         'top_level': 'Catalyst',
         'mid_level': 'Lifetime (years)',
-        'lower_level': 'Value',
-		'unit_key': 'Unit'
+        'lower_level': 'Value'
     },
     'catalyst_molar_weight': {
         'top_level': 'Catalyst',
         'mid_level': 'Molar Weight (g/mol)',
-        'lower_level': 'Value',
-		'unit_key': 'Unit'
+        'lower_level': 'Value'
     },
     'catalyst_molar_attenuation': {
         'top_level': 'Catalyst',
         'mid_level': 'Molar Attenuation Coefficient (M^-1 cm^-1)',
-        'lower_level': 'Value',
-		'unit_key': 'Unit'
+        'lower_level': 'Value'
     },
     'sth_efficiency': {
         'top_level': 'Solar-to-Hydrogen Efficiency',
         'mid_level': 'STH (%)',
-        'lower_level': 'Value',
-		'unit_key': 'Unit'
+        'lower_level': 'Value'
     },
     'mean_solar_input': {
         'top_level': 'Solar Input',
         'mid_level': 'Mean solar input (kWh/m2/day)',
-        'lower_level': 'Value',
-		'unit_key': 'Unit'
+        'lower_level': 'Value'
     },
     'hourly_solar_input': {
         'top_level': 'Solar Input',
         'mid_level': 'Hourly (kWh/m2)',
-        'lower_level': 'Value',
-		'unit_key': 'Unit'
+        'lower_level': 'Value'
     },
 }
 
@@ -123,57 +104,57 @@ photocatalytic_output_dict = {
     'land_required_acres': {
         'top_level': 'Non-Depreciable Capital Costs',
         'mid_level': 'Land required (acres)',
-        'lower_level': 'Value',
+        'lower_level': 'Value'
     },
     'solar_collection_area': {
         'top_level': 'Non-Depreciable Capital Costs',
         'mid_level': 'Solar Collection Area (m2)',
-        'lower_level': 'Value',
+        'lower_level': 'Value'
     },
     'planned_replacement_catalyst_cost': {
         'top_level': 'Planned Replacement',
         'mid_level': 'Planned Replacement Catalyst',
-        'lower_level': 'Cost ($)',
+        'lower_level': 'Cost ($)'
     },
     'planned_replacement_catalyst_frequency': {
         'top_level': 'Planned Replacement',
         'mid_level': 'Planned Replacement Catalyst',
-        'lower_level': 'Frequency (years)',
+        'lower_level': 'Frequency (years)'
     },
     'planned_replacement_baggie_cost': {
         'top_level': 'Planned Replacement',
         'mid_level': 'Planned Replacement Baggie',
-        'lower_level': 'Cost ($)',
+        'lower_level': 'Cost ($)'
     },
     'planned_replacement_baggie_frequency': {
         'top_level': 'Planned Replacement',
         'mid_level': 'Planned Replacement Baggie',
-        'lower_level': 'Frequency (years)',
+        'lower_level': 'Frequency (years)'
     },
     'direct_baggie_cost': {
         'top_level': 'Direct Capital Costs - Reactor Baggies',
         'mid_level': 'Baggie Cost ($)',
-        'lower_level': 'Value',
+        'lower_level': 'Value'
     },
     'direct_catalyst_cost': {
         'top_level': 'Direct Capital Costs - Photocatalyst',
         'mid_level': 'Catalyst Cost ($)',
-        'lower_level': 'Value',
+        'lower_level': 'Value'
     },
     'baggie_number': {
         'top_level': 'Reactor Baggies',
         'mid_level': 'Number',
-        'lower_level': 'Value',
+        'lower_level': 'Value'
     },
     'catalyst_properties': {
         'top_level': 'Catalyst',
         'mid_level': 'Properties',
-        'lower_level': 'Value',
+        'lower_level': 'Value'
     },
     'total_water_volume_liters': {
         'top_level': 'Water Volume',
         'mid_level': 'Volume (liters)',
-        'lower_level': 'Value',
+        'lower_level': 'Value'
     },
 }
 
