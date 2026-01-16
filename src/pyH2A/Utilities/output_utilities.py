@@ -1,6 +1,5 @@
 import math
 from pathlib import PurePath
-from pathlib import Path
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 import matplotlib.image as mpimg
