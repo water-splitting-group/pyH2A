@@ -11,37 +11,37 @@ variable_operating_cost_input_dict = {
     },
     'utilities_cost': {
         'top_level': 'Utilities',
-        'mid_level': 'Repeatable rows',  
+        'mid_level': '<...>',  
         'lower_level': 'Cost',
 		'dimension': ''
     },
     'utilities_usage': {
         'top_level': 'Utilities',
-        'mid_level': 'Repeatable rows',  
+        'mid_level': '<...>',  
         'lower_level': 'Usage per kg H2',
 		'dimension': ''
     },
     'utilities_price_conversion': {
         'top_level': 'Utilities',
-        'mid_level': 'Repeatable rows',  
+        'mid_level': '<...>',  
         'lower_level': 'Price Conversion Factor',
 		'dimension': ''
     },
     'utilities_cost_path': {
         'top_level': 'Utilities',
-        'mid_level': 'Repeatable rows',  
+        'mid_level': '<...>',  
         'lower_level': 'Path',
 		'dimension': ''
     },
     'utilities_usage_path': {
         'top_level': 'Utilities',
-        'mid_level': 'Repeatable rows',  
+        'mid_level': '<...>',  
         'lower_level': 'Usage Path',
 		'dimension': ''
     },
     'other_variable_operating_cost': {
         'top_level': '<...> Other Variable Operating Cost <...>',
-        'mid_level': 'Repeatable rows',
+        'mid_level': '<...>',
         'lower_level': 'Value',
         'dimension': '',
     },

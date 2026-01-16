@@ -15,7 +15,7 @@ fixed_operating_cost_input_dict = {
     },
     'other_fixed_operating_costs': {
         'top_level': '<...> Other Fixed Operating Cost <...>',
-        'mid_level': 'Repeatable rows',
+        'mid_level': '<...>',
         'lower_level': 'Value',
         'dimension': ''
     },

@@ -3,13 +3,13 @@ from pyH2A.Utilities.input_modification import insert, sum_all_tables, process_t
 capital_cost_input_dict = {
 	'direct_capital_costs': {
 		'top_level': '<...> Direct Capital Cost <...>',
-		'mid_level': 'Repeatable rows',
+		'mid_level': '<...>',
         'lower_level': 'Value',
         'dimension': ''
 	},
 	'indirect_capital_costs': {
 		'top_level': '<...> Indirect Capital Cost <...>',
-		'mid_level': 'Repeatable rows',
+		'mid_level': '<...>',
         'lower_level': 'Value',
         'dimension': ''
 	},
@@ -27,7 +27,7 @@ capital_cost_input_dict = {
 	},
 	'other_non_depreciable': {
 		'top_level': '<...> Other Non-Depreciable Capital Cost <...>',
-		'mid_level': 'Repeatable rows',
+		'mid_level': '<...>',
         'lower_level': 'Value',
         'dimension': ''
 	},

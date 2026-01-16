@@ -16,13 +16,13 @@ input_dict_pm = {
     },
     'consumers': {
         'top_level': 'Power Consumption',
-        'mid_level': 'repeatable',  
+        'mid_level': '<...>',  
         'lower_level': 'Value',
         'dimension': '',
     },
     'consumer_type': {
         'top_level': 'Power Consumption',
-        'mid_level': 'repeatable',  
+        'mid_level': '<...>',  
         'lower_level': 'Type',
         'dimension': ''
     },

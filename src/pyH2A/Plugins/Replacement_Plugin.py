@@ -5,19 +5,19 @@ import numpy as np
 replacement_input_dict = {
     'planned_replacement_frequency': {
         'top_level': 'Planned Replacement',
-        'mid_level': 'Repeatable rows',
+        'mid_level': '<...>',
         'lower_level': 'Frequency (years)',
 		'dimension': ''
     },
     'planned_replacement_cost': {
         'top_level': 'Planned Replacement',
-        'mid_level': 'Repeatable rows',
+        'mid_level': '<...>',
         'lower_level': 'Cost ($)',
 		'dimension': ''
     },
     'unplanned_replacement': {
         'top_level': '<...> Unplanned Replacement <...>',
-        'mid_level': 'Repeatable rows',
+        'mid_level': '<...>',
         'lower_level': 'Value',
         'dimension': ''
     }

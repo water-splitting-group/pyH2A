@@ -1043,7 +1043,7 @@ def resolve_inner_input(dcf, tops, mid, low):
 
     This function processes each top-level input table, ensures it is initialized,
     and extracts values at the specified mid- and low-level keys. If the mid-level
-    key indicates a repeatable structure, all matching low-level values across
+    key indicates a <...> structure, all matching low-level values across
     rows are collected into a list.
 
     Parameters
@@ -1055,7 +1055,7 @@ def resolve_inner_input(dcf, tops, mid, low):
         Top-level keys identifying input tables to process.
     mid : str
         Mid-level key within each top-level table. If this key starts with
-        'repeatable' (case-insensitive), the table is treated as a repeatable
+        '<...>' (case-insensitive), the table is treated as a <...>
         structure.
     low : str
         Low-level key whose value(s) should be extracted.
@@ -1064,7 +1064,7 @@ def resolve_inner_input(dcf, tops, mid, low):
     -------
     dict
         Dictionary mapping each top-level key to the resolved value(s):
-        - a list of values if the mid-level key is repeatable
+        - a list of values if the mid-level key is <...>
         - a single value otherwise
 
     Notes
@@ -1079,7 +1079,7 @@ def resolve_inner_input(dcf, tops, mid, low):
     for top in tops:
         process_table(dcf.inp, top, low)
 
-        if mid.lower().startswith("repeatable"):
+        if mid == "<...>":
             values = []
             for row in dcf.inp[top].values():
                 if isinstance(row, dict) and low in row:
@@ -1103,7 +1103,7 @@ def input_resolver(input_dict, dcf):
         {
             'planned_replacement_cost': {
                 'top_level': 'Planned Replacement',
-                'mid_level': 'Repeatable rows',
+                'mid_level': '<...>',
                 'lower_level': 'Cost ($)'
             },
             ...
@@ -1115,7 +1115,7 @@ def input_resolver(input_dict, dcf):
     -------
     resolved : dict
         Dictionary of resolved values according to the input specification.
-        For repeatable tables, values are returned as lists.
+        For <...> tables, values are returned as lists.
     """
     resolved = {}
 
@@ -1161,7 +1161,7 @@ def output_resolver(output_dict, values, dcf, print_info=True):
 
     Notes
     -----
-    - Handles repeatable top-level tables (identified by '[...]' in top_level).
+    - Handles <...> top-level tables (identified by '[...]' in top_level).
     - Inserts single values or lists depending on the table structure.
     """
 
