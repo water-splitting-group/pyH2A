@@ -3,6 +3,9 @@ import pint
 # Create Pint unit registry
 ureg = pint.UnitRegistry()
 ureg.define('percent = 0.01 = %')  # Define percent as dimensionless
+ureg.define("TCE = 29.3076 * gigajoule")
+ureg.define("TOE = 41.868 * gigajoule")
+ureg.define("fraction = 1 * dimensionless = frac")
 
 dimension = {
     "Energy_Battery": {
@@ -28,19 +31,46 @@ def validate_unit_for_category(category: str, unit: pint.Unit):
 
     return True
 
+def convert_dict_values_to_base(value_dict, current_unit, category):
+    """
+    Convert all numeric values in a dict-of-lists to base units.
+    
+    Parameters
+    ----------
+    value_dict : dict
+        Dict of years → list of values.
+    current_unit : str
+        Current unit string.
+    category : str
+        Unit category for conversion.
+    
+    Returns
+    -------
+    dict
+        Converted dict-of-lists, base unit applied.
+    """
+    converted = {}
+    for year, values in value_dict.items():
+        converted[year] = [to_base_unit(v, current_unit, category) for v in values]
+    return converted
+
+
 def to_base_unit(value: float, from_unit: str, category: str):
     """
     Convert a value from its current unit to the base unit of the specified category.
     Raises a clear error if Pint cannot perform the conversion.
     """
-    if validate_unit_for_category(category, from_unit):
+    if validate_unit_for_category(category, ureg.Unit(from_unit)):
             
         base_unit = dimension[category]['base_unit']
 
         try:
-            quantity = value * ureg(from_unit)
-            converted = quantity.to(base_unit)
-            return converted
+            if isinstance(value, dict):
+                return convert_dict_values_to_base(value, from_unit, category)
+            else:    
+                quantity = value * ureg.Unit(from_unit)
+                converted = quantity.to(base_unit)
+                return converted
 
         except pint.errors.UndefinedUnitError as e:
             raise ValueError(

@@ -6,36 +6,31 @@ battery_input_dict = {
         'top_level': 'Power Generation',
         'mid_level': 'Available Power (daily, kWh)',
         'lower_level': 'Value',
-        'unit_key': 'Unit',
-        'unit_category': 'Energy_Battery'  
+        'dimension': 'Energy_Battery'  
     },
     'design_capacity': {
         'top_level': 'Battery',
         'mid_level': 'Design Capacity (kWh)',
         'lower_level': 'Value',
-        'unit_key': 'Unit',
-        'unit_category': 'Energy_Battery'  
+        'dimension': 'Energy_Battery'  
     },
     'lowest_discharge_level': {
         'top_level': 'Battery',
         'mid_level': 'Lowest discharge level',
         'lower_level': 'Value',
-        'unit_key': 'Unit',
-        'unit_category': 'Dimensionless'  
+        'dimension': 'Dimensionless'  
     },
     'capacity_loss_per_year': {
         'top_level': 'Battery',
         'mid_level': 'Capacity loss per year',
         'lower_level': 'Value',
-        'unit_key': 'Unit',
-        'unit_category': 'Dimensionless'  
+        'dimension': 'Dimensionless'  
     },
     'round_trip_efficiency': {
         'top_level': 'Battery',
         'mid_level': 'Round trip efficiency',
         'lower_level': 'Value',
-        'unit_key': 'Unit',
-        'unit_category': 'Dimensionless'  
+        'dimension': 'Dimensionless'  
     },
 }
 
@@ -44,22 +39,19 @@ battery_output_dict = {
         'top_level': 'Power Generation',
         'mid_level': 'Stored Power (daily, kWh)',
         'lower_level': 'Value',
-        'unit': 'kWh',
-        'unit_category': 'Energy'
+        'dimension': 'Energy'
     },
     'yearly_unstored_power': {
         'top_level': 'Power Generation',
         'mid_level': 'Available Power (daily, kWh)',
         'lower_level': 'Value',
-        'unit': 'kWh',
-        'unit_category': 'Energy'
+        'dimension': 'Energy'
     },
     'hourly_available_power': {
         'top_level': 'Power Generation',
         'mid_level': 'Available Power (hourly, kWh)',
         'lower_level': 'Value',
-        'unit': 'kWh',
-        'unit_category': 'Energy'
+        'dimension': 'Energy'
     }
 }
 
@@ -100,6 +92,7 @@ class Battery_Plugin:
             # Only show the final message
             print(f"[ERROR] {e}")
             raise SystemExit(1)  # stops execution without full traceback
+        
         self.available_power_yearly = inputs['available_power_daily']
         self.design_capacity = inputs['design_capacity']
 
@@ -123,8 +116,10 @@ class Battery_Plugin:
         yearly_unstored_power = {}
 
         for year in dcf.operation_years:
-            daily_available_power = self.available_power_yearly[year]
+            daily_available_power = [q.magnitude for q in self.available_power_yearly[year]]
 
+            print(daily_available_power)
+            
             capacity, _ = self.calculate_battery_capacity(year)
 
             capacity_arr = capacity * np.ones(len(daily_available_power))
