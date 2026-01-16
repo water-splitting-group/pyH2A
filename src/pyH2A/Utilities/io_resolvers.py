@@ -1,6 +1,6 @@
 import re
-import numpy as np
 from pyH2A.Utilities.input_modification import insert, process_table
+
 
 def resolve_top_levels(inp, pattern):
     """
@@ -20,11 +20,9 @@ def resolve_top_levels(inp, pattern):
         List of top-level keys in `inp` matching the pattern.
     """
     core = pattern.replace("<...>", "").strip()
-    return [
-        k for k in inp
-        if k == core or k.split(" - ", 1)[0] == core
-    ]
-    
+    return [k for k in inp if k == core or k.split(" - ", 1)[0] == core]
+
+
 def resolve_inner_input(dcf, tops, mid, low):
     """
     Resolve and collect input values from nested input tables based on hierarchy level.
