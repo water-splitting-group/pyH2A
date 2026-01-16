@@ -1,93 +1,59 @@
-"""
-units.py
+import pint
 
-Unit registry for pyH2A or other workflows.
+# Create Pint unit registry
+ureg = pint.UnitRegistry()
+ureg.define('percent = 0.01 = %')  # Define percent as dimensionless
 
-Each category has:
-- base_unit: canonical unit for calculations
-- allowed_units: dictionary of units with description and conversion factor to base unit
-"""
-
-unit_registry = {
-    'Energy': {
-        'base_unit': 'MJ',
-        'allowed_units': {
-            'MJ':  {'description': 'Megajoules (Reference Unit)',        'conversion_to_base': 1.0},
-            'J':   {'description': 'Joule',                                'conversion_to_base': 1.0e-6},
-            'kJ':  {'description': 'Kilojoule',                            'conversion_to_base': 0.001},
-            'kcal':{'description': 'Kilocalorie (International)',         'conversion_to_base': 0.00418},
-            'kWh': {'description': 'Kilowatt hour',                       'conversion_to_base': 3.6},
-            'MWh': {'description': 'Megawatt hour',                       'conversion_to_base': 3600.0},
-            'GJ':  {'description': 'Gigajoules',                           'conversion_to_base': 1000.0},
-            'TJ':  {'description': 'Terajoule',                            'conversion_to_base': 1.0e6},
-            'PJ':  {'description': 'Petajoule',                            'conversion_to_base': 1.0e9},
-            'Wh':  {'description': 'Watt hour',                            'conversion_to_base': 0.0036},
-            'BTU': {'description': 'British thermal unit (International)', 'conversion_to_base': 0.00106},
-            'TCE': {'description': 'Tonne coal equivalent',               'conversion_to_base': 2.93076e4},
-            'TOE': {'description': 'Tonne of oil equivalent',             'conversion_to_base': 4.1868e4}
-        }
+dimension = {
+    "Energy_Battery": {
+        "base_unit": ureg.kWh,  
+        "allowed_units": {ureg.kWh, ureg.MJ, ureg.J, ureg.kJ, ureg.Wh,
+                          ureg.MWh, ureg.GJ, ureg.TJ, ureg.PJ, ureg.BTU,
+                          ureg.TCE, ureg.TOE},
     },
-    'Energy_Battery': {
-        'base_unit': 'kWh',
-        'allowed_units': {
-            'kWh':  {'description': 'Kilowatt hour (Reference Unit)',             'conversion_to_base': 1.0},
-            'MJ':   {'description': 'Megajoules',                                 'conversion_to_base': 0.277778},
-            'J':    {'description': 'Joule',                                       'conversion_to_base': 2.77778e-7},
-            'kJ':   {'description': 'Kilojoule',                                   'conversion_to_base': 0.000277778},
-            'kcal': {'description': 'Kilocalorie (International)',                'conversion_to_base': 0.001162},
-            'MWh':  {'description': 'Megawatt hour',                               'conversion_to_base': 1000.0},
-            'GJ':   {'description': 'Gigajoules',                                  'conversion_to_base': 277.778},
-            'TJ':   {'description': 'Terajoule',                                   'conversion_to_base': 277778.0},
-            'PJ':   {'description': 'Petajoule',                                   'conversion_to_base': 2.77778e8},
-            'Wh':   {'description': 'Watt hour',                                   'conversion_to_base': 0.001},
-            'BTU':  {'description': 'British thermal unit (International)',       'conversion_to_base': 2.94444e-4},
-            'TCE':  {'description': 'Tonne coal equivalent',                       'conversion_to_base': 8139.7},
-            'TOE':  {'description': 'Tonne of oil equivalent',                     'conversion_to_base': 11629.7}
-        }
+    "Dimensionless": {
+        "base_unit": ureg.dimensionless,  
+        "allowed_units": {ureg.dimensionless, ureg.percent, ureg.fraction},
     },
-    'Dimensionless': {
-        'base_unit': '1',
-        'allowed_units': {
-            'fraction': {'description': 'Fraction (0–1)', 'conversion_to_base': 1.0},
-            '%':        {'description': 'Percentage',     'conversion_to_base': 0.01},
-            'percent':        {'description': 'Percentage',     'conversion_to_base': 0.01}
-        }
-    }
 }
-def validate_unit(unit_category: str, unit: str, input_name: str = None) -> bool:
-    """
-    Validate that a unit belongs to a unit category in the registry.
 
-    Parameters
-    ----------
-    unit_category : str
-        The category of the unit, e.g., 'Energy_Battery'.
-    unit : str
-        The unit to validate, e.g., 'kWh'.
-    input_name : str, optional
-        Name of the input for error messages.
+def validate_unit_for_category(category: str, unit: pint.Unit):
+    if category not in dimension:
+        raise ValueError(f"Unknown category '{category}'")
 
-    Returns
-    -------
-    bool
-        True if the unit is valid in the given category.
-
-    Raises
-    ------
-    ValueError
-        If the unit category is not found or if the unit is not allowed.
-    """
-    # Check if the category exists
-    if unit_category not in unit_registry:
-        raise ValueError(f"Unit category '{unit_category}' not found in unit registry.")
-
-    # Check if the unit is allowed in this category
-    if unit not in unit_registry[unit_category]['allowed_units']:
-        allowed_units = list(unit_registry[unit_category]['allowed_units'].keys())
-        msg = f"Unit '{unit}' is not allowed in category '{unit_category}'. Allowed units: {allowed_units}"
-        if input_name:
-            msg = f"Input '{input_name}': {msg}"
+    allowed_units = dimension[category]["allowed_units"]
+    if unit not in allowed_units:
+        msg = f"Unit '{unit}' is not allowed in category '{category}'. Allowed: {allowed_units}"
         raise ValueError(msg)
 
-    # Unit is valid
     return True
+
+def to_base_unit(value: float, from_unit: str, category: str):
+    """
+    Convert a value from its current unit to the base unit of the specified category.
+    Raises a clear error if Pint cannot perform the conversion.
+    """
+    if validate_unit_for_category(category, from_unit):
+            
+        base_unit = dimension[category]['base_unit']
+
+        try:
+            quantity = value * ureg(from_unit)
+            converted = quantity.to(base_unit)
+            return converted
+
+        except pint.errors.UndefinedUnitError as e:
+            raise ValueError(
+                f"Undefined unit '{from_unit}'. Pint does not recognize this unit."
+            ) from e
+
+        except pint.errors.DimensionalityError as e:
+            raise ValueError(
+                f"Cannot convert from '{from_unit}' to '{base_unit}': units are not dimensionally compatible."
+            ) from e
+
+        except pint.errors.PintError as e:
+            # Catch-all for other Pint-related issues
+            raise ValueError(
+                f"Unit conversion failed for '{from_unit}' → '{base_unit}': {e}"
+            ) from e
