@@ -66,7 +66,13 @@ class InputResolver:
             return self._resolve_table_group(top_key, {"<...>": {bottom_key: spec}})
 
         if self._is_wildcard_key(mid_key):
+            if isinstance(bottom_key, dict):
+                return self._resolve_table(top_key, {"<...>": bottom_key})
             return self._resolve_table(top_key, {"<...>": {bottom_key: spec}})
+
+        if isinstance(bottom_key, dict):
+            self._process_table_for_spec(top_key, {mid_key: bottom_key})
+            return self._resolve_row(top_key, mid_key, self.dcf.inp[top_key][mid_key], bottom_key)
 
         self._process_table_for_spec(top_key, {mid_key: {bottom_key: spec}})
         return self._resolve_specific_value(top_key, mid_key, bottom_key, spec)
