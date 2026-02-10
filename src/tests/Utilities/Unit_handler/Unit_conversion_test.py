@@ -1,6 +1,7 @@
 import pytest
 import pyH2A.Utilities.Unit_handler.Unit_conversion as con
 
+
 class TestUnitConversionHandler:
     """ Test suite for UnitConversionHandler class """
 
@@ -65,6 +66,23 @@ class TestUnitConversionHandler:
         assert result.magnitude == expected.magnitude
         assert str(result.units) == str(expected.units)
 
+    def test_kilowatt_hour_per_kilogram_to_joule_per_gram(self):
+        """ Test conversion from kWh/kg to J/g """
+        result = self.handler.convert(1.0, 'kWh/kg')
+        expected = 3.6e3 * self.handler.ureg.J / self.handler.ureg.g
+        assert result.magnitude == expected.magnitude
+        assert str(result.units) == str(expected.units)
+
+    def test_USD_per_kWh_to_USD_per_J(self):
+        """ Test conversion from USD/kWh to USD/J """
+        result = self.handler.convert(200, 'USD/kWh')
+        expected = (200.0 / 3.6e6) * self.handler.ureg.USD / \
+            self.handler.ureg.J
+        assert abs(result.magnitude - expected.magnitude) < 1e-6
+        assert round(result.magnitude, 4) == round(expected.magnitude, 4)
+        assert str(result.units) == str(expected.units)
+
+
 class TestUnitConversionHandlerInvalidUnits:
     """ Test suite for invalid unit handling in UnitConversionHandler """
 
@@ -76,8 +94,8 @@ class TestUnitConversionHandlerInvalidUnits:
         """ Test handling of invalid unit """
         with pytest.raises(ValueError) as excinfo:
             self.handler.convert(1.0, 'invalid_unit')
-        assert "'invalid_unit' is not a valid unit" in str(excinfo.value)
-
+        assert "'invalid_unit' is not defined in the unit registry" in str(
+            excinfo.value)
 
 
 if __name__ == '__main__':

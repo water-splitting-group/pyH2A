@@ -2,7 +2,7 @@ import pytest
 import pyH2A.Utilities.Unit_handler.Unit_dimension as dim
 
 
-class TestUnitDimensionHandler:    
+class TestUnitDimensionHandler:
     """ Test suite for UnitDimensionHandler class """
 
     def setup_method(self):
@@ -57,11 +57,16 @@ class TestUnitDimensionHandler:
         assert self.handler.get_dimension('l') == 'volume'
         assert self.handler.get_dimension('ml') == 'volume'
         assert self.handler.get_dimension('cc') == 'volume'
-    
+        assert self.handler.get_dimension('m3') == 'volume'
+
     def test_dimensionless(self):
         """ Test detection of dimensionless """
         assert self.handler.get_dimension('rad') == 'dimensionless'
         assert self.handler.get_dimension('') == 'dimensionless'
+
+    def test_currency_dimension(self):
+        """ Test detection of currency dimension """
+        assert self.handler.get_dimension('USD') == 'currency'
 
 
 class TestUnitDimensionHandlerInvalidUnits:

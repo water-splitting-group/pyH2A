@@ -393,9 +393,8 @@ input_dict_resolved = {'Utilities': {
 }
 
 if __name__ == "__main__":
-    from pyH2A.Utilities.IO_Resolver.input_resolver import InputResolver
+    from pyH2A.Utilities.IO_Resolver.resolver import input_resolver
 
     dcf = DummyDCF()
-    resolver = InputResolver(dcf)
-    resolved = resolver.resolve(input_dict)
+    resolved = input_resolver(dcf, input_dict)
     print(resolved)
