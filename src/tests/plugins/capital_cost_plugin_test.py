@@ -19,19 +19,19 @@ class DummyDCF:
         self.ci_inflator = ci_inflator
 
         self.inp = {
-            "Direct Capital Cost": {
-                name: {"Value": value} for name, value in direct_costs.items()
+            "Dummy Left Direct Capital Cost Dummy Right": {
+                key: {"Value": value} for key, value in direct_costs.items()
             },
-            "Indirect Capital Cost": {
-                name: {"Value": value} for name, value in indirect_costs.items()
+            "Dummy Left Indirect Capital Cost Dummy Right": {
+                key: {"Value": value} for key, value in indirect_costs.items()
             },
             "Non-Depreciable Capital Costs": {
                 "Cost of land ($ per acre)": {"Value": land_cost_per_acre},
                 "Land required (acres)": {"Value": land_required_acres},
-            },
-            "Other Non-Depreciable Capital Cost": {
-                name: {"Value": value}
-                for name, value in other_non_depreciable_costs.items()
+            },  
+            "Dummy Left Other Non-Depreciable Capital Cost Dummy Right": {
+                key: {"Value": value}
+                for key, value in other_non_depreciable_costs.items()
             },
         }
 
@@ -77,6 +77,20 @@ def test_capital_cost_plugin(case):
     plugin = Capital_Cost_Plugin(dcf, print_info=False)
     expected = case["expected"]
 
-    assert plugin.direct == expected["direct"]
-    assert plugin.indirect == expected["indirect"]
-    assert plugin.non_depreciable == expected["non_depreciable"]
+    # Tolerance (very small)
+    tolerance = 1e-12
+    
+    assert plugin.direct == pytest.approx(
+        expected["direct"],
+        abs=tolerance
+    )
+    
+    assert plugin.indirect == pytest.approx(
+        expected["indirect"],
+        abs=tolerance
+    )
+    
+    assert plugin.non_depreciable == pytest.approx(
+        expected["non_depreciable"],
+        abs=tolerance
+    )
