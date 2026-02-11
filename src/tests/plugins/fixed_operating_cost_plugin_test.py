@@ -19,8 +19,8 @@ class DummyDCF:
                 "staff": {"Value": staff},
                 "hourly labor cost": {"Value": hourly_labor_cost},
             },
-            "Other Fixed Operating Cost": {
-                k: {"Value": v} for k, v in other_fixed_costs.items()
+            "Dummy Left Other Fixed Operating Cost Dummy Right": {
+                key: {"Value": value} for key, value in other_fixed_costs.items()
             },
         }
 
@@ -35,7 +35,10 @@ class DummyDCF:
             "input": {
                 "staff": 1,
                 "hourly_labor_cost": 50.0,
-                "other_fixed_costs": {"electrolyzer_OPEX": 0.2, "PV_OPEX": 0.2},
+                "other_fixed_costs": {
+                    "electrolyzer_OPEX": 0.2, 
+                    "PV_OPEX": 0.2
+                },
                 "labor_inflator": 1.05,
                 "combined_inflator": 1.1,
             },
@@ -56,7 +59,21 @@ def test_fixed_operating_cost_plugin(case):
     # Run plugin
     plugin = Fixed_Operating_Cost_Plugin(dcf, print_info=False)
     expected = case["expected"]
+    
+    # Tolerance (very small)
+    tolerance = 1e-12
 
-    assert plugin.labor_uninflated == expected["labor_uninflated"]
-    assert plugin.labor == expected["labor"]
-    assert plugin.other == expected["other"]
+    assert plugin.labor_uninflated == pytest.approx(
+        expected["labor_uninflated"],
+        abs=tolerance
+    )
+    
+    assert plugin.labor == pytest.approx(
+        expected["labor"],
+        abs=tolerance
+    )
+    
+    assert plugin.other == pytest.approx(
+        expected["other"],
+        abs=tolerance
+    )
