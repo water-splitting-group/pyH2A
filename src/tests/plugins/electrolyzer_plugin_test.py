@@ -8,17 +8,16 @@ class DummyDCF:
 
     def __init__(
         self,
-        available_power_hourly,
-        nominal_power_kw,
-        efficiency,
-        min_capacity,
-        power_increase,
         construction_time,
         capex_multiplier,
+        nominal_power_kw,
         capex_reference_power,
+        power_increase,
+        min_capacity,
+        efficiency,
         replacement_time_h,
+        available_power_hourly,
     ):
-        self.operation_years = list(available_power_hourly.keys())
 
         self.inp = {
             "Financial Input Values": {
@@ -40,6 +39,9 @@ class DummyDCF:
                 }
             },
         }
+        
+        self.operation_years = list(available_power_hourly.keys())
+
 
 
 @pytest.mark.parametrize(

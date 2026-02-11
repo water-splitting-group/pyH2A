@@ -8,17 +8,18 @@ class DummyDCF:
 
     def __init__(
         self,
-        sth,
+        design_output,
         cell_cost,
+        lifetime,
         length,
         width,
         cell_angle,
         south_spacing,
         east_spacing,
+        sth,
         solar_input,
-        lifetime,
         conc_factor,
-        design_output,
+        
     ):
         self.inp = {
             "Technical Operating Parameters and Specifications": {
