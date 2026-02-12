@@ -76,7 +76,7 @@ class DummyDCF:
             "expected": {
                 "pv_scaling_factor": 1.0,
                 "area_m2": 5000.0,
-                "area_acres": 5000.0 * 0.000247105,
+                "area_acres": 1.235525,
                 "power_generation_yearly_data": {
                     2026: np.array(
                         [
