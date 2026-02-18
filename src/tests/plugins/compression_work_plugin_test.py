@@ -8,17 +8,24 @@ class DummyDCF:
     def __init__(
         self,
         compressor_train,
-        product_gas_properties,
-
+        raw_product_gas,
+        technical_operating_parameters_and_specifications,
+        product_gas_properties
     ):
 
         self.inp = {
             "Compressor train": {
                 key: {"Value": value} for key, value in compressor_train.items()
             },
+            "Raw product gas": {
+                key: {"Value": value} for key, value in raw_product_gas.items()
+            },
+            "Technical Operating Parameters and Specifications": {
+                key: {"Value": value} for key, value in technical_operating_parameters_and_specifications.items()
+            },  
             "Product gas properties": {
                 key: {"Value": value} for key, value in product_gas_properties.items()
-            },
+            }
         }
         
 
@@ -30,25 +37,29 @@ class DummyDCF:
         {
             "input": {
                 "compressor_train": {
-                    "Inlet pressure": 1.0,
                     "Outlet pressure": 20.7,
                     "Number of compression stages": 2,
-                    "Inlet temperature": 333,
-                    "Molar flowrate": 1.0,
                     "Compressor efficiency": 0.75,
                     "Combustion to shaft efficiency": 0.25,                    
                 },
-                "product_gas_properties": {
-                    "Hydrogen fraction in gas": 0.66,
+                "raw_product_gas": {
+                    "Pressure": 1.,
+                    "Temperature": 333.,
+                    "Hydrogen molar fraction": 0.66
                 },
+                "technical_operating_parameters_and_specifications": {
+                    "Plant Design Capacity (kg of H2/day)" : 1111, 
+                    "Maximum Output at Gate" : 1000.
+                }, 
+                "product_gas_properties":{}
             },
             "expected": {
-                "outlet_temperature": 240.381243+273.0,
+                "outlet_temperature": 513.381243,
                 "combustion_enthalpy_per_mixture": 188100.0,
-                "compression_work": 7498.4482710,
-                "shaft_work": 9997.931028,
-                "required_combustion_power": 39991.72411,
-                "hydrogen_self_consumption_ratio": 0.212608847,                
+                "compression_work": 72466.4944498,
+                "shaft_work": 96621.9925997,
+                "required_combustion_power": 386487.97038,
+                "hydrogen_self_consumption_ratio": 0.23620842901,                
             }, 
         }            
     ],
