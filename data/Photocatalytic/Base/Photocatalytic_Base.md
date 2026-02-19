@@ -4,6 +4,7 @@ Name | Type | Description | Position
 --- | --- | --- | ---
 Hourly_Irradiation_Plugin | plugin | Plugin to calculate solar irradiation from typical meteorological year data | 0
 Photocatalytic_Plugin | plugin | Computes number of required baggies, cost of baggies and catalyst cost | 2
+Compression_Work_Plugin | plugin | Computes energy required to compress the gas up to gate pressure | 2
 Catalyst_Separation_Plugin | plugin | Computes cost of catalyst separation | 2
 Multiple_Modules_Plugin | plugin | Modelling of multiple plant modules, adjustment of labor requirement | 3
 
@@ -27,7 +28,8 @@ Plant Modules | 10 | None | 10 identical modules, only affects labor requirement
 
 Name | Full Name | Value
 --- | --- | ---
-capital perc 1st | % of Capital Spent in 1st Year of Construction | 100%
+capital perc 1st | % of Capital Spent in 1st Year of Construction | 50%
+capital perc 2nd | % of Capital Spent in 2nd Year of Construction | 50%
 
 # Hourly Irradiation
 
@@ -90,6 +92,15 @@ Lifetime (years) | 5 | Lifetime of reactor baggies.
 Name | Value | Comment
 --- | --- | ---
 Filtration cost ($/m3) | 0.24 | Cost of nanofiltration per m3 of water based on Costa 2006. Nanofiltration as a proxy for cost of actual catalyst separation.
+
+# Compressor train
+
+Name | Value | Comment
+--- | --- | ---
+Outlet pressure | 20.7 | bars - from Pinaud's recommendation of 300 psi
+Number of compression stages | 2 
+Compressor efficiency | 75%
+Combustion to shaft efficiency | 25%
 
 # Direct Capital Costs - Equipment
 
@@ -178,7 +189,8 @@ fees | Licensing, Permits and Fees ($ per year) | None | 1000.0
 
 Name | Usage per kg H2 | Usage Unit | Cost | Cost Unit | Price Conversion Factor | Price Conversion Factor Unit | Comment
 --- | --- | --- | --- | --- | --- | --- | ---
-Industrial Electricity | 3.29 | kWh/kg H2 | pyH2A.Lookup_Tables.Utility_Cost~Industrial_Electricity_AEO_2017_Reference_Case.csv | GJ | 0.0036 | GJ/kWh | Electricity usage based on Pinaud 2013.
+Industrial Electricity | 0.4333 | kWh/kg H2 | pyH2A.Lookup_Tables.Utility_Cost~Industrial_Electricity_AEO_2017_Reference_Case.csv | GJ | 0.0036 | GJ/kWh | Electricity usage based on Pinaud 2013., minus the electricity for compression that is specified on the next line
+Electricity for compression | Energy self consumption > Electricity for compression > Value | kWh/kg H2 | pyH2A.Lookup_Tables.Utility_Cost~Industrial_Electricity_AEO_2017_Reference_Case.csv | GJ | 0.0036 | GJ/kWh | Electricity usage based on Pinaud 2013.
 Process Water | 2.637 | gal/kg H2 | 0.0023749510945008 | $(2016)/gal | 1. | None | Seawater reverse osmosis cost ca. 0.6 $/m3 (equal to ca. 0.0023 $/gal), based on Kibria 2021 and Driess 2021.
 
 # Unplanned Replacement
@@ -187,108 +199,7 @@ Name | Full Name | Path | Value | Comment
 --- | --- | --- | --- | ---
 unplanned replacement | Total Unplanned Replacement Capital Cost Factor (% of total direct depreciable costs/year) | Depreciable Capital Costs > Inflated > Value | 0.5% | Based on Pinaud 2013.
 
-# Sensitivity_Analysis
-
-Parameter | Name | Type | Values
---- | --- | --- | ---
-Solar-to-Hydrogen Efficiency > STH (%) > Value | STH efficiency | value | 1%; 4%
-Catalyst > Cost per kg ($) > Value | Catalyst cost (\$/kg) | value | 1500; 6000
-Catalyst > Lifetime (years) > Value | Catalyst lifetime (years) | value | 0.25; 1
-Catalyst > Concentration (g/L) > Value | Catalyst concentration (g/L) | value | 0.25; 1.0
-Direct Capital Costs - Gas Processing > Compressor ($) > Value | Compressor cost (\$) | value | 250,000; 1,000,000
-
-# Monte_Carlo_Analysis
+# Product gas properties
 
 Name | Value | Comment
 --- | --- | ---
-Samples | 50,000 | Number of samples in Monte Carlo simlulation.
-Target Price Range ($) | 1.5; 1.6
-Input File | ./Photocatalytic/Base/Monte_Carlo_Output.csv
-
-# Parameters - Monte_Carlo_Analysis
-
-Parameter | Name | Type | Values | File Index | Comment
---- | --- | --- | --- | --- | ---
-Solar-to-Hydrogen Efficiency > STH (%) > Value | STH efficiency | value | 20%; Base | 0 | Maximum theoretical STH efficiency ca. 28% for two-absorber system, Schneidewind 2021.
-Catalyst > Concentration (g/L) > Value | g(Catalyst) / L | value | Base; 0.01 | 1 | Model calculation for homogeneous photocatalyst: molar mass 500 g/mol, molar attenuation coefficient of 10,000 M^-1 cm^-1, water heigt of 5 cm, at a concentration of 0.01 g/L gives an absorbance of 1 (10% transmittance).
-Catalyst > Cost per kg ($) > Value | \$ / kg(Catalyst) | value | 100.0; Base | 2 | CatCost model catalyst cost drops to 140 $/kg at 100 t/a production scale, estimating lower bound of catalyst cost at 100 $/kg.
-Catalyst > Lifetime (years) > Value | Catalyst lifetime (years) | value | Base; 1 | 3 | Doubling lifetime of 6 months to 1 year.
-
-# Cost_Contributions_Analysis - Deactivate
-
-# Methods - Cost_Contributions_Analysis
-
-Name | Method Name | Arguments
---- | --- | ---
-cost_breakdown_plot_total | cost_breakdown_plot | {'name': 'Cost_Breakdown_Plot', 'show': False, 'save': False}
-cost_breakdown_plot_capital | cost_breakdown_plot | {'name': 'Cost_Breakdown_Plot_Capital', 'show': False, 'save': False, 'plugin': 'Capital_Cost_Plugin', 'plugin_property': 'direct_contributions'}
-
-# Methods - Monte_Carlo_Analysis
-
-Name | Method Name | Arguments
---- | --- | ---
-distance_cost_relationship | plot_distance_cost_relationship | Arguments - MC Analysis - distance_cost
-distance_histogram | plot_distance_histogram | {'show': False, 'xlabel': True, 'save': False, 'pdf': True, 'image_kwargs': {'path': 'pyH2A.Other~Photocatalytic_Clipart.png'}}
-colored_scatter | plot_colored_scatter | Arguments - MC Analysis - colored_scatter
-complete_histogram | plot_complete_histogram | {'show': False, 'bins': 300}
-
-# Arguments - MC Analysis - colored_scatter
-
-Name | Value
---- | ---
-show | False
-save | False
-pdf | False
-dpi | 500
-base_string | Base
-title_string | Target cost range: 
-plot_kwargs | {'left': 0.31, 'right': 0.94, 'bottom': 0.13, 'top': 0.92, 'fig_width': 6.5, 'fig_height': 4.0}
-image_kwargs | {'x': -0.4, 'zoom': 0.09, 'y': 0.5, 'path': 'pyH2A.Other~Photocatalytic_Clipart.png'}
-
-# Arguments - MC Analysis - distance_cost
-
-Name | Value
---- | ---
-legend_loc | upper right
-log_scale | True
-plot_kwargs | {'show': False, 'save': False, 'dpi': 300, 'left': 0.09, 'right': 0.5, 'bottom': 0.15, 'top': 0.95, 'fig_width': 9, 'fig_height': 3.5}
-table_kwargs | {'ypos': 0.5, 'xpos': 1.05, 'height': 0.5}
-image_kwargs | {'path': 'pyH2A.Other~Photocatalytic_Clipart.png', 'x': 1.6, 'zoom': 0.095, 'y': 0.2}
-
-# Comparative_MC_Analysis - Deactivate
-
-Name | Value | Image
---- | --- | ---
-pec | pyH2A.Example~210511_Future_PEC_Type_4.md | pyH2A.Other~PEC_Clipart.png
-photocatalytic | pyH2A.Example~211109_Future_PEC_Type_1_Figure_Test.md | pyH2A.Other~Photocatalytic_Clipart.png
-pv_e | pyH2A.Example~210613_PV_E.md | pyH2A.Other~PV_E_Clipart.png
-
-# Methods - Comparative_MC_Analysis
-
-Name | Method Name | Arguments
---- | --- | ---
-comparative_distance_histogram | plot_comparative_distance_histogram | {'show': False, 'save': False, 'pdf': True}
-comparative_distance_cost_relationship | plot_comparative_distance_cost_relationship | {'show': False, 'save': False, 'dist_kwargs': {'log_scale': True}}
-comparative_distance_combined | plot_combined_distance | {'show': False, 'save': False, 'left': 0.06, 'fig_width': 13, 'dist_kwargs': {'legend_loc': 'upper right', 'log_scale': True}, 'table_kwargs': {'colWidths': [0.65, 0.25, 0.12, 0.25]}, 'hist_kwargs': {'title_string': 'Target price range:'}}
-
-# Waterfall_Analysis - Deactivate
-
-Parameter | Name | Type | Value | Show Percent
---- | --- | --- | --- | ---
-Solar-to-Hydrogen Efficiency > STH (%) > Value | STH Efficiency | value | 10% | True
-Catalyst > Lifetime (years) > Value | Catalyst Lifetime (years) | value | 5.0
-Catalyst > Concentration (g/L) > Value | Catalyst Concentration (g/L) | value | 1.05e-2
-Catalyst > Cost per kg ($) > Value | Catalyst Cost ($/kg) | value | 304.0
-
-# Methods - Waterfall_Analysis
-
-Name | Method Name | Arguments
---- | --- | ---
-waterfall_chart | plot_waterfall_chart | {'show': False}
-
-# Methods - Sensitivity_Analysis
-
-Name | Method Name | Arguments
---- | --- | ---
-sensitivity_box_plot | sensitivity_box_plot | {'show': False, 'save': False, 'fig_width': 8, 'label_offset': 0.12, 'lim_extra': 0.25}
-

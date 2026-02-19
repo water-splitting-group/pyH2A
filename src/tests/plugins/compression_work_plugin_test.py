@@ -3,7 +3,7 @@ from pyH2A.Plugins.Compression_Work_Plugin import Compression_Work_Plugin
 
 
 class DummyDCF:
-    """Minimal DCF object for CCompression_Work_Plugin with configurable inputs."""
+    """Minimal DCF object for Compression_Work_Plugin with configurable inputs."""
 
     def __init__(
         self,
@@ -48,7 +48,7 @@ class DummyDCF:
                     "Hydrogen molar fraction": 0.66
                 },
                 "technical_operating_parameters_and_specifications": {
-                    "Plant Design Capacity (kg of H2/day)" : 1111, 
+                    "Design Output per Day" : 1111, 
                     "Maximum Output at Gate" : 1000.
                 }, 
                 "product_gas_properties":{}
