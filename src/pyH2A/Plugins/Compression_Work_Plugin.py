@@ -21,8 +21,8 @@ class Compression_Work_Plugin:
         Amount of hydrogen effectively delivered after the separation step   
     Compressor train > Outlet pressure > Value : float
         Pressure of the compressed gas (bar).        
-    Compressor train > Number of compression stages > Value : float
-        Number of compressors in series to reach the final pressure (-).
+    Compressor train > Number of compression stages > Value : int
+        Number of compressors in series, with intermediate cooling, to reach the final pressure (-).
     Compressor train > Polytropic coefficient > Value : float, optional
         Polytropic coefficient of the compression (-). Defaults to 1.4.
     Compressor train > Compressor efficiency > Value : float
