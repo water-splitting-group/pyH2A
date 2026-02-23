@@ -23,17 +23,17 @@ class Solar_Thermal_Plugin:
 		Total land requirement in acres.
 	'''
 	
-	def __init__(therm, dcf, print_info):
+	def __init__(self, dcf, print_info):
 		process_table(dcf.inp, 'Technical Operating Parameters and Specifications', 'Value')
 		process_table(dcf.inp, 'Solar-to-Hydrogen Efficiency', 'Value')
 		process_table(dcf.inp, 'Solar Input', 'Value')
 		process_table(dcf.inp, 'Non-Depreciable Capital Costs', 'Value')
 
-		therm.calculate_land_area(dcf)
+		self.calculate_land_area(dcf)
 
-		insert(dcf, 'Non-Depreciable Capital Costs', 'Land required (acres)', 'Value', therm.area_acres, __name__, print_info = print_info)
+		insert(dcf, 'Non-Depreciable Capital Costs', 'Land required (acres)', 'Value', self.area_acres, __name__, print_info = print_info)
 
-	def calculate_land_area(therm, dcf):
+	def calculate_land_area(self, dcf):
 		'''Calculation of required land area based on solar input, solar-to-hydrogen efficiency
 		and addtional land are requirements.
 		'''
@@ -45,5 +45,5 @@ class Solar_Thermal_Plugin:
 
 		required_area_m2 = dcf.inp['Technical Operating Parameters and Specifications']['Design Output per Day']['Value'] / kg_H2_per_m2_per_day
 
-		therm.area_m2 = required_area_m2 * (1. + dcf.inp['Non-Depreciable Capital Costs']['Additional Land Area (%)']['Value'])
-		therm.area_acres = therm.area_m2 * 0.000247105
+		self.area_m2 = required_area_m2 * (1. + dcf.inp['Non-Depreciable Capital Costs']['Additional Land Area (%)']['Value'])
+		self.area_acres = self.area_m2 * 0.000247105
