@@ -1,5 +1,7 @@
 import numpy as np
-from pint import UnitRegistry
+import pytest
+from pint import Quantity, UnitRegistry
+from pyH2A.Utilities.IO_Resolver.resolver import input_resolver
 
 ureg = UnitRegistry()
 ureg.define('USD = [currency]')
@@ -56,7 +58,7 @@ class DummyDCF:
             'Catalyst Separation': {
                 'Filtration cost': {
                     'Value': 100,
-                    'Unit': '$/m3'
+                    'Unit': '$/meter**3'
                 }
             },
 
@@ -314,7 +316,7 @@ input_dict_resolved = {'Utilities': {
         'Type': 'natural_gas'
     },
     'Electricity': {
-        'Usage_Value': ureg.Quantity(10.8E9, 'J/kg'),
+        'Usage_Value': ureg.Quantity(10.8E9, 'J/kilogram'),
         'Cost_Value': ureg.Quantity(1.388888E-4, 'USD/J'),
         'Type': 'electricity'
     },
@@ -336,7 +338,8 @@ input_dict_resolved = {'Utilities': {
 },
     'Catalyst': {
     'Lifetime': {
-        'Value': ureg.Quantity(1.57788E8, 's')  # assuming 1 year = 365.25 days
+        # assuming 1 year = 365.25 days
+        'Value': ureg.Quantity(1.57788E8, 'second')
     },
 },
     'Catalyst Separation': {
@@ -392,9 +395,8 @@ input_dict_resolved = {'Utilities': {
 },
 }
 
-if __name__ == "__main__":
-    from pyH2A.Utilities.IO_Resolver.resolver import input_resolver
 
+if __name__ == '__main__':
     dcf = DummyDCF()
     resolved = input_resolver(dcf, input_dict)
     print(resolved)

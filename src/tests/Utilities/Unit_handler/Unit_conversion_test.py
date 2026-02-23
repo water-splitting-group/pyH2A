@@ -31,10 +31,10 @@ class TestUnitConversionHandler:
         assert str(result.units) == str(expected.units)
 
     # add current, luminosity, mass, substance, temperature, volume tests as needed
-    def test_mass_conversion_kg_to_g(self):
-        """ Test conversion from kilograms to grams """
-        result = self.handler.convert(1.0, 'kg')
-        expected = 1000.0 * self.handler.ureg.g
+    def test_mass_conversion_g_to_kg(self):
+        """ Test conversion from grams to kilograms """
+        result = self.handler.convert(1000.0, 'g')
+        expected = 1.0 * self.handler.ureg.kg
         assert result.magnitude == expected.magnitude
         assert str(result.units) == str(expected.units)
 
@@ -45,11 +45,11 @@ class TestUnitConversionHandler:
         assert result.magnitude == expected.magnitude
         assert str(result.units) == str(expected.units)
 
-    def test_volume_conversion_ml_to_l(self):
-        """ Test conversion from milliliters to liters """
-        result = self.handler.convert(1000.0, 'ml')
-        expected = 1.0 * self.handler.ureg.l
-        assert result.magnitude == expected.magnitude
+    def test_volume_conversion_ml_to_m3(self):
+        """ Test conversion from milliliters to cubic meters """
+        result = self.handler.convert(1, 'ml')
+        expected = 1E-06 * self.handler.ureg.meter**3
+        assert result.magnitude == pytest.approx(expected.magnitude)
         assert str(result.units) == str(expected.units)
 
     def test_current_conversion_mA_to_A(self):
@@ -66,10 +66,10 @@ class TestUnitConversionHandler:
         assert result.magnitude == expected.magnitude
         assert str(result.units) == str(expected.units)
 
-    def test_kilowatt_hour_per_kilogram_to_joule_per_gram(self):
-        """ Test conversion from kWh/kg to J/g """
+    def test_kilowatt_hour_per_kilogram_to_joule_per_kilogram(self):
+        """ Test conversion from kWh/kg to J/kg """
         result = self.handler.convert(1.0, 'kWh/kg')
-        expected = 3.6e3 * self.handler.ureg.J / self.handler.ureg.g
+        expected = 3.6e6 * self.handler.ureg.J / self.handler.ureg.kg
         assert result.magnitude == expected.magnitude
         assert str(result.units) == str(expected.units)
 

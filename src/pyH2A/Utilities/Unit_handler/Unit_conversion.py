@@ -18,6 +18,29 @@ class UnitConversionHandler:
         # Define currency as a new dimension
         self.ureg.define("USD = [currency]")
 
+    @staticmethod
+    def _normalize_unit_str(unit_str: str) -> str:
+        """
+        Normalize common unit shorthand to pint-compatible strings.
+
+        Replaces symbols that pint cannot parse (e.g. '$') with their
+        registered equivalents (e.g. 'USD').
+
+        Parameters
+        ----------
+        unit_str : str
+            Raw unit string, possibly containing shorthand symbols.
+
+        Returns
+        -------
+        str
+            Normalized unit string safe to pass to pint.
+        """
+        unit_str = unit_str.replace("$", "USD")
+        # Convert shorthand exponents like 'm3' -> 'm**3', 'cm2' -> 'cm**2'
+        unit_str = re.sub(r'([a-zA-Z]+)(\d+)', r'\1**\2', unit_str)
+        return unit_str
+
     def convert(self, value, unit):
         """
         Convert a value with the given unit to SI units.
@@ -38,6 +61,7 @@ class UnitConversionHandler:
             The converted quantity with target SI units.
         """
         try:
+            unit = self._normalize_unit_str(unit)
             target_unit = self._build_target_unit(unit)
 
             if target_unit is None:
@@ -71,6 +95,7 @@ class UnitConversionHandler:
             The target SI unit string (e.g., 'J/g', 'USD/J').
         """
         unit_str = unit_str.strip()
+        unit_str = self._normalize_unit_str(unit_str)
 
         # Try as a simple unit first
         try:
@@ -117,9 +142,3 @@ class UnitConversionHandler:
         except (ValueError, KeyError, Exception):
             # If we can't determine dimension, keep original (e.g., 'USD')
             return unit_str
-
-
-if __name__ == "__main__":    # Example usage
-    handler = UnitConversionHandler()
-    print(f"Converted: {handler.convert(1.0, 'kWh/kg')}")
-    print(f"Converted: {handler.convert(1.0, 'm3')}")

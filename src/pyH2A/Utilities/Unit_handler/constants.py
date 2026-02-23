@@ -4,10 +4,10 @@ DIMENSION_TO_UNIT_MAPPING = {
     "time": "s",
     "current": "A",
     "luminosity": "cd",
-    "mass": "g",
+    "mass": "kg",
     "substance": "mol",
     "temperature": "degK",
-    "volume": "l",
+    "volume": "meter**3",
     "currency": "USD"
 }
 
