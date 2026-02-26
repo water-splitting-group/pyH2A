@@ -66,19 +66,19 @@ class DummyDCF:
                 "electrolyzer_min_capacity": 0.1,
                 "electrolyzer_conversion_efficiency": 0.05,
                 "electrolyzer_replacement_time_h": 4000.0,
-                "electrolyzer_yearly_H2_production_kg": np.array([0.0, 0.0]),
+                "electrolyzer_yearly_H2_production_kg": np.array([0.0, 2.0]),
                 "electrolyzer_yearly_operation_hours": np.array(
-                    [[2026, 0, 0], [2027, 0, 0]]
+                    [[2026, 3.0, 0], [2027, 4.0, 0]]
                 ),
                 "stored_power_daily_kWh": {
-                    2026: np.array([1000.0, 1200.0, 800.0]),
-                    2027: np.array([900.0, 1100.0, 700.0]),
+                    2026: np.array([1000.0, 1200.0, 0]),
+                    2027: np.array([900.0, 0, 700.0]),
                 },
             },
             "expected": {
-                "power_consumption_kWh": np.array([2400.0, 2160.0]),
+                "power_consumption_kWh": np.array([1760.0, 1280.0]),
                 "replacement_frequency": 2.0,
-                "new_h2_production_kg": np.array([4.5209869809591305e-16, 3.989106159669821e-16]),
+                "new_h2_production_kg": np.array([3.3153904527033626e-16, 2.0000000000000004]),
             },
         }
     ],

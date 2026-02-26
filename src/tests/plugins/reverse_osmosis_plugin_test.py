@@ -34,15 +34,15 @@ class DummyDCF:
     [
         {
             "input": {
-                "plant_output_per_year": np.array([100000.0]),      
-                "construction_time": 0,                   
-                "power_demand_kWh_per_m3": 2.0,          
+                "plant_output_per_year": np.array([1800.0, 1900.0]),      
+                "construction_time": 1,                   
+                "power_demand_kWh_per_m3": 10.0,          
                 "avg_daily_hours": 24.0,                  
-                "recovery_rate": 0.5,                    
+                "recovery_rate": 0.1,                    
             },
             "expected": {
-                "electricity_demand_kWh": np.array([3585.2159653563867]),
-                "max_capacity_m3_per_hour": 0.20463561446098097
+                "electricity_demand_kWh": np.array([1702.977583544284]),
+                "max_capacity_m3_per_hour": 0.019440383373793193
             },
         }
     ]
