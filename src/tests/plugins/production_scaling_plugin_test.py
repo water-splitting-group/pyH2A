@@ -2,7 +2,7 @@ import pytest
 from pyH2A.Plugins.Production_Scaling_Plugin import Production_Scaling_Plugin
 
 class DummyDCF:
-    """Minimal DCF object for Power_Management_Plugin testing with configurable inputs."""
+    """Minimal DCF object for Production_Scaling_Plugin testing with configurable inputs."""
     
     def __init__(
         self,
@@ -50,7 +50,7 @@ class DummyDCF:
     ]
 )
 def test_production_scaling_plugin(case):
-    """Test Power_Management_Plugin using base inputs (direct names style)."""
+    """Test Production_Scaling_Plugin using base inputs (direct names style)."""
 
     # Unpack inputs from case
     dcf = DummyDCF(**case["input"])

@@ -28,8 +28,8 @@ class DummyDCF:
             },
             "Power Consumption": {
                 "Test Consumer": {
-                    "Value": power_consumption,
-                    "Type": "flexible",
+                    "Value": power_consumption["value"],
+                    "Type": power_consumption["type"],
                     "Processed": "Yes",
                 },
             },
@@ -53,7 +53,10 @@ class DummyDCF:
                 "stored_daily": {
                     2026: np.array([8000000.0, 8000000.0, 8000000.0]),
                 },
-                "power_consumption": np.array([25000.0]),
+                "power_consumption": {
+                    "value": np.array([25000.0]),
+                    "type": "flexible"
+                },
                 "grid_cost": 100000.12,
                 "construction_time": 1,
             },

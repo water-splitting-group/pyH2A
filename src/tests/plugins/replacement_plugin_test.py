@@ -15,8 +15,8 @@ class DummyDCF:
     ):
         self.inp = {
             "Planned Replacement": {
-                key: {"Cost ($)": cost, "Frequency (years)": freq}
-                for key, (cost, freq) in planned_replacement.items()
+                key: {"Cost ($)": value["cost"], "Frequency (years)": value["frequency"]}
+                for key, value in planned_replacement.items()
             },
             "Dummy Left Unplanned Replacement Dummy Right": {
                 key: {"Value": value} for key, value in unplanned_replacement.items()
@@ -35,8 +35,14 @@ class DummyDCF:
         {
             "input": {
                 "planned_replacement": {
-                    "Electrolyzer Stack": (5000, 5),  # (cost, frequency)
-                    "Valve": (2000, 3),
+                    "Electrolyzer Stack": {
+                        "cost": 5000,
+                        "frequency": 5
+                    },
+                    "Valve": {
+                        "cost": 2000,
+                        "frequency": 3
+                    },
                 },
                 "unplanned_replacement": {
                     "Misc": 1000
