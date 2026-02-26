@@ -7,8 +7,26 @@ from pyH2A.run_pyH2A import pyH2A
     [
         {
             "input": {
-                "input_file": "data/PV_E/Base/PV_E_Base.md",
-                "output_directory": "data/PV_E/Base",
+                "input_file": "src/tests/end_to_end/PEC_Base.md",
+                "output_directory": "src/tests/end_to_end/",
+            },
+            "expected": {
+                "lcoh": 139.41887561917213
+            },
+        },
+        {
+            "input": {
+                "input_file": "src/tests/end_to_end/Photocatalytic_Base.md",
+                "output_directory": "src/tests/end_to_end/",
+            },
+            "expected": {
+                "lcoh": 185.44329282256822
+            },
+        },
+        {
+            "input": {
+                "input_file": "src/tests/end_to_end/Pv_E_Base.md",
+                "output_directory": "src/tests/end_to_end/",
             },
             "expected": {
                 "lcoh": 4.194302976489675
@@ -16,37 +34,19 @@ from pyH2A.run_pyH2A import pyH2A
         },
         {
             "input": {
-                "input_file": "data/PEC/Limit/PEC_Limit.md",
-                "output_directory": "data/PEC/Limit",
+                "input_file": "src/tests/end_to_end/Thermal_Base.md",
+                "output_directory": "src/tests/end_to_end/",
             },
             "expected": {
-                "lcoh": 1.4242951683758598
-            },
-        },
-        {
-            "input": {
-                "input_file": "data/PEC/No_Conc/PEC_Limit_No_Concentration.md",
-                "output_directory": "data/PEC/No_Conc",
-            },
-            "expected": {
-                "lcoh": 15.826371459378658
-            },
-        },
-        {
-            "input": {
-                "input_file": "data/LCA/PV_E_Base.md",
-                "output_directory": ".",
-            },
-            "expected": {
-                "lcoh": 3.5777931317137512
+                "lcoh": 3.270581409704611
             },
         },
     ],
     ids=[
-        "PV_E/Base/PV_E_Base",
-        "PEC/Limit/PEC_Limit",
-        "No_Conc/PEC_No_Concentration",
-        "LCA/PV_E_Base",
+        "PEC_Base",
+        "Photocatalytic_Base",
+        "Pv_E_Base",
+        "Thermal_Base",
     ]
 )
 def test_e2e_lcoh(case):
