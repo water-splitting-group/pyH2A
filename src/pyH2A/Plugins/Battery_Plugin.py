@@ -2,8 +2,8 @@ from pyH2A.Utilities.input_modification import insert, process_table
 import numpy as np
 
 input_dict = {    
-    "Power Generation": {
-        #removed (daily, kWh), because we have unit and dimension in input dict
+    "Power Generation (daily)": {
+        #removed (kWh), because we have unit and dimension in input dict
         "Available Power": {
             "Value": {
                 "type": {np.ndarray,},
@@ -13,7 +13,7 @@ input_dict = {
                 "dimension": "energy",
             },                    
             "optional": False,
-            "description": " Available power, daily basis, dictionary of years (in kWh)."
+            "description": " Available power, daily basis, dictionary of years."
         },                      
     },
     
@@ -28,7 +28,7 @@ input_dict = {
                 "dimension": "energy",
             },                    
             "optional": False,
-            "description": "Full design capacity of battery in kWh."
+            "description": "Full design capacity of battery."
         },
         
         "Lowest discharge level": {
@@ -46,7 +46,7 @@ input_dict = {
         "Capacity loss per year": {
             "Value": {
                 "type": {float,},
-                "bounds": (0, None), # (0, None) beacuse of -> Percentage or value > 0
+                "bounds": (0, 1),
             },
             "Unit": {
                 "dimension": "dimensionless",
