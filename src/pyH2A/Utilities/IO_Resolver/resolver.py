@@ -303,7 +303,21 @@ class InputResolver:
 
         # Handle Value fields (require unit conversion)
         if VALUE_KEY in key:
-            return self._resolve_value_field(row, key, spec, context)
+            # Determine corresponding unit key and pull its dimension spec so we
+            # can validate the unit's dimension before conversion.
+            unit_key = (
+                UNIT_KEY if key == VALUE_KEY
+                else key.replace(VALUE_SUFFIX, UNIT_SUFFIX)
+            )
+            unit_spec = row_spec.get(unit_key)
+            expected_dimension = (
+                unit_spec.get("dimension")
+                if isinstance(unit_spec, dict)
+                else None
+            )
+            return self._resolve_value_field(
+                row, key, spec, context, expected_dimension
+            )
 
         # Skip Unit fields (handled with Value fields)
         if key.endswith(UNIT_SUFFIX) or key == UNIT_KEY:
@@ -320,6 +334,7 @@ class InputResolver:
         key: str,
         spec: Dict[str, Any],
         context: str,
+        expected_dimension: Optional[str] = None,
     ) -> Any:
         """Resolve a Value field with its associated unit."""
         # Determine corresponding unit key
@@ -333,13 +348,20 @@ class InputResolver:
             )
 
         value = row[key]
+        unit_str = row[unit_key]
 
         # Validate the raw value
         validate_value(value, spec, context, check_bounds_flag=False)
 
+        # Check unit dimension matches the spec before converting
+        if expected_dimension is not None:
+            self.unit_processor.validate_unit_dimension(
+                unit_str, expected_dimension
+            )
+
         # Convert with unit
         resolved = self.unit_processor.convert_value_with_unit(
-            value, row[unit_key])
+            value, unit_str)
 
         # Check bounds on the converted quantity
         bounds = spec.get("bounds")

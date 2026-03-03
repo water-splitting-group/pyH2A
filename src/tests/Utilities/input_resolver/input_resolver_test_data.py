@@ -1,6 +1,5 @@
 import numpy as np
-import pytest
-from pint import Quantity, UnitRegistry
+from pint import UnitRegistry
 from pyH2A.Utilities.IO_Resolver.resolver import input_resolver
 
 ureg = UnitRegistry()

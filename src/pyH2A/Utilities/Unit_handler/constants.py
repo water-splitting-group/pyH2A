@@ -30,3 +30,9 @@ CUSTOM_UNITS = [
     ("USD", "[currency]"),
     ("m3", "[meter] ** 3"),
 ]
+
+# Aliases that pint cannot register as unit names (not valid identifiers).
+# These are normalised at parse time in UnitDimensionHandler.get_dimension.
+UNIT_ALIASES = {
+    "$": "USD",
+}
