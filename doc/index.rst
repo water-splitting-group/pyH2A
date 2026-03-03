@@ -11,6 +11,7 @@ pyH2A
    :caption: Contents
 
    guide
+   Overview
    pyH2A/pyH2A
    utilities/utilities
    plugins/plugins
