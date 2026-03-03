@@ -45,6 +45,13 @@ class TestUnitConversionHandler:
         assert result.magnitude == expected.magnitude
         assert str(result.units) == str(expected.units)
 
+    def test_delta_temperature_conversion_F_to_K(self):
+        """ Test conversion from delta Fahrenheit to delta Kelvin """
+        result = self.handler.convert(1.0, 'delta_degF')
+        expected = (5.0 / 9.0) * self.handler.ureg.K
+        assert result.magnitude == expected.magnitude
+        assert str(result.units) == str(expected.units)
+
     def test_volume_conversion_ml_to_m3(self):
         """ Test conversion from milliliters to cubic meters """
         result = self.handler.convert(1, 'ml')

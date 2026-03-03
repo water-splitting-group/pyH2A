@@ -29,6 +29,7 @@ DIMENSION_MAPPING = {
 CUSTOM_UNITS = [
     ("USD", "[currency]"),
     ("m3", "[meter] ** 3"),
+    ("delta_degK", "[temperature]")
 ]
 
 # Aliases that pint cannot register as unit names (not valid identifiers).
