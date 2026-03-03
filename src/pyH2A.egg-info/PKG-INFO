@@ -5,11 +5,12 @@ Summary: pyH2A is an extensible Python framework for the analysis of hydrogen pr
 Home-page: https://github.com/jschneidewind/pyH2A
 Author: Jacob Schneidewind
 Author-email: pyH2A.pypi@gmail.com
-Requires-Python: >=3.9
+Requires-Python: >=3.14
 Description-Content-Type: text/markdown
 License-File: LICENSE
 License-File: LICENSE-CC-BY.txt
 Requires-Dist: autodocsumm>=0.2.14
+Requires-Dist: autopep8>=2.3.2
 Requires-Dist: click>=8.1.8
 Requires-Dist: furo>=2025.9.25
 Requires-Dist: matplotlib>=3.9.4
