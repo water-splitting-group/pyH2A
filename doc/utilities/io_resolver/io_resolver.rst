@@ -10,3 +10,4 @@ Input_output_resolver
    table_processor
    unit_processor
    validators
+   resolver_guide
