@@ -7,9 +7,9 @@ Photovoltaic_Plugin | plugin | 0
 Electrolyzer_Plugin | plugin | 0
 Battery_Plugin | plugin | 0
 Stored_Power_Electrolysis_Plugin | plugin | 0
-Reverse_Osmosis_Plugin | plugin | 2
-Power_Management_Plugin | plugin | 2
-Multiple_Modules_Plugin | plugin | 3
+Reverse_Osmosis_Plugin | plugin | 4
+Power_Management_Plugin | plugin | 4
+Multiple_Modules_Plugin | plugin | 6
 
 # Display Parameters
 

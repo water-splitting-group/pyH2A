@@ -3,10 +3,10 @@
 Name | Type | Description | Position
 --- | --- | --- | ---
 Hourly_Irradiation_Plugin | plugin | Plugin to calculate solar irradiation from typical meteorological year data | 0
-Photocatalytic_Plugin | plugin | Computes number of required baggies, cost of baggies and catalyst cost | 2
-Compression_Work_Plugin | plugin | Computes energy required to compress the gas up to gate pressure | 2
-Catalyst_Separation_Plugin | plugin | Computes cost of catalyst separation | 2
-Multiple_Modules_Plugin | plugin | Modelling of multiple plant modules, adjustment of labor requirement | 3
+Photocatalytic_Plugin | plugin | Computes number of required baggies, cost of baggies and catalyst cost | 4
+Compression_Work_Plugin | plugin | Computes energy required to compress the gas up to gate pressure | 4
+Catalyst_Separation_Plugin | plugin | Computes cost of catalyst separation | 4
+Multiple_Modules_Plugin | plugin | Modelling of multiple plant modules, adjustment of labor requirement | 6
 
 # Display Parameters
 
