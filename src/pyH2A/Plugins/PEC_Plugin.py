@@ -2,6 +2,142 @@ import numpy as np
 from pyH2A.Utilities.Energy_Conversion import Energy, kWh, eV
 from pyH2A.Utilities.input_modification import insert, process_table
 
+input_dict = {
+	"Technical Operating Parameters and Specifications": {
+		"Design Output per Day": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "mass / time",
+			},
+			"optional": False,
+			"description": "Design output in (kg of H2)/day."
+		},
+	},
+	"PEC Cells": {
+		"Cell Cost": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "currency / area",
+			},
+			"optional": False,
+			"description": "Cost of PEC cells in $/m2."
+		},
+		"Lifetime": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "time",
+			},
+			"optional": False,
+			"description": "Lifetime of PEC cells in years before replacement is required."
+		},
+		"Length": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "area", # Please check if dimension is correct.
+			},
+			"optional": False,
+			"description": "Length of single PEC cell in m."
+		},
+		"Width": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "area", # Please check if dimension is correct.
+			},
+			"optional": False,
+			"description": "Width of single PEC cell in m."
+		}
+	},
+	"Land Area Requirement": {
+		"Cell Angle": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None), # Check Please, No upper bound on cell angle, (but it should be between 0 and 90 degrees for practical purposes)?.
+			},
+			"Unit": {
+				"dimension": "angle", # Please check if dimesion is correct, or if it should be "dimensionless" since it's in degrees.
+			},
+			"optional": False,
+			"description": "Angle of PEC cells from the ground, in degrees."
+		},
+		"South Spacing": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "area", # Please check if dimension is correct.
+			},
+			"optional": False,
+			"description": "South spacing of PEC cells in m."
+		},
+		"East/West Spacing": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "area", # Please check if dimension is correct.
+			},
+			"optional": False,
+			"description": "East/West Spacing of PEC cells in m."
+		}
+	},
+	"Solar-to-Hydrogen Efficiency": {
+		"STH": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, 1),
+			},
+			"Unit": {
+				"dimension": "dimensionless", 
+			},
+			"optional": False,
+			"description": "Solar-to-hydrogen efficiency in percentage or as a value between 0 and 1."
+		}
+	},
+	"Solar Input": {
+		"Mean solar input": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "energy / (area * time)", # Please check if dimension is correct.
+			},
+			"optional": False,
+			"description": "Mean solar input in kWh/m2/day."
+		}
+	},
+	"Solar Concentrator": {
+		"Concentration Factor": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "dimensionless", # Please check if dimension is correct.
+			},
+			"optional": True,
+			"description": "Concentration factor created by solar concentration module, which is used in combination with PEC cells. If 'Solar Concentrator' is in dcf.inp, process_table() is used."
+		}
+	}
+}
+
 class PEC_Plugin:
 	'''Simulating H2 production using photoelectrochemical water splitting.
 
