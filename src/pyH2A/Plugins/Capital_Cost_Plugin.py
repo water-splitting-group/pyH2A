@@ -1,5 +1,71 @@
 from pyH2A.Utilities.input_modification import insert, sum_all_tables, process_table
 
+input_dict = {
+	"<...> Direct Capital Cost <...>": {
+		"<...>": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "currency",
+			},	
+			"optional": False,
+			"description": "Direct capital cost contribution, summed for each individual table in 'Direct Capital Cost' group."
+		},
+	},
+	"<...> Indirect Capital Cost <...>": {
+		"<...>": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},	
+			"Unit": {
+				"dimension": "currency",
+			},		
+			"optional": False,
+			"description": "Indirect capital cost contribution, summed for each individual table in 'Indirect Capital Cost' group."
+		},
+	},
+	"Non-Depreciable Capital Costs": {
+		"Cost of land": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},	
+			"Unit": {
+				"dimension": "currency / area",
+			},		
+			"optional": False,
+			"description": "Cost of land in $ per acre."
+		},
+		"Land required": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},	
+			"Unit": {
+				"dimension": "area",
+			},		
+			"optional": False,
+			"description": "Total land are required in acres."
+		},
+	},
+	"<...> Other Non-Depreciable Capital Cost <...>": {
+		"<...>": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},	
+			"Unit": {
+				"dimension": "currency",
+			},		
+			"optional": False,
+			"description": "Other non-depreciable capital cost contribution, summed for each individual table in 'Other Non-Depreciable Capital Cost' group."
+		},
+	}
+}
+
 class Capital_Cost_Plugin:
 	'''
 
