@@ -1,6 +1,116 @@
 from pyH2A.Utilities.input_modification import insert, process_table, hourly_to_daily_power
 import numpy as np
 
+input_dict = {
+    "Financial Input Values": {
+        "construction time": {
+            "Value": {
+                "type": {int,},
+                "bounds": (0, None),
+            },
+            "Unit": {
+                "dimension": "time",
+            },
+            "optional": False,
+            "description": "Construction time of hydrogen production plant in years."
+        },
+    },
+    "CAPEX Multiplier": {
+        "Multiplier": {
+            "Value": {
+                "type": {float,},
+                "bounds": (0, None),
+            },
+            "Unit": {
+                "dimension": "dimensionless", # Please check if this is the correct dimension for the multiplier.
+            },
+            "optional": False,
+            "description": "Multiplier to describe cost reduction of electrolysis CAPEX for every ten-fold increase of power relative to CAPEX reference power. Based on the multiplier the CAPEX scaling factor is calculated as: multiplier ^ (number of ten-fold increases). A value of 1 leads to no CAPEX reduction, a value < 1 enables cost reduction."
+        },
+    },
+    "Electrolyzer": {
+        "Nominal Power": {
+            "Value": {
+                "type": {float,},
+                "bounds": (0, None),
+            },
+            "Unit": {
+                "dimension": "power",
+            },
+            "optional": False,
+            "description": "Nominal power of electrolyzer in kW."
+        },
+        "CAPEX Reference Power": {
+            "Value": {
+                "type": {float,},
+                "bounds": (0, None),
+            },
+            "Unit": {
+                "dimension": "power",
+            },
+            "optional": False,
+            "description": "Reference power of electrolyzer in kW for cost reduction calculation."
+        },
+        "Power requirement increase per year": {
+            "Value": {
+                "type": {float,},
+                "bounds": (0, None),
+            },
+            "Unit": {
+                "dimension": "dimensionless", # Please check if this is the correct dimension for the power requirement increase per year.
+            },
+            "optional": False,
+            "description": "Electrolyzer power requirement increase per year due to stack degradation. Percentage or value > 0. Increase calculated as: (1 + increase per year) ^ year."
+        },
+        "Minimum capacity": {
+            "Value": {
+                "type": {float,},
+                "bounds": (0, 1),
+            },
+            "Unit": {
+                "dimension": "dimensionless",
+            },
+            "optional": False,
+            "description": "Minimum capacity required for electrolyzer operation. Percentage or value between 0 and 1."
+        },
+        "Conversion efficiency": {
+            "Value": {
+                "type": {float,},
+                "bounds": (0, None),
+            },
+            "Unit": {
+                "dimension": "mass / energy",
+            },
+            "optional": False,
+            "description": "Electrical conversion efficiency of electrolyzer in (kg H2)/kWh."
+        },
+        "Replacement time": {
+            "Value": {
+                "type": {float,},
+                "bounds": (0, None),
+            },
+            "Unit": {
+                "dimension": "time",
+            },
+            "optional": False,
+            "description": "Operating time in hours before stack replacement of electrolyzer is required."
+        },
+    },
+    "Power Generation": {
+        "Available Power (hourly)": {
+            "Value": {
+                "type": {dict,},
+                "bounds": (0, None),
+            },
+            "Unit": {
+                "dimension": "energy",
+            },
+            "optional": False,
+            "description": "Available power, hourly basis, dictionary of years (in kWh)."
+        },
+    },
+}
+
 class Electrolyzer_Plugin:
     '''Simulation of hydrogen production using electrolysis.
 
