@@ -1,5 +1,45 @@
 from pyH2A.Utilities.input_modification import insert, sum_all_tables, process_table
 
+input_dict = {
+	"Fixed Operating Costs": {
+		"staff": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "count", # Please check if this is the correct dimension for number of staff.
+			},
+			"optional": False,		
+			"description": "Number of staff."
+		},
+		"hourly labor cost": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "currency / time", # Please check if this is the correct dimension for hourly labor cost.
+			},
+			"optional": False,
+			"description": "Hourly labor cost of staff."
+		},
+	},
+	"<...> Other Fixed Operating Cost <...>": {
+		"<...>": {
+			"Value": {
+				"type": {float,},	
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "currency / year", # Please check if this is the correct dimension for yearly other fixed operating costs.
+			},
+			"optional": False,
+			"description": "Yearly other fixed operating cost contribution, summed for each individual table in ther Fixed Operating Cost group."
+		},
+	},
+}
+
 class Fixed_Operating_Cost_Plugin:
 	'''Calculation of yearly fixed operating costs.
 
