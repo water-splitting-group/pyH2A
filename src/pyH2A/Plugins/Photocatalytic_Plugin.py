@@ -2,6 +2,228 @@ import numpy as np
 from pyH2A.Utilities.Energy_Conversion import Energy, kWh, eV
 from pyH2A.Utilities.input_modification import insert, process_table
 
+input_dict = {
+	"Technical Operating Parameters and Specifications": {
+		"Design Output per Day": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "mass / time",
+			},
+			"optional": False,
+			"description": "Design output in (kg of H2)/day."
+		},
+	},
+	"Reactor Baggies": {
+		"Cost Material Top": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "currency / area",
+			},
+			"optional": False,
+			"description": "Cost of baggie top material in $/m2."
+		},
+		"Cost Material Bottom": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "currency / area",
+			},
+			"optional": False,
+			"description": "Cost of baggie bottom material in $/m2."
+		},
+		"Number of ports": {
+			"Value": {
+				"type": {int,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "dimensionless", # Please check if this is the correct dimension for number of ports.
+			},
+			"optional": False,
+			"description": "Number of ports per baggie."
+		},
+		"Other Costs": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "currency",
+			},
+			"optional": False,
+			"description": "Other costs per baggie in $."
+		},
+		"Markup factor": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "dimensionless", # Please check if this is the correct dimension for markup factor.
+			},
+			"optional": False,
+			"description": "Markup factor for baggies, typically > 1."
+		},
+		"Length": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "area",
+			},
+			"optional": False,
+			"description": "Length of single baggie in m."
+		},
+		"Width": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "area",
+			},
+			"optional": False,
+			"description": "Width of single baggie in m."
+		},
+		"Height": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "area",
+			},
+			"optional": False,
+			"description": "Height of reactor baggie in m. In this simulation this value determines the height of the water level and hence is an important parameter ultimately determining the level of light absorption and total catalyst amount."
+		},
+		"Additional land area": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "dimensionless",
+			},
+			"optional": False,
+			"description": "Additional land area required, percentage or value > 0. Calculated as: (1 + addtional land area) * baggie area."
+		},
+		"Lifetime": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "time",
+			},
+			"optional": False,
+			"description": "Lifetime of reactor baggies in years before replacement is required."
+		},
+	},
+	"Catalyst": {
+		"Cost per kg": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "currency / mass",
+			},
+			"optional": False,
+			"description": "Cost per kg of catalyst."
+		},
+		"Concentration": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "mass / volume",
+			},
+			"optional": False,
+			"description": "Concentration of catalyst in g/L."
+		},
+		"Lifetime": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "time",
+			},
+			"optional": False,
+			"description": "Lifetime of catalysts in year before replacement is required."
+		},
+		"Molar Weight": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "mass / amount of substance", # Please check if this is the correct dimension for molar weight.
+			},
+			"optional": True,
+			"description": "If the molar weight of the catalyst (in g/mol) is specified, homogeneous catalyst properties (TON, TOF etc. are calculated)."
+		},
+		"Molar Attenuation Coefficient": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "amount of substance^-1 * length^-1", # Please check if this is the correct dimension for molar attenuation coefficient.
+			},
+			"optional": True,
+			"description": "If the molar attenuation coefficient (in M^-1 cm^-1) is specified (along with the molar weight), absorbance and the fraction of absorbed light are also calculated."
+		},
+	},
+	"Solar-to-Hydrogen Efficiency": {
+		"STH": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, 1),
+			},
+			"Unit": {
+				"dimension": "dimensionless",
+			},
+			"optional": False,
+			"description": "Solar-to-hydrogen efficiency in percentage or as a value between 0 and 1."
+		},
+	},
+ 	"Solar Input": {
+		"Mean solar input": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "energy / (area * time)", # Please check if this is the correct dimension for mean solar input.
+			},
+			"optional": False,
+			"description": "Mean solar input in kWh/m2/day."
+		},
+		"Hourly": {
+			"Value": {
+				"type": {np.ndarray,},
+			},
+			"Unit": {
+				"dimension": "energy / (area * time)", # Please check if this is the correct dimension for hourly irradiation data.
+			},
+			"optional": False,
+			"description": "Hourly irradiation data in kWh/m2."
+		},
+	},	
+}
+  
+
 class Photocatalytic_Plugin:
 	'''Simulating H2 production using photocatalytic water splitting in plastic baggie reactors.
 
