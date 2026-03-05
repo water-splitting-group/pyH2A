@@ -319,13 +319,6 @@ The typical usage pattern inside a pyH2A plugin ``__init__`` is:
                 }
             })
 
-            self.volume = (
-                inputs["Water Supply"]["Volume"]["Value"]
-            )
-            self.purity = (
-                inputs["Water Supply"]["Purity"]["Value"]
-            )
-
 Or using the convenience wrapper
 :func:`~pyH2A.Utilities.IO_Resolver.resolver.input_resolver`:
 
