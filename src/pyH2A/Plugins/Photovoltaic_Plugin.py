@@ -1,6 +1,81 @@
 from pyH2A.Utilities.input_modification import insert, process_table, read_textfile, hourly_to_daily_power
 import numpy as np
 
+input_dict = {
+	"Irradiation Used": {
+		"Data": {
+			"Value": {
+				"type": {str, np.ndarray,},
+				"bounds": None, # bounds not defined as data can be provided as text file or array.
+			},
+			"Unit": {
+				"dimension": "dimensionless",
+			},
+			"optional": False,
+			"description": "Hourly power ratio data for electricity production calculation. Either a path to a text file containing the data or ndarray. A suitable array can be retrieved from 'Hourly Irradiation > *type of tracking* > Value'."
+		},
+	},
+	"CAPEX Multiplier": {
+		"Multiplier": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "dimensionless",
+			},
+			"optional": False,
+			"description": "Multiplier to describe cost reduction of PV CAPEX for every ten-fold increase of power relative to CAPEX reference power. Based on the multiplier the CAPEX scaling factor is calculated as: multiplier ^ (number of ten-fold increases). A value of 1 leads to no CAPEX reduction, a value < 1 enables cost reduction."
+		},
+	},
+	"Photovoltaic": {
+		"Nominal Power": {
+			"Value": {	
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {	
+				"dimension": "power",
+			},
+			"optional": False,
+			"description": "Nominal power of PV array in kW."
+		},
+		"CAPEX Reference Power": {	
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "power",
+			},
+			"optional": False,
+			"description": "Reference power of PV array for cost reduction calculations."
+		},
+		"Power loss per year": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, 1), # Please check this, it can be a percentage or a value.
+			},
+			"Unit": {
+				"dimension": "dimensionless",
+			},
+			"optional": False,
+			"description": "Reduction in power produced by PV array per year due to degradation. Percentage or value > 0. Reduction calculated as: (1 - loss per year) ^ year."
+		},
+		"Efficiency": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, 1),
+			},
+			"Unit": {
+				"dimension": "dimensionless",
+			},
+			"optional": False,
+			"description": "Power conversion efficiency of used solar cells. Percentage or value between 0 and 1."
+		},
+	},
+}
+
 class Photovoltaic_Plugin:
 	'''Simulation of electricity production using PV.
 
