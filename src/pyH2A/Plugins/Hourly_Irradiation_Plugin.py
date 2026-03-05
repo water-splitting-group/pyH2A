@@ -1,7 +1,90 @@
 import numpy as np
 from functools import lru_cache
-
 from pyH2A.Utilities.input_modification import insert, process_table, read_textfile, file_import
+
+input_dict = {
+	"Hourly Irradiation": {		
+		"File": {
+			"Value": {	
+				"type": {str,},
+				"bounds": (0, None), # Please check if bounds are necessary or not
+			},
+			"Unit": {
+				"dimension": "dimensionless", #please check dimension and unit for file paths
+			},
+			"optional": False,
+			"description": "Path to a `.csv` file containing hourly irradiance data"
+		},
+	},
+	"Irradiance Area Parameters": {	
+		"Module Tilt": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, 360), #Please check bounds for module tilt, can it be 0 or 360?
+			},
+			"Unit": {
+				"dimension": "angle", # please check dimension and unit for angles
+			},
+			"optional": False,
+			"description": "Tilt of irradiated module in degrees."
+		},
+		"Array Azimuth": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, 360), #Please check bounds for array azimuth, can it be 0 or 360?
+			},
+			"Unit": {
+				"dimension": "angle", # please check dimension and unit for angles
+			},
+			"optional": False,
+			"description": "Azimuth angle of irradiated module in degrees."
+		},
+		"Nominal Operating Temperature": {
+			"Value": {
+				"type": {float,},
+				"bounds": (None, None), #Please check bounds for nominal operating temperature, can it be negative or very high?
+			},
+			"Unit": {
+				"dimension": "temperature", # please check dimension and unit for temperature
+			},
+			"optional": False,
+			"description": "Nominal operating temperature of irradiated module in degrees Celsius."
+		},
+		"Mismatch Derating": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, 1), 
+			},
+			"Unit": {
+				"dimension": "dimensionless",
+			},
+			"optional": False,
+			"description": "Derating value due to mismatch (percentage or value between 0 and 1)."
+		},
+		"Dirt Derating": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, 1), 
+			},
+			"Unit": {
+				"dimension": "dimensionless",
+			},
+			"optional": False,
+			"description": "Derating value due to dirt buildup (percentage or value between 0 and 1)."
+		},
+		"Temperature Coefficient": {
+			"Value": {
+				"type": {float,},
+				"bounds": (None, None), #Please check bounds for temperature coefficient, can it be negative or positive? What are typical values?
+			},
+			"Unit": {
+				"dimension": "temperature", # please check dimension and unit for temperature coefficient?
+			},
+			"optional": False,
+			"description": "Performance decrease of irradiated module per degree Celsius increase."
+		},
+	},
+}
 
 class Hourly_Irradiation_Plugin:
 	'''Calculation of hourly and mean daily irradiation data with different module configurations.
