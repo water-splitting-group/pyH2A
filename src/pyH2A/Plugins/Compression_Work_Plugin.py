@@ -111,7 +111,7 @@ class Compression_Work_Plugin:
         self.compression_work = (dcf.inp['Compressor train']['Outlet pressure']['Value']/dcf.inp['Raw product gas']['Pressure']['Value'])**((self.polytropic_coefficient-1)/(self.polytropic_coefficient*dcf.inp['Compressor train']['Number of compression stages']['Value']))-1  
         self.compression_work = self.compression_work * FP.IG_constant * dcf.inp['Compressor train']['Number of compression stages']['Value'] * molar_flowrate_to_compress
         self.compression_work = self.compression_work * dcf.inp['Raw product gas']['Temperature']['Value'] 
-        self.compression_work = self.compression_work / (self.polytropic_coefficient - 1)     
+        self.compression_work = self.compression_work * self.polytropic_coefficient/ (self.polytropic_coefficient - 1)     
         
     def mechanical_work(self, dcf):
         '''Calculation of the mechanical power to drive the compressors shafts.
