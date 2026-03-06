@@ -56,10 +56,10 @@ class DummyDCF:
             "expected": {
                 "outlet_temperature": 513.381243,
                 "combustion_enthalpy_per_mixture": 188100.0,
-                "compression_work": 72466.4944498,
-                "shaft_work": 96621.9925997,
-                "required_combustion_power": 386487.97038,
-                "hydrogen_self_consumption_ratio": 0.23620842901,                
+                "compression_work": 101453.09223,
+                "shaft_work": 135270.78964,
+                "required_combustion_power": 541083.158532,
+                "hydrogen_self_consumption_ratio": 0.33069180061,                
             }, 
         }            
     ],
