@@ -1,5 +1,68 @@
 from pyH2A.Utilities.input_modification import insert, process_table
-import numpy as np
+
+input_dict = {
+    "Financial Input Values": {
+        "construction time": {
+            "Value": {
+                "type": {int,},
+                "bounds": (0, None),
+            },
+            "Unit": {
+                "dimension": "time",
+            },
+            "optional": False,
+            "description": "Construction time of hydrogen production plant in years."
+        },
+    },
+    "Technical Operating Parameters and Specifications": {
+        "Output per Year": {
+            "Value": {
+                "type": {float,},
+                "bounds": (0, None),
+            },
+            "Unit": {
+                "dimension": "mass / time", # Please check if this is the correct dimension for output per year, or if it should be "mass".
+            },
+            "optional": False,
+            "description": "Yearly output taking operating capacity factor into account, in (kg of H2)/year."
+        },
+    },
+    "Reverse Osmosis": {
+        "Power Demand": {
+            "Value": {
+                "type": {float,},
+                "bounds": (0, None),
+            },
+            "Unit": {
+                "dimension": "energy", # Please check if this is the correct dimension for power demand, or if it should be "power".
+            },
+            "optional": False,
+            "description": "Power demand of reverse osmosis plant in kWh per m3 of sea water."
+        },
+        "Average daily operating hours": {
+            "Value": {
+                "type": {float,},
+                "bounds": (0, 24),
+            },
+            "Unit": {
+                "dimension": "time",
+            },
+            "optional": False,
+            "description": "Average daily operating hours of reverse osmosis plant, used for scaling of reverse osmosis plant."
+        },
+        "Recovery Rate": {
+            "Value": {
+                "type": {float,},
+                "bounds": (0, None), # Please check if there should be an upper bound for the recovery rate, e.g. 1.
+            },
+            "Unit": {
+                "dimension": "dimensionless",
+            },
+            "optional": False,
+            "description": "Fraction of fresh water obtained from given volume of sea water."
+        },
+    },
+}
 
 class Reverse_Osmosis_Plugin:
     '''Simulation of purified water production using reverse osmosis.
