@@ -2,6 +2,92 @@ from pyH2A.Utilities.input_modification import insert, sum_all_tables, process_t
 import pyH2A.Utilities.find_nearest as fn
 import numpy as np
 
+input_dict = {	
+	"Technical Operating Parameters and Specifications": {
+		"Output per Year": {
+			"Value": {
+				"type": {float},
+				"bounds": (0, None)
+			},
+			"Unit": {
+				"dimension": "mass / time"
+			},
+			"optional": False,
+			"description": "Yearly output taking operating capacity factor into account, in (kg of H2)/year."
+		}
+	},
+	"Utilities": {
+		"<...>": {
+			"Cost": {
+				"type": {float, str, np.ndarray},
+				"bounds": (0, None)
+			},
+			"unit": {
+				"dimension": "currency" # Please check this dimension
+			},
+			"optional": False,
+			"description": "Cost of utility (e.g. $/kWh for electricity). May be either a float, a ndarray with the same length as `dcf.inflation_correction` or a textfile containing cost values (cost values have to be in second column)."
+		},
+		"<...>": {
+			"Usage": {
+				"type": {float},
+				"bounds": (0, None)
+			},
+			"Unit": {
+				"dimension": "mass" # Please check this dimension
+			},
+			"optional": False,
+			"description": "Usage of utility per kg H2 (e.g. kWh/(kg of H2) for electricity)."
+		},
+		"<...>": {
+			"Price Conversion Factor": {
+				"type": {float},
+				"bounds": (0, None)
+			},
+			"Unit": {
+				"dimension": "dimensionless"
+			},
+			"optional": False,
+			"description": "Conversion factor between cost and usage units. Should be set to 1 if no conversion is required."
+		},
+		"<...>": {
+			"Path": {
+				"type": {str},
+				"bounds": None
+			},
+			"Unit": {	
+				"dimension": "dimensionless"
+			},
+			"optional": True,
+			"description": "Path for `Cost` entry."
+		},
+		"<...>": {
+			"Usage Path": {
+				"type": {str},
+				"bounds": None
+			},
+			"Unit": {	
+				"dimension": "dimensionless"
+			},
+			"optional": True,
+			"description": "Path for `Usage per kg H2` entry."
+		}
+	},
+	"<...> Other Variable Operating Cost <...>": {
+		"<...>": {
+			"Value": {
+				"type": {float},
+				"bounds": (0, None)
+			},
+			"Unit": {
+				"dimension": "currency / time"
+			},
+			"optional": False,
+			"description": "Value for variable operating cost. `sum_all_tables()` is used for summing all tables in this group."
+		}
+	}
+}
+
 class Variable_Operating_Cost_Plugin:
 	'''Calculation of variable operating costs.
 
