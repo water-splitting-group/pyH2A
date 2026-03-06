@@ -1,5 +1,81 @@
 from pyH2A.Utilities.input_modification import insert, process_table
 
+input_dict = {
+    "Technical Operating Parameters and Specifications": {
+		"Plant Design Capacity": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "mass / time", # Please check if this is the correct dimension for plant design capacity, or if it should be "mass".
+			},
+			"optional": False,
+			"description": "Plant design capacity in kg of H2/day."
+		},
+		"Operating Capacity Factor": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, 1),
+			},
+			"Unit": {
+				"dimension": "dimensionless",
+			},
+			"optional": False,
+			"description": "Operating capacity factor in %."
+		},
+		"Maximum Output at Gate": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "mass",
+			},
+			"optional": True,
+			"description": "Maximum output at gate in (kg of H2)/day. If not specified it defaults to `Plant Design Capacity (kg of H2/day)`."
+		},
+		"New Plant Design Capacity": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "mass / time", # Please check if this is the correct dimension for plant design capacity, or if it should be "mass".
+			},
+			"optional": True,
+			"description": "New plant design capacity in kg of H2/day to calculate scaling, which overwrites possible Scaling Ratio."
+		},
+		"Scaling Ratio": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None), # Please check if there should be an upper bound for the scaling ratio.
+			},
+			"Unit": {
+				"dimension": "dimensionless",
+			},
+			"optional": True,
+			"description": "Scaling ratio which is multiplied by current plant design capacity to obtain scaled plant size. Overwritten by `New Plant Design Capacity (kg of H2/day)` if that is specified."
+		},
+		"Capital Scaling Exponent": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None), # Please check if there should be an upper bound for the capital scaling exponent.
+			},
+			"optional": True,
+			"description": 	"Exponent to calculate capital scaling factor. Defaults to 0.78 if not specified."
+		},
+		"Labor Scaling Exponent": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None), # Please check if there should be an upper bound for the labor scaling exponent.
+			},
+			"optional": True,
+			"description": 	"Exponent to calculcate labor scaling factor. Defaults to 0.25 if not specified."
+		},
+	},	
+}
+
 class Production_Scaling_Plugin:
 	'''Calculation of plant output and potential scaling.
 
