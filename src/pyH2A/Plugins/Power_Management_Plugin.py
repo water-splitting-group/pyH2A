@@ -1,6 +1,63 @@
 from pyH2A.Utilities.input_modification import insert, process_table, daily_to_yearly_power
 import numpy as np
 
+input_dict = {
+    "Power Generation": {
+        "Available Power (daily)": {
+            "Value": {
+                "type": {np.ndarray,},
+                "bounds": (0, None),
+            },
+            "Unit": {
+                "dimension": "energy",
+            },
+            "optional": True,
+            "description": "Available power on a daily basis in kWh. Can be provided as a single value or as an array with values for each year. If not provided, it is assumed that no available power is generated."
+        },
+        "Stored Power (daily)": {
+            "Value": {
+                "type": {np.ndarray,},
+                "bounds": (0, None),
+            },
+            "Unit": {
+                "dimension": "energy",
+            },
+            "optional": True,
+            "description": "Stored power on a daily basis in kWh. Can be provided as a single value or as an array with values for each year. If not provided, it is assumed that no stored power is generated."
+        },
+    },
+    "Power Consumption": {
+        "<...>": {
+            "Value": {
+                "type": {np.ndarray,},
+                "bounds": (0, None),
+            },
+            "Type": {
+                "type": {str,},
+                "options": {'flexible', 'on_demand'},
+            },
+            "Unit": {
+                "dimension": "power",
+            },
+            "optional": True,
+            "description": "Power consumption values for each year in kWh. Can be provided for multiple consumers, in which case they should be provided as separate entries under Power Consumption. The type of consumer should be specified as either 'flexible' for consumers that can consume both available and stored power, or 'on_demand' for consumers that can only consume stored power."
+        },
+    },
+    "Grid Electricity": {
+        "Cost": {
+            "Value": {
+                "type": {float, np.ndarray,},
+                "bounds": (0, None),
+            },
+            "Unit": {
+                "dimension": "cost",
+            },
+            "optional": True,
+            "description": "Cost of grid electricity in $/kWh. Can be provided as a single value or as an array with values for each year. If not provided, it is assumed that grid electricity is not used."
+        },
+    },
+}
+
 class Power_Management_Plugin:
     '''Management of electricity production and consumption.
     
