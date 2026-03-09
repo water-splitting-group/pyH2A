@@ -3,10 +3,9 @@
 Name | Type | Description | Position
 --- | --- | --- | ---
 Hourly_Irradiation_Plugin | plugin | Plugin to calculate solar irradiation from typical meteorological year data | 0
-Photocatalytic_Plugin | plugin | Computes number of required baggies, cost of baggies and catalyst cost | 4
-Compression_Work_Plugin | plugin | Computes energy required to compress the gas up to gate pressure | 4
-Catalyst_Separation_Plugin | plugin | Computes cost of catalyst separation | 4
-Multiple_Modules_Plugin | plugin | Modelling of multiple plant modules, adjustment of labor requirement | 6
+Photocatalytic_Plugin | plugin | Computes number of required baggies, cost of baggies and catalyst cost | 2
+Catalyst_Separation_Plugin | plugin | Computes cost of catalyst separation | 2
+Multiple_Modules_Plugin | plugin | Modelling of multiple plant modules, adjustment of labor requirement | 3
 
 # Display Parameters
 
@@ -28,8 +27,7 @@ Plant Modules | 10 | None | 10 identical modules, only affects labor requirement
 
 Name | Full Name | Value
 --- | --- | ---
-capital perc 1st | % of Capital Spent in 1st Year of Construction | 50%
-capital perc 2nd | % of Capital Spent in 2nd Year of Construction | 50%
+capital perc 1st | % of Capital Spent in 1st Year of Construction | 100%
 
 # Hourly Irradiation
 
@@ -92,15 +90,6 @@ Lifetime (years) | 5 | Lifetime of reactor baggies.
 Name | Value | Comment
 --- | --- | ---
 Filtration cost ($/m3) | 0.24 | Cost of nanofiltration per m3 of water based on Costa 2006. Nanofiltration as a proxy for cost of actual catalyst separation.
-
-# Compressor train
-
-Name | Value | Comment
---- | --- | ---
-Outlet pressure | 20.7 | bars - from Pinaud's recommendation of 300 psi
-Number of compression stages | 2 
-Compressor efficiency | 75%
-Combustion to shaft efficiency | 25%
 
 # Direct Capital Costs - Equipment
 
@@ -189,7 +178,7 @@ fees | Licensing, Permits and Fees ($ per year) | None | 1000.0
 
 Name | Usage per kg H2 | Usage Unit | Cost | Cost Unit | Price Conversion Factor | Price Conversion Factor Unit | Comment
 --- | --- | --- | --- | --- | --- | --- | ---
-Electricity for compression | Energy self consumption > Electricity for compression > Value | kWh/kg H2 | pyH2A.Lookup_Tables.Utility_Cost~Industrial_Electricity_AEO_2017_Reference_Case.csv | GJ | 0.0036 | GJ/kWh | Electricity usage based on Pinaud 2013.
+Industrial Electricity | 3.29 | kWh/kg H2 | pyH2A.Lookup_Tables.Utility_Cost~Industrial_Electricity_AEO_2017_Reference_Case.csv | GJ | 0.0036 | GJ/kWh | Electricity usage based on Pinaud 2013.
 Process Water | 2.637 | gal/kg H2 | 0.0023749510945008 | $(2016)/gal | 1. | None | Seawater reverse osmosis cost ca. 0.6 $/m3 (equal to ca. 0.0023 $/gal), based on Kibria 2021 and Driess 2021.
 
 # Unplanned Replacement
@@ -197,8 +186,3 @@ Process Water | 2.637 | gal/kg H2 | 0.0023749510945008 | $(2016)/gal | 1. | None
 Name | Full Name | Path | Value | Comment
 --- | --- | --- | --- | ---
 unplanned replacement | Total Unplanned Replacement Capital Cost Factor (% of total direct depreciable costs/year) | Depreciable Capital Costs > Inflated > Value | 0.5% | Based on Pinaud 2013.
-
-# Product gas properties
-
-Name | Value | Comment
---- | --- | ---

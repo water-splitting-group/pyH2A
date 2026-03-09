@@ -86,6 +86,8 @@ class Photocatalytic_Plugin:
         Mass fraction of the gas produced by the baggie (H2, O2, H2O).                      
     Raw product gas > Hydrogen molar fraction > Value : float
         Molar fraction of hydrogen in the product gas        
+    Raw product gas > Species > Value : set
+        Chemical species present in the outlet gas               
     '''
 
     def __init__(self, dcf, print_info):
@@ -142,6 +144,8 @@ class Photocatalytic_Plugin:
                 self.Mass_fractions, __name__, print_info = print_info) 
         insert(dcf, 'Raw product gas', 'Hydrogen molar fraction', 'Value',
                 self.Hydrogen_mol_fraction, __name__, print_info = print_info)  
+        insert(dcf, 'Raw product gas', 'Species', 'Value',
+                self.species, __name__, print_info = print_info)                  
                 
     def hydrogen_production(self, dcf):
         '''Calculation of hydrogen produced per day per baggie (in kg).
@@ -268,4 +272,5 @@ class Photocatalytic_Plugin:
         self.Pressure = 1.02 
         self.Temperature = 333 # 60 degC
         self.Mass_fractions = {'H2':0.08101, 'O2':0.64278, 'H2O':0.27621} # From Pinaud
+        self.species = {'H2', 'O2', 'H2O'}
         self.Hydrogen_mol_fraction = (self.Mass_fractions['H2']/FP.MW['H2'])/(self.Mass_fractions['H2']/FP.MW['H2']+self.Mass_fractions['O2']/FP.MW['O2']+self.Mass_fractions['H2O']/FP.MW['H2O'])
