@@ -12,6 +12,7 @@ pyH2A
 
    guide
    Overview
+   dictionary_structure
    pyH2A/pyH2A
    utilities/utilities
    plugins/plugins
