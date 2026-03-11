@@ -7,6 +7,7 @@ DIMENSION_TO_UNIT_MAPPING = {
     "mass": "kg",
     "substance": "mol",
     "temperature": "degK",
+    "delta_temperature": "degK",
     "volume": "meter**3",
     "currency": "USD"
 }
@@ -20,6 +21,7 @@ DIMENSION_MAPPING = {
     "[mass]": "mass",
     "[substance]": "substance",
     "[temperature]": "temperature",
+    "delta_temperature": "delta_temperature",
     "[length] ** 3": "volume",
     "[meter] ** 3": "volume",
     "dimensionless": "dimensionless",
@@ -29,7 +31,9 @@ DIMENSION_MAPPING = {
 CUSTOM_UNITS = [
     ("USD", "[currency]"),
     ("m3", "[meter] ** 3"),
-    ("delta_degK", "[temperature]")
+    ("delta_degK", "delta_temperature"),
+    ("delta_degC", "delta_temperature"),
+    ("delta_degF", "delta_temperature")
 ]
 
 # Aliases that pint cannot register as unit names (not valid identifiers).

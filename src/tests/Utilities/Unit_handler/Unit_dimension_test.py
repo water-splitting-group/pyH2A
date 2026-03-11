@@ -53,9 +53,12 @@ class TestUnitDimensionHandler:
         assert self.handler.get_dimension('degC') == 'temperature'
         assert self.handler.get_dimension('degF') == 'temperature'
         assert self.handler.get_dimension('degK') == 'temperature'
-        assert self.handler.get_dimension('delta_degC') == 'temperature'
-        assert self.handler.get_dimension('delta_degF') == 'temperature'
-        assert self.handler.get_dimension('delta_degK') == 'temperature'
+
+    def test_delta_temperature_dimension(self):
+        """ Test detection of delta temperature dimension """
+        assert self.handler.get_dimension('delta_degC') == 'delta_temperature'
+        assert self.handler.get_dimension('delta_degF') == 'delta_temperature'
+        assert self.handler.get_dimension('delta_degK') == 'delta_temperature'
 
     def test_volume_dimension(self):
         """ Test detection of volume dimension """

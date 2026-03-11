@@ -50,7 +50,10 @@ class UnitDimensionHandler:
         :meth:`get_dimension` can normalise them before parsing.
         """
         self.ureg = pint.UnitRegistry()
+        self._explicit_unit_map = {}
         for unit_name, definition in CUSTOM_UNITS:
+            if definition in DIMENSION_MAPPING:
+                self._explicit_unit_map[unit_name] = DIMENSION_MAPPING[definition]
             try:
                 self.ureg.Unit(unit_name)
             except (pint.UndefinedUnitError, pint.errors.UndefinedUnitError):
@@ -98,6 +101,8 @@ class UnitDimensionHandler:
             handler.get_dimension('not_a_unit')  # raises ValueError
         """
         unit_str = UNIT_ALIASES.get(unit_str, unit_str)
+        if unit_str in self._explicit_unit_map:
+            return self._explicit_unit_map[unit_str]
         try:
             unit = self.ureg.Unit(unit_str)
         except Exception:
