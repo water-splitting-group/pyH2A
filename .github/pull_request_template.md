@@ -43,7 +43,7 @@ python examples/pem_example.yaml
 - [ ] Code follows pyH2A style guidelines
 - [ ] Self-review of code completed
 - [ ] Comments added in complex or critical sections
-- [ ] Documentation updated (docstrings, README, RedTheDocs)
+- [ ] Documentation updated (docstrings, README, ReadTheDocs)
 - [ ] Example input YAML or scripts updated if relevant
 - [ ] No new warnings generated
 - [ ] Tests added / updated and passing
