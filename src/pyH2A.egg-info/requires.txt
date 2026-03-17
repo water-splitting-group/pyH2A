@@ -1,4 +1,5 @@
 autodocsumm>=0.2.14
+autopep8>=2.3.2
 click>=8.1.8
 furo>=2025.9.25
 matplotlib>=3.9.4
