@@ -60,7 +60,7 @@ class DummyDCF:
                 }
             },
             
-            'Grid electricity': {
+            'Grid Electricity': {
                 'Cost': {
                     'Value': 0.15, 
                     'Unit': '$/kWh'
