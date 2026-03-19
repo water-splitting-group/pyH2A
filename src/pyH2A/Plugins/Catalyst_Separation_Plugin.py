@@ -11,7 +11,7 @@ input_dict = {
 				"dimension": "volume",
 			},	
 			"optional": False,
-			"description": "Total water volume in liters."
+			"description": "Total water volume."
 		},
 	},
 	"Catalyst": {
@@ -24,7 +24,7 @@ input_dict = {
 				"dimension": "time",
 			},	
 			"optional": False,
-			"description": "Lifetime of catalysts in year before replacement is required."	
+			"description": "Lifetime of catalysts before replacement is required."	
 		},
 	},
 	"Catalyst Separation": {
@@ -37,7 +37,7 @@ input_dict = {
 				"dimension": "currency / volume",
 			},	
 			"optional": False,
-			"description": "Cost of filtration in $ per m3."
+			"description": "Cost of filtration in currency per volume."
 		},
 	},
 }

@@ -10,7 +10,7 @@ input_dict = {
 			"Unit": {
 				"dimension": "currency",
 			},	
-			"optional": False,
+			"optional": True,
 			"description": "Direct capital cost contribution, summed for each individual table in 'Direct Capital Cost' group."
 		},
 	},
@@ -23,7 +23,7 @@ input_dict = {
 			"Unit": {
 				"dimension": "currency",
 			},		
-			"optional": False,
+			"optional": True,
 			"description": "Indirect capital cost contribution, summed for each individual table in 'Indirect Capital Cost' group."
 		},
 	},
@@ -37,7 +37,7 @@ input_dict = {
 				"dimension": "currency / area",
 			},		
 			"optional": False,
-			"description": "Cost of land in $ per acre."
+			"description": "Cost per surface area."
 		},
 		"Land required": {
 			"Value": {
@@ -48,7 +48,7 @@ input_dict = {
 				"dimension": "area",
 			},		
 			"optional": False,
-			"description": "Total land are required in acres."
+			"description": "Total land Area are required."
 		},
 	},
 	"<...> Other Non-Depreciable Capital Cost <...>": {
@@ -60,7 +60,7 @@ input_dict = {
 			"Unit": {
 				"dimension": "currency",
 			},		
-			"optional": False,
+			"optional": True,
 			"description": "Other non-depreciable capital cost contribution, summed for each individual table in 'Other Non-Depreciable Capital Cost' group."
 		},
 	}

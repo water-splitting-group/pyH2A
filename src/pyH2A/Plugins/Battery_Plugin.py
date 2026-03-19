@@ -3,21 +3,21 @@ import numpy as np
 
 input_dict = {    
     "Power Generation": {
-        "Available Power (daily)": {
+        "Available energy (daily)": {
             "Value": {
-                "type": {np.ndarray,},
+                "type": {dict,},
                 "bounds": (0, None),
             },
             "Unit": {
                 "dimension": "energy",
             },                    
             "optional": False,
-            "description": " Available power, daily basis, dictionary of years."
+            "description": " Available energy, daily basis, dictionary of years."
         },                      
     },
     
     "Battery": {
-        "Design Capacity": { 
+        "Design capacity": { 
             "Value": {
                 "type": {float,},
                 "bounds": (0, None),

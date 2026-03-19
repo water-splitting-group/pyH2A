@@ -2,24 +2,24 @@ from pyH2A.Utilities.input_modification import insert, sum_all_tables, process_t
 
 input_dict = {
 	"Fixed Operating Costs": {
-		"staff": {
+		"Staff": {
 			"Value": {
 				"type": {float,},
 				"bounds": (0, None),
 			},
 			"Unit": {
-				"dimension": "count", # Please check if this is the correct dimension for number of staff.
+				"dimension": "dimensionless",
 			},
 			"optional": False,		
 			"description": "Number of staff."
 		},
-		"hourly labor cost": {
+		"Hourly labor cost": {
 			"Value": {
 				"type": {float,},
 				"bounds": (0, None),
 			},
 			"Unit": {
-				"dimension": "currency / time", # Please check if this is the correct dimension for hourly labor cost.
+				"dimension": "currency / time",
 			},
 			"optional": False,
 			"description": "Hourly labor cost of staff."
@@ -32,9 +32,9 @@ input_dict = {
 				"bounds": (0, None),
 			},
 			"Unit": {
-				"dimension": "currency / year", # Please check if this is the correct dimension for yearly other fixed operating costs.
+				"dimension": "currency",
 			},
-			"optional": False,
+			"optional": True,
 			"description": "Yearly other fixed operating cost contribution, summed for each individual table in ther Fixed Operating Cost group."
 		},
 	},
