@@ -1,5 +1,3 @@
-.. _plugins:
-
 Plugins
 =======
 
