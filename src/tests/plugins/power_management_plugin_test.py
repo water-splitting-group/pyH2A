@@ -49,22 +49,48 @@ class DummyDCF:
             "input": {
                 "available_daily": {
                     2026: np.array([12000000.0, 11000000.0, 13000000.0]),
+                    2027: np.array([12200000.0, 11200000.0, 13200000.0]),
                 },
                 "stored_daily": {
                     2026: np.array([8000000.0, 8000000.0, 8000000.0]),
+                    2027: np.array([7000000.0, 8700000.0, 8070000.0])
                 },
                 "power_consumption": {
-                    "value": np.array([25000.0]),
+                    "value": np.array([95000000.0]),
                     "type": "flexible"
                 },
                 "grid_cost": 100000.12,
                 "construction_time": 1,
             },
             "expected": {
-                "remaining_flexible": np.array([35975000.0]),
-                "remaining_stored": np.array([24000000.0]),
-                "total_unfulfilled": np.array([0.0]),
-                "electricity_cost": np.array([0.0, 0.0]),
+                "remaining_flexible": np.array([0., 0.]),
+                "remaining_stored": np.array([0.0, 0.0]),
+                "total_unfulfilled": np.array([35000000.0, 34630000.0]),
+                "electricity_cost": np.array([0.0, 3.5000042e12, 3.4630041556e12]),
+            },
+        },
+        {
+            "input": {
+                "available_daily": {
+                    2026: np.array([12000000.0, 11000000.0, 13000000.0]),
+                    2027: np.array([12000000.0, 11000000.0, 13000000.0]),
+                },
+                "stored_daily": {
+                    2026: np.array([8000000.0, 8000000.0, 8000000.0]),
+                    2027: np.array([8000000.0, 8000000.0, 8000000.0]),
+                },
+                "power_consumption": {
+                    "value": np.array([25000.0]),
+                    "type": "on_demand"
+                },
+                "grid_cost": 100000.12,
+                "construction_time": 1,
+            },
+            "expected": {
+                "remaining_flexible": np.array([36000000.0, 36000000.0]),
+                "remaining_stored": np.array([23975000.0, 23975000.0]),
+                "total_unfulfilled": np.array([0.0, 0.0]),
+                "electricity_cost": np.array([0.0, 0.0, 0.0]),
             },
         }
     ],
@@ -103,9 +129,14 @@ def test_power_management_plugin(case):
         atol=tolerance,
     )
 
+    for v in plugin.electricity_cost:
+        print(f"{v:.12f}")
+
     np.testing.assert_allclose(
         plugin.electricity_cost,
         expected["electricity_cost"],
         rtol=tolerance,
         atol=tolerance,
     )
+    
+

@@ -47,7 +47,7 @@ class DummyDCF:
                 "unplanned_replacement": {
                     "Misc": 1000
                 },
-                "plant_years": np.arange(1, 11),
+                "plant_years": np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
                 "combined_inflator": 1.0,
                 "inflation_correction": 1.0,
                 "inflation_factor": np.ones(10),
