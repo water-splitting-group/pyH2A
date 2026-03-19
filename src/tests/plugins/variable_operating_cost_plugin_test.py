@@ -43,19 +43,19 @@ class DummyDCF:
             "input": {
                 "plant_output_per_year": 100_000.0,  
                 "utilities": {
-                    "Electricity": {"Cost": 0.05, "Usage": 50.0}, 
+                    "Electricity": {"Cost": 0.05, "Usage": 50.0, "Conversion": 2.0}, 
                     "Water": {"Cost": 0.01, "Usage": 10.0}          
                 },
                 "other_variable_costs": {
                     "Maintenance": 1000.0,
                     "Chemicals": 500.0
                 },
-                "inflation_correction": 1.0,
+                "inflation_correction": 1.2,
                 "chemical_inflator": 1.0
             },
             "expected": {
-                "utilities": np.array([260000., 260000., 260000., 260000., 260000., 260000., 260000.,
-              260000., 260000., 260000.]), 
+                "utilities": np.array([612000.0, 612000.0, 612000.0, 612000.0, 612000.0, 612000.0, 612000.0,
+              612000.0, 612000.0, 612000.0]), 
                 "other": np.array(1500.),                                      
             }
         }
