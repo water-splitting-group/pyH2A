@@ -45,7 +45,7 @@ from pyH2A.run_pyH2A import pyH2A
     ids=[
         "PEC_Base",
         "Photocatalytic_Base",
-        "Pv_E_Base",
+        "PV_E_Base",
         "Thermal_Base",
     ]
 )
