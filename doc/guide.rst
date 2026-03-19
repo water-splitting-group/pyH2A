@@ -45,7 +45,7 @@ This header request the :class:`~pyH2A.Analysis.Monte_Carlo_Analysis` module.
 Generate input file template
 ============================
 
-The input file containing the ``Workflow`` tabe and possible analysis headings is the starting point to generate the full input file template.
+The input file containing the ``Workflow`` table and possible analysis headings is the starting point to generate the full input file template.
 
 At this point the input file may look like this:
 

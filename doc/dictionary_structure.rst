@@ -1,0 +1,362 @@
+.. _dictionary-structure:
+
+
+Dictionary Structure and Data Flow
+==================================
+
+.. contents:: Table of Contents
+   :depth: 2
+   :local:
+   :class: this-will-duplicate-information-and-it-is-still-useful-here
+   
+
+
+1. The Shared Calculation Dictionary
+------------------------------------
+
+All plugins operate on a shared Python dictionary that contains the variables used throughout the techno-economic calculation.  
+Within plugins, this dictionary is accessible as ``dcf.inp``.
+
+As the calculation progresses, this dictionary is continuously updated.  
+Plugins read values from it, perform calculations, and then insert new values or update existing ones.
+
+Because this dictionary is passed through the successive plugins, it represents the evolving state of the economic model.
+
+
+2. Structure of the Dictionary
+------------------------------
+
+The dictionary used in pyH2A has three levels of keys:
+
+.. code-block:: python
+
+   dcf.inp['top']['mid']['bottom']
+
+These three levels correspond conceptually to:
+
+- a **table name** (top key)
+- a **row name** (mid key)
+- a **column name** (bottom key)
+
+For example, the input file ``Thermal_base.md`` contains the table:
+
+::
+
+   # Technical Operating Parameters and Specifications
+
+   Name | Value
+   --- | ---
+   Operating Capacity Factor (%) | 90.0%
+   Plant Design Capacity (kg of H2/day) | 1,000
+
+After conversion into Python objects and processing the table, the value ``1000`` is stored as this dictionary keys' item:
+
+.. code-block:: python
+
+   dcf.inp['Technical Operating Parameters and Specifications']['Plant Design Capacity (kg of H2/day)']['Value']
+
+Conceptually, the dictionary structure can be visualized as follows:
+
+.. code-block:: text
+
+   dcf.inp
+   │
+   ├── "Technical Operating Parameters and Specifications"   ← table (top key)
+   │       │
+   │       ├── "Plant Design Capacity (kg of H2/day)"        ← row (mid key)
+   │       │        │
+   │       │        └── "Value" → 1000                        ← column (bottom key)
+   │       │
+   │       └── "Operating Capacity Factor (%)"
+   │                │
+   │                └── "Value" → 90.0
+   │
+   └── "Non-Depreciable Capital Costs"
+   │       │
+   │       └── "Land required (acres)"
+   │                │
+   │                └── "Value" → calculated by plugin
+   │				
+					
+					
+3. Dictionary Entries and the Concept of Tables
+-----------------------------------------------
+
+In pyH2A, many variables originate from tables written in the input ``.md`` files.  
+During initialization, these tables are converted into the internal dictionary structure. At this stage, the tables are only converted into Python objects; their entries are processed later when plugins request them (see Section 4).
+
+After this conversion, each entry of an input table corresponds to a position in the ``dcf.inp`` dictionary. In practice, the top-level key of the dictionary corresponds to the table name.
+
+However, the term *table* in pyH2A should be understood more generally than just the tables appearing in the input files.
+
+As the calculation progresses, plugins may create new entries or update existing ones using the same ``dcf.inp`` dictionary structure. These entries follow the same organization as those originating from the input tables.
+
+Consequently, a value stored in the dictionary may originate from two sources:
+
+1. **Tables defined in the input (.md) file**
+2. **Calculations or assignments performed by plugins**
+
+In this sense, a *table* refers to any group of entries stored under a given top-level key of the ``dcf.inp`` dictionary, regardless of whether it was originally defined in the input file or created later by a plugin.
+
+
+4. Conversion of Markdown Tables
+--------------------------------
+
+Tables written in the input ``.md`` files are converted into the Python dictionary structure by the function ``convert_input_to_dictionary``.
+
+This function is called in both the ``pyH2A`` class and the ``Discounted_Cash_Flow`` class before the plugin workflow is executed.
+
+It is important to note that this step **does not evaluate the entries** in the tables.  
+It only converts their structure into Python objects so that they can later be processed by plugins when needed.
+
+
+5. Processing inputs: the ``process_table`` method
+--------------------------------------------------
+
+When a plugin requires input data, it retrieves it from the dictionary using the ``process_table`` method.
+
+Each plugin typically begins by calling ``process_table`` for the entries it needs.  
+This call retrieves the actual value corresponding to the requested dictionary position.
+
+For example:
+
+.. code-block:: python
+
+   process_table(dcf.inp, 'Solar Concentrator', 'Value')
+   
+
+One important feature of pyH2A is that table entries in the input file do not necessarily contain numerical values.  
+They can instead refer to other variables or paths.
+
+For example, in ``PV_E_Base.md`` : 
+
+::
+
+	# Irradiance Area Parameters
+
+	Name | Value | Comment
+	--- | --- | ---
+	Module Tilt (degrees) | Hourly Irradiation > Latitude > Value | Module tilt equal to latitude of location.
+
+Here the entry points to another variable in the dictionary.
+
+When Hourly_Irradiation_Plugin executes ``process_table(dcf.inp, 'Hourly Irradiation', 'Value')``, the corresponding entry ``dcf.inp['Irradiance Area Parameters']['Module Tilt (degrees)']['Value']`` ultimately receives the value stored at: 
+
+.. code-block:: python
+
+   dcf.inp[Hourly Irradiation']['Latitude']['Value']
+   
+In the present example, it means that the value of the module tilt is simply made equal to the latitude.
+
+
+6. Value Processing and Path-Based Multiplication
+-------------------------------------------------
+
+In many cases, the numerical value appearing in a table is not the final value used in the calculation.  
+pyH2A allows entries to be expressed as a **base value multiplied by another variable** stored elsewhere in the dictionary.
+
+This is done using the optional ``Path`` column in input tables.
+
+For example, in ``PEC_Base.md``:
+
+::
+
+   # Direct Capital Costs - Water Management
+
+   Name | Value | Path | Comment
+   --- | --- | --- | ---
+   Water pump ($) | 213.0 | None | Based on Pinaud 2013.
+   Water Manifold Piping ($ per cell) | 11.58 | PEC Cells > Number > Value |
+
+The entry indicates that the cost of water manifold piping is **11.58 $ per cell**.  
+The total cost therefore depends on the number of PEC cells defined elsewhere in the model.
+
+When the table is processed, pyH2A retrieves the referenced value:
+
+::
+
+   dcf.inp['PEC Cells']['Number']['Value']
+
+and multiplies it by the base value specified in the table:
+
+::
+
+   total_cost = 11.58 * dcf.inp['PEC Cells']['Number']['Value']
+
+This multiplication is performed automatically when the table entry is processed.
+
+  .. admonition:: Code implementation
+
+     The multiplication is handled by the ``process_input()`` method, which is called internally by ``process_table()``. If a ``Path`` column exists, the value retrieved from that path is multiplied with the entry in the ``Value`` column, and the resulting number replaces the original value in the dictionary.
+
+
+7. Flexible Rows and Table Groups
+---------------------------------
+
+Some plugins interpret tables in a way that allows the user to define multiple entries without fixing their exact row structure. Two mechanisms are used for this: **flexible rows** and **table groups**.
+
+
+Flexible rows
+~~~~~~~~~~~~~
+
+In some tables, the specific row names do not affect the calculation.  
+The rows are simply used to list multiple contributions that will later be combined.
+
+For example, in the ``Variable_Operating_Cost_Plugin`` the method ``other_variable_costs`` computes the sum of all entries in the table ``Other Variable Operating Cost``:
+
+.. code-block:: python
+
+   self.other = dcf.chemical_inflator * sum_all_tables(dcf.inp,'Other Variable Operating Cost','Value',
+       insert_total = True, class_object = dcf, print_info = print_info
+   )
+
+In this case, the individual row names inside the table do not influence the calculation.  
+The user may therefore define any number of rows describing different cost components. Their values are simply summed when the plugin processes the table.
+
+
+Table groups
+~~~~~~~~~~~~
+
+In some situations, several tables that share a common theme are grouped together based on their names.
+
+A plugin may search for all tables whose top-level key contains a given string and treat them as belonging to the same group.
+
+For example, in ``Fixed_Operating_Cost_Plugin`` the method ``other_cost`` performs the calculation:
+
+.. code-block:: python
+
+   self.other = sum_all_tables(dcf.inp, 'Other Fixed Operating Cost', 'Value',
+       insert_total = True, class_object = dcf, print_info = print_info
+   ) * dcf.combined_inflator
+
+Here, every table whose name contains the string ``Other Fixed Operating Cost`` is included in the calculation.
+
+This allows users to define several tables such as:
+
+- ``Plant A Other Fixed Operating Cost``
+- ``Water Treatment Other Fixed Operating Cost``
+- ``Utilities Other Fixed Operating Cost``
+
+Each table can contain its own entries, but all their values are combined when the plugin computes the total cost.
+
+
+Purpose of These Mechanisms
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Flexible rows and table groups provide a way to structure input files in a clear and modular way.
+
+Users can separate different cost contributions into individual rows or tables for readability, while the plugin logic automatically aggregates them during the calculation.
+
+8. Inserting or Updating Values: the ``insert`` method
+------------------------------------------------------
+
+After performing calculations, plugins store their results in the dictionary using the ``insert`` method.
+
+This method can either:
+
+- create a **new dictionary entry**, or
+- **update the value** of an existing entry.
+
+Example: in ``Solar_Concentrator_Plugin``
+
+- creating a new entry:
+
+The variable ``total_land_area_acres`` is calculated and inserted with:
+
+.. code-block:: python
+
+   insert(
+       dcf,
+       'Non-Depreciable Capital Costs', 'Land required (acres)', 'Value',
+       self.total_land_area_acres,
+       __name__,print_info = print_info
+   )
+
+This creates the dictionary entry:
+
+.. code-block:: python
+
+   dcf.inp['Non-Depreciable Capital Costs']['Land required (acres)']['Value']
+
+
+- updating an existing entry.
+
+The plugin reads the existing values of the ``Non-Depreciable Capital Costs`` table, including the existing value of the ``Solar Collection Area (m2)`` row:
+
+.. code-block:: python
+
+   process_table(dcf.inp, 'Non-Depreciable Capital Costs', 'Value')
+
+
+A new value ``total_solar_collection_area_m2`` is calculated, and its value is assigned to ``dcf.inp['Non-Depreciable Capital Costs']['Solar Collection Area (m2)']['Value']``:
+
+.. code-block:: python
+
+   insert(
+       dcf,
+       'Non-Depreciable Capital Costs', 'Solar Collection Area (m2)','Value',
+       self.total_solar_collection_area_m2,
+       __name__,print_info = print_info
+   )
+
+In other words, this operation updates:
+
+.. code-block:: python
+
+   dcf.inp['Non-Depreciable Capital Costs']['Solar Collection Area (m2)']['Value']
+
+
+9. Dependency Between Plugins
+-----------------------------
+
+When a plugin requests a value from the dictionary using ``process_table``, the corresponding entry must already exist.
+
+This entry must therefore have been:
+
+- defined in the input ``.md`` file, or
+- inserted earlier by another plugin.
+
+For this reason, the **execution order of plugins determines the dependency structure of the model**.  
+A plugin can only rely on variables that have already been defined earlier in the workflow.
+
+The data flow can be represented schematically as:
+
+.. code-block:: text
+
+        Input tables (.md)
+                │
+                ▼
+        convert_input_to_dictionary
+                │
+                ▼
+            dcf.inp
+      (shared calculation dictionary)
+                │
+                ▼
+        ┌──────────────────┐
+        │     Plugin 1     │
+        │  - process_table │
+        │  - calculations  │
+        │  - insert        │
+        └──────────────────┘
+                │
+                ▼
+            dcf.inp
+       (with newly inserted variables)
+                │
+                ▼
+        ┌──────────────────┐
+        │     Plugin 2     │
+        │  - process_table │
+        │  - calculations  │
+        │  - insert        │
+        └──────────────────┘
+                │
+                ▼
+            dcf.inp
+                │
+                ▼
+               ...
+                │
+                ▼
+        Final financial evaluation
