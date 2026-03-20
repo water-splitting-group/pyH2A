@@ -6,7 +6,7 @@ input_dict = {
         "Construction time": {
             "Value": {
                 "type": {int,},
-                "bounds": (0, None),
+                "bounds": (0, 40),
             },
             "Unit": {
                 "dimension": "time",
