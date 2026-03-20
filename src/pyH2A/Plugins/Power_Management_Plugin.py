@@ -58,7 +58,7 @@ class Power_Management_Plugin:
         insert(dcf, 'Power Generation', 'Stored Power (daily, kWh)', 'Value',
                 0, __name__, print_info = print_info)
         
-        insert(dcf, 'Grid Electricity', 'Used grid electricity (yearly, kWh)', 'Vale',
+        insert(dcf, 'Grid Electricity', 'Used grid electricity (yearly, kWh)', 'Value',
                 self.total_unfulfilled, __name__, print_info = print_info)
         
         insert(dcf, 'Other Variable Operating Cost - Grid Electricity', 'Cost of grid electricity (yearly, $)', 'Value',
