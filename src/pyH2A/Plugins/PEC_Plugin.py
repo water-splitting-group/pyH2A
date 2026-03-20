@@ -4,20 +4,20 @@ from pyH2A.Utilities.input_modification import insert, process_table
 
 input_dict = {
 	"Technical Operating Parameters and Specifications": {
-		"Design Output per Day": {
+		"Design output per Day": {
 			"Value": {
 				"type": {float,},
 				"bounds": (0, None),
 			},
 			"Unit": {
-				"dimension": "mass / time",
+				"dimension": "mass",
 			},
 			"optional": False,
-			"description": "Design output in (kg of H2)/day."
+			"description": "Design output in mass per day."
 		},
 	},
 	"PEC Cells": {
-		"Cell Cost": {
+		"Cell cost": {
 			"Value": {
 				"type": {float,},
 				"bounds": (0, None),
@@ -26,7 +26,7 @@ input_dict = {
 				"dimension": "currency / area",
 			},
 			"optional": False,
-			"description": "Cost of PEC cells in $/m2."
+			"description": "Cost of PEC cells."
 		},
 		"Lifetime": {
 			"Value": {
@@ -37,7 +37,7 @@ input_dict = {
 				"dimension": "time",
 			},
 			"optional": False,
-			"description": "Lifetime of PEC cells in years before replacement is required."
+			"description": "Lifetime of PEC cells before replacement is required."
 		},
 		"Length": {
 			"Value": {
@@ -45,10 +45,10 @@ input_dict = {
 				"bounds": (0, None),
 			},
 			"Unit": {
-				"dimension": "area", # Please check if dimension is correct.
+				"dimension": "length",
 			},
 			"optional": False,
-			"description": "Length of single PEC cell in m."
+			"description": "Length of single PEC cell."
 		},
 		"Width": {
 			"Value": {
@@ -56,45 +56,45 @@ input_dict = {
 				"bounds": (0, None),
 			},
 			"Unit": {
-				"dimension": "area", # Please check if dimension is correct.
+				"dimension": "length",
 			},
 			"optional": False,
-			"description": "Width of single PEC cell in m."
+			"description": "Width of single PEC cell."
 		}
 	},
 	"Land Area Requirement": {
-		"Cell Angle": {
+		"Cell angle": {
 			"Value": {
 				"type": {float,},
-				"bounds": (0, None), # Check Please, No upper bound on cell angle, (but it should be between 0 and 90 degrees for practical purposes)?.
+				"bounds": (0, np.pi / 2), 
 			},
 			"Unit": {
-				"dimension": "angle", # Please check if dimesion is correct, or if it should be "dimensionless" since it's in degrees.
+				"dimension": "angle",
 			},
 			"optional": False,
-			"description": "Angle of PEC cells from the ground, in degrees."
+			"description": "Angle of PEC cells from the ground."
 		},
-		"South Spacing": {
+		"South spacing": {
 			"Value": {
 				"type": {float,},
 				"bounds": (0, None),
 			},
 			"Unit": {
-				"dimension": "area", # Please check if dimension is correct.
+				"dimension": "length",
 			},
 			"optional": False,
-			"description": "South spacing of PEC cells in m."
+			"description": "South spacing of PEC cells."
 		},
-		"East/West Spacing": {
+		"East/West spacing": {
 			"Value": {
 				"type": {float,},
 				"bounds": (0, None),
 			},
 			"Unit": {
-				"dimension": "area", # Please check if dimension is correct.
+				"dimension": "length",
 			},
 			"optional": False,
-			"description": "East/West Spacing of PEC cells in m."
+			"description": "East/West Spacing of PEC cells."
 		}
 	},
 	"Solar-to-Hydrogen Efficiency": {
@@ -117,23 +117,10 @@ input_dict = {
 				"bounds": (0, None),
 			},
 			"Unit": {
-				"dimension": "energy / (area * time)", # Please check if dimension is correct.
+				"dimension": "power / area",
 			},
 			"optional": False,
-			"description": "Mean solar input in kWh/m2/day."
-		}
-	},
-	"Solar Concentrator": {
-		"Concentration Factor": {
-			"Value": {
-				"type": {float,},
-				"bounds": (0, None),
-			},
-			"Unit": {
-				"dimension": "dimensionless", # Please check if dimension is correct.
-			},
-			"optional": True,
-			"description": "Concentration factor created by solar concentration module, which is used in combination with PEC cells. If 'Solar Concentrator' is in dcf.inp, process_table() is used."
+			"description": "Mean solar input in power / area and yearly average of solar input."
 		}
 	}
 }
@@ -163,9 +150,6 @@ class PEC_Plugin:
 		Solar-to-hydrogen efficiency in percentage or as a value between 0 and 1.
 	Solar Input > Mean solar input (kWh/m2/day) > Value : float
 		Mean solar input in kWh/m2/day, ``process_table()`` is used.
-	Solar Concentrator > Concentration Factor > Value : float, optional
-		Concentration factor created by solar concentration module, which is used in combination
-		with PEC cells. If "Solar Concentrator" is in dcf.inp, ``process_table()`` is used.
 
 	Returns
 	-------

@@ -4,20 +4,20 @@ from pyH2A.Utilities.input_modification import insert, process_table
 
 input_dict = {
 	"Technical Operating Parameters and Specifications": {
-		"Design Output per Day": {
+		"Design output per day": {
 			"Value": {
 				"type": {float,},
 				"bounds": (0, None),
 			},
 			"Unit": {
-				"dimension": "mass / time",
+				"dimension": "mass",
 			},
 			"optional": False,
-			"description": "Design output in (kg of H2)/day."
+			"description": "Design output."
 		},
 	},
 	"Reactor Baggies": {
-		"Cost Material Top": {
+		"Cost material top": {
 			"Value": {
 				"type": {float,},
 				"bounds": (0, None),
@@ -26,9 +26,9 @@ input_dict = {
 				"dimension": "currency / area",
 			},
 			"optional": False,
-			"description": "Cost of baggie top material in $/m2."
+			"description": "Cost of baggie top material in currency / area."
 		},
-		"Cost Material Bottom": {
+		"Cost material bottom": {
 			"Value": {
 				"type": {float,},
 				"bounds": (0, None),
@@ -37,20 +37,20 @@ input_dict = {
 				"dimension": "currency / area",
 			},
 			"optional": False,
-			"description": "Cost of baggie bottom material in $/m2."
+			"description": "Cost of baggie bottom material in currency / area."
 		},
-		"Number of ports": {
+		"Number of ports per baggie": {
 			"Value": {
 				"type": {int,},
 				"bounds": (0, None),
 			},
 			"Unit": {
-				"dimension": "dimensionless", # Please check if this is the correct dimension for number of ports.
+				"dimension": "dimensionless",
 			},
 			"optional": False,
 			"description": "Number of ports per baggie."
 		},
-		"Other Costs": {
+		"Other costs per baggies": {
 			"Value": {
 				"type": {float,},
 				"bounds": (0, None),
@@ -59,15 +59,15 @@ input_dict = {
 				"dimension": "currency",
 			},
 			"optional": False,
-			"description": "Other costs per baggie in $."
+			"description": "Other costs per baggie."
 		},
 		"Markup factor": {
 			"Value": {
 				"type": {float,},
-				"bounds": (0, None),
+				"bounds": (1, None),
 			},
 			"Unit": {
-				"dimension": "dimensionless", # Please check if this is the correct dimension for markup factor.
+				"dimension": "dimensionless",
 			},
 			"optional": False,
 			"description": "Markup factor for baggies, typically > 1."
@@ -78,10 +78,10 @@ input_dict = {
 				"bounds": (0, None),
 			},
 			"Unit": {
-				"dimension": "area",
+				"dimension": "length",
 			},
 			"optional": False,
-			"description": "Length of single baggie in m."
+			"description": "Length of single baggie."
 		},
 		"Width": {
 			"Value": {
@@ -89,21 +89,21 @@ input_dict = {
 				"bounds": (0, None),
 			},
 			"Unit": {
-				"dimension": "area",
+				"dimension": "length",
 			},
 			"optional": False,
-			"description": "Width of single baggie in m."
+			"description": "Width of single baggie."
 		},
-		"Height": {
+		"Filling height": {
 			"Value": {
 				"type": {float,},
 				"bounds": (0, None),
 			},
 			"Unit": {
-				"dimension": "area",
+				"dimension": "length",
 			},
 			"optional": False,
-			"description": "Height of reactor baggie in m. In this simulation this value determines the height of the water level and hence is an important parameter ultimately determining the level of light absorption and total catalyst amount."
+			"description": "Height of reactor baggie. In this simulation this value determines the height of the water level and hence is an important parameter ultimately determining the level of light absorption and total catalyst amount."
 		},
 		"Additional land area": {
 			"Value": {
@@ -125,11 +125,11 @@ input_dict = {
 				"dimension": "time",
 			},
 			"optional": False,
-			"description": "Lifetime of reactor baggies in years before replacement is required."
+			"description": "Lifetime of reactor baggies before replacement is required."
 		},
 	},
 	"Catalyst": {
-		"Cost per kg": {
+		"Cost per unit of mass": {
 			"Value": {
 				"type": {float,},
 				"bounds": (0, None),
@@ -138,7 +138,7 @@ input_dict = {
 				"dimension": "currency / mass",
 			},
 			"optional": False,
-			"description": "Cost per kg of catalyst."
+			"description": "Cost of catalyst per unit of mass."
 		},
 		"Concentration": {
 			"Value": {
@@ -149,7 +149,7 @@ input_dict = {
 				"dimension": "mass / volume",
 			},
 			"optional": False,
-			"description": "Concentration of catalyst in g/L."
+			"description": "Concentration of catalyst."
 		},
 		"Lifetime": {
 			"Value": {
@@ -160,29 +160,29 @@ input_dict = {
 				"dimension": "time",
 			},
 			"optional": False,
-			"description": "Lifetime of catalysts in year before replacement is required."
+			"description": "Lifetime of catalysts before replacement is required."
 		},
-		"Molar Weight": {
+		"Molar weight": {
 			"Value": {
 				"type": {float,},
 				"bounds": (0, None),
 			},
 			"Unit": {
-				"dimension": "mass / amount of substance", # Please check if this is the correct dimension for molar weight.
+				"dimension": "mass / substance",
 			},
 			"optional": True,
-			"description": "If the molar weight of the catalyst (in g/mol) is specified, homogeneous catalyst properties (TON, TOF etc. are calculated)."
+			"description": "If the molar weight of the catalyst is specified, homogeneous catalyst properties (TON, TOF etc. are calculated)."
 		},
-		"Molar Attenuation Coefficient": {
+		"Molar attenuation coefficient": {
 			"Value": {
 				"type": {float,},
 				"bounds": (0, None),
 			},
 			"Unit": {
-				"dimension": "amount of substance^-1 * length^-1", # Please check if this is the correct dimension for molar attenuation coefficient.
+				"dimension": "volume / (substance * length)",
 			},
 			"optional": True,
-			"description": "If the molar attenuation coefficient (in M^-1 cm^-1) is specified (along with the molar weight), absorbance and the fraction of absorbed light are also calculated."
+			"description": "If the molar attenuation coefficient is specified (along with the molar weight), absorbance and the fraction of absorbed light are also calculated."
 		},
 	},
 	"Solar-to-Hydrogen Efficiency": {
@@ -205,20 +205,20 @@ input_dict = {
 				"bounds": (0, None),
 			},
 			"Unit": {
-				"dimension": "energy / (area * time)", # Please check if this is the correct dimension for mean solar input.
+				"dimension": "power / area", 
 			},
 			"optional": False,
-			"description": "Mean solar input in kWh/m2/day."
+			"description": "Mean solar input."
 		},
 		"Hourly": {
 			"Value": {
 				"type": {np.ndarray,},
 			},
 			"Unit": {
-				"dimension": "energy / (area * time)", # Please check if this is the correct dimension for hourly irradiation data.
+				"dimension": "energy / area",
 			},
 			"optional": False,
-			"description": "Hourly irradiation data in kWh/m2."
+			"description": "Hourly irradiation data."
 		},
 	},	
 }

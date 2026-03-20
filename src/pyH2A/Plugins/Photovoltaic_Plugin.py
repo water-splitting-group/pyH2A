@@ -6,10 +6,10 @@ input_dict = {
 		"Data": {
 			"Value": {
 				"type": {str, np.ndarray,},
-				"bounds": None, # bounds not defined as data can be provided as text file or array.
+				"bounds": (0, None),
 			},
 			"Unit": {
-				"dimension": "dimensionless",
+				"dimension": "energy / area",
 			},
 			"optional": False,
 			"description": "Hourly power ratio data for electricity production calculation. Either a path to a text file containing the data or ndarray. A suitable array can be retrieved from 'Hourly Irradiation > *type of tracking* > Value'."
@@ -29,7 +29,7 @@ input_dict = {
 		},
 	},
 	"Photovoltaic": {
-		"Nominal Power": {
+		"Nominal power": {
 			"Value": {	
 				"type": {float,},
 				"bounds": (0, None),
@@ -38,9 +38,9 @@ input_dict = {
 				"dimension": "power",
 			},
 			"optional": False,
-			"description": "Nominal power of PV array in kW."
+			"description": "Nominal power of PV array."
 		},
-		"CAPEX Reference Power": {	
+		"CAPEX reference power": {	
 			"Value": {
 				"type": {float,},
 				"bounds": (0, None),
@@ -54,7 +54,7 @@ input_dict = {
 		"Power loss per year": {
 			"Value": {
 				"type": {float,},
-				"bounds": (0, 1), # Please check this, it can be a percentage or a value.
+				"bounds": (0, 1),
 			},
 			"Unit": {
 				"dimension": "dimensionless",

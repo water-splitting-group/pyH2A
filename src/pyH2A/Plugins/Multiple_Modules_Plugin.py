@@ -3,20 +3,20 @@ from pyH2A.Utilities.input_modification import insert, process_table
 
 input_dict = {
 	"Technical Operating Parameters and Specifications": {
-		"Plant Modules": {
+		"Plant modules": {
 			"Value": {
 				"type": {float, int,},
 				"bounds": (0, None),
 			},
 			"Unit": {
-				"dimension": "dimensionless", # Please check if this is the correct dimension for this parameter.
+				"dimension": "dimensionless",
 			},
 			"optional": False,
 			"description": "Number of plant modules considered in this calculation."
 		},
 	},
 	"Non-Depreciable Capital Costs": {
-		"Solar Collection Area": {
+		"Solar collection area": {
 			"Value": {
 				"type": {float,},
 				"bounds": (0, None),
@@ -25,39 +25,39 @@ input_dict = {
 				"dimension": "area",
 			},
 			"optional": False,
-			"description": "Solar collection area for one plant module in m2."
+			"description": "Solar collection area for one plant module."
 		},
 	},
 	"Fixed Operating Costs": {
-		"area": {
+		"Solar collection area per staffer": {
 			"Value": {
 				"type": {float,},
 				"bounds": (0, None),
 			},
 			"Unit": {
-				"dimension": "area",
+				"dimension": "dimensionless / area",
 			},
 			"optional": False,
-			"description": "Solar collection area in m2 that can be covered by one staffer."
+			"description": "Solar collection area that can be covered by one staffer."
 		},
-		"shifts": {
+		"Number of 8-hour shifts": {
 			"Value": {
 				"type": {float, int,},
-				"bounds": (1, None),
+				"bounds": (1, 3),
 			},
 			"Unit": {
-				"dimension": "dimensionless", # Please check if this is the correct dimension for this parameter. or may be "count" can be used.
+				"dimension": "dimensionless",
 			},
 			"optional": False,
 			"description": "Number of 8-hour shifts (typically 3 for 24h operation)."
 		},
-		"supervisor": {
+		"Number of supervisors": {
 			"Value": {
 				"type": {float, int,},
 				"bounds": (0, None),
 			},
 			"Unit": {
-				"dimension": "dimensionless", # Please check if this is the correct dimension for this parameter. or may be "count" can be used.
+				"dimension": "dimensionless",
 			},
 			"optional": False,
 			"description": "Number of shift supervisors."

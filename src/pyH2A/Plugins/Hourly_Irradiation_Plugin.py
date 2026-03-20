@@ -7,50 +7,46 @@ input_dict = {
 		"File": {
 			"Value": {	
 				"type": {str,},
-				"bounds": (0, None), # Please check if bounds are necessary or not
-			},
-			"Unit": {
-				"dimension": "dimensionless", #please check dimension and unit for file paths
 			},
 			"optional": False,
 			"description": "Path to a `.csv` file containing hourly irradiance data"
 		},
 	},
 	"Irradiance Area Parameters": {	
-		"Module Tilt": {
+		"Module tilt": {
 			"Value": {
 				"type": {float,},
-				"bounds": (0, 360), #Please check bounds for module tilt, can it be 0 or 360?
+				"bounds": (0, np.pi / 2),
 			},
 			"Unit": {
-				"dimension": "angle", # please check dimension and unit for angles
+				"dimension": "angle",
 			},
 			"optional": False,
-			"description": "Tilt of irradiated module in degrees."
+			"description": "Tilt of irradiated module."
 		},
-		"Array Azimuth": {
+		"Array azimuth": {
 			"Value": {
 				"type": {float,},
-				"bounds": (0, 360), #Please check bounds for array azimuth, can it be 0 or 360?
+				"bounds": (0, np.pi),
 			},
 			"Unit": {
-				"dimension": "angle", # please check dimension and unit for angles
+				"dimension": "angle",
 			},
 			"optional": False,
-			"description": "Azimuth angle of irradiated module in degrees."
+			"description": "Azimuth angle of irradiated module."
 		},
-		"Nominal Operating Temperature": {
+		"Nominal operating temperature": {
 			"Value": {
 				"type": {float,},
-				"bounds": (None, None), #Please check bounds for nominal operating temperature, can it be negative or very high?
+				"bounds": (250, 500),
 			},
 			"Unit": {
-				"dimension": "temperature", # please check dimension and unit for temperature
+				"dimension": "dimensionless / temperature",
 			},
 			"optional": False,
-			"description": "Nominal operating temperature of irradiated module in degrees Celsius."
+			"description": "Nominal operating temperature of irradiated module."
 		},
-		"Mismatch Derating": {
+		"Mismatch derating": {
 			"Value": {
 				"type": {float,},
 				"bounds": (0, 1), 
@@ -61,7 +57,7 @@ input_dict = {
 			"optional": False,
 			"description": "Derating value due to mismatch (percentage or value between 0 and 1)."
 		},
-		"Dirt Derating": {
+		"Dirt derating": {
 			"Value": {
 				"type": {float,},
 				"bounds": (0, 1), 
@@ -72,16 +68,16 @@ input_dict = {
 			"optional": False,
 			"description": "Derating value due to dirt buildup (percentage or value between 0 and 1)."
 		},
-		"Temperature Coefficient": {
+		"Temperature coefficient": {
 			"Value": {
 				"type": {float,},
-				"bounds": (None, None), #Please check bounds for temperature coefficient, can it be negative or positive? What are typical values?
+				"bounds": (-0.1, 0), 
 			},
 			"Unit": {
-				"dimension": "temperature", # please check dimension and unit for temperature coefficient?
+				"dimension": "temperature",
 			},
 			"optional": False,
-			"description": "Performance decrease of irradiated module per degree Celsius increase."
+			"description": "Performance decrease of irradiated module per degree increase."
 		},
 	},
 }
