@@ -3,16 +3,17 @@ from pyH2A.Utilities.input_modification import insert, process_table
 
 input_dict = {
 	"Technical Operating Parameters and Specifications": {
-		"Design Output per Day": {
+		"Design output per day": {
 			"Value": {
 				"type": {float,},
 				"bounds": (0, None),
 			},
 			"Unit": {
 				"dimension": "mass / time",	
+				"enforced_unit": "kg / day",
 			},
 			"optional": False,
-			"description": "Design output of hydrogen production plant per day in kg."
+			"description": "Design output of hydrogen production plant per day."
 		},
 	},	
 	"Solar-to-Hydrogen Efficiency": {
@@ -25,7 +26,7 @@ input_dict = {
 				"dimension": "dimensionless",	
 			},
 			"optional": False,
-			"description": "Solar-to-Hydrogen Efficiency of thermal water splitting process. Percentage of value between 0 and 1."
+			"description": "Solar-to-Hydrogen Efficiency of thermal water splitting process. Percentage or value between 0 and 1."
 		},
 	},
 	"Solar Input": {
@@ -35,14 +36,14 @@ input_dict = {
 				"bounds": (0, None),	
 			},
 			"Unit": {
-				"dimension": "energy / area / time",	
+				"dimension": "power / area",	
 			},
 			"optional": False,
-			"description": "Mean solar input in kWh/m2/day."
+			"description": "Mean solar input."
 		},
 	},
 	"Non-Depreciable Capital Costs": {
-		"Additional Land Area": {
+		"Additional land area": {
 			"Value": {
 				"type": {float,},
 				"bounds": (0, None),	

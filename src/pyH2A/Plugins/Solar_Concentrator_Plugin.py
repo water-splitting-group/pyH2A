@@ -3,7 +3,7 @@ from pyH2A.Utilities.input_modification import insert, process_table
 
 input_dict = {
 	"Solar Concentrator": {
-		"Concentration Factor": {
+		"Concentration factor": {
 			"Value": {
 				"type": {float,},
 				"bounds": (1, None),
@@ -23,14 +23,14 @@ input_dict = {
 				"dimension": "currency / area",
 			},
 			"optional": False,
-			"description": "Cost of solar concentrator in $/m2."
+			"description": "Cost of solar concentrator in currency / area."
 		},
 	},
 	"PEC Cells": {
 		"Number": {
 			"Value": {
 				"type": {float,},
-				"bounds": (0, None),
+				"bounds": (1, None),
 			},	
 			"Unit": {
 				"dimension": "dimensionless",
@@ -40,31 +40,31 @@ input_dict = {
 		},
 	},
 	"Land Area Requirement": {
-		"South Spacing": {
+		"South spacing": {
 			"Value": {
 				"type": {float,},
 				"bounds": (0, None),
 			},
 			"Unit": {
-				"dimension": "area",	
+				"dimension": "length",	
 			},
 			"optional": False,
-			"description": "South spacing of solar concentrators in m."
+			"description": "South spacing of solar concentrators."
 		},
-		"East/West Spacing": {
+		"East/West spacing": {
 			"Value": {
 				"type": {float,},
 				"bounds": (0, None),
 			},
 			"Unit": {
-				"dimension": "area",	
+				"dimension": "length",	
 			},
 			"optional": False,
-			"description": "East/West Spacing (m) of solar concentrators in m."
+			"description": "East/West Spacing of solar concentrators."
 		},
 	},
 	"Non-Depreciable Capital Costs": {
-		"Solar Collection Area": {
+		"Solar collection area": {
 			"Value": {
 				"type": {float,},
 				"bounds": (0, None),
@@ -73,7 +73,7 @@ input_dict = {
 				"dimension": "area",
 			},
 			"optional": False,
-			"description": "Total solar collection area in m2."
+			"description": "Total solar collection area."
 		},
 	},
 }

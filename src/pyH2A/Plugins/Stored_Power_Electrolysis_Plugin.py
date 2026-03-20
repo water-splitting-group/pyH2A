@@ -7,7 +7,7 @@ input_dict = {
         "Fraction of stored power used for electrolysis": {
             "Value": {
                 "type": {float},
-                "bounds": (0, 1) # Fraction or value between 0 and 1. Check Please
+                "bounds": (0, 1) 
             },
             "Unit": {
                 "dimension": "dimensionless"
@@ -17,7 +17,7 @@ input_dict = {
         }
     },
     "Electrolyzer": {
-        "Nominal Power": {
+        "Nominal power": {
             "Value": {
                 "type": {float},
                 "bounds": (0, None)
@@ -26,7 +26,7 @@ input_dict = {
                 "dimension": "power"
             },
             "optional": False,
-            "description": "Nominal power of electrolyzer in kW."
+            "description": "Nominal power of electrolyzer."
         },
         "Power requirement increase per year": {
             "Value": {
@@ -72,18 +72,18 @@ input_dict = {
             "optional": False,
             "description": "Operating time in hours before stack replacement of electrolyzer is required."
         },
-        "Yearly Operation Data": {
+        "Yearly operation data": {
             "Value": {
                 "type": {np.ndarray},
                 "bounds": (0, None)
             },
             "Unit": {
-                "dimension": "(year, H2 produced, electrolyzer capacity)"
+                "dimension": "(dimensionless, mass, dimensionless)"
             },
             "optional": False,
-            "description": "Yearly operation data of electrolyzer in (year, H2 produced, electrolyzer capacity) format."
+            "description": "Yearly operation data of electrolyzer in format."
         },
-        "H2 Production (yearly)": {
+        "H2 production (yearly)": {
             "Value": {
                 "type": {np.ndarray},
                 "bounds": (0, None)
@@ -92,11 +92,11 @@ input_dict = {
                 "dimension": "mass"
             },
             "optional": False,
-            "description": "Yearly hydrogen production in kg."
+            "description": "Yearly hydrogen production."
         },
     },
     "Power Generation": {
-        "Stored Power (daily)": {
+        "Stored energy (daily)": {
             "Value": {
                 "type": {dict,},
                 "bounds": (0, None)
@@ -105,7 +105,7 @@ input_dict = {
                 "dimension": "energy"
             },
             "optional": False,
-            "description": "Power stored in battery daily in kWh (dictionary of years)."
+            "description": "Energy stored in battery daily (dictionary of years)."
         }
     },
 }
