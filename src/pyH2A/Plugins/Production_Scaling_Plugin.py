@@ -2,18 +2,18 @@ from pyH2A.Utilities.input_modification import insert, process_table
 
 input_dict = {
     "Technical Operating Parameters and Specifications": {
-		"Plant Design Capacity": {
+		"Plant design capacity": {
 			"Value": {
 				"type": {float,},
 				"bounds": (0, None),
 			},
 			"Unit": {
-				"dimension": "mass / time", # Please check if this is the correct dimension for plant design capacity, or if it should be "mass".
+				"dimension": "mass / time",
 			},
 			"optional": False,
-			"description": "Plant design capacity in kg of H2/day."
+			"description": "Plant design capacity in mass(product) / time."
 		},
-		"Operating Capacity Factor": {
+		"Operating capacity factor": {
 			"Value": {
 				"type": {float,},
 				"bounds": (0, 1),
@@ -22,53 +22,59 @@ input_dict = {
 				"dimension": "dimensionless",
 			},
 			"optional": False,
-			"description": "Operating capacity factor in %."
+			"description": "Operating capacity factor value between 0 and 1 or percentage value."
 		},
-		"Maximum Output at Gate": {
+		"Maximum output at gate": {
 			"Value": {
 				"type": {float,},
 				"bounds": (0, None),
 			},
 			"Unit": {
-				"dimension": "mass",
+				"dimension": "mass / time",
 			},
 			"optional": True,
-			"description": "Maximum output at gate in (kg of H2)/day. If not specified it defaults to `Plant Design Capacity (kg of H2/day)`."
+			"description": "Maximum output at gate. If not specified it defaults to `Plant Design Capacity`."
 		},
-		"New Plant Design Capacity": {
+		"New plant design capacity": {
 			"Value": {
 				"type": {float,},
 				"bounds": (0, None),
 			},
 			"Unit": {
-				"dimension": "mass / time", # Please check if this is the correct dimension for plant design capacity, or if it should be "mass".
+				"dimension": "mass / time",
 			},
 			"optional": True,
-			"description": "New plant design capacity in kg of H2/day to calculate scaling, which overwrites possible Scaling Ratio."
+			"description": "New plant design capacity in mass(product) / time to calculate scaling, which overwrites possible Scaling Ratio."
 		},
-		"Scaling Ratio": {
+		"Scaling ratio": {
 			"Value": {
 				"type": {float,},
-				"bounds": (0, None), # Please check if there should be an upper bound for the scaling ratio.
+				"bounds": (0, None), 
 			},
 			"Unit": {
 				"dimension": "dimensionless",
 			},
 			"optional": True,
-			"description": "Scaling ratio which is multiplied by current plant design capacity to obtain scaled plant size. Overwritten by `New Plant Design Capacity (kg of H2/day)` if that is specified."
+			"description": "Scaling ratio which is multiplied by current plant design capacity to obtain scaled plant size. Overwritten by `New Plant Design Capacity` if that is specified."
 		},
-		"Capital Scaling Exponent": {
+		"Capital scaling exponent": {
 			"Value": {
 				"type": {float,},
-				"bounds": (0, None), # Please check if there should be an upper bound for the capital scaling exponent.
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "dimensionless",
 			},
 			"optional": True,
 			"description": 	"Exponent to calculate capital scaling factor. Defaults to 0.78 if not specified."
 		},
-		"Labor Scaling Exponent": {
+		"Labor scaling exponent": {
 			"Value": {
 				"type": {float,},
-				"bounds": (0, None), # Please check if there should be an upper bound for the labor scaling exponent.
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "dimensionless",
 			},
 			"optional": True,
 			"description": 	"Exponent to calculcate labor scaling factor. Defaults to 0.25 if not specified."

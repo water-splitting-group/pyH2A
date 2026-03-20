@@ -3,27 +3,27 @@ import numpy as np
 
 input_dict = {
     "Power Generation": {
-        "Available Power (daily)": {
+        "Available energy (daily)": {
             "Value": {
-                "type": {np.ndarray,},
+                "type": {dict,},
                 "bounds": (0, None),
             },
             "Unit": {
                 "dimension": "energy",
             },
             "optional": True,
-            "description": "Available power on a daily basis in kWh. Can be provided as a single value or as an array with values for each year. If not provided, it is assumed that no available power is generated."
+            "description": "Available energy on a daily basis. Can be provided as a single value or as an array with values for each year. If not provided, it is assumed that no available energy is generated."
         },
-        "Stored Power (daily)": {
+        "Stored energy (daily)": {
             "Value": {
-                "type": {np.ndarray,},
+                "type": {dict,},
                 "bounds": (0, None),
             },
             "Unit": {
                 "dimension": "energy",
             },
             "optional": True,
-            "description": "Stored power on a daily basis in kWh. Can be provided as a single value or as an array with values for each year. If not provided, it is assumed that no stored power is generated."
+            "description": "Stored energy on a daily basis. Can be provided as a single value or as an array with values for each year. If not provided, it is assumed that no stored energy is generated."
         },
     },
     "Power Consumption": {
@@ -37,10 +37,10 @@ input_dict = {
                 "options": {'flexible', 'on_demand'},
             },
             "Unit": {
-                "dimension": "power",
+                "dimension": "energy",
             },
             "optional": True,
-            "description": "Power consumption values for each year in kWh. Can be provided for multiple consumers, in which case they should be provided as separate entries under Power Consumption. The type of consumer should be specified as either 'flexible' for consumers that can consume both available and stored power, or 'on_demand' for consumers that can only consume stored power."
+            "description": "Power consumption values for each year. Can be provided for multiple consumers, in which case they should be provided as separate entries under Power Consumption. The type of consumer should be specified as either 'flexible' for consumers that can consume both available and stored power, or 'on_demand' for consumers that can only consume stored power."
         },
     },
     "Grid Electricity": {
@@ -50,10 +50,10 @@ input_dict = {
                 "bounds": (0, None),
             },
             "Unit": {
-                "dimension": "cost",
+                "dimension": "currency / energy",
             },
-            "optional": True,
-            "description": "Cost of grid electricity in $/kWh. Can be provided as a single value or as an array with values for each year. If not provided, it is assumed that grid electricity is not used."
+            "optional": False,
+            "description": "Cost of grid electricity. Can be provided as a single value or as an array with values for each year. If not provided, it is assumed that grid electricity is not used."
         },
     },
 }

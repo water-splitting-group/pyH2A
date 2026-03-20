@@ -2,58 +2,58 @@ from pyH2A.Utilities.input_modification import insert, process_table
 
 input_dict = {
     "Financial Input Values": {
-        "construction time": {
+        "Construction time": {
             "Value": {
                 "type": {int,},
-                "bounds": (0, None),
+                "bounds": (0, 40),
             },
             "Unit": {
                 "dimension": "time",
             },
             "optional": False,
-            "description": "Construction time of hydrogen production plant in years."
+            "description": "Construction time of hydrogen production plant."
         },
     },
     "Technical Operating Parameters and Specifications": {
-        "Output per Year": {
+        "Output per year": {
             "Value": {
                 "type": {float,},
                 "bounds": (0, None),
             },
             "Unit": {
-                "dimension": "mass / time", # Please check if this is the correct dimension for output per year, or if it should be "mass".
+                "dimension": "mass / time",
             },
             "optional": False,
-            "description": "Yearly output taking operating capacity factor into account, in (kg of H2)/year."
+            "description": "Yearly output taking operating capacity factor into account."
         },
     },
     "Reverse Osmosis": {
-        "Power Demand": {
+        "Power demand": {
             "Value": {
                 "type": {float,},
                 "bounds": (0, None),
             },
             "Unit": {
-                "dimension": "energy", # Please check if this is the correct dimension for power demand, or if it should be "power".
+                "dimension": "energy / volume",
             },
             "optional": False,
-            "description": "Power demand of reverse osmosis plant in kWh per m3 of sea water."
+            "description": "Power demand of reverse osmosis plant of sea water in energy demand of reverse osmosis in energy / volume (of feed water)."
         },
-        "Average daily operating hours": {
+        "Average operating time fraction": {
             "Value": {
                 "type": {float,},
-                "bounds": (0, 24),
+                "bounds": (0, 1),
             },
             "Unit": {
-                "dimension": "time",
+                "dimension": "dimensionless",
             },
             "optional": False,
-            "description": "Average daily operating hours of reverse osmosis plant, used for scaling of reverse osmosis plant."
+            "description": "Fraction of time during which reverse osmosis plant is operating, a value of 1 (100%) is corresponding to 24/7 operation."
         },
-        "Recovery Rate": {
+        "Recovery rate": {
             "Value": {
                 "type": {float,},
-                "bounds": (0, None), # Please check if there should be an upper bound for the recovery rate, e.g. 1.
+                "bounds": (0, 1),
             },
             "Unit": {
                 "dimension": "dimensionless",

@@ -5,26 +5,22 @@ import numpy as np
 input_dict = {
 	"Planned Replacement": {
 		"<...>": {
-			"Frequency": {
+			"Frequency_Value": {
 				"type": {float,},
 				"bounds": (0, None),
 			},
-			"unit": {
+			"Frequency_Unit": {
 				"dimension": "time",
 			},
-			"optional": False,
-			"description": "Replacement frequency of [...] in years. Iteration over all entries in `Planned Replacement` table. No path key available."
-		},
-		"<...>": {
-			"Cost": {
+			"Cost_Value": {
 				"type": {float,},
 				"bounds": (0, None),
 			},
-			"unit": {
-				"dimension": "cost",
+			"Cost_Unit": {
+				"dimension": "currency",
 			},
-   			"optional": False,
-			"description": "One-time replacement cost of [...]. Iteration over all entries in `Planned Replacement` table. Path key is 'Path'."
+   			"optional": True,
+			"description": "One-time replacement cost of <...>. Iteration over all entries in `Planned Replacement` table. Path key is 'Path'."
 		},
 	},
 	"<...> Unplanned Replacement <...>": {
@@ -33,10 +29,10 @@ input_dict = {
 				"type": {float,},
 				"bounds": (0, None),
 			},
-			"unit": {
-				"dimension": "cost",
+			"Unit": {
+				"dimension": "currency",
 			},
-			"optional": False,
+			"optional": True,
 			"description": "Unplanned replacement costs. Can be provided for multiple entries under Unplanned Replacement, in which case they will be summed up to the total unplanned replacement costs."
 		},
 	}
