@@ -50,7 +50,7 @@ input_dict = {
             "optional": False,
             "description": "Minimum capacity required for electrolyzer operation. Percentage or value between 0 and 1."
         },
-        "Conversion efficiency": {
+        "Hydrogen yield per unit energy": {
             "Value": {
                 "type": {float},
                 "bounds": (0, None)
@@ -59,7 +59,7 @@ input_dict = {
                 "dimension": "mass / energy"
             },
             "optional": False,
-            "description": "Electrical conversion efficiency of electrolyzer in (kg H2)/kWh."
+            "description": "Electrical conversion efficiency of electrolyzer in mass(H2)/energy(electrical)."
         },
         "Replacement time": {
             "Value": {
