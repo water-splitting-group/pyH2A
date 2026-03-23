@@ -329,6 +329,91 @@ def merge(a, b, path=None, update=True):
 			a[key] = b[key]
 	return a
 
+def merge_arbitary_input_files(input_dictionary, file_reference, visited=None):
+	'''Recursively merge input dictionaries referenced from a ``Base input file`` table.
+
+	This function traverses the ``Base input file`` table in ``input_dictionary``
+	and merges each referenced file into the current dictionary using ``merge()``.
+	Merging is performed in listed order, so later referenced files override
+	earlier referenced files for overlapping keys.
+
+	The current file dictionary is treated as the base dictionary for that level
+	of recursion. If a referenced file itself contains a ``Base input file`` table,
+	it is resolved recursively before being merged into the current dictionary.
+
+	Parameters
+	----------
+	input_dictionary : dict
+		Dictionary representation of the current input file.
+	file_reference : str
+		Path reference for ``input_dictionary``. Used to build a stable identifier
+		for cycle detection.
+	visited : set, optional
+		Set of resolved file identifiers currently in the recursion stack.
+		If ``None``, a new set is created.
+
+	Returns
+	-------
+	merged_input_dictionary : dict
+		The input dictionary after recursively merging all referenced files.
+
+	Raises
+	------
+	ValueError
+		If a circular reference is detected in the ``Base input file`` chain.
+	FileNotFoundError
+		If any referenced file cannot be opened by ``file_import()``.
+
+	Notes
+	-----
+	- Only rows whose ``Value`` entry is a string are considered references.
+	- References are stripped of surrounding whitespace before loading.
+	- The function relies on ``file_import()`` for path interpretation; package
+	  references (``package~file``) and regular paths follow existing
+	  ``file_import()`` behavior.
+	- ``visited`` is managed as a recursion-stack set and cleaned up in a
+	  ``finally`` block to prevent stale state on exceptions.
+	'''
+	if visited is None:
+		visited = set()
+
+	current_identifier = str(file_import(file_reference, return_path=True))
+
+	if current_identifier in visited:
+		raise ValueError(f"Circular reference detected for file: {current_identifier}")
+
+	visited.add(current_identifier)
+
+	try:
+		table = input_dictionary.get('Base input file')
+		if not isinstance(table, dict):
+			return input_dictionary
+
+		merged_input_dictionary = input_dictionary
+
+		for _, row in table.items():
+			if not isinstance(row, dict):
+				continue
+
+			reference = row.get('Value')
+			if not isinstance(reference, str):
+				continue
+			reference = reference.strip(' ')
+
+			referenced_input_dictionary = convert_file_to_dictionary(
+				file_import(reference, mode='r')
+			)
+			referenced_input_dictionary = merge_arbitary_input_files(
+				referenced_input_dictionary,
+				reference,
+				visited=visited
+			)
+			merge(merged_input_dictionary, referenced_input_dictionary)
+
+		return merged_input_dictionary
+	finally:
+		visited.remove(current_identifier)
+
 def convert_input_to_dictionary(file, default = 'pyH2A.Config~Defaults.md', merge_default = True):
 	'''Reads provided input file (file) and default file, converting both to dictionaries.
 	The dictionaries are merged, with the input file having priority.
@@ -347,15 +432,12 @@ def convert_input_to_dictionary(file, default = 'pyH2A.Config~Defaults.md', merg
 	inp : dict
 		Input dictionary.
 	'''
-
-	inp_file = convert_file_to_dictionary(file_import(file, mode = 'r'))
-
-	if merge_default is False:
-		return inp_file
-
-	else:
-		inp_default = convert_file_to_dictionary(file_import(default, mode = 'r'))
-		return merge(inp_default, inp_file)
+	input_dictionary = convert_file_to_dictionary(file_import(file, mode='r'))
+	if merge_default is True:
+		input_default = convert_file_to_dictionary(file_import(default, mode = 'r'))
+		input_dictionary = merge(input_default, input_dictionary)
+	
+	return merge_arbitary_input_files(input_dictionary, file)
 
 def get_by_path(root, items):
 	'''Access a nested object in `root` by item sequence.'''
