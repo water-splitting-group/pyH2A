@@ -125,4 +125,3 @@ src/pyH2A/Utilities/find_nearest.py
 src/pyH2A/Utilities/input_modification.py
 src/pyH2A/Utilities/output_utilities.py
 src/pyH2A/Utilities/plugin_input_output_processing.py
-src/pyH2A/Utilities/Dictionary_Merger/dict_merger.py
