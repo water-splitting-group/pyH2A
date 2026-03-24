@@ -374,6 +374,8 @@ def merge_arbitary_input_files(input_dictionary, file_reference, visited=None):
 	- ``visited`` is managed as a recursion-stack set and cleaned up in a
 	  ``finally`` block to prevent stale state on exceptions.
 	'''
+	table_key = 'Base input file'
+	value_key = 'Value'
 	if visited is None:
 		visited = set()
 
@@ -385,7 +387,7 @@ def merge_arbitary_input_files(input_dictionary, file_reference, visited=None):
 	visited.add(current_identifier)
 
 	try:
-		table = input_dictionary.get('Base input file')
+		table = input_dictionary.get(table_key)
 		if not isinstance(table, dict):
 			return input_dictionary
 
@@ -395,7 +397,7 @@ def merge_arbitary_input_files(input_dictionary, file_reference, visited=None):
 			if not isinstance(row, dict):
 				continue
 
-			reference = row.get('Value')
+			reference = row.get(value_key)
 			if not isinstance(reference, str):
 				continue
 			reference = reference.strip(' ')
