@@ -1,3 +1,6 @@
+.. _Overview:
+
+
 Overview of pyH2A
 =================
 
@@ -6,9 +9,99 @@ Overview of pyH2A
    :local:
    :class: this-will-duplicate-information-and-it-is-still-useful-here   
 
+This page introduces the general logic of pyH2A, as well as its concrete implementation in the pyh2A code.
 
-1. General Principle
---------------------
+
+0. Navigating the pyH2A Codebase
+--------------------------------
+
+The pyH2A codebase is organized into a set of folders that separate the core calculation workflow, the :ref:`plugins`, and supporting functions for handling inputs / outputs / post-processing (referred to as "utilities").
+
+The main entry point of the code is located in:
+
+::
+
+   pyH2A/src/pyH2A/
+
+
+Overview of the folder structure
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- To understand how a calculation is executed, start with ``run_pyH2A.py`` and ``Discounted_Cash_Flow.py``.
+- To follow or modify the calculation steps, look at the files in the :ref:`plugins` folder.
+- To understand how input data is read and processed, refer to the ``Utilities`` folder.
+- To locate default parameters and the standard calculation structure, see ``Config/Defaults.md``.
+- To explore example inputs or test cases, consult the ``tests`` and ``Lookup_Tables`` folders.
+
+The structure below can be read as a map indicating where each of these elements is implemented.
+::
+
+   pyH2A/src/pyH2A/
+   │
+   ├── run_pyH2A.py
+   │   Entry point of the calculation:
+   │   - Initializes the model: calls methods to read and convert the input (.md) file into a dictionary
+   │   - Launches the workflow: runs the Discounted_Cash_Flow and puts the results in self.base_case
+   │
+   ├── Discounted_Cash_Flow.py
+   │   Core of the techno-economic calculation:
+   │   - Defines the pre_workflow, workflow and post_workflow (see section 2 below)
+   │
+   ├── LCA/
+   │   └── LCA.py
+   │       Life Cycle Analysis module:
+   │       - Contains the ``LCA`` class
+   │       - Called by ``Discounted_Cash_Flow`` to run the base case (single point calculation)
+   │
+   ├── Config/
+   │   └── Defaults.md
+   │       Default configuration:
+   │       - Defines the default plugin workflow (sections 3 and 4 below)
+   │       - Contains financial input values (section 2.1 below)
+   │
+   ├── Plugins/
+   │   Contains all ``*_Plugin`` files:
+   │   - Each plugin processes its necessary inputs (process_table call), performs calculations, and inserts the results in the dcf.inp dictionary 
+   │   - Plugins are executed sequentially in the workflow
+   │
+   ├── Utilities/
+   │   Functions for handling inputs and outputs:
+   │   - Conversion of input (.md) files into the dictionary structure
+   │   - Functions such as ``convert_input_to_dictionary``, ``process_table``, ``insert`` etc.
+   │
+   ├── Analysis/
+   │   Advanced analysis modules:
+   │   - Monte Carlo analysis
+   │   - Sensitivity analysis
+   │   - Not used in the base case calculation
+   │
+   └── Lookup_Tables/
+       Input data for example calculations:
+       - Contains files used as inputs in provided examples
+
+
+Additional test structure
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Files are available to test pyH2A execution.
+
+::
+
+   pyH2A/src/tests/
+   │
+   ├── end_to_end/
+   │   Input (.md) files for various complete hydrogen production pathways
+   │
+   ├── plugins/
+   │   Tests for individual plugin robustness
+   │
+   └── Utilities/
+       Tests for input/output processing:
+       - Verifies correct handling of dictionary entries and data resolution
+
+
+1. General Principle of pyH2A
+-----------------------------
 
 pyH2A performs a techno-economic analysis based on discounted cash flow methodology. Its purpose is to compute financial metrics such as annual cash flows and the levelized cost of hydrogen from a combination of technical assumptions and economic parameters.
 
