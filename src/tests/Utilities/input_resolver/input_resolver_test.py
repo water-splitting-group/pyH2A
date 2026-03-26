@@ -397,6 +397,29 @@ input_dict_resolved = {'Utilities': {
 
 
 class TestInputResolver:
+    """Validate deterministic behavior of ``input_resolver`` for a mixed-schema input.
+
+    This test class verifies that ``input_resolver`` returns a nested mapping
+    matching ``input_dict_resolved`` with the following explicit rules:
+
+    1. Dictionary structures are compared recursively at all depths.
+    2. Dictionary keys are matched case-insensitively.
+    3. ``pint.Quantity`` values are first converted to expected units and then
+       compared numerically.
+    4. Numeric comparisons for floats and arrays use absolute tolerance
+       ``ABS_TOL``.
+
+    Scope of validation:
+
+    - scalar quantities (e.g., costs, lifetimes),
+    - array quantities,
+    - dictionary-of-quantities structures,
+    - non-quantity values (strings and plain scalars).
+    """
+
+    # Centralized numeric tolerances for floating-point comparisons.
+    # REL_TOL = 1e-9
+    ABS_TOL = 1e-9
 
     def _assert_quantity_close(self, actual: Quantity, expected: Quantity) -> None:
         assert isinstance(actual, Quantity)
@@ -407,9 +430,18 @@ class TestInputResolver:
         actual_magnitude = actual_converted.magnitude
 
         if isinstance(expected_magnitude, np.ndarray):
-            assert np.allclose(actual_magnitude, expected_magnitude)
+            assert np.allclose(
+                actual_magnitude,
+                expected_magnitude,
+                # rtol=self.REL_TOL,
+                atol=self.ABS_TOL,
+            )
         else:
-            assert actual_magnitude == pytest.approx(expected_magnitude)
+            assert actual_magnitude == pytest.approx(
+                expected_magnitude,
+                # rel=self.REL_TOL,
+                abs=self.ABS_TOL,
+            )
 
     def _assert_resolved_equal(self, actual, expected) -> None:
         if isinstance(expected, dict):
@@ -423,16 +455,23 @@ class TestInputResolver:
                     actual[actual_key], expected[expected_key])
             return
 
-        if isinstance(expected, Quantity):
+        elif isinstance(expected, Quantity):
             self._assert_quantity_close(actual, expected)
             return
 
-        if isinstance(expected, np.ndarray):
+        elif isinstance(expected, np.ndarray):
             assert isinstance(actual, np.ndarray)
-            assert np.allclose(actual, expected)
+            assert np.allclose(
+                actual,
+                expected,
+                # rtol=self.REL_TOL,
+                atol=self.ABS_TOL,
+            )
             return
 
-        assert actual == expected
+        else:
+            assert actual == expected
+            return
 
     def test_input_resolver(self):
         """ Test the input resolver with a dummy DCF and expected input schema """
