@@ -5,10 +5,7 @@ from pathlib import Path
 
 import pytest
 import pyH2A.Utilities.input_modification as input_modification
-from pyH2A.Utilities.input_modification import (
-    convert_file_to_dictionary,
-    merge_arbitary_input_files,
-)
+from pyH2A.Utilities.input_modification import convert_file_to_dictionary
 
 
 def _convert_file_to_dictionary_with_pipe_normalization(file_obj):
@@ -37,7 +34,7 @@ def patch_markdown_parser_for_pipe_tables(monkeypatch):
 
 
 class TestMergeArbitaryInputFilesPositive:
-    """Test suite for successful recursive input-file merging."""
+    """Test suite for successful first-level base-file merging."""
 
     def setup_method(self):
         """Set path to real markdown fixture directory."""
@@ -59,14 +56,13 @@ class TestMergeArbitaryInputFilesPositive:
         with Path(file_path).open(mode='r') as handle:
             return _convert_file_to_dictionary_with_pipe_normalization(handle)
 
-    def test_merge_arbitary_input_files_merges_in_list_order(self):
-        """Test that later listed base references override earlier ones."""
-        base_file = self.test_data_dir / 'base_input.md'
-        input_dictionary = self._load_dictionary(base_file)
-
+    def test_convert_input_to_dictionary_merges_references_in_list_order(self):
+        """Later listed references should override earlier ones for first-level merge."""
         with self._working_directory(self.test_data_dir):
-            merged = merge_arbitary_input_files(
-                input_dictionary, str(base_file))
+            merged = input_modification.convert_input_to_dictionary(
+                'base_input.md',
+                merge_default=False,
+            )
 
         assert merged['Process']['Temperature']['Value'] == 320
         assert merged['Process']['Pressure']['Value'] == 8
@@ -75,17 +71,22 @@ class TestMergeArbitaryInputFilesPositive:
         assert merged['Economics']['CapEx']['Value'] == 120
         assert merged['Economics']['OpEx']['Value'] == 55
 
-    def test_merge_arbitary_input_files_returns_original_when_no_base_table(self):
-        """Test that dictionary is unchanged when no Base input file table exists."""
+    def test_convert_input_to_dictionary_returns_same_data_without_base_table(self):
+        """Input without Base input file table should remain unchanged."""
         file_input = self.test_data_dir / 'override_level_1.md'
-        input_dictionary = self._load_dictionary(file_input)
-        merged = merge_arbitary_input_files(input_dictionary, str(file_input))
+        expected = self._load_dictionary(file_input)
 
-        assert merged == input_dictionary
+        with self._working_directory(self.test_data_dir):
+            merged = input_modification.convert_input_to_dictionary(
+                'override_level_1.md',
+                merge_default=False,
+            )
+
+        assert merged == expected
 
 
 class TestMergeArbitaryInputFilesNegative:
-    """Test suite for failure behavior in recursive input-file merging."""
+    """Test suite for failure behavior in first-level base-file merging."""
 
     def setup_method(self):
         """Set path to real markdown fixture directory."""
@@ -107,25 +108,25 @@ class TestMergeArbitaryInputFilesNegative:
         with Path(file_path).open(mode='r') as handle:
             return _convert_file_to_dictionary_with_pipe_normalization(handle)
 
-    def test_merge_arbitary_input_files_detects_cycle(self):
-        """Test that cyclic Base input file references raise ValueError."""
-        file_a = self.test_data_dir / 'cycle_a.md'
-        input_dictionary = self._load_dictionary(file_a)
-
-        with pytest.raises(ValueError) as excinfo:
-            with self._working_directory(self.test_data_dir):
-                merge_arbitary_input_files(input_dictionary, str(file_a))
-
-        assert 'Circular reference detected for file' in str(excinfo.value)
-
-    def test_merge_arbitary_input_files_missing_file_raises(self):
+    def test_convert_input_to_dictionary_missing_file_raises(self):
         """Test that missing referenced files surface a file-not-found error."""
-        file_base = self.test_data_dir / 'missing_reference.md'
-        input_dictionary = self._load_dictionary(file_base)
-
         with pytest.raises(FileNotFoundError):
             with self._working_directory(self.test_data_dir):
-                merge_arbitary_input_files(input_dictionary, str(file_base))
+                input_modification.convert_input_to_dictionary(
+                    'missing_reference.md',
+                    merge_default=False,
+                )
+
+    def test_convert_input_to_dictionary_does_not_follow_nested_references(self):
+        """Method only resolves first-level references from the main input file."""
+        with self._working_directory(self.test_data_dir):
+            merged = input_modification.convert_input_to_dictionary(
+                'cycle_a.md',
+                merge_default=False,
+            )
+
+        assert merged['A']['Value']['Value'] == 1
+        assert merged['B']['Value']['Value'] == 2
 
 
 if __name__ == '__main__':
