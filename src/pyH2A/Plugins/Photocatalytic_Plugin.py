@@ -213,6 +213,7 @@ input_dict = {
 		"Hourly": {
 			"Value": {
 				"type": {np.ndarray,},
+				"bounds": (0, None),
 			},
 			"Unit": {
 				"dimension": "energy / area",
