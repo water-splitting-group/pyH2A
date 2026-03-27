@@ -1,5 +1,6 @@
 import numpy as np
-from pint import UnitRegistry
+from pint import UnitRegistry, Quantity
+import pytest
 
 ureg = UnitRegistry()
 ureg.define('USD = [currency]')
@@ -310,3 +311,59 @@ resolved_dict_expected = {
 }
 
 
+class TestOutputResolver:
+
+    ABS_TOL = 1e-9
+
+    def _assert_resolved_equal(self, actual, expected) -> None:
+        if isinstance(expected, dict):
+            actual_key_map = {str(key).casefold(): key for key in actual}
+            expected_key_map = {str(key).casefold(): key for key in expected}
+            assert set(actual_key_map.keys()) == set(expected_key_map.keys())
+
+            for normalized_key, expected_key in expected_key_map.items():
+                actual_key = actual_key_map[normalized_key]
+                self._assert_resolved_equal(
+                    actual[actual_key], expected[expected_key]
+                )
+            return
+
+        elif isinstance(expected, np.ndarray):
+            assert isinstance(actual, np.ndarray)
+            assert np.allclose(actual, expected, atol=self.ABS_TOL)
+            return
+
+        elif isinstance(expected, float):
+            assert actual == pytest.approx(expected, abs=self.ABS_TOL)
+            return
+
+        else:
+            assert actual == expected
+            return
+
+    def _apply_values(self, dcf):
+        """Simulate plugin behavior: we would manually in which dict location to insert a self.XXX value"""
+        for top_key, mid_dict in values_to_insert.items():
+            for mid_key, leaf_dict in mid_dict.items():
+                for leaf_key, value in leaf_dict.items():
+                    output_resolver(
+                        dcf,
+                        top_key,
+                        mid_key,
+                        leaf_key,
+                        value,
+                        output_dict
+                    )
+
+    def test_output_resolver(self):
+        dcf = DummyDCF()
+
+        # apply all insertions one by one
+        self._apply_values(dcf)
+
+        # check final state
+        self._assert_resolved_equal(dcf.inp, resolved_dict_expected)
+
+
+if __name__ == '__main__':
+    pytest.main([__file__, '-v'])
