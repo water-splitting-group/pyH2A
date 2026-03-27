@@ -16,7 +16,8 @@ class DummyDCF:
                     'Usage_Unit': 'kWh/kg',
                     'Cost_Value': 200,
                     'Cost_Unit': 'USD/kWh',
-                    'Type': 'natural_gas'
+                    'Type': 'natural_gas', 
+                    'Processed': 'Yes'
                 }
             },                       
             'Power Generation': {
@@ -25,20 +26,30 @@ class DummyDCF:
                         '2025':np.array([400., 250., 350.]), 
                         '2024':np.array([500., 350., 450.])
                     }, 
-                    'Unit': 'kWh'
+                    'Unit': 'kWh', 
+                    'Processed': 'Yes'
                 },
             }, 
             'Dummy left Direct Capital Cost dummy right': {
                 'First cost': {
                     'Value': 750.0,
-                    'Unit': 'USD'
+                    'Unit': 'USD', 
+                    'Processed': 'Yes'
                 },
                 'Second cost': {
                     'Value': 250.0,
-                    'Unit': 'USD'
+                    'Unit': 'USD', 
+                    'Processed': 'Yes'
                 },                
             }, 
-
+            'Planned Replacement': {
+                'Electrolyzer Stack Replacement': {
+                    'Cost_Value': 0.4,
+                    'Cost_Unit': 'USD',                     
+                    'Path': 'Direct Capital Costs - Electrolyzer > Electrolyzer CAPEX ($/kW) > Value', 
+                    'Comment': 'Based on Chang 2020'
+                },               
+            }, 
         }
 
 # quantities to insert : these would be the quantities calculated by the plugin
@@ -60,7 +71,6 @@ values_to_insert = {
             }
         },         
     },
-
 
     'Dummy left Direct Capital Cost dummy right':{
         'Summed Total':{
@@ -101,6 +111,9 @@ values_to_insert = {
             'Cost': ureg.Quantity(1000, 'USD'), 
             'Frequency': ureg.Quantity(2, 'year'), 
         }, 
+        'Electrolyzer Stack Replacement':{
+            'Frequency': ureg.Quantity(10, 'year'), 
+        },         
     },   
 
 }
@@ -216,8 +229,18 @@ output_dict = {
             },
             'Frequency_Unit': 'year', # keeping years here, it seems more coherent              
             'optional': False,
-            'description': ' Replacement frequency and cost of baggies'
-        }
+            'description': ' Replacement frequency and cost of baggies', 
+        }, 
+        'Electrolyzer Stack Replacement': {
+            'Frequency_Value': {
+                'type': {float},
+            },
+            'Frequency_Unit': 'year', # keeping years here, it seems more coherent              
+            'optional': False, 
+            'description': 'Frequency of electrolyzer stack replacements, calculated from replacement time and hourly irradiation data', 
+            'add_processed' = False,  # when add_processed and insert_path are different from the default value, the output resolver must read it from output_dict to inform the 'insert' method accordingly
+            'insert_path' = False
+        },            
     },       
 }
 
@@ -231,21 +254,25 @@ resolved_dict_expected = {
             'Usage_Unit': 'kWh/kg',
             'Cost_Value': 200,
             'Cost_Unit': 'USD/kWh',
-            'Type': 'natural_gas'
+            'Type': 'natural_gas', 
+            'Processed': 'Yes'
         }
     },        
     'Dummy left Direct Capital Cost dummy right': {
         'First cost': {
             'Value': 750.0,
-            'Unit': 'USD'
+            'Unit': 'USD', 
+            'Processed': 'Yes'
         },
         'Second cost': {
             'Value': 250.0,
-            'Unit': 'USD'
+            'Unit': 'USD', 
+            'Processed': 'Yes'
         },                
         'Summed Total': { # new mid key
             'Value': 1000.0, 
-            'Unit': 'USD'            
+            'Unit': 'USD', 
+            'Processed': 'Yes'            
         }        
     }, 
     
@@ -255,32 +282,37 @@ resolved_dict_expected = {
                 '2025':np.array([5.4e8, 3.6e8, 7.2e8]), 
                 '2024':np.array([1.26e9, 7.2e8, 1.08e9]) 
             }, 
-            'Unit': 'J'            
+            'Unit': 'J', 
+            'Processed': 'Yes'            
         }, 
         'Stored Energy (daily)': { # Value that has been inserted
             'Value': {
                 np.int64(0): np.array([0, 0, 938736, 0, 1008000]), 
                 np.int64(1): np.array([0, 0, 933840, 0, 1005480]), 
             }, 
-            'Unit': 'J'            
+            'Unit': 'J', 
+            'Processed': 'Yes'            
         }        
     }, 
 
     'Direct Capital Costs': { # upper key didn't exist in the initial dictionary
         'Inflated': {
             'Value': 2000.0, 
-            'Unit': 'USD'            
+            'Unit': 'USD', 
+            'Processed': 'Yes'            
         }
     }, 
 
     'Technical Operating Parameters and Specifications': { 
         'Plant Design Capacity (Daily)': {
             'Value': np.array([0., 955.95413492, 952.47095234, 948.98391499]), 
-            'Unit': 'kg'            
+            'Unit': 'kg', 
+            'Processed': 'Yes'            
         },
         'Scaling Ratio': { # inserted optional value
             'Value': 1.0, 
-            'Unit': 'dimensionless'            
+            'Unit': 'dimensionless',  
+            'Processed': 'Yes'
         }        
     }, 
 
@@ -288,7 +320,8 @@ resolved_dict_expected = {
         'Reverse Osmosis Consumption (yearly)': {
             'Value': np.array([1.3e9, 1.e9]),
             'Unit': 'J',
-            'Type': 'flexible'
+            'Type': 'flexible', 
+            'Processed': 'Yes'
         }
     },       
 
@@ -296,6 +329,7 @@ resolved_dict_expected = {
         'Number': {
             'Value': 5,
             'Unit': 'dimensionless',
+            'Processed': 'Yes'
         }
     },   
 
@@ -305,7 +339,16 @@ resolved_dict_expected = {
             'Cost_Unit': 'USD',
             'Frequency_Value': 2,
             'Frequency_Unit': 'year',
-        }
+            'Processed': 'Yes'
+        }, 
+        'Electrolyzer Stack Replacement': {
+            'Cost_Value': 0.4,
+            'Cost_Unit': 'USD',             
+            'Path': 'Direct Capital Costs - Electrolyzer > Electrolyzer CAPEX ($/kW) > Value', 
+            'Comment': 'Based on Chang 2020',
+            'Frequency_Value': np.float64(10.0),
+            'Frequency_Unit': 'year'
+        },          
     },   
 
 }
@@ -342,16 +385,16 @@ class TestOutputResolver:
             return
 
     def _apply_values(self, dcf):
-        """Simulate plugin behavior: we would manually in which dict location to insert a self.XXX value"""
+        """Simulate plugin behavior: we would manually specify, in the output_resolver call, in which dict location (keys) to insert a self.XXX value"""
         for top_key, mid_dict in values_to_insert.items():
             for mid_key, leaf_dict in mid_dict.items():
-                for leaf_key, value in leaf_dict.items():
+                for leaf_key, value_to_insert in leaf_dict.items():
                     output_resolver(
                         dcf,
                         top_key,
                         mid_key,
                         leaf_key,
-                        value,
+                        value_to_insert,
                         output_dict
                     )
 
