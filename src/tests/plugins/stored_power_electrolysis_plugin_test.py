@@ -15,7 +15,7 @@ class DummyDCF:
         electrolyzer_conversion_efficiency,
         electrolyzer_replacement_time_h,
         electrolyzer_yearly_H2_production_kg,
-        yearly_operation_hours,
+        yearly_operation_data,
         stored_power_daily_kWh,
     ):
 
@@ -40,7 +40,7 @@ class DummyDCF:
                     "Processed": "Yes"
                 },
                 "Yearly Operation Data": {
-                    "Value": yearly_operation_hours,
+                    "Value": yearly_operation_data,
                     "Processed": "Yes"
                 },
             },
@@ -67,7 +67,7 @@ class DummyDCF:
                 "electrolyzer_conversion_efficiency": 0.05,
                 "electrolyzer_replacement_time_h": 4000.0,
                 "electrolyzer_yearly_H2_production_kg": np.array([1.0, 8.0]),
-                "yearly_operation_hours": np.array([
+                "yearly_operation_data": np.array([
                     [2026, 1.0, 10.0],
                     [2027, 8.0, 80.0]
                 ]),
