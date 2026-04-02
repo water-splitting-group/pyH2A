@@ -40,7 +40,8 @@ extensions = ['sphinx.ext.autodoc',
     		  'sphinx.ext.coverage',
     		  'sphinx.ext.viewcode',
     		  'numpydoc',
-    		  'autodocsumm'
+    		  'autodocsumm', 
+              'sphinx.ext.mathjax'
 ]
 
 autodoc_default_options = {

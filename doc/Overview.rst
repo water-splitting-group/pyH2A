@@ -81,7 +81,7 @@ The structure below can be read as a map indicating where each of these elements
 
 
 Additional test structure
-~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Files are available to test pyH2A execution.
 
