@@ -312,12 +312,12 @@ input_dict = {
 input_dict_resolved = {'Utilities': {
     'Natural gas': {
         'Usage_Value': ureg.Quantity(5.4E9, 'J/kg'),
-        'Cost_Value': ureg.Quantity(5.555555E-5, 'USD/J'),
+        'Cost_Value': ureg.Quantity(5.555555555555555E-5, 'USD/J'),
         'Type': 'natural_gas'
     },
     'Electricity': {
         'Usage_Value': ureg.Quantity(10.8E9, 'J/kg'),
-        'Cost_Value': ureg.Quantity(1.388888E-4, 'USD/J'),
+        'Cost_Value': ureg.Quantity(1.3888888888888E-4, 'USD/J'),
         'Type': 'electricity'
     },
 },
@@ -419,7 +419,7 @@ class TestInputResolver:
 
     # Centralized numeric tolerances for floating-point comparisons.
     # REL_TOL = 1e-9
-    ABS_TOL = 1e-9
+    ABS_TOL = 1e-12
 
     def _assert_quantity_close(self, actual: Quantity, expected: Quantity) -> None:
         assert isinstance(actual, Quantity)
