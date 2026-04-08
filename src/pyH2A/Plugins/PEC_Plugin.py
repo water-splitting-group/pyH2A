@@ -27,9 +27,6 @@ class PEC_Plugin:
 		Solar-to-hydrogen efficiency in percentage or as a value between 0 and 1.
 	Solar Input > Mean solar input (kWh/m2/day) > Value : float
 		Mean solar input in kWh/m2/day, ``process_table()`` is used.
-	Solar Concentrator > Concentration Factor > Value : float, optional
-		Concentration factor created by solar concentration module, which is used in combination
-		with PEC cells. If "Solar Concentrator" is in dcf.inp, ``process_table()`` is used.
 
 	Returns
 	-------
@@ -48,9 +45,6 @@ class PEC_Plugin:
 	'''
 
 	def __init__(self, dcf, print_info):
-		if 'Solar Concentrator' in dcf.inp:
-			process_table(dcf.inp, 'Solar Concentrator', 'Value')
-
 		process_table(dcf.inp, 'Solar Input', 'Value')
 		process_table(dcf.inp, 'Solar-to-Hydrogen Efficiency', 'Value')
 		process_table(dcf.inp, 'PEC Cells', 'Value')
