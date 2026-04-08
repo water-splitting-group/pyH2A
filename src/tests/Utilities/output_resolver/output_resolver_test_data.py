@@ -1,6 +1,8 @@
 import numpy as np
 from pint import UnitRegistry, Quantity
 import pytest
+import unittest
+from pyH2A.Utilities.input_modification output_resolver
 
 ureg = UnitRegistry()
 ureg.define('USD = [currency]')
@@ -50,199 +52,163 @@ class DummyDCF:
                     'Comment': 'Based on Chang 2020'
                 },               
             }, 
+            'Catalyst': {
+                'Lifetime': {
+                    'Value': 0.5,
+                    'Unit': 'year', 
+                },
+            }
         }
 
-# quantities to insert : these would be the quantities calculated by the plugin
-# that is: the self.XXX variables (that would now be pint quantities)
-# written here under the form of a dict for convenience
-# i.e. we write here directly the dict location where the value would go to ease testing, but in the plugin these would be self.XXX quantities, not dict items
-values_to_insert = {
-    'Power Generation':{
-        'Stored Energy (daily)':{ # new middle key to insert
-            'Value': {
-                np.int64(0): ureg.Quantity(np.array([0, 0, 938736, 0, 1008000]), 'J'),
-                np.int64(1): ureg.Quantity(np.array([0, 0, 933840, 0, 1005480]), 'J'), 
+
+# we need a dummy plugin to contain the variables to insert
+class DummyPlugin:
+    # Output schema (output equivalent to input_dict)
+    output_dict = { 
+        'Power Generation': {
+            'Stored Energy (daily)': { # new middle key to insert
+                'Value': 'self.yearly_recovered_power',
+                'add_processed' : True,  # This is the default so shouldn't be needed anyway, but it doesn't harm to test the explicit specification of it
+                'insert_path' : True,            
+                'description': 'Electricity stored in battery daily (dictionary of years)',
+                'optional': False,            
+            }, 
+            'Available Energy (daily)': { # overwrite existing value
+                # From now on, I don't add 'add_processed' and 'insert_path' when they are true, it's the default so normally it'S unnecessary
+                'Value': 'self.yearly_unstored_power', 
+                'description': 'Available Electricity, daily basis, dictionary of years - energy which has not been stored in battery',
+                'optional': False,            
+            }        
+        }, 
+    
+        '<...> Direct Capital Cost <...>': { # actually I'm confused about this one, the docstring says we insert [...] Direct Capital Cost [...] > Summed Total > Value, but I don't find such an insert. So I use it here for the test as an example anyway but in the capital cost plugin we might need to clarify it
+            'Summed Total': {
+                'Value': 'self.total',
+                'description': 'Summed total for each individual table in "Direct Capital Cost" group.', 
+                'optional': False,
             }
         }, 
-        'Available Energy (daily)':{ # overwrite existing value
-            'Value': {
-                '2025':ureg.Quantity(np.array([5.4e8, 3.6e8, 7.2e8]), 'J'), 
-                '2024':ureg.Quantity(np.array([1.26e9, 7.2e8, 1.08e9]), 'J') 
+
+        'Direct Capital Costs': {
+            'Inflated': {
+                'Value': 'self.direct_inflated', # this one is not normally a self.XXX, but if we don't turn it into a self.XXX I suspect it won't work
+                'description': 'Total direct capital costs multiplied by combined inflator.', 
+                'optional': False,            
             }
-        },         
-    },
+        },    
 
-    'Dummy left Direct Capital Cost dummy right':{
-        'Summed Total':{
-            'Value': ureg.Quantity(1000.0, 'USD')
-        }, 
-    }, 
-
-    'Direct Capital Costs':{
-        'Inflated':{
-            'Value': ureg.Quantity(2000.0, 'USD')
-        }, 
-    }, 
-
-    'Technical Operating Parameters and Specifications':{
-        'Plant daily design flowrate':{
-            'Value': ureg.Quantity(np.array([0., 955.95413492, 952.47095234, 948.98391499]), 'kg/day')
-        }, 
-        'Scaling Ratio':{
-            'Value': ureg.Quantity(1.0, 'dimensionless')
-        },         
-    }, 
-
-    'Power Consumption':{
-        'Reverse Osmosis Consumption (yearly)':{
-            'Value': ureg.Quantity(np.array([1.3e9, 1.e9]), 'J'), 
-            'Type': 'flexible'
-        }, 
-    }, 
-
-    'Reactor Baggies':{
-        'Number':{
-            'Value': ureg.Quantity(5, 'dimensionless'), 
-        }, 
-    },    
-
-    'Planned Replacement':{
-        'Planned Replacement Baggie':{
-            'Cost': ureg.Quantity(1000, 'USD'), 
-            'Frequency': ureg.Quantity(2, 'year'), 
-        }, 
-        'Electrolyzer Stack Replacement':{
-            'Frequency': ureg.Quantity(10, 'year'), 
-        },         
-    },   
-
-}
-
-# Output schema (output equivalent to input_dict)
-output_dict = {
-    'Power Generation': {
-        'Stored Energy (daily)': {
-            'Value': {
-                'type': {dict},
+        'Technical Operating Parameters and Specifications': { 
+            'Plant design flowrate': {# I renamed the existing Plant Design Capacity (kg of H2/day)
+                'Value': 'self.h2_production', #originally there's a division by 365 that iswill require update in the plugin
+                'description': 'Plant design capacity expressed as a daily flowrate, calculated from installed electrolysis power capacity and hourly power generation data.', 
+                'optional': False,
             },
-            'Unit': 'J', # I didn't keep a 'dimension' subkey here, I think there's no need to validate the dimension on the output side. 
-                         # Actually I'm not even sure we need to keep the unit here, since it is included in the calculated pint quantity already
-            'optional': False,
-            'description': 'Electricity stored in battery daily (dictionary of years)'
-        }, 
-        'Available Energy (daily)': {
-            'Value': {
-                'type': {dict},
-            },
-            'Unit': 'J', 
-            'optional': False,
-            'description': 'Available Electricity, daily basis, dictionary of years - energy which has not been stored in battery'
-        }        
-    }, 
-  
-    '<...> Direct Capital Cost <...>': {
-        'Summed Total': {
-            'Value': {
-                'type': {float},
-            },
-            'Unit': 'USD', 
-            'optional': False,
-            'description': 'Summed total for each individual table in "Direct Capital Cost" group.'
-        }
-    }, 
+            'Scaling Ratio': { # optional
+                'Value': 'self.scaling_ratio', # isn't normally a "self"
+                'description': 'Returned if New Plant Design Capacity was specified.', 
+                'optional': True,            
+            }        
+        },  
 
-    'Direct Capital Costs': {
-        'Inflated': {
-            'Value': {
-                'type': {float},
-            },
-            'Unit': 'USD', 
-            'optional': False,
-            'description': 'Total direct capital costs multiplied by combined inflator.'
-        }
-    },    
-
-    'Technical Operating Parameters and Specifications': { 
-        'Plant Design Capacity (Daily)': {# I renamed the existing Plant Design Capacity (kg of H2/day)
-            'Value': {
-                'type': {float, np.ndarray},
-            },
-            'Unit': 'kg', 
-            'optional': False,
-            'description': 'Plant design capacity expressed as a daily flowrate, calculated from installed electrolysis power capacity and hourly power generation data.'
+        'Scaling': { # this one is optional, and we actually don't insert any value (to check the ability of the output resolver to handle an optional value that is absent)
+            'Capital Scaling Factor': {
+                'Value': 'self.capital_scaling_factor',
+                'description': 'Returned if scaling is active (`Scaling Ratio` or `New Plant Design Capacity (kg of H2/day)` specified).', 
+                'optional': True,            
+            }
         },
-        'Scaling Ratio': {
-            'Value': {
-                'type': {float},
-            },
-            'Unit': 'dimensionless', 
-            'optional': True,
-            'description': 'Returned if New Plant Design Capacity was specified.'
+
+        'Power Consumption': {
+            'Reverse Osmosis Consumption (yearly)': {
+                'Value': 'self.electricity_demand',
+                'Type': 'flexible', # no need to have the intermediate "options" key anymore: in the same way as we define here the inserted variables, we define directly the Type
+                'description': ' Electricity demand of reverse osmosis plant per year.',      
+                'optional': False,                   
+            }
+        },
+
+        'Reactor Baggies': {
+            'Number': {
+                'Value': 'self.baggie_number',
+                'description': 'Number of individual baggies required for design H2 production capacity', 
+                'optional': False,            
+            }
+        },    
+
+        'Planned Replacement': {
+            'Planned Replacement Baggie': {
+                'Cost_Value': 'self.baggies_cost',
+                'Frequency_Value': 'self.baggie_frequency',
+                'description': ' Replacement frequency and cost of baggies',             
+                'optional': False,                
+            }, 
+            'Planned Replacement Catalyst': {
+                'Frequency_Value': 'self.input_dict_resolved["Catalyst"]["Lifetime"]["Value"]', # interesting because in the existing version we insert something that should already be in the dictionary ('dcf.inp['Catalyst']['Lifetime']['Value']'), not a variable that results from a calculation
+                                                                                    # rather than picking up the value from dcf.inp (as we currently do), it's better to now pick it up from the resolved dict so we know already it's "clean"        
+                'description': 'Replacement frequency of catalyst in years, identical to catalyst lifetime.', 
+                'optional': False,             
+            },           
+            'Electrolyzer Stack Replacement': {
+                'Frequency_Value': 'self.replacement_frequency',
+                'description': 'Frequency of electrolyzer stack replacements, calculated from replacement time and hourly irradiation data', 
+                'optional': False,             
+                'add_processed' : False,  # when add_processed and insert_path are different from the default value, the output resolver must read it from output_dict to inform the 'insert' method accordingly
+                'insert_path' : False
+            },            
+        },       
+    }
+
+    def __init__(self, dcf, print_info):
+        self.input_dict_resolved = { # sometimes we need to pick up some values from the resolved dict that exists in the plugin, that is created after the input_resolver calls
+            'Catalyst': {
+                'Lifetime': {
+                    'Value': ureg.Quantity(1.57788E8, 's')
+                }
+            }
         }        
-    },  
-
-    'Scaling': { # this one is optional, and we actually don't insert any value (check the ability of the output resolver to handle an optional value that is absent)
-        'Capital Scaling Factor': {
-            'Value': {
-                'type': {float},
-            },
-            'Unit': 'dimensionless', 
-            'optional': True,
-            'description': 'Returned if scaling is active (`Scaling Ratio` or `New Plant Design Capacity (kg of H2/day)` specified).'
+        self.yearly_recovered_power = {
+            np.int64(0): ureg.Quantity(np.array([0, 0, 938736, 0, 1008000]), 'J'),
+            np.int64(1): ureg.Quantity(np.array([0, 0, 933840, 0, 1005480]), 'J'),
         }
-    },
 
-    'Power Consumption': {
-        'Reverse Osmosis Consumption (yearly)': {
-            'Value': {
-                'type': {np.ndarray},
-            },
-            'Unit': 'J', 
-            'Type': {
-                'type': str,
-                'options': {'flexible', 'on demand'} 
-            },
-            'optional': False,
-            'description': ' Electricity demand of reverse osmosis plant per year.'
+        self.yearly_unstored_power = {
+            '2025': ureg.Quantity(np.array([5.4e8, 3.6e8, 7.2e8]), 'J'),
+            '2024': ureg.Quantity(np.array([1.26e9, 7.2e8, 1.08e9]), 'J'),
         }
-    },
 
-    'Reactor Baggies': {
-        'Number': {
-            'Value': {
-                'type': {int},
-            },
-            'Unit': 'dimensionless', 
-            'optional': False,
-            'description': ' Number of ports per baggie.'
-        }
-    },    
+        self.total = ureg.Quantity(1000.0, 'USD')
 
-    'Planned Replacement': {
-        'Planned Replacement Baggie': {
-            'Cost_Value': {
-                'type': {float},
-            },
-            'Cost_Unit': 'USD',
-            'Frequency_Value': {
-                'type': {float},
-            },
-            'Frequency_Unit': 'year', # keeping years here, it seems more coherent              
-            'optional': False,
-            'description': ' Replacement frequency and cost of baggies', 
-        }, 
-        'Electrolyzer Stack Replacement': {
-            'Frequency_Value': {
-                'type': {float},
-            },
-            'Frequency_Unit': 'year', # keeping years here, it seems more coherent              
-            'optional': False, 
-            'description': 'Frequency of electrolyzer stack replacements, calculated from replacement time and hourly irradiation data', 
-            'add_processed' = False,  # when add_processed and insert_path are different from the default value, the output resolver must read it from output_dict to inform the 'insert' method accordingly
-            'insert_path' = False
-        },            
-    },       
-}
+        self.h2_production = ureg.Quantity(np.array([0., 955.95413492, 952.47095234, 948.98391499]), 'kg/day')
+
+        self.electricity_demand = ureg.Quantity(np.array([1.3e9, 1.e9]), 'J')
+
+        self.baggie_number = ureg.Quantity(5, 'dimensionless')
+
+        self.baggies_cost = ureg.Quantity(1000, 'USD')
+
+        self.baggie_frequency = ureg.Quantity(5, 'year')
+
+        self.replacement_frequency = ureg.Quantity(10, 'year')
+
+        # the next two ones are not normally self.XXX, but as mentioned earlier I think we need to convert them into self.XXX for the output resolver to work 
+        self.direct_inflated = ureg.Quantity(2000.0, 'USD')
+
+        self.scaling_ratio = ureg.Quantity(1.0, 'dimensionless')
+
+        output_resolver(dcf, 'Power Generation', 'Stored Energy (daily)', 'Value', self, print_info = print_info) # self contains output_dict normally, so inside output_resolver we will call it 
+        output_resolver(dcf, 'Power Generation', 'Available Energy (daily)', 'Value', self, print_info = print_info)
+        output_resolver(dcf, 'Dummy left Direct Capital Cost dummy right', 'Summed Total', 'Value', self, print_info = print_info)
+        output_resolver(dcf, 'Direct Capital Costs', 'Inflated', 'Value', self, print_info = print_info)
+        output_resolver(dcf, 'Technical Operating Parameters and Specifications', 'Plant design flowrate', 'Value', self, print_info = print_info)
+        output_resolver(dcf, 'Technical Operating Parameters and Specifications', 'Scaling Ratio', 'Value', self, print_info = print_info)
+        output_resolver(dcf, 'Scaling', 'Capital Scaling Factor', 'Value', self, print_info = print_info)
+        output_resolver(dcf, 'Power Consumption', 'Reverse Osmosis Consumption (yearly)', 'Value', self, print_info = print_info)
+        output_resolver(dcf, 'Reactor Baggies', 'Number', 'Value', self, print_info = print_info)
+        output_resolver(dcf, 'Planned Replacement', 'Planned Replacement Baggie', 'Cost_Value', self, print_info = print_info)
+        output_resolver(dcf, 'Planned Replacement', 'Planned Replacement Baggie', 'Frequency_Value', self, print_info = print_info)
+        output_resolver(dcf, 'Planned Replacement', 'Planned Replacement Catalyst', 'Frequency_Value', self, print_info = print_info)
+        output_resolver(dcf, 'Planned Replacement', 'Electrolyzer Stack Replacement', 'Frequency_Value', self, print_info = print_info)
+        
 
 
 # Expected final state, that is: what dcf.inp would look like after insertions
@@ -270,8 +236,8 @@ resolved_dict_expected = {
             'Processed': 'Yes'
         },                
         'Summed Total': { # new mid key
-            'Value': 1000.0, 
-            'Unit': 'USD', 
+            'Value': ureg.Quantity(1000.0, 'USD'), 
+            # when we insert a pint quantity, there's no need to insert a 'unit' bottom key
             'Processed': 'Yes'            
         }        
     }, 
@@ -279,47 +245,43 @@ resolved_dict_expected = {
     'Power Generation': { # upper key existed already
         'Available Energy (daily)': { # Value that was initially present, and has been modified
             'Value': {
-                '2025':np.array([5.4e8, 3.6e8, 7.2e8]), 
-                '2024':np.array([1.26e9, 7.2e8, 1.08e9]) 
+                '2025':ureg.Quantity(np.array([5.4e8, 3.6e8, 7.2e8]), 'J'), 
+                '2024':ureg.Quantity(np.array([1.26e9, 7.2e8, 1.08e9]), 'J') 
             }, 
-            'Unit': 'J', 
+            # when we discussed we said we would ignore the 'Unit' if the 'Value' is a pint ; 
+            # I would advise further that when we update a value with a pint quantity, it would be good to remove the existing 'Unit' bottom key from the dict to prevent any issue and unnecessary/wrong item (I hope it should not be too complicated too implement) 
             'Processed': 'Yes'            
         }, 
         'Stored Energy (daily)': { # Value that has been inserted
             'Value': {
-                np.int64(0): np.array([0, 0, 938736, 0, 1008000]), 
-                np.int64(1): np.array([0, 0, 933840, 0, 1005480]), 
+                np.int64(0): ureg.Quantity(np.array([0, 0, 938736, 0, 1008000]), 'J'), 
+                np.int64(1): ureg.Quantity(np.array([0, 0, 933840, 0, 1005480]), 'J'), 
             }, 
-            'Unit': 'J', 
             'Processed': 'Yes'            
         }        
     }, 
 
     'Direct Capital Costs': { # upper key didn't exist in the initial dictionary
         'Inflated': {
-            'Value': 2000.0, 
-            'Unit': 'USD', 
+            'Value': ureg.Quantity(2000.0, 'USD'), 
             'Processed': 'Yes'            
         }
     }, 
 
     'Technical Operating Parameters and Specifications': { 
-        'Plant Design Capacity (Daily)': {
-            'Value': np.array([0., 955.95413492, 952.47095234, 948.98391499]), 
-            'Unit': 'kg', 
+        'Plant design flowrate': {
+            'Value': ureg.Quantity(np.array([0., 955.95413492, 952.47095234, 948.98391499]), 'kg/day'), 
             'Processed': 'Yes'            
         },
         'Scaling Ratio': { # inserted optional value
-            'Value': 1.0, 
-            'Unit': 'dimensionless',  
+            'Value': ureg.Quantity(1.0, 'dimensionless'),
             'Processed': 'Yes'
         }        
     }, 
 
     'Power Consumption': {
         'Reverse Osmosis Consumption (yearly)': {
-            'Value': np.array([1.3e9, 1.e9]),
-            'Unit': 'J',
+            'Value': ureg.Quantity(np.array([1.3e9, 1.e9]), 'J'),
             'Type': 'flexible', 
             'Processed': 'Yes'
         }
@@ -327,36 +289,42 @@ resolved_dict_expected = {
 
     'Reactor Baggies': {
         'Number': {
-            'Value': 5,
-            'Unit': 'dimensionless',
+            'Value': ureg.Quantity(5, 'dimensionless'),
             'Processed': 'Yes'
         }
     },   
 
     'Planned Replacement': {
         'Planned Replacement Baggie': {
-            'Cost_Value': 1000,
-            'Cost_Unit': 'USD',
-            'Frequency_Value': 2,
-            'Frequency_Unit': 'year',
+            'Cost_Value': ureg.Quantity(1000, 'USD'),
+            'Frequency_Value': ureg.Quantity(5, 'year'),
             'Processed': 'Yes'
         }, 
+        'Planned Replacement Catalyst': {
+            'Frequency_Value': ureg.Quantity(1.57788E8, 's'),
+            'Processed': 'Yes'
+        },
         'Electrolyzer Stack Replacement': {
             'Cost_Value': 0.4,
-            'Cost_Unit': 'USD',             
-            'Path': 'Direct Capital Costs - Electrolyzer > Electrolyzer CAPEX ($/kW) > Value', 
+            'Cost_Unit': 'USD',  
+            'Path': 'Direct Capital Costs - Electrolyzer > Electrolyzer CAPEX ($/kW) > Value', # insert_part is False so the path stays as is
             'Comment': 'Based on Chang 2020',
-            'Frequency_Value': np.float64(10.0),
-            'Frequency_Unit': 'year'
+            'Frequency_Value': ureg.Quantity(10, 'year'),
         },          
-    },   
+    }, 
+    'Catalyst': {
+        'Lifetime': {
+            'Value': 0.5,
+            'Unit': 'year', 
+        },      
 
+    }
 }
 
 
-class TestOutputResolver:
 
-    ABS_TOL = 1e-9
+class TestDummyPlugin(unittest.TestCase):
+    ABS_TOL = 1e-12
 
     def _assert_resolved_equal(self, actual, expected) -> None:
         if isinstance(expected, dict):
@@ -380,33 +348,27 @@ class TestOutputResolver:
             assert actual == pytest.approx(expected, abs=self.ABS_TOL)
             return
 
+        elif hasattr(expected, 'units') and hasattr(actual, 'units'):
+            # Compare pint quantities
+            assert abs(actual.magnitude - expected.magnitude) < self.ABS_TOL
+            assert str(actual.units) == str(expected.units)
+            return
+
         else:
             assert actual == expected
             return
 
-    def _apply_values(self, dcf):
-        """Simulate plugin behavior: we would manually specify, in the output_resolver call, in which dict location (keys) to insert a self.XXX value"""
-        for top_key, mid_dict in values_to_insert.items():
-            for mid_key, leaf_dict in mid_dict.items():
-                for leaf_key, value_to_insert in leaf_dict.items():
-                    output_resolver(
-                        dcf,
-                        top_key,
-                        mid_key,
-                        leaf_key,
-                        value_to_insert,
-                        output_dict
-                    )
-
-    def test_output_resolver(self):
+    def test_plugin_resolves_dict_correctly(self):
+        # Create dummy DCF
         dcf = DummyDCF()
-
-        # apply all insertions one by one
-        self._apply_values(dcf)
-
-        # check final state
+        
+        # Run the plugin
+        plugin = DummyPlugin(dcf, print_info=False)
+        
+        # Compare the final dict
         self._assert_resolved_equal(dcf.inp, resolved_dict_expected)
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+# Run the test
+if __name__ == "__main__":
+    unittest.main(argv=[''], exit=False)
