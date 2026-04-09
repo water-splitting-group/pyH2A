@@ -85,7 +85,7 @@ output_dict = {
         },
         'Available energy (hourly)': {
             'Value': 0,
-            'add_processed': False,
+            'add_processed': True,
             'insert_path': True,
             'description': 'Available energy is set to zero, since available energy is now only in daily format.',
             'optional': False,
