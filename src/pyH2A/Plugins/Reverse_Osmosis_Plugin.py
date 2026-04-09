@@ -1,5 +1,68 @@
 from pyH2A.Utilities.input_modification import insert, process_table
-import numpy as np
+
+input_dict = {
+    "Financial Input Values": {
+        "Construction time": {
+            "Value": {
+                "type": {int,},
+                "bounds": (0, 40),
+            },
+            "Unit": {
+                "dimension": "time",
+            },
+            "optional": False,
+            "description": "Construction time of hydrogen production plant."
+        },
+    },
+    "Technical Operating Parameters and Specifications": {
+        "Output per year": {
+            "Value": {
+                "type": {float,},
+                "bounds": (0, None),
+            },
+            "Unit": {
+                "dimension": "mass / time",
+            },
+            "optional": False,
+            "description": "Yearly output taking operating capacity factor into account."
+        },
+    },
+    "Reverse Osmosis": {
+        "Power demand": {
+            "Value": {
+                "type": {float,},
+                "bounds": (0, None),
+            },
+            "Unit": {
+                "dimension": "energy / volume",
+            },
+            "optional": False,
+            "description": "Power demand of reverse osmosis plant of sea water in energy demand of reverse osmosis in energy / volume (of feed water)."
+        },
+        "Average operating time fraction": {
+            "Value": {
+                "type": {float,},
+                "bounds": (0, 1),
+            },
+            "Unit": {
+                "dimension": "dimensionless",
+            },
+            "optional": False,
+            "description": "Fraction of time during which reverse osmosis plant is operating, a value of 1 (100%) is corresponding to 24/7 operation."
+        },
+        "Recovery rate": {
+            "Value": {
+                "type": {float,},
+                "bounds": (0, 1),
+            },
+            "Unit": {
+                "dimension": "dimensionless",
+            },
+            "optional": False,
+            "description": "Fraction of fresh water obtained from given volume of sea water."
+        },
+    },
+}
 
 class Reverse_Osmosis_Plugin:
     '''Simulation of purified water production using reverse osmosis.

@@ -1,5 +1,87 @@
 from pyH2A.Utilities.input_modification import insert, process_table
 
+input_dict = {
+    "Technical Operating Parameters and Specifications": {
+		"Plant design capacity": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "mass / time",
+			},
+			"optional": False,
+			"description": "Plant design capacity in mass(product) / time."
+		},
+		"Operating capacity factor": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, 1),
+			},
+			"Unit": {
+				"dimension": "dimensionless",
+			},
+			"optional": False,
+			"description": "Operating capacity factor value between 0 and 1 or percentage value."
+		},
+		"Maximum output at gate": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "mass / time",
+			},
+			"optional": True,
+			"description": "Maximum output at gate. If not specified it defaults to `Plant Design Capacity`."
+		},
+		"New plant design capacity": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "mass / time",
+			},
+			"optional": True,
+			"description": "New plant design capacity in mass(product) / time to calculate scaling, which overwrites possible Scaling Ratio."
+		},
+		"Scaling ratio": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None), 
+			},
+			"Unit": {
+				"dimension": "dimensionless",
+			},
+			"optional": True,
+			"description": "Scaling ratio which is multiplied by current plant design capacity to obtain scaled plant size. Overwritten by `New Plant Design Capacity` if that is specified."
+		},
+		"Capital scaling exponent": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "dimensionless",
+			},
+			"optional": True,
+			"description": 	"Exponent to calculate capital scaling factor. Defaults to 0.78 if not specified."
+		},
+		"Labor scaling exponent": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "dimensionless",
+			},
+			"optional": True,
+			"description": 	"Exponent to calculcate labor scaling factor. Defaults to 0.25 if not specified."
+		},
+	},	
+}
+
 class Production_Scaling_Plugin:
 	'''Calculation of plant output and potential scaling.
 
