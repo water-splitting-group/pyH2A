@@ -1,6 +1,70 @@
 import numpy as np
 from pyH2A.Utilities.input_modification import insert, process_table
 
+input_dict = {
+	"Technical Operating Parameters and Specifications": {
+		"Plant modules": {
+			"Value": {
+				"type": {float, int,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "dimensionless",
+			},
+			"optional": False,
+			"description": "Number of plant modules considered in this calculation."
+		},
+	},
+	"Non-Depreciable Capital Costs": {
+		"Solar collection area": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "area",
+			},
+			"optional": False,
+			"description": "Solar collection area for one plant module."
+		},
+	},
+	"Fixed Operating Costs": {
+		"Solar collection area per staffer": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "dimensionless / area",
+			},
+			"optional": False,
+			"description": "Solar collection area that can be covered by one staffer."
+		},
+		"Number of 8-hour shifts": {
+			"Value": {
+				"type": {float, int,},
+				"bounds": (1, 3),
+			},
+			"Unit": {
+				"dimension": "dimensionless",
+			},
+			"optional": False,
+			"description": "Number of 8-hour shifts (typically 3 for 24h operation)."
+		},
+		"Number of supervisors": {
+			"Value": {
+				"type": {float, int,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "dimensionless",
+			},
+			"optional": False,
+			"description": "Number of shift supervisors."
+		},
+	},
+}
+
 class Multiple_Modules_Plugin:
 	''' Simulating mutliple plant modules which are operated together, assuming that only labor cost is reduced. 
 	Calculation of required labor to operate all modules, scaling down labor requirement to one module for subsequent calculations.

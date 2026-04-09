@@ -1,7 +1,86 @@
 import numpy as np
 from functools import lru_cache
-
 from pyH2A.Utilities.input_modification import insert, process_table, read_textfile, file_import
+
+input_dict = {
+	"Hourly Irradiation": {		
+		"File": {
+			"Value": {	
+				"type": {str,},
+			},
+			"optional": False,
+			"description": "Path to a `.csv` file containing hourly irradiance data"
+		},
+	},
+	"Irradiance Area Parameters": {	
+		"Module tilt": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, np.pi / 2),
+			},
+			"Unit": {
+				"dimension": "angle",
+			},
+			"optional": False,
+			"description": "Tilt of irradiated module."
+		},
+		"Array azimuth": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, np.pi),
+			},
+			"Unit": {
+				"dimension": "angle",
+			},
+			"optional": False,
+			"description": "Azimuth angle of irradiated module."
+		},
+		"Nominal operating temperature": {
+			"Value": {
+				"type": {float,},
+				"bounds": (250, 500),
+			},
+			"Unit": {
+				"dimension": "dimensionless / temperature",
+			},
+			"optional": False,
+			"description": "Nominal operating temperature of irradiated module."
+		},
+		"Mismatch derating": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, 1), 
+			},
+			"Unit": {
+				"dimension": "dimensionless",
+			},
+			"optional": False,
+			"description": "Derating value due to mismatch (percentage or value between 0 and 1)."
+		},
+		"Dirt derating": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, 1), 
+			},
+			"Unit": {
+				"dimension": "dimensionless",
+			},
+			"optional": False,
+			"description": "Derating value due to dirt buildup (percentage or value between 0 and 1)."
+		},
+		"Temperature coefficient": {
+			"Value": {
+				"type": {float,},
+				"bounds": (-0.1, 0), 
+			},
+			"Unit": {
+				"dimension": "temperature",
+			},
+			"optional": False,
+			"description": "Performance decrease of irradiated module per degree increase."
+		},
+	},
+}
 
 class Hourly_Irradiation_Plugin:
 	'''Calculation of hourly and mean daily irradiation data with different module configurations.

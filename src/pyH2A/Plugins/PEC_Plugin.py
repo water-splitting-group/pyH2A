@@ -2,6 +2,129 @@ import numpy as np
 from pyH2A.Utilities.Energy_Conversion import Energy, kWh, eV
 from pyH2A.Utilities.input_modification import insert, process_table
 
+input_dict = {
+	"Technical Operating Parameters and Specifications": {
+		"Design output per Day": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "mass",
+			},
+			"optional": False,
+			"description": "Design output in mass per day."
+		},
+	},
+	"PEC Cells": {
+		"Cell cost": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "currency / area",
+			},
+			"optional": False,
+			"description": "Cost of PEC cells."
+		},
+		"Lifetime": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "time",
+			},
+			"optional": False,
+			"description": "Lifetime of PEC cells before replacement is required."
+		},
+		"Length": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "length",
+			},
+			"optional": False,
+			"description": "Length of single PEC cell."
+		},
+		"Width": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "length",
+			},
+			"optional": False,
+			"description": "Width of single PEC cell."
+		}
+	},
+	"Land Area Requirement": {
+		"Cell angle": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, np.pi / 2), 
+			},
+			"Unit": {
+				"dimension": "angle",
+			},
+			"optional": False,
+			"description": "Angle of PEC cells from the ground."
+		},
+		"South spacing": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "length",
+			},
+			"optional": False,
+			"description": "South spacing of PEC cells."
+		},
+		"East/West spacing": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "length",
+			},
+			"optional": False,
+			"description": "East/West Spacing of PEC cells."
+		}
+	},
+	"Solar-to-Hydrogen Efficiency": {
+		"STH": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, 1),
+			},
+			"Unit": {
+				"dimension": "dimensionless", 
+			},
+			"optional": False,
+			"description": "Solar-to-hydrogen efficiency in percentage or as a value between 0 and 1."
+		}
+	},
+	"Solar Input": {
+		"Mean solar input": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "power / area",
+			},
+			"optional": False,
+			"description": "Mean solar input in power / area and yearly average of solar input."
+		}
+	}
+}
+
 class PEC_Plugin:
 	'''Simulating H2 production using photoelectrochemical water splitting.
 
@@ -27,9 +150,6 @@ class PEC_Plugin:
 		Solar-to-hydrogen efficiency in percentage or as a value between 0 and 1.
 	Solar Input > Mean solar input (kWh/m2/day) > Value : float
 		Mean solar input in kWh/m2/day, ``process_table()`` is used.
-	Solar Concentrator > Concentration Factor > Value : float, optional
-		Concentration factor created by solar concentration module, which is used in combination
-		with PEC cells. If "Solar Concentrator" is in dcf.inp, ``process_table()`` is used.
 
 	Returns
 	-------
