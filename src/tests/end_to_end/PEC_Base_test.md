@@ -16,17 +16,17 @@
 
 # Technical Operating Parameters and Specifications
 
-| Name                      | Value | Unit         | Path | Full Name                                                         |
-| ------------------------- | ----- | ------------ | ---- | ----------------------------------------------------------------- |
-| Operating Capacity Factor | 90.0% |              |      |
-| Plant Design Capacity     | 1,000 | kg/day       |      |
-| Plant Modules             | 10    |              | None | 10 identical modules, only affects labor requirement calculation. |
+| Name                      | Value | Unit   | Path | Full Name                                                         |
+| ------------------------- | ----- | ------ | ---- | ----------------------------------------------------------------- |
+| Operating Capacity Factor | 0.90  |        |      |
+| Plant Design Capacity     | 1,000 | kg/day |      |
+| Plant Modules             | 10    |        | None | 10 identical modules, only affects labor requirement calculation. |
 
 # Construction
 
 | Name             | Full Name                                      | Value | Unit |
 | ---------------- | ---------------------------------------------- | ----- | ---- |
-| capital perc 1st | % of Capital Spent in 1st Year of Construction | 100%  |
+| capital perc 1st | % of Capital Spent in 1st Year of Construction | 1.00  |
 
 # Hourly Irradiation
 
@@ -36,14 +36,14 @@
 
 # Irradiance Area Parameters
 
-| Name                          | Value | Unit       | Comment                                                                                   |
-| ----------------------------- | ----- | ---------- | ----------------------------------------------------------------------------------------- |
-| Module Tilt                   | 0     | degree     | Two axis tracking, module tilt and array azimuth change are not relevant.                 |
-| Array Azimuth                 | 0     | degree     |
-| Nominal Operating Temperature | 45    | Celsiu     | Temperature is stabilized even under solar concentration through intrinsic water cooling. |
-| Mismatch Derating             | 98%   |            |
-| Dirt Derating                 | 98%   |            | Values taken from Chang 2020, analogues to silicon PV.                                    |
-| Temperature Coefficient       | 0.0%  | Celsius    | No assumed efficiency loss with higher temperature.                                       |
+| Name                          | Value | Unit    | Comment                                                                                   |
+| ----------------------------- | ----- | ------- | ----------------------------------------------------------------------------------------- |
+| Module Tilt                   | 0     | degree  | Two axis tracking, module tilt and array azimuth change are not relevant.                 |
+| Array Azimuth                 | 0     | degree  |
+| Nominal Operating Temperature | 45    | Celsiu  | Temperature is stabilized even under solar concentration through intrinsic water cooling. |
+| Mismatch Derating             | 0.98  |         |
+| Dirt Derating                 | 0.98  |         | Values taken from Chang 2020, analogues to silicon PV.                                    |
+| Temperature Coefficient       | 0.0%  | Celsius | No assumed efficiency loss with higher temperature.                                       |
 
 # Solar Input
 
@@ -55,7 +55,7 @@
 
 | Name | Value | Unit | Comment                                                                                                                                                                                                                                                                          |
 | ---- | ----- | ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| STH  | 14.0% |      | Reference Kistler 2020, 14% STH (Note: vapor-fed device used in reference, techno-economic analysis assumes liquid phase design, no solar concentration); alternative reference: Idriss 2020, 18% STH at 15 suns, 13% STH at 200 suns (triple junction III-V cell based system). |
+| STH  | 0.14  |      | Reference Kistler 2020, 14% STH (Note: vapor-fed device used in reference, techno-economic analysis assumes liquid phase design, no solar concentration); alternative reference: Idriss 2020, 18% STH at 15 suns, 13% STH at 200 suns (triple junction III-V cell based system). |
 
 # PEC Cells
 
@@ -124,18 +124,18 @@
 | --------------------------- | ------------------------------------------------------------- | ----- | ------- | --------------------- |
 | Piping Installation         | PEC Cells > Number > Value                                    | 5.65  | $/cell  | Based on Pinaud 2013. |
 | Reactor Installation        | Non-Depreciable Capital Costs > Solar Collection Area > Value | 22.0  | $/m2 of |
-| Pump Installation           | Direct Capital Costs - Water Management > Water pump > Value  | 30%   |         |
-| Gas processing installation | Direct Capital Costs - Gas Processing > Summed Total > Value  | 30%   |         |
-| Control system installation | Direct Capital Costs - Control System > Summed Total > Value  | 30%   |         |
+| Pump Installation           | Direct Capital Costs - Water Management > Water pump > Value  | 0.30  |         |
+| Gas processing installation | Direct Capital Costs - Gas Processing > Summed Total > Value  | 0.30  |         |
+| Control system installation | Direct Capital Costs - Control System > Summed Total > Value  | 0.30  |         |
 
 # Indirect Capital Costs
 
 | Name                      | Path                                 | Value | Unit | Comment               |
 | ------------------------- | ------------------------------------ | ----- | ---- | --------------------- |
-| Engineering and Design    | Direct Capital Costs > Total > Value | 7%    |      | Based on Pinaud 2013. |
-| Process Contingency       | Direct Capital Costs > Total > Value | 20.0% |      |
-| Up-Front Permitting Costs | Direct Capital Costs > Total > Value | 0.5%  |      |
-| Site Preparation          | Direct Capital Costs > Total > Value | 1%    |      |
+| Engineering and Design    | Direct Capital Costs > Total > Value | 0.07  |      | Based on Pinaud 2013. |
+| Process Contingency       | Direct Capital Costs > Total > Value | 0.20  |      |
+| Up-Front Permitting Costs | Direct Capital Costs > Total > Value | 0.005 |      |
+| Site Preparation          | Direct Capital Costs > Total > Value | 0.01  |      |
 
 # Non-Depreciable Capital Costs
 
@@ -156,20 +156,20 @@
 
 | Name         | Full Name                          | Path                                       | Value  | Unit   | Comment               |
 | ------------ | ---------------------------------- | ------------------------------------------ | ------ | ------ | --------------------- |
-| g&a          | G&A rate                           | Fixed Operating Costs > Labor Cost > Value | 20.0%  |        | Based on Pinaud 2013. |
-| property tax | Property tax and insurance rate    | Total Capital Costs > Inflated > Value     | 2.0%   |        |
-| repairs      | Production Maintenance and Repairs | Direct Capital Costs > Total > Value       | 0.5%   |        |
+| g&a          | G&A rate                           | Fixed Operating Costs > Labor Cost > Value | 0.20   |        | Based on Pinaud 2013. |
+| property tax | Property tax and insurance rate    | Total Capital Costs > Inflated > Value     | 0.02   |        |
+| repairs      | Production Maintenance and Repairs | Direct Capital Costs > Total > Value       | 0.005  |        |
 | fees         | Licensing, Permits and Fees        | None                                       | 1000.0 | $/year |
 
 # Utilities
 
-| Name                   | Usage per kg H2 | Usage Unit | Cost                                                                                | Cost Unit  | Price Conversion Factor | Price Conversion Factor Unit | Comment                                                                                                       |
-| ---------------------- | --------------- | ---------- | ----------------------------------------------------------------------------------- | ---------- | ----------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| Industrial Electricity | 0.16            | kWh/kg H2  | pyH2A.Lookup_Tables.Utility_Cost~Industrial_Electricity_AEO_2017_Reference_Case.csv | GJ         | 0.0036                  | GJ/kWh                       | Electricity usage based on Pinaud 2013.                                                                       |
-| Process Water          | 2.369           | gal/kg H2  | 0.0023749510945008                                                                  | $/gal      | 1.                      | None                         | Seawater reverse osmosis cost ca. 0.6 $/m3 (equal to ca. 0.0023 $/gal), based on Kibria 2021 and Driess 2021. |
+| Name                   | Usage per kg H2 | Usage Unit | Cost                                                                                | Cost Unit | Price Conversion Factor | Price Conversion Factor Unit | Comment                                                                                                       |
+| ---------------------- | --------------- | ---------- | ----------------------------------------------------------------------------------- | --------- | ----------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Industrial Electricity | 0.16            | kWh/kg H2  | pyH2A.Lookup_Tables.Utility_Cost~Industrial_Electricity_AEO_2017_Reference_Case.csv | GJ        | 0.0036                  | GJ/kWh                       | Electricity usage based on Pinaud 2013.                                                                       |
+| Process Water          | 2.369           | gal/kg H2  | 0.0023749510945008                                                                  | $/gal     | 1.                      | None                         | Seawater reverse osmosis cost ca. 0.6 $/m3 (equal to ca. 0.0023 $/gal), based on Kibria 2021 and Driess 2021. |
 
 # Unplanned Replacement
 
 | Name                  | Full Name                                       | Path                                         | Value | Unit | Comment               |
 | --------------------- | ----------------------------------------------- | -------------------------------------------- | ----- | ---- | --------------------- |
-| unplanned replacement | Total Unplanned Replacement Capital Cost Factor | Depreciable Capital Costs > Inflated > Value | 0.5%  |      | Based on Pinaud 2013. |
+| unplanned replacement | Total Unplanned Replacement Capital Cost Factor | Depreciable Capital Costs > Inflated > Value | 0.005 |      | Based on Pinaud 2013. |
