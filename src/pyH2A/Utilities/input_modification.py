@@ -368,8 +368,11 @@ def convert_input_to_dictionary(file, default = 'pyH2A.Config~Defaults.md', merg
 		input = merge(default_input, input)
 	
 	table = input.get('Base input file')
+	if table is None:
+		return input
 	if not isinstance(table, dict):
 		raise ValueError(f'Expected "Base input file" table to be a dictionary, got {type(table)}')
+
 	for _, row in list(table.items()):
 		if not isinstance(row, dict):
 			raise ValueError(f'Expected row in "Base input file" table to be a dictionary, got {type(row)}')
@@ -377,6 +380,9 @@ def convert_input_to_dictionary(file, default = 'pyH2A.Config~Defaults.md', merg
 		if not isinstance(reference, str):
 			raise ValueError(f'Expected "Value" in "Base input file" table to be a string, got {type(reference)}')
 		reference = reference.strip(' ')
+		if reference == '':
+			raise ValueError('Empty file reference in "Base input file" table')
+
 		referenced_input = convert_file_to_dictionary(file_import(reference, mode='r'))
 		input = merge(input, referenced_input)
 	
