@@ -66,17 +66,20 @@ class TestMergeArbitaryInputFilesPositive:
         assert merged['Economics']['CapEx']['Value'] == 120
         assert merged['Economics']['OpEx']['Value'] == 55
 
-    def test_convert_input_to_dictionary_without_base_table_raises_value_error(self):
-        """Input without Base input file table should raise a validation error."""
+    def test_convert_input_to_dictionary_without_base_table_returns_unchanged(self):
+        """Input without Base input file table should remain unchanged."""
+        file_input = self.test_data_dir / 'override_level_1.md'
+        with Path(file_input).open(mode='r') as handle:
+            expected = _convert_file_to_dictionary_with_pipe_normalization(
+                handle)
+
         with self._working_directory(self.test_data_dir):
-            with pytest.raises(
-                ValueError,
-                match='Expected "Base input file" table to be a dictionary',
-            ):
-                input_modification.convert_input_to_dictionary(
-                    'override_level_1.md',
-                    merge_default=False,
-                )
+            merged = input_modification.convert_input_to_dictionary(
+                'override_level_1.md',
+                merge_default=False,
+            )
+
+        assert merged == expected
 
 
 class TestMergeArbitaryInputFilesNegative:
@@ -154,6 +157,27 @@ class TestMergeArbitaryInputFilesNegative:
             with pytest.raises(
                 ValueError,
                 match='Expected "Value" in "Base input file" table to be a string',
+            ):
+                input_modification.convert_input_to_dictionary(
+                    'base_input.md',
+                    merge_default=False,
+                )
+
+    def test_convert_input_to_dictionary_empty_reference_raises_value_error(
+        self,
+        monkeypatch,
+    ):
+        """Empty file references in Base input file rows should be rejected."""
+        monkeypatch.setattr(
+            input_modification,
+            'convert_file_to_dictionary',
+            lambda _: {'Base input file': {'Layer 1': {'Value': '   '}}},
+        )
+
+        with self._working_directory(self.test_data_dir):
+            with pytest.raises(
+                ValueError,
+                match='Empty file reference in "Base input file" table',
             ):
                 input_modification.convert_input_to_dictionary(
                     'base_input.md',
