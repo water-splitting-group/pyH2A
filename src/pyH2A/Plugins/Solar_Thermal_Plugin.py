@@ -1,6 +1,62 @@
 from pyH2A.Utilities.Energy_Conversion import Energy, kWh, eV
 from pyH2A.Utilities.input_modification import insert, process_table
 
+input_dict = {
+	"Technical Operating Parameters and Specifications": {
+		"Design output per day": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "mass / time",	
+				"enforced_unit": "kg / day",
+			},
+			"optional": False,
+			"description": "Design output of hydrogen production plant per day."
+		},
+	},	
+	"Solar-to-Hydrogen Efficiency": {
+		"STH": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, 1),	
+			},
+			"Unit": {
+				"dimension": "dimensionless",	
+			},
+			"optional": False,
+			"description": "Solar-to-Hydrogen Efficiency of thermal water splitting process. Percentage or value between 0 and 1."
+		},
+	},
+	"Solar Input": {
+		"Mean solar input": {	
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),	
+			},
+			"Unit": {
+				"dimension": "power / area",	
+			},
+			"optional": False,
+			"description": "Mean solar input."
+		},
+	},
+	"Non-Depreciable Capital Costs": {
+		"Additional land area": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),	
+			},
+			"Unit": {
+				"dimension": "dimensionless",	
+			},
+			"optional": False,
+			"description": "Additional land area required. Percentage or value > 0. Calculated as: (1 + Addtional Land Area) * solar collection area."
+		},
+	},
+}
+
 class Solar_Thermal_Plugin:
 	'''Simulation of hydrogen production using solar thermal water splitting.
 

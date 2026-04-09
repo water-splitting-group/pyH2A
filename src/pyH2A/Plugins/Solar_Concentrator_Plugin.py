@@ -1,6 +1,83 @@
 import numpy as np
 from pyH2A.Utilities.input_modification import insert, process_table
 
+input_dict = {
+	"Solar Concentrator": {
+		"Concentration factor": {
+			"Value": {
+				"type": {float,},
+				"bounds": (1, None),
+			},
+			"Unit": {
+				"dimension": "dimensionless",
+			},
+			"optional": False,	
+			"description": "Concentration factor of solar concentration, value > 1."
+		},
+		"Cost": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},	
+			"Unit": {
+				"dimension": "currency / area",
+			},
+			"optional": False,
+			"description": "Cost of solar concentrator in currency / area."
+		},
+	},
+	"PEC Cells": {
+		"Number": {
+			"Value": {
+				"type": {float,},
+				"bounds": (1, None),
+			},	
+			"Unit": {
+				"dimension": "dimensionless",
+			},
+			"optional": False,
+			"description": "Number of PEC cells required for design H2 production capacity."
+		},
+	},
+	"Land Area Requirement": {
+		"South spacing": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "length",	
+			},
+			"optional": False,
+			"description": "South spacing of solar concentrators."
+		},
+		"East/West spacing": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "length",	
+			},
+			"optional": False,
+			"description": "East/West Spacing of solar concentrators."
+		},
+	},
+	"Non-Depreciable Capital Costs": {
+		"Solar collection area": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "area",
+			},
+			"optional": False,
+			"description": "Total solar collection area."
+		},
+	},
+}
+
 class Solar_Concentrator_Plugin:
 	'''Simulation of solar concentration (used in combination with PEC cells).
 

@@ -2,6 +2,64 @@ from pyH2A.Utilities.input_modification import insert, sum_all_tables, process_t
 import pyH2A.Utilities.find_nearest as fn
 import numpy as np
 
+input_dict = {	
+	"Technical Operating Parameters and Specifications": {
+		"Output per Year": {
+			"Value": {
+				"type": {float},
+				"bounds": (0, None)
+			},
+			"Unit": {
+				"dimension": "mass / time"
+			},
+			"optional": False,
+			"description": "Yearly output taking operating capacity factor into account, in (kg of H2)/year."
+		}
+	},
+	"Utilities": {
+		"<...>": {
+			"Cost_Value": {
+				"type": {float, str, np.ndarray},
+				"bounds": (0, None)
+			},
+			"Usage_Value": {
+				"type": {float},
+				"bounds": (0, None)
+			},
+			"Price Conversion Factor Value": {
+				"type": {float},
+				"bounds": (0, None)
+			},
+			"Price Conversion Factor Unit": {
+				"dimension": "dimensionless"
+			},
+			"Path_Value": {
+				"type": {str},
+				"bounds": None
+			},
+			"Usage Path Value": {
+				"type": {str},
+				"bounds": None
+			},
+			"optional": True,
+			"description": "Utilities are specified by specifying the cost of a given utility (e.g. $/kWh(electricity) and specifying the usage of the utility per mass of product (e.g. kWh(electricity)/kg(H2). The cost of the utility may be either a float, a ndarray with the same length as `dcf.inflation_correction` or a textfile containing cost values (cost values have to be in second column). For cost the path key is Path and for usage the path key is Usage Path"
+		}
+	},
+	"<...> Other Variable Operating Cost <...>": {
+		"<...>": {
+			"Value": {
+				"type": {float},
+				"bounds": (0, None)
+			},
+			"Unit": {
+				"dimension": "currency"
+			},
+			"optional": True,
+			"description": "Value for variable operating cost. `sum_all_tables()` is used for summing all tables in this group."
+		}
+	}
+}
+
 class Variable_Operating_Cost_Plugin:
 	'''Calculation of variable operating costs.
 

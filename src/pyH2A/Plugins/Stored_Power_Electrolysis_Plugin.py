@@ -2,6 +2,114 @@ from pyH2A.Utilities.input_modification import insert, process_table, daily_to_y
 from pyH2A.Plugins.Electrolyzer_Plugin import calculate_electrolyzer_power_demand, calculate_hydrogen_production, calculate_stack_replacement
 import numpy as np
 
+input_dict = {
+    "Electrolysis Using Stored Power": {
+        "Fraction of stored power used for electrolysis": {
+            "Value": {
+                "type": {float},
+                "bounds": (0, 1) 
+            },
+            "Unit": {
+                "dimension": "dimensionless"
+            },
+            "optional": False,
+            "description": "Fraction of stored power used for electrolysis."
+        }
+    },
+    "Electrolyzer": {
+        "Nominal power": {
+            "Value": {
+                "type": {float},
+                "bounds": (0, None)
+            },
+            "Unit": {
+                "dimension": "power"
+            },
+            "optional": False,
+            "description": "Nominal power of electrolyzer."
+        },
+        "Power requirement increase per year": {
+            "Value": {
+                "type": {float},
+                "bounds": (0, None)
+            },
+            "Unit": {
+                "dimension": "dimensionless"
+            },
+            "optional": False,
+            "description": "Electrolyzer power requirement increase per year due to stack degradation. Percentage or value > 0. Increase calculated as: (1 + increase per year) ^ year."
+        },
+        "Minimum capacity": {
+            "Value": {
+                "type": {float},
+                "bounds": (0, 1)
+            },
+            "Unit": {
+                "dimension": "dimensionless"
+            },
+            "optional": False,
+            "description": "Minimum capacity required for electrolyzer operation. Percentage or value between 0 and 1."
+        },
+        "Hydrogen yield per unit energy": {
+            "Value": {
+                "type": {float},
+                "bounds": (0, None)
+            },
+            "Unit": {
+                "dimension": "mass / energy"
+            },
+            "optional": False,
+            "description": "Electrical conversion efficiency of electrolyzer in mass(H2)/energy(electrical)."
+        },
+        "Replacement time": {
+            "Value": {
+                "type": {float},
+                "bounds": (0, None)
+            },
+            "Unit": {
+                "dimension": "time"
+            },
+            "optional": False,
+            "description": "Operating time in hours before stack replacement of electrolyzer is required."
+        },
+        "Yearly operation data": {
+            "Value": {
+                "type": {np.ndarray},
+                "bounds": (0, None)
+            },
+            "Unit": {
+                "dimension": "(dimensionless, mass, dimensionless)"
+            },
+            "optional": False,
+            "description": "Yearly operation data of electrolyzer in format."
+        },
+        "H2 production (yearly)": {
+            "Value": {
+                "type": {np.ndarray},
+                "bounds": (0, None)
+            },
+            "Unit": {
+                "dimension": "mass"
+            },
+            "optional": False,
+            "description": "Yearly hydrogen production."
+        },
+    },
+    "Power Generation": {
+        "Stored energy (daily)": {
+            "Value": {
+                "type": {dict,},
+                "bounds": (0, None)
+            },
+            "Unit": {
+                "dimension": "energy"
+            },
+            "optional": False,
+            "description": "Energy stored in battery daily (dictionary of years)."
+        }
+    },
+}
+
 class Stored_Power_Electrolysis_Plugin:
     '''Simulation of hydrogen production using electrolysis.
 
