@@ -51,11 +51,6 @@ class TestMergeArbitaryInputFilesPositive:
         finally:
             os.chdir(previous_cwd)
 
-    def _load_dictionary(self, file_path):
-        """Load markdown fixture and normalize pipe-wrapped rows for parser compatibility."""
-        with Path(file_path).open(mode='r') as handle:
-            return _convert_file_to_dictionary_with_pipe_normalization(handle)
-
     def test_convert_input_to_dictionary_merges_references_in_list_order(self):
         """Later listed references should override earlier ones for first-level merge."""
         with self._working_directory(self.test_data_dir):
@@ -71,18 +66,17 @@ class TestMergeArbitaryInputFilesPositive:
         assert merged['Economics']['CapEx']['Value'] == 120
         assert merged['Economics']['OpEx']['Value'] == 55
 
-    def test_convert_input_to_dictionary_returns_same_data_without_base_table(self):
-        """Input without Base input file table should remain unchanged."""
-        file_input = self.test_data_dir / 'override_level_1.md'
-        expected = self._load_dictionary(file_input)
-
+    def test_convert_input_to_dictionary_without_base_table_raises_value_error(self):
+        """Input without Base input file table should raise a validation error."""
         with self._working_directory(self.test_data_dir):
-            merged = input_modification.convert_input_to_dictionary(
-                'override_level_1.md',
-                merge_default=False,
-            )
-
-        assert merged == expected
+            with pytest.raises(
+                ValueError,
+                match='Expected "Base input file" table to be a dictionary',
+            ):
+                input_modification.convert_input_to_dictionary(
+                    'override_level_1.md',
+                    merge_default=False,
+                )
 
 
 class TestMergeArbitaryInputFilesNegative:
@@ -103,11 +97,6 @@ class TestMergeArbitaryInputFilesNegative:
         finally:
             os.chdir(previous_cwd)
 
-    def _load_dictionary(self, file_path):
-        """Load markdown fixture and normalize pipe-wrapped rows for parser compatibility."""
-        with Path(file_path).open(mode='r') as handle:
-            return _convert_file_to_dictionary_with_pipe_normalization(handle)
-
     def test_convert_input_to_dictionary_missing_file_raises(self):
         """Test that missing referenced files surface a file-not-found error."""
         with pytest.raises(FileNotFoundError):
@@ -127,6 +116,49 @@ class TestMergeArbitaryInputFilesNegative:
 
         assert merged['A']['Value']['Value'] == 1
         assert merged['B']['Value']['Value'] == 2
+
+    def test_convert_input_to_dictionary_invalid_base_row_raises_value_error(
+        self,
+        monkeypatch,
+    ):
+        """Rows in Base input file table must be dictionaries."""
+        monkeypatch.setattr(
+            input_modification,
+            'convert_file_to_dictionary',
+            lambda _: {'Base input file': {
+                'Layer 1': './override_level_1.md'}},
+        )
+
+        with self._working_directory(self.test_data_dir):
+            with pytest.raises(
+                ValueError,
+                match='Expected row in "Base input file" table to be a dictionary',
+            ):
+                input_modification.convert_input_to_dictionary(
+                    'base_input.md',
+                    merge_default=False,
+                )
+
+    def test_convert_input_to_dictionary_non_string_reference_raises_value_error(
+        self,
+        monkeypatch,
+    ):
+        """The Value field in Base input file rows must be a string path."""
+        monkeypatch.setattr(
+            input_modification,
+            'convert_file_to_dictionary',
+            lambda _: {'Base input file': {'Layer 1': {'Value': 1}}},
+        )
+
+        with self._working_directory(self.test_data_dir):
+            with pytest.raises(
+                ValueError,
+                match='Expected "Value" in "Base input file" table to be a string',
+            ):
+                input_modification.convert_input_to_dictionary(
+                    'base_input.md',
+                    merge_default=False,
+                )
 
 
 if __name__ == '__main__':
