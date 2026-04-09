@@ -1,6 +1,72 @@
 from pyH2A.Utilities.input_modification import insert, process_table
 import numpy as np
 
+input_dict = {    
+    "Power Generation": {
+        "Available energy (daily)": {
+            "Value": {
+                "type": {dict,},
+                "bounds": (0, None),
+            },
+            "Unit": {
+                "dimension": "energy",
+            },                    
+            "optional": False,
+            "description": " Available energy, daily basis, dictionary of years."
+        },                      
+    },
+    
+    "Battery": {
+        "Design capacity": { 
+            "Value": {
+                "type": {float,},
+                "bounds": (0, None),
+            },
+            "Unit": {
+                "dimension": "energy",
+            },                    
+            "optional": False,
+            "description": "Full design capacity of battery."
+        },
+        
+        "Lowest discharge level": {
+            "Value": {
+                "type": {float,},
+                "bounds": (0, 1),
+            },
+            "Unit": {
+                "dimension": "dimensionless",
+            },                    
+            "optional": False,
+            "description": "Lowest level to which battery can be discharged."
+        },
+        
+        "Capacity loss per year": {
+            "Value": {
+                "type": {float,},
+                "bounds": (0, 1),
+            },
+            "Unit": {
+                "dimension": "dimensionless",
+            },                    
+            "optional": False,
+            "description": "Loss of capacity per year."
+        },
+        
+        "Round trip efficiency": {
+            "Value": {
+                "type": {float,},
+                "bounds": (0, 1),
+            },
+            "Unit": {
+                "dimension": "dimensionless",
+            },                    
+            "optional": False,
+            "description": "Round trip efficiency of battery."
+        },  
+    } 
+}
+
 class Battery_Plugin:
     '''Simulation of electricity storage using a battery.
     Simulation assumes that battery is charged and completely discharged every day.
