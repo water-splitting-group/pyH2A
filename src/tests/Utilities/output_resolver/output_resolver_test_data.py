@@ -7,6 +7,100 @@ from pyH2A.Utilities.input_modification output_resolver
 ureg = UnitRegistry()
 ureg.define('USD = [currency]')
 
+# Output schema (output equivalent to input_dict)
+output_dict = { 
+    'Power Generation': {
+        'Stored Energy (daily)': { # new middle key to insert
+            'Value': 'self.yearly_recovered_power',
+            'add_processed' : True,  # This is the default so shouldn't be needed anyway, but it doesn't harm to test the explicit specification of it
+            'insert_path' : True,            
+            'description': 'Electricity stored in battery daily (dictionary of years)',
+            'optional': False,            
+        }, 
+        'Available Energy (daily)': { # overwrite existing value
+            # From now on, I don't add 'add_processed' and 'insert_path' when they are true, it's the default so normally it'S unnecessary
+            'Value': 'self.yearly_unstored_power', 
+            'description': 'Available Electricity, daily basis, dictionary of years - energy which has not been stored in battery',
+            'optional': False,            
+        }        
+    }, 
+
+    '<...> Direct Capital Cost <...>': { # actually I'm confused about this one, the docstring says we insert [...] Direct Capital Cost [...] > Summed Total > Value, but I don't find such an insert. So I use it here for the test as an example anyway but in the capital cost plugin we might need to clarify it
+        'Summed Total': {
+            'Value': 'self.total',
+            'description': 'Summed total for each individual table in "Direct Capital Cost" group.', 
+            'optional': False,
+        }
+    }, 
+
+    'Direct Capital Costs': {
+        'Inflated': {
+            'Value': 'self.direct_inflated', # this one is not normally a self.XXX, but if we don't turn it into a self.XXX I suspect it won't work
+            'description': 'Total direct capital costs multiplied by combined inflator.', 
+            'optional': False,            
+        }
+    },    
+
+    'Technical Operating Parameters and Specifications': { 
+        'Plant design flowrate': {# I renamed the existing Plant Design Capacity (kg of H2/day)
+            'Value': 'self.h2_production', #originally there's a division by 365 that iswill require update in the plugin
+            'description': 'Plant design capacity expressed as a daily flowrate, calculated from installed electrolysis power capacity and hourly power generation data.', 
+            'optional': False,
+        },
+        'Scaling Ratio': { # optional
+            'Value': 'self.scaling_ratio', # isn't normally a "self"
+            'description': 'Returned if New Plant Design Capacity was specified.', 
+            'optional': True,            
+        }        
+    },  
+
+    'Scaling': { # this one is optional, and we actually don't insert any value (to check the ability of the output resolver to handle an optional value that is absent)
+        'Capital Scaling Factor': {
+            'Value': 'self.capital_scaling_factor',
+            'description': 'Returned if scaling is active (`Scaling Ratio` or `New Plant Design Capacity (kg of H2/day)` specified).', 
+            'optional': True,            
+        }
+    },
+
+    'Power Consumption': {
+        'Reverse Osmosis Consumption (yearly)': {
+            'Value': 'self.electricity_demand',
+            'Type': 'flexible', # no need to have the intermediate "options" key anymore: in the same way as we define here the inserted variables, we define directly the Type
+            'description': ' Electricity demand of reverse osmosis plant per year.',      
+            'optional': False,                   
+        }
+    },
+
+    'Reactor Baggies': {
+        'Number': {
+            'Value': 'self.baggie_number',
+            'description': 'Number of individual baggies required for design H2 production capacity', 
+            'optional': False,            
+        }
+    },    
+
+    'Planned Replacement': {
+        'Planned Replacement Baggie': {
+            'Cost_Value': 'self.baggies_cost',
+            'Frequency_Value': 'self.baggie_frequency',
+            'description': ' Replacement frequency and cost of baggies',             
+            'optional': False,                
+        }, 
+        'Planned Replacement Catalyst': {
+            'Frequency_Value': 'self.input_dict_resolved["Catalyst"]["Lifetime"]["Value"]', # interesting because in the existing version we insert something that should already be in the dictionary ('dcf.inp['Catalyst']['Lifetime']['Value']'), not a variable that results from a calculation
+                                                                                # rather than picking up the value from dcf.inp (as we currently do), it's better to now pick it up from the resolved dict so we know already it's "clean"        
+            'description': 'Replacement frequency of catalyst in years, identical to catalyst lifetime.', 
+            'optional': False,             
+        },           
+        'Electrolyzer Stack Replacement': {
+            'Frequency_Value': 'self.replacement_frequency',
+            'description': 'Frequency of electrolyzer stack replacements, calculated from replacement time and hourly irradiation data', 
+            'optional': False,             
+            'add_processed' : False,  # when add_processed and insert_path are different from the default value, the output resolver must read it from output_dict to inform the 'insert' method accordingly
+            'insert_path' : False
+        },            
+    },       
+}
 
 class DummyDCF:
     def __init__(self):
@@ -63,100 +157,6 @@ class DummyDCF:
 
 # we need a dummy plugin to contain the variables to insert
 class DummyPlugin:
-    # Output schema (output equivalent to input_dict)
-    output_dict = { 
-        'Power Generation': {
-            'Stored Energy (daily)': { # new middle key to insert
-                'Value': 'self.yearly_recovered_power',
-                'add_processed' : True,  # This is the default so shouldn't be needed anyway, but it doesn't harm to test the explicit specification of it
-                'insert_path' : True,            
-                'description': 'Electricity stored in battery daily (dictionary of years)',
-                'optional': False,            
-            }, 
-            'Available Energy (daily)': { # overwrite existing value
-                # From now on, I don't add 'add_processed' and 'insert_path' when they are true, it's the default so normally it'S unnecessary
-                'Value': 'self.yearly_unstored_power', 
-                'description': 'Available Electricity, daily basis, dictionary of years - energy which has not been stored in battery',
-                'optional': False,            
-            }        
-        }, 
-    
-        '<...> Direct Capital Cost <...>': { # actually I'm confused about this one, the docstring says we insert [...] Direct Capital Cost [...] > Summed Total > Value, but I don't find such an insert. So I use it here for the test as an example anyway but in the capital cost plugin we might need to clarify it
-            'Summed Total': {
-                'Value': 'self.total',
-                'description': 'Summed total for each individual table in "Direct Capital Cost" group.', 
-                'optional': False,
-            }
-        }, 
-
-        'Direct Capital Costs': {
-            'Inflated': {
-                'Value': 'self.direct_inflated', # this one is not normally a self.XXX, but if we don't turn it into a self.XXX I suspect it won't work
-                'description': 'Total direct capital costs multiplied by combined inflator.', 
-                'optional': False,            
-            }
-        },    
-
-        'Technical Operating Parameters and Specifications': { 
-            'Plant design flowrate': {# I renamed the existing Plant Design Capacity (kg of H2/day)
-                'Value': 'self.h2_production', #originally there's a division by 365 that iswill require update in the plugin
-                'description': 'Plant design capacity expressed as a daily flowrate, calculated from installed electrolysis power capacity and hourly power generation data.', 
-                'optional': False,
-            },
-            'Scaling Ratio': { # optional
-                'Value': 'self.scaling_ratio', # isn't normally a "self"
-                'description': 'Returned if New Plant Design Capacity was specified.', 
-                'optional': True,            
-            }        
-        },  
-
-        'Scaling': { # this one is optional, and we actually don't insert any value (to check the ability of the output resolver to handle an optional value that is absent)
-            'Capital Scaling Factor': {
-                'Value': 'self.capital_scaling_factor',
-                'description': 'Returned if scaling is active (`Scaling Ratio` or `New Plant Design Capacity (kg of H2/day)` specified).', 
-                'optional': True,            
-            }
-        },
-
-        'Power Consumption': {
-            'Reverse Osmosis Consumption (yearly)': {
-                'Value': 'self.electricity_demand',
-                'Type': 'flexible', # no need to have the intermediate "options" key anymore: in the same way as we define here the inserted variables, we define directly the Type
-                'description': ' Electricity demand of reverse osmosis plant per year.',      
-                'optional': False,                   
-            }
-        },
-
-        'Reactor Baggies': {
-            'Number': {
-                'Value': 'self.baggie_number',
-                'description': 'Number of individual baggies required for design H2 production capacity', 
-                'optional': False,            
-            }
-        },    
-
-        'Planned Replacement': {
-            'Planned Replacement Baggie': {
-                'Cost_Value': 'self.baggies_cost',
-                'Frequency_Value': 'self.baggie_frequency',
-                'description': ' Replacement frequency and cost of baggies',             
-                'optional': False,                
-            }, 
-            'Planned Replacement Catalyst': {
-                'Frequency_Value': 'self.input_dict_resolved["Catalyst"]["Lifetime"]["Value"]', # interesting because in the existing version we insert something that should already be in the dictionary ('dcf.inp['Catalyst']['Lifetime']['Value']'), not a variable that results from a calculation
-                                                                                    # rather than picking up the value from dcf.inp (as we currently do), it's better to now pick it up from the resolved dict so we know already it's "clean"        
-                'description': 'Replacement frequency of catalyst in years, identical to catalyst lifetime.', 
-                'optional': False,             
-            },           
-            'Electrolyzer Stack Replacement': {
-                'Frequency_Value': 'self.replacement_frequency',
-                'description': 'Frequency of electrolyzer stack replacements, calculated from replacement time and hourly irradiation data', 
-                'optional': False,             
-                'add_processed' : False,  # when add_processed and insert_path are different from the default value, the output resolver must read it from output_dict to inform the 'insert' method accordingly
-                'insert_path' : False
-            },            
-        },       
-    }
 
     def __init__(self, dcf, print_info):
         self.input_dict_resolved = { # sometimes we need to pick up some values from the resolved dict that exists in the plugin, that is created after the input_resolver calls
@@ -195,20 +195,8 @@ class DummyPlugin:
 
         self.scaling_ratio = ureg.Quantity(1.0, 'dimensionless')
 
-        output_resolver(dcf, 'Power Generation', 'Stored Energy (daily)', 'Value', self, print_info = print_info) # self contains output_dict normally, so inside output_resolver we will call it 
-        output_resolver(dcf, 'Power Generation', 'Available Energy (daily)', 'Value', self, print_info = print_info)
-        output_resolver(dcf, 'Dummy left Direct Capital Cost dummy right', 'Summed Total', 'Value', self, print_info = print_info)
-        output_resolver(dcf, 'Direct Capital Costs', 'Inflated', 'Value', self, print_info = print_info)
-        output_resolver(dcf, 'Technical Operating Parameters and Specifications', 'Plant design flowrate', 'Value', self, print_info = print_info)
-        output_resolver(dcf, 'Technical Operating Parameters and Specifications', 'Scaling Ratio', 'Value', self, print_info = print_info)
-        output_resolver(dcf, 'Scaling', 'Capital Scaling Factor', 'Value', self, print_info = print_info)
-        output_resolver(dcf, 'Power Consumption', 'Reverse Osmosis Consumption (yearly)', 'Value', self, print_info = print_info)
-        output_resolver(dcf, 'Reactor Baggies', 'Number', 'Value', self, print_info = print_info)
-        output_resolver(dcf, 'Planned Replacement', 'Planned Replacement Baggie', 'Cost_Value', self, print_info = print_info)
-        output_resolver(dcf, 'Planned Replacement', 'Planned Replacement Baggie', 'Frequency_Value', self, print_info = print_info)
-        output_resolver(dcf, 'Planned Replacement', 'Planned Replacement Catalyst', 'Frequency_Value', self, print_info = print_info)
-        output_resolver(dcf, 'Planned Replacement', 'Electrolyzer Stack Replacement', 'Frequency_Value', self, print_info = print_info)
-        
+        output_resolver(dcf.inp, self, output_dict) # we want to call the output_resolver once only
+
 
 
 # Expected final state, that is: what dcf.inp would look like after insertions
