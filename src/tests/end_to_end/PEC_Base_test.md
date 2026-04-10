@@ -40,10 +40,10 @@
 | ----------------------------- | ----- | ------- | ----------------------------------------------------------------------------------------- |
 | Module Tilt                   | 0     | degree  | Two axis tracking, module tilt and array azimuth change are not relevant.                 |
 | Array Azimuth                 | 0     | degree  |
-| Nominal Operating Temperature | 45    | Celsiu  | Temperature is stabilized even under solar concentration through intrinsic water cooling. |
+| Nominal Operating Temperature | 45    | celsius  | Temperature is stabilized even under solar concentration through intrinsic water cooling. |
 | Mismatch Derating             | 0.98  |         |
 | Dirt Derating                 | 0.98  |         | Values taken from Chang 2020, analogues to silicon PV.                                    |
-| Temperature Coefficient       | 0.0%  | Celsius | No assumed efficiency loss with higher temperature.                                       |
+| Temperature Coefficient       | 0.00  | celsius | No assumed efficiency loss with higher temperature.                                       |
 
 # Solar Input
 

@@ -28,9 +28,9 @@
 
 | Name                          | Value                                 | Unit    | Comment                                    |
 | ----------------------------- | ------------------------------------- | ------- | ------------------------------------------ |
-| Module Tilt                   | Hourly Irradiation > Latitude > Value | degrees | Module tilt equal to latitude of location. |
-| Array Azimuth                 | 180                                   | degrees |
-| Nominal Operating Temperature | 45                                    | Celsius |
+| Module Tilt                   | Hourly Irradiation > Latitude > Value | degree  | Module tilt equal to latitude of location. |
+| Array Azimuth                 | 180                                   | degree  |
+| Nominal Operating Temperature | 45                                    | celsius |
 | Mismatch Derating             | 0.98                                  |         | Based on Chang 2020.                       |
 | Dirt Derating                 | 0.98                                  |         | Based on Chang 2020.                       |
 | Temperature Coefficient       | -0.004                                |         | Based on Chang 2020.                       |

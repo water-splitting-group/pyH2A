@@ -27,7 +27,7 @@
 
 | Name             | Full Name                                      | Value | Unit |
 | ---------------- | ---------------------------------------------- | ----- | ---- |
-| capital perc 1st | % of Capital Spent in 1st Year of Construction | 100%  |
+| capital perc 1st | % of Capital Spent in 1st Year of Construction | 1.00  |
 
 # Hourly Irradiation
 
@@ -44,7 +44,7 @@
 | Nominal Operating Temperature | 45    | celsius |
 | Mismatch Derating             | 0.98  |         |
 | Dirt Derating                 | 0.98  |         | Values taken from Chang 2020, analogues to silicon PV.                 |
-| Temperature Coefficient       | 0.00  | celcius | No decrease on photocatalyst activity with higher temperature assumed. |
+| Temperature Coefficient       | 0.00  | celsius | No decrease on photocatalyst activity with higher temperature assumed. |
 
 # Solar Input
 
