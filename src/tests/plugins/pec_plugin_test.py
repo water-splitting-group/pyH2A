@@ -17,9 +17,7 @@ class DummyDCF:
         south_spacing,
         east_spacing,
         sth,
-        solar_input,
-        conc_factor,
-        
+        solar_input,        
     ):
         self.inp = {
             "Technical Operating Parameters and Specifications": {
@@ -42,9 +40,6 @@ class DummyDCF:
             "Solar Input": {
                 "Mean solar input (kWh/m2/day)": {"Value": solar_input}
             },
-            "Solar Concentrator": {
-                "Concentration Factor": {"Value": conc_factor},
-            },
         }
 
 
@@ -63,7 +58,6 @@ class DummyDCF:
                 "east_spacing": 17.3,
                 "sth": 0.14,
                 "solar_input": 5.0,
-                "conc_factor": 50,
             },
             "expected": {
                 "total_land_area_acres": 1321.7195315319523,

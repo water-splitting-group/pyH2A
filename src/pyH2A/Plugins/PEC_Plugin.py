@@ -168,9 +168,6 @@ class PEC_Plugin:
 	'''
 
 	def __init__(self, dcf, print_info):
-		if 'Solar Concentrator' in dcf.inp:
-			process_table(dcf.inp, 'Solar Concentrator', 'Value')
-
 		process_table(dcf.inp, 'Solar Input', 'Value')
 		process_table(dcf.inp, 'Solar-to-Hydrogen Efficiency', 'Value')
 		process_table(dcf.inp, 'PEC Cells', 'Value')
