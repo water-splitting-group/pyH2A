@@ -1,11 +1,11 @@
 import pprint as pp
 import numpy as np
 
-from pyH2A.Utilities.Input_resolver.check_functions import check_type, check_if_in_options, check_dimension, check_bounds
+from pyH2A.Utilities.Input_Resolver.check_functions import check_type, check_if_in_options, check_dimension, check_bounds
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 from pyH2A.Utilities.input_modification import process_input
 
-from tests.Utilities.input_resolver.input_resolver_test_data import DummyDCF, input_dict, input_dict_resolved
+from tests.Utilities.Input_Resolver.input_resolver_test_data import DummyDCF, input_dict, input_dict_resolved
 
 # This marker indicates either a table group (when in top_key) or a wildcard row (when in middle_key). 
 # It is used to indicate that the number of tables/rows is flexible and can be determined based on the content of dcf_class.inp

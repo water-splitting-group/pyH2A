@@ -1,7 +1,7 @@
 Input Resolver Guide
 ====================
 
-The ``pyH2A.Utilities.Input_resolver.input_resolver`` pipeline provides an orchestrated subsystem exclusively designed around securely validating nested configurations within pyH2A inputs. It ensures that the model information entered by the user matches the physical types, bounds, and dimensions expected by the internal simulation modules.
+The ``pyH2A.Utilities.Input_Resolver.input_resolver`` pipeline provides an orchestrated subsystem exclusively designed around securely validating nested configurations within pyH2A inputs. It ensures that the model information entered by the user matches the physical types, bounds, and dimensions expected by the internal simulation modules.
 
 Overview
 --------

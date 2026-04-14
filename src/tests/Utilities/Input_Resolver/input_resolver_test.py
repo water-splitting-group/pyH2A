@@ -1,10 +1,10 @@
 import pytest
 import numpy as np
 
-from pyH2A.Utilities.Input_resolver.input_resolver import input_resolver_function
+from pyH2A.Utilities.Input_Resolver.input_resolver import input_resolver_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
-from tests.Utilities.input_resolver.input_resolver_test_data import DummyDCF, input_dict, input_dict_resolved
+from tests.Utilities.Input_Resolver.input_resolver_test_data import DummyDCF, input_dict, input_dict_resolved
 
 
 def check_dicts(actual, expected, tolerance=1e-12, path=""):
