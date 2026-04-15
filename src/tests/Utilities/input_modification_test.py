@@ -55,7 +55,7 @@ class TestMergeArbitaryInputFilesPositive:
         """Later listed references should override earlier ones for first-level merge."""
         with self._working_directory(self.test_data_dir):
             merged = input_modification.convert_input_to_dictionary(
-                'base_input.md',
+                'override_level_2.md',
                 merge_default=False,
             )
 
@@ -138,7 +138,7 @@ class TestMergeArbitaryInputFilesNegative:
                 match='Expected row in "Base input file" table to be a dictionary',
             ):
                 input_modification.convert_input_to_dictionary(
-                    'base_input.md',
+                    'override_level_2.md',
                     merge_default=False,
                 )
 
@@ -159,7 +159,7 @@ class TestMergeArbitaryInputFilesNegative:
                 match='Expected "Value" in "Base input file" table to be a string',
             ):
                 input_modification.convert_input_to_dictionary(
-                    'base_input.md',
+                    'override_level_2.md',
                     merge_default=False,
                 )
 
@@ -180,7 +180,7 @@ class TestMergeArbitaryInputFilesNegative:
                 match='Empty file reference in "Base input file" table',
             ):
                 input_modification.convert_input_to_dictionary(
-                    'base_input.md',
+                    'override_level_2.md',
                     merge_default=False,
                 )
 

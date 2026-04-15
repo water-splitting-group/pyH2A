@@ -331,63 +331,21 @@ def merge(a, b, path=None, update=True):
 
 
 def convert_input_to_dictionary(file, default = 'pyH2A.Config~Defaults.md', merge_default = True):
-	'''Read markdown input file into dictionary and optionally merge defaults and
-	one level of external base-input files.
 
-	Parameters
-	----------
-	file : str
-		Path to input file.
-	default : str, optional
-		Path to default file.
-	merge_default : bool
-		If ``True``, defaults are merged first and the main input file overrides
-		the default values.
+	inp = convert_file_to_dictionary(file_import(file, mode = 'r'))
 
-	Returns
-	-------
-	inp : dict
-		Input dictionary.
-
-	Notes
-	-----
-	If ``merge_default`` is ``True``, the default file is merged first and the
-	main input file overrides those values.
-
-	If a ``Base input file`` table exists, each row's ``Value`` is treated as a
-	referenced file path. Referenced files are loaded in listed order and merged
-	into the current dictionary, so later listed files have higher priority.
-
-	Only first-level references from the main input file are resolved. Nested
-	``Base input file`` tables inside referenced files are not followed.
-	'''
-	input = convert_file_to_dictionary(file_import(file, mode='r'))
-	
 	if merge_default is True:
-		default_input = convert_file_to_dictionary(file_import(default, mode = 'r'))
-		input = merge(default_input, input)
-	
-	table = input.get('Base input file')
-	if table is None:
-		return input
-	if not isinstance(table, dict):
-		raise ValueError(f'Expected "Base input file" table to be a dictionary, got {type(table)}')
 
-	for _, row in list(table.items()):
-		if not isinstance(row, dict):
-			raise ValueError(f'Expected row in "Base input file" table to be a dictionary, got {type(row)}')
-		reference = row.get('Value')
-		if not isinstance(reference, str):
-			raise ValueError(f'Expected "Value" in "Base input file" table to be a string, got {type(reference)}')
-		reference = reference.strip(' ')
-		if reference == '':
-			raise ValueError('Empty file reference in "Base input file" table')
+		inp_default = convert_file_to_dictionary(file_import(default, mode = 'r'))
+		inp = merge(inp_default, inp)
 
-		referenced_input = convert_file_to_dictionary(file_import(reference, mode='r'))
-		input = merge(input, referenced_input)
-	
-	return input
-			
+	if 'Base input file' in inp:
+		for _ in inp['Base input file']:
+			raw_file = inp['Base input file'][_]['Value']
+			inp_file = convert_file_to_dictionary(file_import(raw_file, mode = 'r'))
+			inp = merge(inp_file, inp)
+
+	return inp
 
 def get_by_path(root, items):
 	'''Access a nested object in `root` by item sequence.'''
