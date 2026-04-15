@@ -44,16 +44,17 @@ For example, the input file ``Thermal_base.md`` contains the table:
 
    # Technical Operating Parameters and Specifications
 
-   Name | Value
-   --- | ---
-   Operating Capacity Factor (%) | 90.0%
-   Plant Design Capacity (kg of H2/day) | 1,000
+   Name | Value | Unit
+   --- | --- | ---
+   Operating Capacity Factor | 90.0 | %
+   Plant Design Capacity | 1,000 | kg/day
 
-After conversion into Python objects and processing the table, the value ``1000`` is stored as this dictionary keys' item:
+After conversion into Python objects and processing the table, the value ``1000``  and the associated unit ``kg/day`` are stored as this dictionary keys' item:
 
 .. code-block:: python
 
-   dcf.inp['Technical Operating Parameters and Specifications']['Plant Design Capacity (kg of H2/day)']['Value']
+   dcf.inp['Technical Operating Parameters and Specifications']['Plant Design Capacity']['Value']
+   dcf.inp['Technical Operating Parameters and Specifications']['Plant Design Capacity']['Unit']
 
 Conceptually, the dictionary structure can be visualized as follows:
 
@@ -63,19 +64,21 @@ Conceptually, the dictionary structure can be visualized as follows:
    │
    ├── "Technical Operating Parameters and Specifications"   ← table (top key)
    │       │
-   │       ├── "Plant Design Capacity (kg of H2/day)"        ← row (mid key)
+   │       ├── "Plant Design Capacity"        ← row (mid key)
    │       │        │
-   │       │        └── "Value" → 1000                        ← column (bottom key)
+   │       │        └── "Value" → 1000        ← column (bottom key)
+   │       │        └── "Unit" → kg/day       ← column (bottom key)   
    │       │
-   │       └── "Operating Capacity Factor (%)"
+   │       └── "Operating Capacity Factor"
    │                │
    │                └── "Value" → 90.0
+   │                └── "Unit" → '%''   
    │
    └── "Non-Depreciable Capital Costs"
    │       │
-   │       └── "Land required (acres)"
+   │       └── "Land required"
    │                │
-   │                └── "Value" → calculated by plugin
+   │                └── "Value" → Quantity object, calculated by plugin
    │				
 					
 					
@@ -110,20 +113,50 @@ It is important to note that this step **does not evaluate the entries** in the 
 It only converts their structure into Python objects so that they can later be processed by plugins when needed.
 
 
-5. Processing inputs: the ``process_table`` method
---------------------------------------------------
+5. Processing inputs: ``input_resolver_function`` 
+-------------------------------------------------
 
-When a plugin requires input data, it retrieves it from the dictionary using the ``process_table`` method.
+When a plugin requires input data, it retrieves it from the dictionary using ``input_resolver_function``.
 
-Each plugin typically begins by calling ``process_table`` for the entries it needs.  
-This call retrieves the actual value corresponding to the requested dictionary position.
+Each plugin file includes an ``input_dict`` dictionary containing the entry keys that are needed by the plugin (top, middle and bottom keys), as well as the characteristics of each entry (dimension, type etc).
 
-For example:
+For example, in ``Hourly_Irradiation__Plugin``, the ``input_dict`` contains, among other items:
+
+.. code-block:: python
+	"Irradiance Area Parameters": {	
+      <...>,   
+		"Nominal operating temperature": {
+			"Value": {
+				"type": {float,},
+				"bounds": (250, 500),
+			},
+			"Unit": {
+				"dimension": "temperature",
+			},
+			"optional": False,
+			"description": "Nominal operating temperature of irradiated module."
+		},   
+      <...>,    
+   }
+
+which means that ``Hourly_Irradiation__Plugin`` uses, among others, the value of ``dcf.inp['Irradiance Area Parameters']['Nominal operating temperature']['Value']`` as an input.
+
+
+The ``__init__`` method of the plugin typically begins by a call to ``input_resolver_function``, for example . 
 
 .. code-block:: python
 
-   process_table(dcf.inp, 'Solar Concentrator', 'Value')
-   
+   input_resolver_function(input_dict, dcf, 'Hourly_Irradiation_Plugin')
+
+This call retrieves the items corresponding to the dictionary positions found in input_dict, and apply a succession of conversion and sanity checks (dimensionality vs. unit consistency ; conversion into a specific unit ; bounds check).   
+
+In our example: 
+ 1. ``dcf.inp['Irradiance Area Parameters']['Nominal operating temperature']['Value']`` is retrieved. 
+ 2. A Quantity object is created from the Value and the related Unit (``dcf.inp['Irradiance Area Parameters']['Nominal operating temperature']['Unit']``). This step is bypassed if the Value is already a Quantity object.
+ 3. The input resolver checks if the unit of measurement is consistent with the expected dimension as per the input_dict (in the present case: temperature). If this is not the case, an error message is thrown.
+ 4. The input resolver checks if the value expressed in the Base unit (generally: SI unit) respects the ``bounds`` specified in input_dict. An operating temperature below 250 K or above 500 K would be unrealistic, and would therefore lead to an error message.
+ 5. The Quantity object is added to the local ``input_dict_resolved`` dictionary. The quantities present in this dictionary are the ones used within the plugin for all the calculations.
+ 
 
 One important feature of pyH2A is that table entries in the input file do not necessarily contain numerical values.  
 They can instead refer to other variables or paths.
@@ -134,19 +167,21 @@ For example, in ``PV_E_Base.md`` :
 
 	# Irradiance Area Parameters
 
-	Name | Value | Comment
+	Name | Value | Unit | Comment
 	--- | --- | ---
-	Module Tilt (degrees) | Hourly Irradiation > Latitude > Value | Module tilt equal to latitude of location.
+	Module Tilt | Hourly Irradiation > Latitude > Value | deg | Module tilt equal to latitude of location.
 
 Here the entry points to another variable in the dictionary.
 
-When Hourly_Irradiation_Plugin executes ``process_table(dcf.inp, 'Hourly Irradiation', 'Value')``, the corresponding entry ``dcf.inp['Irradiance Area Parameters']['Module Tilt (degrees)']['Value']`` ultimately receives the value stored at: 
+When Hourly_Irradiation_Plugin executes ``input_resolver(dcf, input_dict)``, the ``dcf.inp['Irradiance Area Parameters']['Module Tilt']['Value']`` entry ultimately receives the value stored at: 
 
 .. code-block:: python
 
    dcf.inp[Hourly Irradiation']['Latitude']['Value']
    
 In the present example, it means that the value of the module tilt is simply made equal to the latitude.
+
+
 
 
 6. Value Processing and Path-Based Multiplication
@@ -247,10 +282,10 @@ Flexible rows and table groups provide a way to structure input files in a clear
 
 Users can separate different cost contributions into individual rows or tables for readability, while the plugin logic automatically aggregates them during the calculation.
 
-8. Inserting or Updating Values: the ``insert`` method
-------------------------------------------------------
+8. Inserting or Updating Values: the ``output_resolver`` method
+---------------------------------------------------------------
 
-After performing calculations, plugins store their results in the dictionary using the ``insert`` method.
+After performing calculations, plugins store their results in the dictionary using the ``output_resolver`` method.
 
 This method can either:
 
@@ -309,7 +344,7 @@ In other words, this operation updates:
 9. Dependency Between Plugins
 -----------------------------
 
-When a plugin requests a value from the dictionary using ``process_table``, the corresponding entry must already exist.
+When a plugin requests a value from the dictionary using ``input_resolver_function``, the corresponding entry must already exist.
 
 This entry must therefore have been:
 
@@ -333,24 +368,24 @@ The data flow can be represented schematically as:
       (shared calculation dictionary)
                 │
                 ▼
-        ┌──────────────────┐
-        │     Plugin 1     │
-        │  - process_table │
-        │  - calculations  │
-        │  - insert        │
-        └──────────────────┘
+        ┌────────────────────────────┐
+        │         Plugin 1           │
+        │ - input_resolver_function  │
+        │ - calculations             │
+        │ - output_resolver          │
+        └────────────────────────────┘
                 │
                 ▼
             dcf.inp
        (with newly inserted variables)
                 │
                 ▼
-        ┌──────────────────┐
-        │     Plugin 2     │
-        │  - process_table │
-        │  - calculations  │
-        │  - insert        │
-        └──────────────────┘
+        ┌────────────────────────────┐
+        │         Plugin 2           │
+        │ - input_resolver_function  │
+        │ - calculations             │
+        │ - output_resolver          │
+        └────────────────────────────┘
                 │
                 ▼
             dcf.inp

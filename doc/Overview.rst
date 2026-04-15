@@ -29,7 +29,7 @@ Overview of the folder structure
 
 - To understand how a calculation is executed, start with ``run_pyH2A.py`` and ``Discounted_Cash_Flow.py``.
 - To follow or modify the calculation steps, look at the files in the :ref:`plugins` folder.
-- To understand how input data is read and processed, refer to the ``Utilities`` folder.
+- To understand how input and output data are read and processed, refer to the ``Utilities`` folder.
 - To locate default parameters and the standard calculation structure, see ``Config/Defaults.md``.
 - To explore example inputs or test cases, consult the ``tests`` and ``Lookup_Tables`` folders.
 
@@ -41,7 +41,8 @@ The structure below can be read as a map indicating where each of these elements
    ├── run_pyH2A.py
    │   Entry point of the calculation:
    │   - Initializes the model: calls methods to read and convert the input (.md) file into a dictionary
-   │   - Launches the workflow: runs the Discounted_Cash_Flow and puts the results in self.base_case
+   │   - Launches the base case (single point) calculation: calls Discounted_Cash_Flow and puts the results in self.base_case
+   │   - Launches the eventual meta workflow (Analysis modules)
    │
    ├── Discounted_Cash_Flow.py
    │   Core of the techno-economic calculation:
@@ -50,8 +51,8 @@ The structure below can be read as a map indicating where each of these elements
    ├── LCA/
    │   └── LCA.py
    │       Life Cycle Analysis module:
-   │       - Contains the ``LCA`` class
-   │       - Called by ``Discounted_Cash_Flow`` to run the base case (single point calculation)
+   │       - Contains the ``LCA`` class 
+   │       - Called by ``Discounted_Cash_Flow`` to run an LCA on a single point
    │
    ├── Config/
    │   └── Defaults.md
@@ -61,23 +62,53 @@ The structure below can be read as a map indicating where each of these elements
    │
    ├── Plugins/
    │   Contains all ``*_Plugin`` files:
-   │   - Each plugin processes its necessary inputs (process_table call), performs calculations, and inserts the results in the dcf.inp dictionary 
+   │   - Each plugin processes its necessary inputs (input_resolver_function call), performs calculations, and inserts the results (output_resolver call) in the dcf.inp dictionary (see part 2.2)
    │   - Plugins are executed sequentially in the workflow
    │
    ├── Utilities/
-   │   Functions for handling inputs and outputs:
-   │   - Conversion of input (.md) files into the dictionary structure
-   │   - Functions such as ``convert_input_to_dictionary``, ``process_table``, ``insert`` etc.
+   │   │
+   │   └── Input_Resolver/ 
+   │   │   Modules for handling inputs and outputs
+   │   │   └── input_resolver.py 
+   │   │   │   - Orchestrates the resolution of the inputs: retrieving values, conversion and sanity checks
+   │   │   │   - Contains the input_resolver_function and its related  
+   │   │   │   - Calls functions and methods from table_processor.py and unit_processor.py, which in turn call functions from the input_modification.py file (for example: ``process_table``)
+   │   │   │
+   │   │   └── check_functions.py 
+   │   │       - Functions performing sanity checks, called by the input resolver     
+   │   │
+   │   └── Unit_Handler/ 
+   │   │   └── quantity.py    
+   │   │   │   - Modules for creating ``quantity`` objects, which associate a value to a unit
+   │   │   └── config.py       
+   │   │       - Contains the conversion factors between the base units (considered as the reference) and the units thta are supported in the input file
+   │   │            
+   │   └── input_modification.py 
+   │   │   Functions for handling inputs and outputs, that is: to modify the dcf.inp dictionary :     
+   │   │   - Conversion of input (.md) files into the dictionary structure
+   │   │   - Functions such as ``convert_input_to_dictionary``, ``process_table``, ``insert`` etc. 
+   │   │
+   │   └── plugin_input_output_processing.py
+   │   │   Serves to generate an input file template, based on a user-specified Workflow    
+   │   │
+   │   └── output_utilities.py
+   │   │   Serves to define the final outputs format
+   │   │
+   │   └── find_nearest.py  
+   │       Used by some analysis modules 
    │
    ├── Analysis/
-   │   Advanced analysis modules:
-   │   - Monte Carlo analysis
-   │   - Sensitivity analysis
-   │   - Not used in the base case calculation
+   │   Advanced analysis modules (not used in the base case calculation):
+   │   - Monte Carlo analysis, Comparative Monte Carlo analysis
+   │   - Cost_Contributions_Analysis
+   │   - Sensitivity analysis 
+   │   - Optimization_Analysis
+   │   - Development_Distance_Time_Analysis
+   │   - Waterfall_Analysis
    │
    └── Lookup_Tables/
        Input data for example calculations:
-       - Contains files used as inputs in provided examples
+       - Contains files used as inputs in provided examples (for example: hourly irradiaiton data)
 
 
 Additional test structure
@@ -155,7 +186,7 @@ When a plugin is executed:
 
   .. admonition:: Code implementation
 
-     Within the plugin, the ``process_table`` method call retrieves the actual value from the dictionary (``dcf.inp``). More detailed explanations about the dictionary structure and processing :ref:`are provided separately <dictionary-structure>`.
+     Within the plugin, the ``input_resolver_function`` call retrieves the actual value from the dictionary (``dcf.inp``) and applies conversions and checks. More detailed explanations about the dictionary structure and processing :ref:`are provided separately <dictionary-structure>`.
 
 - It performs a defined set of calculations.
 
@@ -163,7 +194,7 @@ When a plugin is executed:
 
   .. admonition:: Code implementation
 
-     Within the plugin, the ``insert`` method call inserts new variables, or updates existing ones, in the dictionary.
+     Within the plugin, the ``output_resolver`` method call inserts new variables, or updates existing ones, in the dictionary.
 
 The dictionary therefore represents the evolving economic model. At any stage, it contains all quantities defined up to that point, and a plugin can only rely on what is already present when it is executed. The execution order therefore defines the logical dependency structure of the model.
 
@@ -179,7 +210,7 @@ The final financial quantities of interest (e.g. levelized cost of hydrogen) are
 
 .. admonition:: Code implementation
 
-   In ``Discounted_Cash_Flow`` class, this step is part of the ``post_workflow`` method call.
+   In the ``Discounted_Cash_Flow`` class, this step is part of the ``post_workflow`` method call.
 
 
 
