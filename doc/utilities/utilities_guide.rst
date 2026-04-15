@@ -33,19 +33,15 @@ How does it work?
 
 At a high level, the method performs these steps:
 
-1. Read the main Markdown input file and parse it into a dictionary.
+1. Read the main (highest priority) Markdown input file and parse it into a dictionary.
 2. If ``merge_default=True``, read the default input file and merge it first.
 3. Let values in the main input file override default values.
 4. Look for a table named ``Base input file`` in the merged dictionary.
-5. For each row in that table, read the file path stored in the ``Value``
-	column and merge that file into the current dictionary.
-6. Later files listed in ``Base input file`` have higher priority than earlier
-	files.
+5. For each row in that table, read the file path stored in the ``Value`` column and merge that file into the current dictionary.
+6. Earlier files listed in ``Base input file`` have higher priority than later files.
 
-Important behavior:
-
-1. Only first-level base references are merged.
-2. Nested base references inside referenced files are not followed.
+Steps 4 to 6 are recursive: nested base references inside referenced files are followed.
+In other words, if a ``Base input file`` table is included in the main (highest priority) file, the lower priority files that are pointed by this table can contain their own ``Base input file`` table pointing to other input files.
 
 
 Method signature
@@ -154,12 +150,11 @@ To merge additional files, include this table in your main input file:
 	Layer 1 | ./override_level_1.md
 	Layer 2 | ./override_level_2.md
 
-Merge priority for this example:
-
-1. Default file (lowest priority, if enabled).
-2. Main input file.
-3. ``Layer 1`` file.
-4. ``Layer 2`` file (highest priority).
+Merge priority (high to low) for this example:
+1. Main input file
+2. ``Layer 1`` file.
+3. ``Layer 2`` file.
+4. Default file
 
 
 Practical example
