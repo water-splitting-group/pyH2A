@@ -342,9 +342,10 @@ def convert_input_to_dictionary(file, default = 'pyH2A.Config~Defaults.md', merg
 		inp = merge(inp_default, inp)
 
 	if 'Base input file' in inp:
+
 		for _ in inp['Base input file']:
 			raw_file = inp['Base input file'][_]['Value']
-			inp_file = convert_file_to_dictionary(file_import(raw_file, mode = 'r'))
+			inp_file = convert_input_to_dictionary(raw_file, default, merge_default=False)			
 			inp = merge(inp_file, inp)
 
 	return inp
