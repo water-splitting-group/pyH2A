@@ -37,38 +37,38 @@
 
 # Irradiation Used
 
-| Name | Value                                                                 | Unit   | Comment                                   |
-| ---- | --------------------------------------------------------------------- | ------ | ----------------------------------------- |
-| Data | Hourly Irradiation > Horizontal Single Axis Tracking (kWh/m2) > Value | kWh/m2 | Single axis tracking based on Chang 2020. |
+| Name | Value                                                        | Unit   | Comment                                   |
+| ---- | ------------------------------------------------------------ | ------ | ----------------------------------------- |
+| Data | Hourly Irradiation > Horizontal Single Axis Tracking > Value | kWh/m2 | Single axis tracking based on Chang 2020. |
 
 # Technical Operating Parameters and Specifications
 
-| Name          | Value | Comment                                                                                                           |
-| ------------- | ----- | ----------------------------------------------------------------------------------------------------------------- |
-| Plant Modules | 10    | Modelling of 10 modules for calculation of staff cost to facilitate comparison with PEC and photocatalytic model. |
+| Name          | Value | Unit | Comment                                                                                                           |
+| ------------- | ----- | ---- | ----------------------------------------------------------------------------------------------------------------- |
+| Plant Modules | 10    |      | Modelling of 10 modules for calculation of staff cost to facilitate comparison with PEC and photocatalytic model. |
 
 # Construction
 
 | Name             | Full Name                                      | Value | Unit |
 | ---------------- | ---------------------------------------------- | ----- | ---- |
-| capital perc 1st | % of capital spent in 1st year of construction | 1.0   |
+| capital perc 1st | % of capital spent in 1st year of construction | 100   | %    |
 
 # CAPEX Multiplier
 
-| Name       | Value | Full Name                                                   |
-| ---------- | ----- | ----------------------------------------------------------- |
-| Multiplier | 1.0   | CAPEX multiplier for every 10-fold increase of system size. |
+| Name       | Value | Unit | Full Name                                                   |
+| ---------- | ----- | ---- | ----------------------------------------------------------- |
+| Multiplier | 1.0   |      | CAPEX multiplier for every 10-fold increase of system size. |
 
 # Electrolyzer
 
-| Name                                | Value    | Unit      | Comment                                                                                  |
-| ----------------------------------- | -------- | --------- | ---------------------------------------------------------------------------------------- |
-| Nominal Power                       | 5,500.0  | kW        | Production of ca. 1 t of H2 per day to compare with PEC and photocatalytic models.       |
-| CAPEX Reference Power               | 1,000.0  | kW        |
-| Power requirement increase per year | 0.003    |           | Based on Chang 2020                                                                      |
-| Minimum capacity                    | 0.1      |           | Based on Chang 2020, minimum capacity for electrolyzer to operate.                       |
-| Conversion efficiency               | 0.0185   | kg H2/kWh | Based on Chang 2020                                                                      |
-| Replacement time                    | 80,000.0 | h         | Based on Chang 2020, operating time after which electrolyzer stacks have to be replaced. |
+| Name                                | Value    | Unit   | Comment                                                                                  |
+| ----------------------------------- | -------- | ------ | ---------------------------------------------------------------------------------------- |
+| Nominal Power                       | 5,500.0  | kW     | Production of ca. 1 t of H2 per day to compare with PEC and photocatalytic models.       |
+| CAPEX Reference Power               | 1,000.0  | kW     |
+| Power requirement increase per year | 0.3      | %      | Based on Chang 2020                                                                      |
+| Minimum capacity                    | 10       | %      | Based on Chang 2020, minimum capacity for electrolyzer to operate.                       |
+| Conversion efficiency               | 0.0185   | kg/kWh | Based on Chang 2020                                                                      |
+| Replacement time                    | 80,000.0 | h      | Based on Chang 2020, operating time after which electrolyzer stacks have to be replaced. |
 
 # Electrolysis Using Stored Power
 
@@ -78,59 +78,59 @@
 
 # Photovoltaic
 
-| Name                  | Value   | Unit | Path                                 | Comment                                       |
-| --------------------- | ------- | ---- | ------------------------------------ | --------------------------------------------- |
-| Nominal Power         | 1.5     |      | Electrolyzer > Capacity (kW) > Value | Optimal PV oversize ratio, same as Chang 2020 |
-| CAPEX Reference Power | 1,000.0 | kW   |                                      |
-| Power loss per year   | 0.005   |      | None                                 | Based on Chang 2020                           |
-| Efficiency            | 0.22    |      | None                                 | Only used for area calculation.               |
+| Name                  | Value   | Unit | Path                            | Comment                                       |
+| --------------------- | ------- | ---- | ------------------------------- | --------------------------------------------- |
+| Nominal Power         | 1.5     | kW   | Electrolyzer > Capacity > Value | Optimal PV oversize ratio, same as Chang 2020 |
+| CAPEX Reference Power | 1,000.0 | kW   |                                 |
+| Power loss per year   | 0.5     | %    | None                            | Based on Chang 2020                           |
+| Efficiency            | 22      | %    | None                            | Only used for area calculation.               |
 
 # Battery
 
 | Name                   | Value  | Unit | Comment                                         |
 | ---------------------- | ------ | ---- | ----------------------------------------------- |
 | Design Capacity        | 800000 | kWh  | Full design capacity                            |
-| Lowest discharge level | 0.2    |      | Lowest level to which battery can be discharged |
-| Capacity loss per year | 0.001  |      | Loss of capacity per year                       |
-| Round trip efficiency  | 1.0    |      | For lithium ion battery                         |
+| Lowest discharge level | 20     | %    | Lowest level to which battery can be discharged |
+| Capacity loss per year | 1      | %    | Loss of capacity per year                       |
+| Round trip efficiency  | 100    | %    | For lithium ion battery                         |
 
 # Reverse Osmosis
 
-| Name                          | Value | Unit   | Comment                                                                                                                                         |
-| ----------------------------- | ----- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| Power Demand                  | 2.71  | kWh/m3 | based on Hausmann 2021 and Kim 2008 (this was chosen for a purity of < 10 ppm of disolved salts in the obtained water), kWh per m3 of sea water |
-| Average daily operating hours | 4     | h/day  | Assumption that reverse osmosis runs for 4 h/day, relevant for scaling of reverse osmosis plant                                                 |
-| Recovery Rate                 | 0.40  |        | Fraction of fresh water obtained from given volume of sea water, based Palmer 2021 and Tewlour 2022                                             |
+| Name                            | Value | Unit   | Comment                                                                                                                                         |
+| ------------------------------- | ----- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Power Demand                    | 2.71  | kWh/m3 | based on Hausmann 2021 and Kim 2008 (this was chosen for a purity of < 10 ppm of disolved salts in the obtained water), kWh per m3 of sea water |
+| Average operating time fraction | 0.25  |        | Assumption that reverse osmosis runs for 4 h/day, relevant for scaling of reverse osmosis plant                                                 |
+| Recovery Rate                   | 40    | %      | Fraction of fresh water obtained from given volume of sea water, based Palmer 2021 and Tewlour 2022                                             |
 
 # Power Consumption
 
-| Name          | Value | Type      |
-| ------------- | ----- | --------- |
-| Test Consumer | 0     | on_demand |
+| Name          | Value | Unit | Type      |
+| ------------- | ----- | ---- | --------- |
+| Test Consumer | 0     | kWh  | on_demand |
 
 # Direct Capital Costs - Reverse Osmosis
 
-| Name                  | Value | Unit   | Path                                      | Comment                                                                                                                              |
-| --------------------- | ----- | ------ | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| Reverse Osmosis CAPEX | 6000  | $/m3/h | Reverse Osmosis > Capacity (m3/h) > Value | Based on https://samcotech.com/much-reverse-osmosis-nanofiltration-membrane-systems-cost/, Conversion factor of 4.5 from GPM to m3/h |
+| Name                  | Value | Unit | Path                               | Comment                                                                                                                              |
+| --------------------- | ----- | ---- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Reverse Osmosis CAPEX | 6000  | $    | Reverse Osmosis > Capacity > Value | Based on https://samcotech.com/much-reverse-osmosis-nanofiltration-membrane-systems-cost/, Conversion factor of 4.5 from GPM to m3/h |
 
 # Direct Capital Costs - Battery
 
-| Name          | Value | Unit  | Path                             |
-| ------------- | ----- | ----- | -------------------------------- |
-| Battery CAPEX | 0     | $/kWh | Battery > Capacity (kWh) > Value |
+| Name          | Value | Unit | Path                              |
+| ------------- | ----- | ---- | --------------------------------- |
+| Battery CAPEX | 0     | $    | Battery > Design Capacity > Value |
 
 # Direct Capital Costs - PV
 
 | Name     | Value | Unit | Path                                                                         | Comment                                                                       |
 | -------- | ----- | ---- | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| PV CAPEX | 818.0 | $/kW | Photovoltaic > Capacity (kW) > Value ; Photovoltaic > Scaling Factor > Value | Based on Chang 2020, Chiesa 2021 Middle East PV installation cost, Shah 2021. |
+| PV CAPEX | 818.0 | $    | Photovoltaic > Nominal Power > Value ; Photovoltaic > Scaling Factor > Value | Based on Chang 2020, Chiesa 2021 Middle East PV installation cost, Shah 2021. |
 
 # Direct Capital Costs - Electrolyzer
 
 | Name               | Value | Unit | Path                                                                         | Comment                                                                                       |
 | ------------------ | ----- | ---- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| Electrolyzer CAPEX | 784.0 | $/kW | Electrolyzer > Capacity (kW) > Value ; Electrolyzer > Scaling Factor > Value | Based on Chang 2020, IRENA 2020 Green Hydrogen (PEM System CAPEX 700 - 1400 $/kg), Shah 2021. |
+| Electrolyzer CAPEX | 784.0 | $    | Electrolyzer > Nominal Power > Value ; Electrolyzer > Scaling Factor > Value | Based on Chang 2020, IRENA 2020 Green Hydrogen (PEM System CAPEX 700 - 1400 $/kg), Shah 2021. |
 
 # Non-Depreciable Capital Costs
 
@@ -140,25 +140,25 @@
 
 # Fixed Operating Costs
 
-| Name              | Full Name                                              | Value   | Unit | Comment                                                                                       |
-| ----------------- | ------------------------------------------------------ | ------- | ---- | --------------------------------------------------------------------------------------------- |
-| area              | Area per staff (m2)                                    | 405,000 | m2   | Same as photocatalytic model, solar collection area that can be overseen by one staff member. |
-| supervisor        | Shift supervisor                                       | 1       |      | Same as PEC and photocatalytic model, number of shift supervisors.                            |
-| shifts            | Shifts                                                 | 3       |      | Same as PEC and photocatalytic model, number of shifts per day.                               |
-| hourly labor cost | Burdened labor cost, including overhead ($ per man-hr) | 50.0    | $/h  | Same as PEC and photocatalytic model.                                                         |
+| Name              | Full Name                                              | Value   | Unit   | Comment                                                                                       |
+| ----------------- | ------------------------------------------------------ | ------- | ------ | --------------------------------------------------------------------------------------------- |
+| area              | Area per staff                                         | 405,000 | m2     | Same as photocatalytic model, solar collection area that can be overseen by one staff member. |
+| supervisor        | Shift supervisor                                       | 1       |        | Same as PEC and photocatalytic model, number of shift supervisors.                            |
+| shifts            | Shifts                                                 | 3       |        | Same as PEC and photocatalytic model, number of shifts per day.                               |
+| hourly labor cost | Burdened labor cost, including overhead ($ per man-hr) | 50.0    | $/hour | Same as PEC and photocatalytic model.                                                         |
 
 # Other Fixed Operating Costs
 
 | Name                           | Value | Path                                                                    | Unit | Comment                           |
 | ------------------------------ | ----- | ----------------------------------------------------------------------- | ---- | --------------------------------- |
-| Electrolyzer OPEX (% of CAPEX) | 0.02  | Direct Capital Costs - Electrolyzer > Electrolyzer CAPEX ($/kW) > Value |      | Based on Stolten 2020, Shah 2021. |
-| PV OPEX (% of CAPEX)           | 0.02  | Direct Capital Costs - PV > PV CAPEX ($/kW) > Value                     |      | Based on Stolten 2020.            |
+| Electrolyzer OPEX (% of CAPEX) | 2     | Direct Capital Costs - Electrolyzer > Electrolyzer CAPEX ($/kW) > Value | %    | Based on Stolten 2020, Shah 2021. |
+| PV OPEX (% of CAPEX)           | 2     | Direct Capital Costs - PV > PV CAPEX ($/kW) > Value                     | %    | Based on Stolten 2020.            |
 
 # Utilities
 
 | Name          | Usage per kg H2 | Usage Unit | Cost   | Cost Unit | Price Conversion Factor | Comment                                                                                                 |
 | ------------- | --------------- | ---------- | ------ | --------- | ----------------------- | ------------------------------------------------------------------------------------------------------- |
-| Process Water | 10              | L/kg H2    | 0.0006 | $/L       | 1.                      | Seawater reverse osmosis cost ca. 0.6 $/m3 (equal to 0.0006 $/L), based on Kibria 2021 and Driess 2021. |
+| Process Water | 10              | L/kg       | 0.0006 | $/L       | 1.                      | Seawater reverse osmosis cost ca. 0.6 $/m3 (equal to 0.0006 $/L), based on Kibria 2021 and Driess 2021. |
 
 # Grid Electricity
 
@@ -170,4 +170,4 @@
 
 | Name                           | Value | Unit | Path                                                                    | Comment             |
 | ------------------------------ | ----- | ---- | ----------------------------------------------------------------------- | ------------------- |
-| Electrolyzer Stack Replacement | 0.40  |      | Direct Capital Costs - Electrolyzer > Electrolyzer CAPEX ($/kW) > Value | Based on Chang 2020 |
+| Electrolyzer Stack Replacement | 40    | %    | Direct Capital Costs - Electrolyzer > Electrolyzer CAPEX ($/kW) > Value | Based on Chang 2020 |

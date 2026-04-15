@@ -15,26 +15,26 @@
 
 | Name                      | Value | Unit   |
 | ------------------------- | ----- | ------ |
-| Operating Capacity Factor | 0.90  |
+| Operating Capacity Factor | 90    | %      |
 | Plant Design Capacity     | 1,000 | kg/day |
 
 # Construction
 
-| Name             | Full Name                                      | Value | Unit |
-| ---------------- | ---------------------------------------------- | ----- | ---- |
-| capital perc 1st | % of Capital Spent in 1st Year of Construction | 1.0   |
+| Name             | Full Name                                 | Value | Unit |
+| ---------------- | ----------------------------------------- | ----- | ---- |
+| capital perc 1st | Capital Spent in 1st Year of Construction | 100   | %    |
 
 # Solar Input
 
-| Name             | Value | Unit       | Comment                                                  |
-| ---------------- | ----- | ---------- | -------------------------------------------------------- |
-| Mean solar input | 6.8   | kWh/m2/day | Typical value in Dagget, CA, USA, with two axis tracking |
+| Name             | Value | Unit         | Comment                                                  |
+| ---------------- | ----- | ------------ | -------------------------------------------------------- |
+| Mean solar input | 6.8   | kWh/(m2*day) | Typical value in Dagget, CA, USA, with two axis tracking |
 
 # Solar-to-Hydrogen Efficiency
 
 | Name | Value | Unit | Comment                                                                                                  |
 | ---- | ----- | ---- | -------------------------------------------------------------------------------------------------------- |
-| STH  | 0.20  |      | Based on DOE Technical Targets for Hydrogen Production from Thermochemical Water Splitting - 2020 Target |
+| STH  | 20    | %    | Based on DOE Technical Targets for Hydrogen Production from Thermochemical Water Splitting - 2020 Target |
 
 # Direct Capital Costs - Equipment
 
@@ -56,7 +56,7 @@
 | Name                 | Value | Unit   | Comment                         |
 | -------------------- | ----- | ------ | ------------------------------- |
 | Cost of land         | 500.0 | $/acre | Land cost based on Pinaud 2013. |
-| Additional Land Area | 0.30  |        | Additional land area required.  |
+| Additional Land Area | 30    | %      | Additional land area required.  |
 
 # Planned Replacement
 
@@ -66,14 +66,14 @@
 
 # Fixed Operating Costs
 
-| Name              | Full Name                                              | Value | Unit |
-| ----------------- | ------------------------------------------------------ | ----- | ---- |
-| staff             | Number of staff                                        | 7     |
-| hourly labor cost | Burdened labor cost, including overhead ($ per man-hr) | 50.0  | $/hr |
+| Name              | Full Name                               | Value | Unit   |
+| ----------------- | --------------------------------------- | ----- | ------ |
+| staff             | Number of staff                         | 7     |
+| hourly labor cost | Burdened labor cost, including overhead | 50.0  | $/hour |
 
 # Utilities
 
-| Name                   | Usage per kg H2 | Usage Unit | Cost                                                                                | Cost Unit   | Price Conversion Factor | Price Conversion Factor Unit | Comment                                                                                                       |
-| ---------------------- | --------------- | ---------- | ----------------------------------------------------------------------------------- | ----------- | ----------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| Industrial Electricity | 0.16            | kWh/kg H2  | pyH2A.Lookup_Tables.Utility_Cost~Industrial_Electricity_AEO_2017_Reference_Case.csv | GJ          | 0.0036                  | GJ/kWh                       | Electricity usage based on Pinaud 2013.                                                                       |
-| Process Water          | 2.369           | gal/kg H2  | 0.0023749510945008                                                                  | $(2016)/gal | 1.                      | None                         | Seawater reverse osmosis cost ca. 0.6 $/m3 (equal to ca. 0.0023 $/gal), based on Kibria 2021 and Driess 2021. |
+| Name                   | Usage per kg H2 | Usage Unit | Cost                                                                                | Cost Unit | Price Conversion Factor | Price Conversion Factor Unit | Comment                                                                                                       |
+| ---------------------- | --------------- | ---------- | ----------------------------------------------------------------------------------- | --------- | ----------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Industrial Electricity | 0.16            | kWh/kg     | pyH2A.Lookup_Tables.Utility_Cost~Industrial_Electricity_AEO_2017_Reference_Case.csv | GJ        | 0.0036                  | GJ/kWh                       | Electricity usage based on Pinaud 2013.                                                                       |
+| Process Water          | 2.369           | gal/kg     | 0.0023749510945008                                                                  | $/gal     | 1.                      | None                         | Seawater reverse osmosis cost ca. 0.6 $/m3 (equal to ca. 0.0023 $/gal), based on Kibria 2021 and Driess 2021. |

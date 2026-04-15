@@ -18,7 +18,7 @@
 
 | Name                      | Value | Unit   | Path | Full Name                                                         |
 | ------------------------- | ----- | ------ | ---- | ----------------------------------------------------------------- |
-| Operating Capacity Factor | 0.90  |        |      |
+| Operating Capacity Factor | 0.90  | %      |      |
 | Plant Design Capacity     | 1,000 | kg/day |      |
 | Plant Modules             | 10    |        | None | 10 identical modules, only affects labor requirement calculation. |
 
@@ -26,7 +26,7 @@
 
 | Name             | Full Name                                      | Value | Unit |
 | ---------------- | ---------------------------------------------- | ----- | ---- |
-| capital perc 1st | % of Capital Spent in 1st Year of Construction | 1.00  |
+| capital perc 1st | % of Capital Spent in 1st Year of Construction | 1.00  | %    |
 
 # Hourly Irradiation
 
@@ -36,14 +36,14 @@
 
 # Irradiance Area Parameters
 
-| Name                          | Value | Unit    | Comment                                                                                   |
-| ----------------------------- | ----- | ------- | ----------------------------------------------------------------------------------------- |
-| Module Tilt                   | 0     | degree  | Two axis tracking, module tilt and array azimuth change are not relevant.                 |
-| Array Azimuth                 | 0     | degree  |
-| Nominal Operating Temperature | 45    | celsius  | Temperature is stabilized even under solar concentration through intrinsic water cooling. |
-| Mismatch Derating             | 0.98  |         |
-| Dirt Derating                 | 0.98  |         | Values taken from Chang 2020, analogues to silicon PV.                                    |
-| Temperature Coefficient       | 0.00  | celsius | No assumed efficiency loss with higher temperature.                                       |
+| Name                          | Value | Unit      | Comment                                                                                   |
+| ----------------------------- | ----- | --------- | ----------------------------------------------------------------------------------------- |
+| Module Tilt                   | 0     | degree    | Two axis tracking, module tilt and array azimuth change are not relevant.                 |
+| Array Azimuth                 | 0     | degree    |
+| Nominal Operating Temperature | 45    | celsius   | Temperature is stabilized even under solar concentration through intrinsic water cooling. |
+| Mismatch Derating             | 98    | %         |
+| Dirt Derating                 | 98    | %         | Values taken from Chang 2020, analogues to silicon PV.                                    |
+| Temperature Coefficient       | 0     | %/celsius | No assumed efficiency loss with higher temperature.                                       |
 
 # Solar Input
 
@@ -55,16 +55,16 @@
 
 | Name | Value | Unit | Comment                                                                                                                                                                                                                                                                          |
 | ---- | ----- | ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| STH  | 0.14  |      | Reference Kistler 2020, 14% STH (Note: vapor-fed device used in reference, techno-economic analysis assumes liquid phase design, no solar concentration); alternative reference: Idriss 2020, 18% STH at 15 suns, 13% STH at 200 suns (triple junction III-V cell based system). |
+| STH  | 14    | %    | Reference Kistler 2020, 14% STH (Note: vapor-fed device used in reference, techno-economic analysis assumes liquid phase design, no solar concentration); alternative reference: Idriss 2020, 18% STH at 15 suns, 13% STH at 200 suns (triple junction III-V cell based system). |
 
 # PEC Cells
 
-| Name      | Value    | Unit  | Comment                                                                                                                                                                                                                                |
-| --------- | -------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Cell Cost | 21,000.0 | $/m2  | Price of III-V solar cells as reference, approximate $/W to $/m2 conversion formula: Cost ($/W) _ conversion_efficiency (%) _ 1000 W/m2 = Cost ($/m2), Reference: Horowitz 2018 (NREL), 70 $/W, assuming 30% efficiency = 21,000 $/m2. |
-| Lifetime  | 0.33     | years | Should consider operational lifetime (irradiation for only 8 h per day), baseline 1000 h operation time (reference: Kistler 2020), 3000 h total, 0.3 years.                                                                            |
-| Length    | 6        | m     | Based on sizing in Pinaud 2013.                                                                                                                                                                                                        |
-| Width     | 0.3      | m     | Based on sizing in Pinaud 2013.                                                                                                                                                                                                        |
+| Name      | Value    | Unit | Comment                                                                                                                                                                                                                                |
+| --------- | -------- | ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Cell Cost | 21,000.0 | $/m2 | Price of III-V solar cells as reference, approximate $/W to $/m2 conversion formula: Cost ($/W) _ conversion_efficiency (%) _ 1000 W/m2 = Cost ($/m2), Reference: Horowitz 2018 (NREL), 70 $/W, assuming 30% efficiency = 21,000 $/m2. |
+| Lifetime  | 0.33     | year | Should consider operational lifetime (irradiation for only 8 h per day), baseline 1000 h operation time (reference: Kistler 2020), 3000 h total, 0.3 years.                                                                            |
+| Length    | 6        | m    | Based on sizing in Pinaud 2013.                                                                                                                                                                                                        |
+| Width     | 0.3      | m    | Based on sizing in Pinaud 2013.                                                                                                                                                                                                        |
 
 # Solar Concentrator
 
@@ -83,65 +83,65 @@
 
 # Direct Capital Costs - Water Management
 
-| Name                           | Value  | Unit   | Path                       | Comment               |
-| ------------------------------ | ------ | ------ | -------------------------- | --------------------- |
-| Water pump                     | 213.0  | $      | None                       | Based on Pinaud 2013. |
-| Water Manifold Piping          | 11.58  | $/cell | PEC Cells > Number > Value |
-| Water Collection Piping        | 1.502  | $/cell | PEC Cells > Number > Value |
-| Water Column Collection Piping | 1.1015 | $/cell | PEC Cells > Number > Value |
-| Water Final Collection Piping  | 0.231  | $/cell | PEC Cells > Number > Value |
+| Name                           | Value  | Unit | Path                       | Comment               |
+| ------------------------------ | ------ | ---- | -------------------------- | --------------------- |
+| Water pump                     | 213.0  | $    | None                       | Based on Pinaud 2013. |
+| Water Manifold Piping          | 11.58  | $    | PEC Cells > Number > Value |
+| Water Collection Piping        | 1.502  | $    | PEC Cells > Number > Value |
+| Water Column Collection Piping | 1.1015 | $    | PEC Cells > Number > Value |
+| Water Final Collection Piping  | 0.231  | $    | PEC Cells > Number > Value |
 
 # Direct Capital Costs - Gas Processing
 
-| Name                     | Value   | Unit   | Path                       | Comment               |
-| ------------------------ | ------- | ------ | -------------------------- | --------------------- |
-| Condenser                | 7,098.0 | $      | None                       | Based on Pinaud 2013. |
-| Manifold Piping          | 11.58   | $/cell | PEC Cells > Number > Value |
-| Collection Piping        | 1.502   | $/cell | PEC Cells > Number > Value |
-| Column Collection Piping | 1.1015  | $/cell | PEC Cells > Number > Value |
-| Final Collection Piping  | 0.231   | $/cell | PEC Cells > Number > Value |
+| Name                     | Value   | Unit | Path                       | Comment               |
+| ------------------------ | ------- | ---- | -------------------------- | --------------------- |
+| Condenser                | 7,098.0 | $    | None                       | Based on Pinaud 2013. |
+| Manifold Piping          | 11.58   | $    | PEC Cells > Number > Value |
+| Collection Piping        | 1.502   | $    | PEC Cells > Number > Value |
+| Column Collection Piping | 1.1015  | $    | PEC Cells > Number > Value |
+| Final Collection Piping  | 0.231   | $    | PEC Cells > Number > Value |
 
 # Direct Capital Costs - Control System
 
-| Name                      | Path                       | Value    | Unit   | Comment               |
-| ------------------------- | -------------------------- | -------- | ------ | --------------------- |
-| PLC                       | None                       | 3,000.0  | $      | Based on Pinaud 2013. |
-| Control Room Building     | None                       | 17,527.0 | $      |
-| Control Room Wiring Panel | None                       | 3,000.0  | $      |
-| Computer and Monitor      | None                       | 1,500.0  | $      |
-| Labview Software          | None                       | 4,299.0  | $      |
-| Water Level Controllers   | PEC Cells > Number > Value | 50.0     | $/cell |
-| Pressure Sensors          | PEC Cells > Number > Value | 3.333    | $/cell |
-| Hydrogen Area Sensors     | PEC Cells > Number > Value | 73.42    | $/cell |
-| Hydrogen Flow Meter       | None                       | 5,500.0  | $      |
-| Instrument Wiring         | PEC Cells > Number > Value | 0.252    | $/cell |
-| Power Wiring              | PEC Cells > Number > Value | 0.1256   | $/cell |
-| Conduit                   | PEC Cells > Number > Value | 3.759    | $/cell |
+| Name                      | Path                       | Value    | Unit | Comment               |
+| ------------------------- | -------------------------- | -------- | ---- | --------------------- |
+| PLC                       | None                       | 3,000.0  | $    | Based on Pinaud 2013. |
+| Control Room Building     | None                       | 17,527.0 | $    |
+| Control Room Wiring Panel | None                       | 3,000.0  | $    |
+| Computer and Monitor      | None                       | 1,500.0  | $    |
+| Labview Software          | None                       | 4,299.0  | $    |
+| Water Level Controllers   | PEC Cells > Number > Value | 50.0     | $    |
+| Pressure Sensors          | PEC Cells > Number > Value | 3.333    | $    |
+| Hydrogen Area Sensors     | PEC Cells > Number > Value | 73.42    | $    |
+| Hydrogen Flow Meter       | None                       | 5,500.0  | $    |
+| Instrument Wiring         | PEC Cells > Number > Value | 0.252    | $    |
+| Power Wiring              | PEC Cells > Number > Value | 0.1256   | $    |
+| Conduit                   | PEC Cells > Number > Value | 3.759    | $    |
 
 # Direct Capital Costs - Installation Costs
 
-| Name                        | Path                                                          | Value | Unit    | Comment               |
-| --------------------------- | ------------------------------------------------------------- | ----- | ------- | --------------------- |
-| Piping Installation         | PEC Cells > Number > Value                                    | 5.65  | $/cell  | Based on Pinaud 2013. |
-| Reactor Installation        | Non-Depreciable Capital Costs > Solar Collection Area > Value | 22.0  | $/m2 of |
-| Pump Installation           | Direct Capital Costs - Water Management > Water pump > Value  | 0.30  |         |
-| Gas processing installation | Direct Capital Costs - Gas Processing > Summed Total > Value  | 0.30  |         |
-| Control system installation | Direct Capital Costs - Control System > Summed Total > Value  | 0.30  |         |
+| Name                        | Path                                                          | Value | Unit | Comment               |
+| --------------------------- | ------------------------------------------------------------- | ----- | ---- | --------------------- |
+| Piping Installation         | PEC Cells > Number > Value                                    | 5.65  | $    | Based on Pinaud 2013. |
+| Reactor Installation        | Non-Depreciable Capital Costs > Solar Collection Area > Value | 22.0  | $/m2 |
+| Pump Installation           | Direct Capital Costs - Water Management > Water pump > Value  | 30    | %    |
+| Gas processing installation | Direct Capital Costs - Gas Processing > Summed Total > Value  | 30    | %    |
+| Control system installation | Direct Capital Costs - Control System > Summed Total > Value  | 30    | %    |
 
 # Indirect Capital Costs
 
 | Name                      | Path                                 | Value | Unit | Comment               |
 | ------------------------- | ------------------------------------ | ----- | ---- | --------------------- |
-| Engineering and Design    | Direct Capital Costs > Total > Value | 0.07  |      | Based on Pinaud 2013. |
-| Process Contingency       | Direct Capital Costs > Total > Value | 0.20  |      |
-| Up-Front Permitting Costs | Direct Capital Costs > Total > Value | 0.005 |      |
-| Site Preparation          | Direct Capital Costs > Total > Value | 0.01  |      |
+| Engineering and Design    | Direct Capital Costs > Total > Value | 7     | %    | Based on Pinaud 2013. |
+| Process Contingency       | Direct Capital Costs > Total > Value | 20    | %    |
+| Up-Front Permitting Costs | Direct Capital Costs > Total > Value | 0.5   | %    |
+| Site Preparation          | Direct Capital Costs > Total > Value | 1     | %    |
 
 # Non-Depreciable Capital Costs
 
-| Name         | Value | Unit       | Comment                         |
-| ------------ | ----- | ---------- | ------------------------------- |
-| Cost of land | 500.0 | $ per acre | Land cost based on Pinaud 2013. |
+| Name         | Value | Unit   | Comment                         |
+| ------------ | ----- | ------ | ------------------------------- |
+| Cost of land | 500.0 | $/acre | Land cost based on Pinaud 2013. |
 
 # Fixed Operating Costs
 
@@ -156,20 +156,20 @@
 
 | Name         | Full Name                          | Path                                       | Value  | Unit   | Comment               |
 | ------------ | ---------------------------------- | ------------------------------------------ | ------ | ------ | --------------------- |
-| g&a          | G&A rate                           | Fixed Operating Costs > Labor Cost > Value | 0.20   |        | Based on Pinaud 2013. |
-| property tax | Property tax and insurance rate    | Total Capital Costs > Inflated > Value     | 0.02   |        |
-| repairs      | Production Maintenance and Repairs | Direct Capital Costs > Total > Value       | 0.005  |        |
+| g&a          | G&A rate                           | Fixed Operating Costs > Labor Cost > Value | 20     | %      | Based on Pinaud 2013. |
+| property tax | Property tax and insurance rate    | Total Capital Costs > Inflated > Value     | 2      | %      |
+| repairs      | Production Maintenance and Repairs | Direct Capital Costs > Total > Value       | 0.5    | %      |
 | fees         | Licensing, Permits and Fees        | None                                       | 1000.0 | $/year |
 
 # Utilities
 
 | Name                   | Usage per kg H2 | Usage Unit | Cost                                                                                | Cost Unit | Price Conversion Factor | Price Conversion Factor Unit | Comment                                                                                                       |
 | ---------------------- | --------------- | ---------- | ----------------------------------------------------------------------------------- | --------- | ----------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| Industrial Electricity | 0.16            | kWh/kg H2  | pyH2A.Lookup_Tables.Utility_Cost~Industrial_Electricity_AEO_2017_Reference_Case.csv | GJ        | 0.0036                  | GJ/kWh                       | Electricity usage based on Pinaud 2013.                                                                       |
-| Process Water          | 2.369           | gal/kg H2  | 0.0023749510945008                                                                  | $/gal     | 1.                      | None                         | Seawater reverse osmosis cost ca. 0.6 $/m3 (equal to ca. 0.0023 $/gal), based on Kibria 2021 and Driess 2021. |
+| Industrial Electricity | 0.16            | kWh/kg     | pyH2A.Lookup_Tables.Utility_Cost~Industrial_Electricity_AEO_2017_Reference_Case.csv | GJ        | 0.0036                  | GJ/kWh                       | Electricity usage based on Pinaud 2013.                                                                       |
+| Process Water          | 2.369           | gal/kg     | 0.0023749510945008                                                                  | $/gal     | 1.                      | None                         | Seawater reverse osmosis cost ca. 0.6 $/m3 (equal to ca. 0.0023 $/gal), based on Kibria 2021 and Driess 2021. |
 
 # Unplanned Replacement
 
 | Name                  | Full Name                                       | Path                                         | Value | Unit | Comment               |
 | --------------------- | ----------------------------------------------- | -------------------------------------------- | ----- | ---- | --------------------- |
-| unplanned replacement | Total Unplanned Replacement Capital Cost Factor | Depreciable Capital Costs > Inflated > Value | 0.005 |      | Based on Pinaud 2013. |
+| unplanned replacement | Total Unplanned Replacement Capital Cost Factor | Depreciable Capital Costs > Inflated > Value | 0.5   | %    | Based on Pinaud 2013. |
