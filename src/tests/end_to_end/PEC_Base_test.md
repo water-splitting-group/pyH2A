@@ -18,15 +18,15 @@
 
 | Name                      | Value | Unit   | Path | Full Name                                                         |
 | ------------------------- | ----- | ------ | ---- | ----------------------------------------------------------------- |
-| Operating Capacity Factor | 0.90  | %      |      |
+| Operating Capacity Factor | 90%   | -      |      |
 | Plant Design Capacity     | 1,000 | kg/day |      |
-| Plant Modules             | 10    |        | None | 10 identical modules, only affects labor requirement calculation. |
+| Plant Modules             | 10    | -      | None | 10 identical modules, only affects labor requirement calculation. |
 
 # Construction
 
-| Name             | Full Name                                      | Value | Unit |
-| ---------------- | ---------------------------------------------- | ----- | ---- |
-| capital perc 1st | % of Capital Spent in 1st Year of Construction | 1.00  | %    |
+| Name             | Full Name           | Value | Unit |
+| ---------------- | ------------------- | ----- | ---- |
+| capital perc 1st | Fraction of Capital | 1.00% | -    |
 
 # Hourly Irradiation
 
@@ -41,8 +41,8 @@
 | Module Tilt                   | 0     | degree    | Two axis tracking, module tilt and array azimuth change are not relevant.                 |
 | Array Azimuth                 | 0     | degree    |
 | Nominal Operating Temperature | 45    | celsius   | Temperature is stabilized even under solar concentration through intrinsic water cooling. |
-| Mismatch Derating             | 98    | %         |
-| Dirt Derating                 | 98    | %         | Values taken from Chang 2020, analogues to silicon PV.                                    |
+| Mismatch Derating             | 98%   | -         |
+| Dirt Derating                 | 98%   | -         | Values taken from Chang 2020, analogues to silicon PV.                                    |
 | Temperature Coefficient       | 0     | %/celsius | No assumed efficiency loss with higher temperature.                                       |
 
 # Solar Input
@@ -55,7 +55,7 @@
 
 | Name | Value | Unit | Comment                                                                                                                                                                                                                                                                          |
 | ---- | ----- | ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| STH  | 14    | %    | Reference Kistler 2020, 14% STH (Note: vapor-fed device used in reference, techno-economic analysis assumes liquid phase design, no solar concentration); alternative reference: Idriss 2020, 18% STH at 15 suns, 13% STH at 200 suns (triple junction III-V cell based system). |
+| STH  | 14%   | -    | Reference Kistler 2020, 14% STH (Note: vapor-fed device used in reference, techno-economic analysis assumes liquid phase design, no solar concentration); alternative reference: Idriss 2020, 18% STH at 15 suns, 13% STH at 200 suns (triple junction III-V cell based system). |
 
 # PEC Cells
 
@@ -70,7 +70,7 @@
 
 | Name                 | Value | Unit | Comment                                                                                                                                                        |
 | -------------------- | ----- | ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Concentration Factor | 50    |      | Concentration factor increased from 10 (Pinaud 2013) to 50 due to high PEC cell cost, within range of typical parabolic trough concentrators, see Gharbi 2011. |
+| Concentration Factor | 50    | -    | Concentration factor increased from 10 (Pinaud 2013) to 50 due to high PEC cell cost, within range of typical parabolic trough concentrators, see Gharbi 2011. |
 | Cost                 | 100   | $/m2 | 100 $/m2 parabolic trough concentrator cost based on Filas 2018.                                                                                               |
 
 # Land Area Requirement
@@ -123,19 +123,19 @@
 | Name                        | Path                                                          | Value | Unit | Comment               |
 | --------------------------- | ------------------------------------------------------------- | ----- | ---- | --------------------- |
 | Piping Installation         | PEC Cells > Number > Value                                    | 5.65  | $    | Based on Pinaud 2013. |
-| Reactor Installation        | Non-Depreciable Capital Costs > Solar Collection Area > Value | 22.0  | $/m2 |
-| Pump Installation           | Direct Capital Costs - Water Management > Water pump > Value  | 30    | %    |
-| Gas processing installation | Direct Capital Costs - Gas Processing > Summed Total > Value  | 30    | %    |
-| Control system installation | Direct Capital Costs - Control System > Summed Total > Value  | 30    | %    |
+| Reactor Installation        | Non-Depreciable Capital Costs > Solar Collection Area > Value | 22.0  | $    |
+| Pump Installation           | Direct Capital Costs - Water Management > Water pump > Value  | 30%   | $    |
+| Gas processing installation | Direct Capital Costs - Gas Processing > Summed Total > Value  | 30%   | $    |
+| Control system installation | Direct Capital Costs - Control System > Summed Total > Value  | 30%   | $    |
 
 # Indirect Capital Costs
 
 | Name                      | Path                                 | Value | Unit | Comment               |
 | ------------------------- | ------------------------------------ | ----- | ---- | --------------------- |
-| Engineering and Design    | Direct Capital Costs > Total > Value | 7     | %    | Based on Pinaud 2013. |
-| Process Contingency       | Direct Capital Costs > Total > Value | 20    | %    |
-| Up-Front Permitting Costs | Direct Capital Costs > Total > Value | 0.5   | %    |
-| Site Preparation          | Direct Capital Costs > Total > Value | 1     | %    |
+| Engineering and Design    | Direct Capital Costs > Total > Value | 7%    | $    | Based on Pinaud 2013. |
+| Process Contingency       | Direct Capital Costs > Total > Value | 20%   | $    |
+| Up-Front Permitting Costs | Direct Capital Costs > Total > Value | 0.5%  | $    |
+| Site Preparation          | Direct Capital Costs > Total > Value | 1%    | $    |
 
 # Non-Depreciable Capital Costs
 
@@ -148,28 +148,28 @@
 | Name              | Full Name                               | Value  | Unit   | Comment                                                                                                                                                              |
 | ----------------- | --------------------------------------- | ------ | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | area              | Area per staff                          | 60,000 | m2     | Based on Pinaud et al. 2013, smaller area per staff compared to PV+E and photocatalytic model due to smaller size of individual units, more connections and sensors. |
-| supervisor        | Shift supervisor                        | 1      |        | Number of shift supervisors.                                                                                                                                         |
-| shifts            | Shifts                                  | 3      |        | Number of shifts per day.                                                                                                                                            |
+| supervisor        | Shift supervisor                        | 1      | -      | Number of shift supervisors.                                                                                                                                         |
+| shifts            | Shifts                                  | 3      | -      | Number of shifts per day.                                                                                                                                            |
 | hourly labor cost | Burdened labor cost, including overhead | 50.0   | $/hour |
 
 # Other Fixed Operating Costs
 
 | Name         | Full Name                          | Path                                       | Value  | Unit   | Comment               |
 | ------------ | ---------------------------------- | ------------------------------------------ | ------ | ------ | --------------------- |
-| g&a          | G&A rate                           | Fixed Operating Costs > Labor Cost > Value | 20     | %      | Based on Pinaud 2013. |
-| property tax | Property tax and insurance rate    | Total Capital Costs > Inflated > Value     | 2      | %      |
-| repairs      | Production Maintenance and Repairs | Direct Capital Costs > Total > Value       | 0.5    | %      |
+| g&a          | G&A rate                           | Fixed Operating Costs > Labor Cost > Value | 20%    | $      | Based on Pinaud 2013. |
+| property tax | Property tax and insurance rate    | Total Capital Costs > Inflated > Value     | 2%     | $      |
+| repairs      | Production Maintenance and Repairs | Direct Capital Costs > Total > Value       | 0.5%   | $      |
 | fees         | Licensing, Permits and Fees        | None                                       | 1000.0 | $/year |
 
 # Utilities
 
-| Name                   | Usage per kg H2 | Usage Unit | Cost                                                                                | Cost Unit | Price Conversion Factor | Price Conversion Factor Unit | Comment                                                                                                       |
-| ---------------------- | --------------- | ---------- | ----------------------------------------------------------------------------------- | --------- | ----------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| Industrial Electricity | 0.16            | kWh/kg     | pyH2A.Lookup_Tables.Utility_Cost~Industrial_Electricity_AEO_2017_Reference_Case.csv | GJ        | 0.0036                  | GJ/kWh                       | Electricity usage based on Pinaud 2013.                                                                       |
-| Process Water          | 2.369           | gal/kg     | 0.0023749510945008                                                                  | $/gal     | 1.                      | None                         | Seawater reverse osmosis cost ca. 0.6 $/m3 (equal to ca. 0.0023 $/gal), based on Kibria 2021 and Driess 2021. |
+| Name                   | Usage_Value | Usage_Unit | Cost_Value                                                                          | Cost_Unit | Price_Conversion_Factor_Value | Price_Conversion_Factor_Unit | Comment                                                                                                       |
+| ---------------------- | ----------- | ---------- | ----------------------------------------------------------------------------------- | --------- | ----------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Industrial Electricity | 0.16        | kWh/kg     | pyH2A.Lookup_Tables.Utility_Cost~Industrial_Electricity_AEO_2017_Reference_Case.csv | $/GJ      | 0.0036                        | -                            | Electricity usage based on Pinaud 2013.                                                                       |
+| Process Water          | 2.369       | gal/kg     | 0.0023749510945008                                                                  | $/gal     | 1.                            | None                         | Seawater reverse osmosis cost ca. 0.6 $/m3 (equal to ca. 0.0023 $/gal), based on Kibria 2021 and Driess 2021. |
 
 # Unplanned Replacement
 
-| Name                  | Full Name                                       | Path                                         | Value | Unit | Comment               |
-| --------------------- | ----------------------------------------------- | -------------------------------------------- | ----- | ---- | --------------------- |
-| unplanned replacement | Total Unplanned Replacement Capital Cost Factor | Depreciable Capital Costs > Inflated > Value | 0.5   | %    | Based on Pinaud 2013. |
+| Name                  | Full Name                                                                                         | Path                                         | Value | Unit | Comment               |
+| --------------------- | ------------------------------------------------------------------------------------------------- | -------------------------------------------- | ----- | ---- | --------------------- |
+| unplanned replacement | Total Unplanned Replacement Capital Cost Factor (fraction of total direct depreciable costs/year) | Depreciable Capital Costs > Inflated > Value | 0.5%  | $    | Based on Pinaud 2013. |
