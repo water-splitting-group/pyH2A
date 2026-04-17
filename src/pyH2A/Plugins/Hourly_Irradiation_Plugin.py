@@ -41,7 +41,7 @@ input_dict = {
 				"bounds": (250, 500),
 			},
 			"Unit": {
-				"dimension": "dimensionless / temperature",
+				"dimension": "temperature",
 			},
 			"optional": False,
 			"description": "Nominal operating temperature of irradiated module."
@@ -74,7 +74,7 @@ input_dict = {
 				"bounds": (-0.1, 0), 
 			},
 			"Unit": {
-				"dimension": "temperature",
+				"dimension": "dimensionless / temperature",
 			},
 			"optional": False,
 			"description": "Performance decrease of irradiated module per degree increase."
