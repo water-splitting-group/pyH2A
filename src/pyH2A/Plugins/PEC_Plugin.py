@@ -125,6 +125,43 @@ input_dict = {
 	}
 }
 
+output_dict = {
+	"Non-Depreciable Capital Costs": {
+		"Land required": {
+			"Value": "self.total_land_area_acres",
+			"description": "Total land area required.",
+			"optional": False,
+		},
+		"Solar collection area": {
+			"Value": "self.total_solar_collection_area",
+			"description": "Solar collection area.",
+			"optional": False,
+		}
+	},
+	"Planned Replacement": {
+		"Planned replacement PEC Cells": {
+			"Cost": "self.cell_cost",
+			"Frequency (years)": "dcf.inp['PEC Cells']['Lifetime (years)']['Value']",
+			"description": "Total cost of replacing all PEC cells once.",
+			"optional": False,		
+		}
+	},
+ 	"Direct capital costs - PEC Cells": {
+		"PEC cell cost": {
+			"Value": "self.cell_cost",
+			"description": "Total cost of all PEC cells.",
+			"optional": False,
+		}
+	},
+	"PEC Cells": {
+		"Number": {
+			"Value": "self.cell_number",
+			"description": "Number of individual PEC cells required for design H2 output capacity.",
+			"optional": False,
+		}
+	},
+}
+
 class PEC_Plugin:
 	'''Simulating H2 production using photoelectrochemical water splitting.
 
