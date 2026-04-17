@@ -58,6 +58,45 @@ input_dict = {
     },
 }
 
+output_dict = {
+    "Power Generation": {
+        "Available energy (yearly)": {
+            "Value": "self.remaining_flexible",
+            "description": "Remaining available energy, yearly basis.",
+            "optional": False,
+        },
+        "Stored energy (yearly)": {
+            "Value": "self.remaining_stored",
+            "description": "Remaining stored energy, yearly basis.",
+            "optional": False,
+        },
+        "Available energy (daily)": {
+            "Value": 0,
+            "description": "Remaining available energy, daily basis.",
+            "optional": False,
+        },
+        "Stored energy (daily)": {
+            "Value": 0,
+            "description": "Remaining stored energy, daily basis.",
+            "optional": False,
+        },
+    },
+    "Grid Electricity": {
+        "Used grid electricity (yearly)": {
+            "Value": "self.total_unfulfilled",
+            "description": "Used grid electricity, yearly basis.",
+            "optional": False,
+        },
+    },
+    "Other Variable Operating Cost - Grid Electricity": {
+        "Cost of grid electricity (yearly)": {
+            "Value": "self.electricity_cost",
+            "description": "Cost of grid electricity, yearly basis.",
+            "optional": False,
+        },
+    },
+}
+
 class Power_Management_Plugin:
     '''Management of electricity production and consumption.
     
