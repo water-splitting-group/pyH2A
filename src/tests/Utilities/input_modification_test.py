@@ -51,8 +51,8 @@ class TestMergeArbitaryInputFilesPositive:
         finally:
             os.chdir(previous_cwd)
 
-    def test_convert_input_to_dictionary_merges_references_in_list_order(self):
-        """Later listed references should override earlier ones for first-level merge."""
+    def test_convert_input_to_dictionary_respects_priority_and_main_override(self):
+        """Top-listed base rows beat later rows, while main input still overrides base values."""
         with self._working_directory(self.test_data_dir):
             merged = input_modification.convert_input_to_dictionary(
                 'override_level_2.md',
@@ -65,6 +65,34 @@ class TestMergeArbitaryInputFilesPositive:
         assert merged['Process']['Flow']['Value'] == 25
         assert merged['Economics']['CapEx']['Value'] == 120
         assert merged['Economics']['OpEx']['Value'] == 55
+
+    def test_convert_input_to_dictionary_base_top_row_has_highest_priority(
+        self,
+        tmp_path,
+    ):
+        """Top listed base file should override later base files on conflicts."""
+        top_base = self.test_data_dir / 'base_input.md'
+        lower_base = self.test_data_dir / 'override_level_1.md'
+        priority_file = tmp_path / 'priority_order.md'
+
+        priority_file.write_text(
+            '# Base input file\n\n'
+            '| Name | Value |\n'
+            '| --- | --- |\n'
+            f'| Top priority | {top_base} |\n'
+            f'| Lower priority | {lower_base} |\n',
+            encoding='utf-8',
+        )
+
+        merged = input_modification.convert_input_to_dictionary(
+            str(priority_file),
+            merge_default=False,
+        )
+
+        assert merged['Process']['Temperature']['Value'] == 300
+        assert merged['Process']['Owner']['Value'] == 'BaseTeam'
+        assert merged['Economics']['CapEx']['Value'] == 100
+        assert merged['Economics']['OpEx']['Value'] == 50
 
     def test_convert_input_to_dictionary_without_base_table_returns_unchanged(self):
         """Input without Base input file table should remain unchanged."""
@@ -120,7 +148,7 @@ class TestMergeArbitaryInputFilesNegative:
         assert merged['A']['Value']['Value'] == 1
         assert merged['B']['Value']['Value'] == 2
 
-    def test_convert_input_to_dictionary_invalid_base_row_raises_value_error(
+    def test_convert_input_to_dictionary_invalid_base_row_raises_type_error(
         self,
         monkeypatch,
     ):
@@ -133,16 +161,13 @@ class TestMergeArbitaryInputFilesNegative:
         )
 
         with self._working_directory(self.test_data_dir):
-            with pytest.raises(
-                ValueError,
-                match='Expected row in "Base input file" table to be a dictionary',
-            ):
+            with pytest.raises(TypeError):
                 input_modification.convert_input_to_dictionary(
                     'override_level_2.md',
                     merge_default=False,
                 )
 
-    def test_convert_input_to_dictionary_non_string_reference_raises_value_error(
+    def test_convert_input_to_dictionary_non_string_reference_raises_type_error(
         self,
         monkeypatch,
     ):
@@ -154,16 +179,13 @@ class TestMergeArbitaryInputFilesNegative:
         )
 
         with self._working_directory(self.test_data_dir):
-            with pytest.raises(
-                ValueError,
-                match='Expected "Value" in "Base input file" table to be a string',
-            ):
+            with pytest.raises(TypeError):
                 input_modification.convert_input_to_dictionary(
                     'override_level_2.md',
                     merge_default=False,
                 )
 
-    def test_convert_input_to_dictionary_empty_reference_raises_value_error(
+    def test_convert_input_to_dictionary_empty_reference_raises_file_not_found(
         self,
         monkeypatch,
     ):
@@ -175,10 +197,7 @@ class TestMergeArbitaryInputFilesNegative:
         )
 
         with self._working_directory(self.test_data_dir):
-            with pytest.raises(
-                ValueError,
-                match='Empty file reference in "Base input file" table',
-            ):
+            with pytest.raises(FileNotFoundError):
                 input_modification.convert_input_to_dictionary(
                     'override_level_2.md',
                     merge_default=False,
