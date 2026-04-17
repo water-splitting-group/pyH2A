@@ -68,27 +68,21 @@ input_dict = {
 }
 
 output_dict = {
-    'Power Generation': {
-        'Stored energy (daily)': {
-            'Value': 'self.yearly_recovered_power',
-            'add_processed': True,
-            'insert_path': True,
-            'description': 'Energy stored in battery daily (dictionary of years)',
-            'optional': False,
+    "Power Generation": {
+        "Stored energy (daily)": {
+            "Value": "self.yearly_recovered_power",
+            "description": "Energy stored in battery daily (dictionary of years)",
+            "optional": False,
         },
-        'Available energy (daily)': {
-            'Value': 'self.yearly_unstored_power',
-            'add_processed': True,
-            'insert_path': True,
-            'description': 'Available energy, daily basis, dictionary of years - energy which has not been stored in battery',
-            'optional': False,
+        "Available energy (daily)": {
+            "Value": "self.yearly_unstored_power",
+            "description": "Available energy, daily basis, dictionary of years - energy which has not been stored in battery",
+            "optional": False,
         },
-        'Available energy (hourly)': {
-            'Value': 0,
-            'add_processed': True,
-            'insert_path': True,
-            'description': 'Available energy is set to zero, since available energy is now only in daily format.',
-            'optional': False,
+        "Available energy (hourly)": {
+            "Value": 0,
+            "description": "Available energy is set to zero, since available energy is now only in daily format.",
+            "optional": False,
         }
     }
 }
