@@ -64,6 +64,24 @@ input_dict = {
     },
 }
 
+output_dict = {
+    "Power Consumption": {
+        "Reverse osmosis consumption (yearly)": {
+            "Value": "self.electricity_demand_kWh",
+            "Type": "flexible",
+            "description": "Electricity demand of reverse osmosis plant per year.",
+            "optional": False,
+        },
+    },
+    "Reverse Osmosis": {
+        "Capacity (hourly)": { # check if this is the best way to express this output
+            "Value": "self.maximum_sea_water_processing_m3_per_hour",
+            "description": "Maximum sea water processing capacity per hour of reverse osmosis plant.",
+            "optional": False,
+        },
+    },
+}
+
 class Reverse_Osmosis_Plugin:
     '''Simulation of purified water production using reverse osmosis.
     
