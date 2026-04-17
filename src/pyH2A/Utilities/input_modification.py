@@ -331,6 +331,38 @@ def merge(a, b, path=None, update=True):
 
 
 def convert_input_to_dictionary(file, default = 'pyH2A.Config~Defaults.md', merge_default = True):
+	'''
+	Read markdown input file into dictionary and optionally merge defaults and
+	one level of external base-input files.
+
+	Parameters
+	----------
+	file : str
+		Path to input file.
+	default : str, optional
+		Path to default file.
+	merge_default : bool
+		If ``True``, defaults are merged first and the main input file overrides
+		the default values.
+
+	Returns
+	-------
+	inp : dict
+		Input dictionary.
+
+	Notes
+	-----
+	If ``merge_default`` is ``True``, the default file is merged first and the
+	main input file overrides those values.
+
+	If a ``Base input file`` table exists, each row's ``Value`` is treated as a
+	referenced file path. Referenced files are loaded in listed order and merged
+	into the current dictionary, so later listed files have higher priority.
+
+	Only first-level references from the main input file are resolved. Nested
+	``Base input file`` tables inside referenced files are not followed.
+ 	'''
+ 
 
 	inp = convert_file_to_dictionary(file_import(file, mode = 'r'))
 
