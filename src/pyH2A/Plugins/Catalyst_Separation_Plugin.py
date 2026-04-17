@@ -42,6 +42,16 @@ input_dict = {
 	},
 }
 
+output_dict = {
+    "Other Variable Operating Cost - Catalyst Separation": {
+        "Catalyst separation (yearly cost)": {
+            'Value': 'self.yearly_cost',
+            'description': 'Yearly cost of catalyst seperation.',
+            'optional': False,
+        },
+	},
+}
+
 class Catalyst_Separation_Plugin:
 	'''Calculation of cost for catalyst separation (e.g. via nanofiltration).
 
