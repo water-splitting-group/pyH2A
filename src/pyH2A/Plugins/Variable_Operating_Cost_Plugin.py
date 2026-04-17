@@ -26,18 +26,18 @@ input_dict = {
 				"type": {float},
 				"bounds": (0, None)
 			},
-			"Price Conversion Factor Value": {
+			"Price Conversion Factor_Value": {
 				"type": {float},
 				"bounds": (0, None)
 			},
-			"Price Conversion Factor Unit": {
+			"Price Conversion Factor_Unit": {
 				"dimension": "dimensionless"
 			},
 			"Path_Value": {
 				"type": {str},
 				"bounds": None
 			},
-			"Usage Path Value": {
+			"Usage Path_Value": {
 				"type": {str},
 				"bounds": None
 			},
