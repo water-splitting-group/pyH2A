@@ -65,6 +65,16 @@ input_dict = {
 	},
 }
 
+output_dict = {
+	"Fixed Operating Costs": {
+		"Staff": {
+			"Value": "self.staff_per_module",
+			"description": "Number of 8-hour equivalent staff required for operating one plant module.",
+			"optional": False,
+		},
+	},
+}
+
 class Multiple_Modules_Plugin:
 	''' Simulating mutliple plant modules which are operated together, assuming that only labor cost is reduced. 
 	Calculation of required labor to operate all modules, scaling down labor requirement to one module for subsequent calculations.
