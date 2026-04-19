@@ -1,7 +1,7 @@
 import pprint as pp
 import numpy as np
 
-from pyH2A.Utilities.Input_Resolver.check_functions import check_type, check_if_in_options, check_dimension, check_bounds
+from pyH2A.Utilities.check_functions import check_type, check_if_in_options, check_dimension, check_bounds
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 from pyH2A.Utilities.input_modification import process_input
 
@@ -190,13 +190,8 @@ def value_resolver_function(top_key,
     (and if applicable, within specified options).
     '''
 
-    # Retrieve value specification, check if PATH_KEY is present, setting
-    # specific_path_key accordingly (if not present, default to 'Path')
-    value_specification = row_dict[bottom_key]
-    if PATH_KEY in value_specification:
-        specific_path_key = value_specification[PATH_KEY]
-    else:
-        specific_path_key = 'Path'
+    # Get specific_path_key from value specifications (if not present, default to 'Path')
+    specific_path_key = row_dict[bottom_key].get(PATH_KEY, 'Path')
 
     # Process input (resolving paths etc.)
     process_input(dcf_class.inp, 
@@ -291,7 +286,7 @@ def value_with_unit_resolver_function(top_key,
 
     # If retrieved value is numerical, quantity object is created, 
     # checks are performed and newly created quantity object is returned
-    if isinstance(value_retrieved, (int, float, np.ndarray, dict)):
+    elif isinstance(value_retrieved, (int, float, np.ndarray, dict)):
 
         unit_specification, unit_retrieved = unit_resolver_function(top_key, 
                                                                     middle_key, 

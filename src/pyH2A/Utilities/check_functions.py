@@ -34,7 +34,6 @@ def check_dimension(top_key,
     '''
     Check if value has expected dimension. Raises ValueError if not.
     '''
-    pass
 
     if value.dimension.replace(' ', '') != expected_dimension.replace(' ', ''):
         raise ValueError(f"'{top_key} > {middle_key} > {bottom_key}' (entry: '{value}'): Expected dimension '{expected_dimension}', but got '{value.dimension}'")

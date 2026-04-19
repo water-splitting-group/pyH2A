@@ -376,7 +376,7 @@ def set_by_path(root, items, value, value_type = 'value'):
 		get_by_path(root, items[:-1])[items[-1]] = value
 
 def insert(class_object, top_key, middle_key, bottom_key, value, name, 
-		   print_info = True, add_processed = True, insert_path = True):
+		   print_info = True, add_processed = True, insert_path = True, path_key = 'Path'):
 	'''Insert function used in plugins. 
 
 	Parameters
@@ -398,7 +398,9 @@ def insert(class_object, top_key, middle_key, bottom_key, value, name,
 	add_processed : bool, optional
 		Flag to control if 'Processed' key is added.
 	insert_path : bool, optional
-		Flog to control if 'Path' key is added.
+		Flag to control if 'Path' key is added.
+	path_key : str, optional
+		Key for the path entry.
 
 	Notes
 	-----
@@ -415,7 +417,7 @@ def insert(class_object, top_key, middle_key, bottom_key, value, name,
 	try:
 		class_object.inp[top_key][middle_key][bottom_key] = value
 		if insert_path is True: 
-			class_object.inp[top_key][middle_key]['Path'] = 'None' # setting path to "None" to avoid processing
+			class_object.inp[top_key][middle_key][path_key] = 'None' # setting path to "None" to avoid processing
 		if print_info is True: print("'{0} > {1} > {2}' is being overwritten by {3}".format(top_key, 
 																							middle_key, 
 																							bottom_key, 
