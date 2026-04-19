@@ -51,7 +51,6 @@ class DummyDCF:
                     'Value': 50, 
                     'Unit': '-',
                     'Processed': True,
-
                 }
             },  
             
@@ -181,6 +180,18 @@ class DummyDCF:
                 'Quantity object': {
                     'Value': Quantity(np.array([1., 2., 3.]), 'J/m2'),
                     'Processed': True,
+                }
+            },
+
+            'Quantity Path Testing': {
+                'Electrolyzer power': { 
+                    'Value': Quantity(100, 'kW'),
+                    'Processed': True,
+                },
+                'PV power': {
+                    'Value': 1.5,
+                    'Path': 'Quantity Path Testing > Electrolyzer power > Value', # testing that path information is correctly passed and used for Quantity objects
+                    'Unit': 'W',
                 }
             }
     }
@@ -447,12 +458,35 @@ input_dict = {
             'optional': False,
             'description': 'Testing of directly getting a Quantity object'
         }
+    },
+    'Quantity Path Testing': {
+        'Electrolyzer power': {
+            'Value': {
+                'type': {float, int},
+                'bounds': (0, None),
+            },
+            'Unit': {
+                'dimension': 'power'
+            },
+            'optional': False,
+            'description': 'Power of the electrolyzer.'
+        },
+        'PV power': {
+            'Value': {
+                'type': {float, int},
+                'bounds': (0, None),
+            },
+            'Unit': {
+                'dimension': 'power'
+            },
+            'optional': False,
+            'description': 'Power of the PV system'
+        }
     }
 }
 
-
 # Expected resolved output
-input_dict_resolved = { 'Utilities':{ 
+input_dict_resolved = {'Utilities':{ 
                                 'Natural gas': {
                                     'Usage_Value': Quantity(5.4E9, 'J/kg'),
                                     'Cost_Value': Quantity(5.55555555555E-5, 'USD/J'),
@@ -568,8 +602,17 @@ input_dict_resolved = { 'Utilities':{
                             'Quantity object': {
                                 'Value': Quantity(np.array([1., 2., 3.]), 'J/m2'),
                             }
-                        }
+                        },
+                        'Quantity Path Testing': {
+                            'Electrolyzer power': {
+                                'Value': Quantity(100, 'kW'),
+                            },
+                            'PV power': {
+                                'Value': Quantity(150000, 'W'),    
+                            }
+                        },
     }
+    
 
 
 

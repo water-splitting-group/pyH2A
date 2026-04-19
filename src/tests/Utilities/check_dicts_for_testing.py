@@ -46,6 +46,14 @@ def check_dicts(actual, expected, tolerance=1e-12, path=""):
             assert actual[key] == pytest.approx(expected[key], abs=tolerance), \
                 f"Numeric mismatch at {current_path}: {actual[key]} != {expected[key]}"
 
+        elif isinstance(expected[key], (list, tuple, np.ndarray)):
+            np.testing.assert_allclose(
+                actual[key], 
+                expected[key], 
+                atol=tolerance, 
+                err_msg=f"Array/List value mismatch at {current_path}"
+            )
+
         else:
             raise TypeError(f"Unsupported type in expected dict for key '{key}' at {current_path}: {type(expected[key])}")
 

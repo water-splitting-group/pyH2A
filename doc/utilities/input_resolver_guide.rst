@@ -1,86 +1,128 @@
+.. _input_resolver_guide:
+
+=======================
 Input Resolver Guide
-====================
+=======================
 
-The ``pyH2A.Utilities.Input_Resolver.input_resolver`` pipeline provides an orchestrated subsystem exclusively designed around securely validating nested configurations within pyH2A inputs. It ensures that the model information entered by the user matches the physical types, bounds, and dimensions expected by the internal simulation modules.
+The Input Resolver is a utility in pyH2A designed to provide a structured and verifiable way to extract input values from the user's input dictionary (usually ``dcf.inp``) into the plugins.
 
-Overview
---------
+It utilizes an ``input_dict`` that acts as a blueprint, describing what information your plugin expects, where to find it, and ensuring that any retrieved values match the required type, bounds, and physical dimension.
 
-Data in ``pyH2A`` inputs is structured hierarchically. The input resolver walks over these nested dictionaries, checks them against predefined constraints, and dynamically converts string inputs and unit definitions into mathematical ``Quantity`` objects internally. 
+Structure of the input_dict
+===========================
 
-To understand the input resolver, it is essential to understand the hierarchical terminology used in pyH2A input structures:
-1. **top_key**: The name of the table in the input file (e.g., ``# Capital Cost``).
-2. **middle_key**: The row name or parameter name within a table (e.g., the entry under the ``Name`` column).
-3. **bottom_key**: The specific column related to that parameter (e.g., ``Value``, ``Unit``, or ``Type``).
+The ``input_dict`` mimics the hierarchical structure of the pyH2A input file. The structure is 3 levels deep: 
 
-Basic Strategy
+1. **Top Level** (Table name / Group name): The name of the table in the input file, e.g., ``'Utilities'``.
+2. **Middle Level** (Row name / Parameter name): The name of the row, e.g., ``'Electricity'``.
+3. **Bottom Level** (Value entries & Specifications): Contains the parameters for extraction, like ``'Value'``, ``'Unit'``, as well as descriptive properties of the row.
+
+Example
+-------
+
+.. code-block:: python
+
+    input_dict = {
+        'Utilities': {
+            'Electricity': {
+                'Usage_Value': {
+                    'type': {float, int},
+                    'bounds': (0, None),
+                    'path': 'Usage_Path'
+                },
+                'Usage_Unit': {
+                    'dimension': 'energy / mass'
+                },
+                'Type': {
+                    'type': str,
+                    'options': {'natural_gas', 'electricity'}
+                },
+                'optional': True,
+                'description': 'The utility usage details.'
+            }
+        }
+    }
+
+
+Wildcards and Table Groups
+--------------------------
+
+Often, the exact name of a table or a row is flexible or unknown in advance. The indicator ``'<...>'`` (``WILDCARD_MARKER``) can be used to handle these situations:
+
+* **Table Groups (Top Level)**: If a top key contains ``'<...>'`` (e.g., ``'<...> Other Variable Operating Cost <...>'``), it acts as a group. The resolver extracts all tables in the input that contain the string (in this case, all tables containing " Other Variable Operating Cost ").
+* **Wildcard Rows (Middle Level)**: If a middle key is ``'<...>'``, the resolver iterates over *all* rows present in the referenced table in the user's input file and applies the bottom level specification to each of them.
+
+Special Bottom Keys
+-------------------
+
+The input resolver looks for a few special keys at the bottom level that govern the entire row's behavior:
+
+* ``optional`` (bool): Whether the parameter is optional. If ``False`` (or absent) and the row or table is not found in the user input, an error is raised.
+* ``description`` (str): Used to provide a description for the documentation or clarification within the dictionary.
+
+These keys are ignored during the actual value parsing.
+
+Value and Unit Pairs
+--------------------
+
+The resolver automatically pairs values and units recursively within a row based on their keys:
+* A direct ``'Value'`` and ``'Unit'`` pair.
+* Keys ending with ``'_Value'`` and ``'_Unit'`` (e.g., ``'Usage_Value'`` paired with ``'Usage_Unit'``).
+
+Any key not fitting these pair formats or the special bottom keys (like ``'Type'`` in the example) is treated as a standalone value.
+
+Specifications 
 --------------
 
-When pyH2A processes a module's inputs, it provides the resolver with a predefined specification dictionary matching the expected input layout. The resolver typically looks for paired keys such as:
-- ``Value`` / ``Unit``
-- ``_Value`` / ``_Unit`` (e.g., ``Usage_Value`` and ``Usage_Unit``)
+For any value or unit key on the bottom level, you provide a dictionary with specifications used for verification:
 
-A matched valid pair triggers physical dimensionality resolving:
-1. **Retrieval**: The ``bottom_key`` specifications are fetched.
-2. **Dimensionality Checks**: The provided physical unit is matched against the target specification (e.g., ensuring an energy parameter strictly receives an ``energy`` dimension).
-3. **Bounds Detection**: Boundary rules (min/max validations) assert that the inputs comply strictly with physical boundaries defined locally.
-4. **Quantity Creation**: A ``Quantity`` class instance is structured, carrying the base scale mapping and value.
+* ``type`` (set or type): A set of permitted Python types for the value (e.g., ``{float, int, np.ndarray}``).
+* ``bounds`` (tuple): A tuple of ``(min, max)`` values the base value must adhere to (e.g., ``(0, None)`` for strictly non-negative limits). Checked for the associated physical *base value*.
+* ``options`` (set): For categorical strings, ensuring the input matches exactly one of the allowed options.
+* ``dimension`` (str): Specified **only on the unit key**, verifying the physical dimension (e.g., ``'energy / mass'``, ``'currency'``, ``'dimensionless'``).
+* ``path`` (str): Customizes the suffix of the key used to find a path for the value. Replaces the default ``'Path'`` (or ``'{Prefix}_Path'``).
 
-In contrast, basic standard variables without unit definitions (e.g., a simple ``Type`` string or ``Year`` integer) are evaluated directly based on their structural requirements using predefined type checking and list-option limits.
+Behavior of the Input Resolver
+==============================
 
-Examples
---------
+The resolver pipeline extracts values from the central input dictionary and transforms them based on dimensionality.
 
-Consider an input configuration specifying utility usage, mapped via the following dictionary structure representing expected inputs from a plugin:
+Supported Data Types
+--------------------
+
+* **Numbers and Arrays** (``float``, ``int``, ``np.ndarray``): When retrieved alongside a unit, they are automatically converted into a ``Quantity`` object representing the physical property.
+* **Existing Quantities**: The system can extract predefined ``Quantity`` objects explicitly provided by plugins.
+* **Strings**: For attributes requiring string selection (like ``'Type'``), they are parsed directly without unit associations.
+* **Dictionaries**: Top-level dictionaries containing nested structures (often time-series or mapping sets) are recursively traversed, and terminal numerical values are individually converted into ``Quantity`` objects.
+
+Using the resolver function
+---------------------------
+
+Usually, resolving input information is done using the top-level ``input_resolver_function``:
 
 .. code-block:: python
 
-    from pyH2A.Utilities.Input_resolver.input_resolver import input_resolver_function
-
-    # Define specifications using top_key, middle_key, bottom_key logic
-    specification = {
-        'Utilities': {                          # top_key
-            'Electricity': {                    # middle_key
-                'Usage_Value': {'type': 'float', 'bounds': [0, None]}, # bottom_key 1
-                'Usage_Unit': {'dimension': 'energy / mass'},          # bottom_key 2
-                'Type': {'type': 'str', 'options': ['natural_gas', 'electricity']} # bottom_key 3
-            }
-        }
-    }
+    from pyH2A.Utilities.IO.input_resolver import input_resolver_function
     
-    # Run the resolver
-    # actual = input_resolver_function(specification, dcf_class_instance, 'TestPlugin')
+    # ... inside your plugin execution ...
+    resolved_inputs = input_resolver_function(
+        input_dict=my_plugin_blueprint, 
+        dcf_class=self.dcf, 
+        plugin_name=self.name
+    )
 
-If the pyH2A input file does not match the constraints (e.g., entering an area unit when energy is required, or a negative usage value where bound requires ``>=0``), the resolver intercepts and explicitly tells the user where the error occurred by referencing the exact ``top_key > middle_key > bottom_key`` chain.
+The function matches the blueprint ``my_plugin_blueprint`` against ``self.dcf.inp`` and returns a populated, structurally identical dictionary containing validated strings, dictionaries, and ``Quantity`` objects.
 
-Wildcard and Group Formatting
------------------------------
+Edge Cases and Common Problems
+==============================
 
-Often, the table structure in the input file is flexible. For example, a user can provide multiple unknown utility inputs or create table groups ending in a shared modifier (like ``[...] Direct Capital Cost [...]``). 
+Paths and Referencing
+---------------------
+The resolver natively supports pointing inputs toward other input components using the path definition natively implemented in pyH2A. 
+* **Important Tip regarding Paths and Units**: 
+  When a ``Path`` (or ``{Prefix}_Path``) references an **unprocessed** input (direct user input), the *Unit defined at the reference destination* must be the **exact same unit** as defined for the user input.
+  However, if a path string references **processed** input (marked with ``'Processed': True`` in the background data), it implies the value target has already been converted into a base ``Quantity``. **Therefore, any path referencing processed parameters must explicitly use the overarching physical default BASE UNIT (e.g. `'kg'`, `'J'`, base SI variations) to avoid duplicate unit multiplication or dimension mismatch errors.** You can view ``process_input()`` in ``pyH2A.Utilities.input_modification`` for internal path behavior.
 
-The resolver seamlessly models this by employing the wildcard ``"<...>"`` at either the ``top_key`` or ``middle_key`` level:
-
-.. code-block:: python
-
-    specification = {
-        'Utilities': {                          # top_key
-            '<...>': {                          # middle_key (Any number of rows)
-                'Usage_Value': {'type': 'float', 'bounds': [0, None]},
-                'Usage_Unit': {'dimension': 'energy / mass'}
-            }
-        },
-        '<...> Direct Capital Cost': {          # top_key (Table group placeholder)
-            '<...>': {                          # middle_key (Any parameter name)
-                'Value': {'type': 'float'}
-            }
-        }
-    }
-
-Using the ``"<...>"`` tag instructs the resolver to dynamically search the actual input dictionary and apply the validation protocol iteratively to all matching instances.
-
-Dependencies and Best Practices
--------------------------------
-
-1. **Explicit Constraint Mapping**: Always set proper ``bounds`` and ``dimension`` specifications within your referencing dictionaries to ensure models avoid unphysical state inputs (e.g., negative efficiencies).
-2. **Wildcards**: For dynamically expanding tables, insert ``<...>`` carefully to allow iterative parsing over flexible model structures.
-3. **Traceable Errors**: Keep naming schemas unified and descriptive (``Value``, ``Unit``, ``Path``). Proper prefix/suffix pairings ensure pyH2A tracks dimensionality automatically and alerts the user natively when a definition overlaps or breaks.
+Missing Optional Modifiers
+--------------------------
+If a row or table is essential for your plugin computation (e.g., you explicitly expect ``resolved_inputs['Table']['Row']`` to be provided), ensure ``'optional': False`` is set in the bottom keys. Do not rely heavily on hardcoded error catches without using the system's boolean ``optional`` flag, otherwise ``KeyError`` will natively interrupt the extraction flow.
