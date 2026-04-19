@@ -15,6 +15,90 @@ Key Features:
 - Built-in rigid dimension verification constraints prevent impossible conversions.
 - Full support for temperature conversions including Absolute Temperature logic natively.
 
+Supported Data Types
+--------------------
+
+The ``Quantity`` object is designed to process both single numerical values and arrays. The ``value`` parameter accepts the following data types natively:
+
+- ``int``: For integer scalar values.
+- ``float``: For floating-point scalar values.
+- ``np.ndarray``: For entire NumPy arrays, allowing efficient vectorization and broad array-based operations directly within the unit handler.
+
+The base value (stored as ``base_value``) and any converted value arrays accessed via the unit dictionary will inherently preserve this mathematical structure, ensuring transparent compatibility with logically intensive pyH2A plugins.
+
+Supported Dimensions and Units
+------------------------------
+
+The following table provides a complete overview of all physical dimensions strictly supported by the framework, including their defined base unit and all acceptable alternative units.
+
+.. list-table:: Supported Dimensions and Units
+   :widths: 20 15 65
+   :header-rows: 1
+
+   * - Dimension
+     - Base Unit
+     - Other Supported Units
+   * - ``absolute_temperature``
+     - K
+     - degC
+   * - ``energy``
+     - J
+     - kJ, MJ, GJ, Wh, kWh, MWh, GWh, eV, cal, kcal
+   * - ``power``
+     - W
+     - kW, MW, GW, hp
+   * - ``length``
+     - m
+     - mm, cm, km
+   * - ``area``
+     - m2
+     - mm2, cm2, km2, acre, ha
+   * - ``volume``
+     - m3
+     - mm3, cm3, L, liters, km3, mL, uL
+   * - ``time``
+     - s
+     - minute, h, day, week, year, ms
+   * - ``currency``
+     - USD
+     - EUR
+   * - ``mass``
+     - kg
+     - mg, g, ton
+   * - ``temperature_diff``
+     - delta_K
+     - delta_degC
+   * - ``substance``
+     - mol
+     - umol, mmol
+   * - ``voltage``
+     - V
+     - 
+   * - ``current``
+     - A
+     - mA
+   * - ``angle``
+     - rad
+     - deg
+   * - ``pressure``
+     - Pa
+     - hPa, atm, bar, MPa, psi
+   * - ``force``
+     - N
+     - kN
+   * - ``frequency``
+     - Hz
+     - kHz, MHz, GHz
+   * - ``charge``
+     - C
+     - mC, Ah, mAh
+   * - ``resistance``
+     - Ohm
+     - mOhm, kOhm
+   * - ``dimensionless``
+     - -
+     - ppm, ppb
+
 Basic Usage
 -----------
 

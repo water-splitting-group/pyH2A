@@ -7,6 +7,8 @@ import ast
 import operator
 import numpy as np
 
+from pyH2A.Utilities.Unit_Handler import Quantity
+
 def import_plugin(plugin_name, plugin_module):
 	'''Importing module.
 
@@ -554,6 +556,11 @@ def process_path(dictionary, path, top_key, key, bottom_key, print_processing_wa
 			if not isinstance(target_value, numbers.Number):
 				if isinstance(target_value, list) or type(target_value).__module__ == np.__name__:
 					pass
+
+				# If target value is a Quantity object, its base value is retrieved for further calculations
+				elif isinstance(target_value, Quantity):
+					target_value = target_value.base_value
+
 				else:
 					print('Warning: Non-numerical value retrieved at "{0} > {1} > {2}" (by "{3} > {4}"), setting to 1'
 						  .format(parsed_path[0], parsed_path[1], parsed_path[2], top_key, key))
