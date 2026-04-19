@@ -1,5 +1,5 @@
 Input Resolver
 ==============
 
-.. automodule:: pyH2A.Utilities.Input_Resolver.input_resolver
+.. automodule:: pyH2A.Utilities.IO.input_resolver
     :members:
