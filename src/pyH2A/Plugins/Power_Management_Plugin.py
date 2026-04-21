@@ -1,3 +1,4 @@
+from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 from pyH2A.Utilities.input_modification import insert, process_table, daily_to_yearly_power
 import numpy as np
 
@@ -58,39 +59,58 @@ input_dict = {
     },
 }
 
+
 output_dict = {
     "Power Generation": {
         "Available energy (yearly)": {
-            "Value": "self.remaining_flexible",
+            "Value": {
+                "inserted_value": "self.remaining_flexible",
+                "type": {np.ndarray,}
+            },
             "description": "Remaining available energy, yearly basis.",
             "optional": False,
         },
         "Stored energy (yearly)": {
-            "Value": "self.remaining_stored",
+            "Value": {
+                "inserted_value": "self.remaining_stored",
+                "type": {np.ndarray,}
+            },
             "description": "Remaining stored energy, yearly basis.",
             "optional": False,
         },
         "Available energy (daily)": {
-            "Value": 0,
+            "Value": {
+                "inserted_value": Quantity(0, 'kWh'),
+                "type": {float,}
+            },
             "description": "Remaining available energy, daily basis.",
             "optional": False,
         },
         "Stored energy (daily)": {
-            "Value": 0,
+            "Value": {
+                "inserted_value": Quantity(0, 'kWh'),
+                "type": {float,}
+            },
             "description": "Remaining stored energy, daily basis.",
             "optional": False,
         },
     },
     "Grid Electricity": {
         "Used grid electricity (yearly)": {
-            "Value": "self.total_unfulfilled",
+            "Value": {
+                "inserted_value": "self.total_unfulfilled",
+                "type": {np.ndarray,}
+            },
             "description": "Used grid electricity, yearly basis.",
             "optional": False,
         },
     },
     "Other Variable Operating Cost - Grid Electricity": {
         "Cost of grid electricity (yearly)": {
-            "Value": "self.electricity_cost",
+            "Value": {
+                "inserted_value": "self.electricity_cost",
+                "type": {np.ndarray,}
+            },
             "description": "Cost of grid electricity, yearly basis.",
             "optional": False,
         },

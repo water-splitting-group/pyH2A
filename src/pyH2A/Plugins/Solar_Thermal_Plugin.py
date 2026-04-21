@@ -60,7 +60,10 @@ input_dict = {
 output_dict = {
 	"Non-Depreciable Capital Costs": {
 		"Land required": {
-			"Value": "self.area_acres",
+			"Value": {
+				"inserted_value": "self.area_acres",
+				"type": {float,}
+			},
 			"description": "Total land requirement.",
 			"optional": False,	
 		},

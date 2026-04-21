@@ -1,4 +1,5 @@
 from pyH2A.Utilities.input_modification import insert, process_table
+import numpy as np
 
 input_dict = {
     "Financial Input Values": {
@@ -67,15 +68,24 @@ input_dict = {
 output_dict = {
     "Power Consumption": {
         "Reverse osmosis consumption (yearly)": {
-            "Value": "self.electricity_demand_kWh",
-            "Type": "flexible",
+            "Value": {
+                "inserted_value": "self.electricity_demand_kWh",
+                "type": {np.ndarray,}
+            },
+            "Type": {
+                "inserted_value": "flexible",
+                "type": {str,}
+            },
             "description": "Electricity demand of reverse osmosis plant per year.",
             "optional": False,
         },
     },
     "Reverse Osmosis": {
-        "Capacity (hourly)": { # check if this is the best way to express this output
-            "Value": "self.maximum_sea_water_processing_m3_per_hour",
+        "Capacity": {
+            "Value": {
+                "inserted_value": "self.maximum_sea_water_processing_m3_per_hour",
+                "type": {float,}
+            },
             "description": "Maximum sea water processing capacity per hour of reverse osmosis plant.",
             "optional": False,
         },
