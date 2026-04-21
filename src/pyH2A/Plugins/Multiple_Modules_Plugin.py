@@ -68,7 +68,10 @@ input_dict = {
 output_dict = {
 	"Fixed Operating Costs": {
 		"Staff": {
-			"Value": "self.staff_per_module",
+			"Value": {
+				"inserted_value": "staff_per_module",
+				"type": {float,},
+			},
 			"description": "Number of 8-hour equivalent staff required for operating one plant module.",
 			"optional": False,
 		},

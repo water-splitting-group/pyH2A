@@ -45,9 +45,12 @@ input_dict = {
 output_dict = {
     "Other Variable Operating Cost - Catalyst Separation": {
         "Catalyst separation (yearly cost)": {
-            'Value': 'self.yearly_cost',
-            'description': 'Yearly cost of catalyst seperation.',
-            'optional': False,
+            "Value": {
+                "inserted_value": "yearly_cost",
+                "type": {float,},
+            },
+            "description": "Yearly cost of catalyst seperation.",
+            "optional": False,
         },
 	},
 }

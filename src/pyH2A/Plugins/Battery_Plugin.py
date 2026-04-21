@@ -70,17 +70,26 @@ input_dict = {
 output_dict = {
     "Power Generation": {
         "Stored energy (daily)": {
-            "Value": "self.yearly_recovered_power",
+            "Value": {
+                "inserted_value": "daily_stored_power",
+                "type": {dict,},
+            },
             "description": "Energy stored in battery daily (dictionary of years)",
             "optional": False,
         },
         "Available energy (daily)": {
-            "Value": "self.yearly_unstored_power",
+            "Value": {
+                "inserted_value": "daily_unstored_power",
+                "type": {dict,},
+            },
             "description": "Available energy, daily basis, dictionary of years - energy which has not been stored in battery",
             "optional": False,
         },
         "Available energy (hourly)": {
-            "Value": 0,
+            "Value": {
+                "inserted_value": Quantity(0, 'J'),
+                 "type": {float,},
+            },
             "description": "Available energy is set to zero, since available energy is now only in daily format.",
             "optional": False,
         }

@@ -128,34 +128,52 @@ input_dict = {
 output_dict = {
 	"Non-Depreciable Capital Costs": {
 		"Land required": {
-			"Value": "self.total_land_area_acres",
+			"Value": {
+				"inserted_value": "total_land_area_acres", 
+				"type": {float,}
+        	},
 			"description": "Total land area required.",
 			"optional": False,
 		},
 		"Solar collection area": {
-			"Value": "self.total_solar_collection_area",
+			"Value": {
+				"inserted_value": "total_solar_collection_area",
+				"type": {float,}
+			},
 			"description": "Solar collection area.",
 			"optional": False,
 		}
 	},
 	"Planned Replacement": {
 		"Planned replacement PEC Cells": {
-			"Cost": "self.cell_cost",
-			"Frequency (years)": "dcf.inp['PEC Cells']['Lifetime (years)']['Value']",
+			"Cost": {
+				"inserted_value": "cell_cost",
+				"type": {float,}
+			},
+			"Frequency (years)": {
+				"inserted_value": "input_dict_resolved['PEC Cells']['Lifetime (years)']['Value'].unit['year']",
+				"type": {float,}
+			},
 			"description": "Total cost of replacing all PEC cells once.",
 			"optional": False,		
 		}
 	},
  	"Direct capital costs - PEC Cells": {
 		"PEC cell cost": {
-			"Value": "self.cell_cost",
+			"Value": {
+				"inserted_value": "cell_cost",
+				"type": {float,}
+			},
 			"description": "Total cost of all PEC cells.",
 			"optional": False,
 		}
 	},
 	"PEC Cells": {
 		"Number": {
-			"Value": "self.cell_number",
+			"Value": {
+				"inserted_value": "cell_number",
+				"type": {float,}
+			},
 			"description": "Number of individual PEC cells required for design H2 output capacity.",
 			"optional": False,
 		}
