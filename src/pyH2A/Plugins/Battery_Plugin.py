@@ -72,7 +72,7 @@ output_dict = {
     "Power Generation": {
         "Stored energy (daily)": {
             "Value": {
-                "inserted_value": "daily_stored_power",
+                "inserted_value": "yearly_recovered_energy",
                 "type": {dict,},
                 "dimesion": "energy",
             },
@@ -81,7 +81,7 @@ output_dict = {
         },
         "Available energy (daily)": {
             "Value": {
-                "inserted_value": "daily_unstored_power",
+                "inserted_value": "yearly_unstored_energy",
                 "type": {dict,},
                 "dimension": "energy",
             },
@@ -131,49 +131,42 @@ class Battery_Plugin:
     '''
 
     def __init__(self, dcf, print_info):
-        process_table(dcf.inp, 'Power Generation', 'Value')
-        process_table(dcf.inp, 'Battery', 'Value')
+        self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Battery_Plugin')
 
         self.calculate_electricity_storage(dcf)
-
-        insert(dcf, 'Power Generation', 'Stored Power (daily, kWh)', 'Value',
-                self.yearly_recovered_power, __name__, print_info = print_info)
-        insert(dcf, 'Power Generation', 'Available Power (daily, kWh)', 'Value',
-                self.yearly_unstored_power, __name__, print_info = print_info)
-        insert(dcf, 'Power Generation', 'Available Power (hourly, kWh)', 'Value',
-                0, __name__, print_info = print_info)
+        
+        output_inserter_function(output_dict, self, dcf, 'Battery_Plugin')            
 
     def calculate_electricity_storage(self, dcf):
-        '''Using hourly power generation data and electrolyzer parameters,
+        '''Using hourly energy generation data and electrolyzer parameters,
         H2 production is calculated.
         '''
+        available_energy_yearly = {}
+        for year, energy in self.input_dict_resolved['Power Generation']['Available energy (daily)']['Value'].items():
+            available_energy_yearly[year] = energy.unit['J'] 
 
-        available_power_yearly = dcf.inp['Power Generation']['Available Power (daily, kWh)']['Value']
-
-        yearly_recovered_power = {}
-        yearly_unstored_power = {}
+        self.yearly_recovered_energy = {}
+        self.yearly_unstored_energy = {}
 
         for year in dcf.operation_years:
-            daily_available_power = available_power_yearly[year]
+            daily_available_energy = available_energy_yearly[year] # array of floats
 
-            capacity, capacity_decrease = self.calculate_battery_capacity(dcf, year)
+            capacity, capacity_decrease = self.calculate_battery_capacity(year) # floats
 
-            capacity *= np.ones(len(daily_available_power))
-            daily_stored_power = np.amin(np.c_[daily_available_power, capacity], axis = 1)
-            daily_recovered_power = daily_stored_power * dcf.inp['Battery']['Round trip efficiency']['Value']
+            capacity *= np.ones(len(daily_available_energy))
+            daily_stored_energy = np.amin(np.c_[daily_available_energy, capacity], axis = 1)
+            daily_recovered_energy = daily_stored_energy * self.input_dict_resolved['Battery']['Round trip efficiency']['Value'].unit['-']
 
-            unstored_power = daily_available_power - daily_stored_power
+            unstored_energy = daily_available_energy - daily_stored_energy
 
-            yearly_recovered_power[year] = daily_recovered_power
-            yearly_unstored_power[year] = unstored_power  
-      
-        self.yearly_recovered_power = yearly_recovered_power
-        self.yearly_unstored_power = yearly_unstored_power
+            self.yearly_recovered_energy[year] = Quantity(daily_recovered_energy, 'J')
+            self.yearly_unstored_energy[year] = Quantity(unstored_energy, 'J')
+ 
     
-    def calculate_battery_capacity(self, dcf, year):
+    def calculate_battery_capacity(self, year):
 
-        capacity_decrease = (1. - dcf.inp['Battery']['Capacity loss per year']['Value']) ** year
-        nominal_capacity = dcf.inp['Battery']['Design Capacity (kWh)']['Value'] * (1. - dcf.inp['Battery']['Lowest discharge level']['Value'])
+        capacity_decrease = (1. - self.input_dict_resolved['Battery']['Capacity loss per year']['Value'].unit['-'] ) ** year
+        nominal_capacity = self.input_dict_resolved['Battery']['Design Capacity']['Value'].unit['J'] * (1. - self.input_dict_resolved['Battery']['Lowest discharge level']['Value'].unit['-'])
 
         capacity = nominal_capacity * capacity_decrease
 
