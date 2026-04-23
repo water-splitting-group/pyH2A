@@ -46,7 +46,7 @@ For example, the input file ``Thermal_base.md`` contains the table:
 
    Name | Value | Unit
    --- | --- | ---
-   Operating Capacity Factor | 90.0 | %
+   Operating Capacity Factor | 90.0% | -
    Plant Design Capacity | 1,000 | kg/day
 
 After conversion into Python objects and processing the table, the value ``1000``  and the associated unit ``kg/day`` are stored as this dictionary keys' item:
@@ -67,12 +67,12 @@ Conceptually, the dictionary structure can be visualized as follows:
    │       ├── "Plant Design Capacity"        ← row (mid key)
    │       │        │
    │       │        └── "Value" → 1000        ← column (bottom key)
-   │       │        └── "Unit" → kg/day       ← column (bottom key)   
+   │       │        └── "Unit" → 'kg/day'       ← column (bottom key)   
    │       │
    │       └── "Operating Capacity Factor"
    │                │
-   │                └── "Value" → 90.0
-   │                └── "Unit" → '%''   
+   │                └── "Value" → 0.9
+   │                └── "Unit" → '-'   
    │
    └── "Non-Depreciable Capital Costs"
    │       │
@@ -116,11 +116,13 @@ It only converts their structure into Python objects so that they can later be p
 5. Processing inputs: ``input_resolver_function`` 
 -------------------------------------------------
 
+This paragraph gives an overview of how inputs are processed in each plugin. More detailed explanations :ref:`are provided separately <input_resolver_guide>`.
+
 When a plugin requires input data, it retrieves it from the dictionary using ``input_resolver_function``.
 
 Each plugin file includes an ``input_dict`` dictionary containing the entry keys that are needed by the plugin (top, middle and bottom keys), as well as the characteristics of each entry (dimension, type etc).
 
-For example, in ``Hourly_Irradiation__Plugin``, the ``input_dict`` contains, among other items:
+For example, in ``Hourly_Irradiation_Plugin``, the ``input_dict`` contains, among other items:
 
 .. code-block:: python
 	"Irradiance Area Parameters": {	
@@ -146,7 +148,7 @@ The ``__init__`` method of the plugin typically begins by a call to ``input_reso
 
 .. code-block:: python
 
-   input_resolver_function(input_dict, dcf, 'Hourly_Irradiation_Plugin')
+   self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Hourly_Irradiation_Plugin')
 
 This call retrieves the items corresponding to the dictionary positions found in input_dict, and apply a succession of conversion and sanity checks (dimensionality vs. unit consistency ; conversion into a specific unit ; bounds check).   
 
@@ -155,7 +157,7 @@ In our example:
  2. A Quantity object is created from the Value and the related Unit (``dcf.inp['Irradiance Area Parameters']['Nominal operating temperature']['Unit']``). This step is bypassed if the Value is already a Quantity object.
  3. The input resolver checks if the unit of measurement is consistent with the expected dimension as per the input_dict (in the present case: temperature). If this is not the case, an error message is thrown.
  4. The input resolver checks if the value expressed in the Base unit (generally: SI unit) respects the ``bounds`` specified in input_dict. An operating temperature below 250 K or above 500 K would be unrealistic, and would therefore lead to an error message.
- 5. The Quantity object is added to the local ``input_dict_resolved`` dictionary. The quantities present in this dictionary are the ones used within the plugin for all the calculations.
+ 5. The Quantity object is added to the local ``self.input_dict_resolved`` dictionary. The quantities present in this dictionary are the ones used within the plugin for all the calculations.
  
 
 One important feature of pyH2A is that table entries in the input file do not necessarily contain numerical values.  
@@ -173,7 +175,7 @@ For example, in ``PV_E_Base.md`` :
 
 Here the entry points to another variable in the dictionary.
 
-When Hourly_Irradiation_Plugin executes ``input_resolver(dcf, input_dict)``, the ``dcf.inp['Irradiance Area Parameters']['Module Tilt']['Value']`` entry ultimately receives the value stored at: 
+When Hourly_Irradiation_Plugin executes ``input_resolver_function``, the ``dcf.inp['Irradiance Area Parameters']['Module Tilt']['Value']`` entry ultimately receives the value stored at: 
 
 .. code-block:: python
 
@@ -198,10 +200,10 @@ For example, in ``PEC_Base.md``:
 
    # Direct Capital Costs - Water Management
 
-   Name | Value | Path | Comment
+   Name | Value | Path | Unit | Comment
    --- | --- | --- | ---
-   Water pump ($) | 213.0 | None | Based on Pinaud 2013.
-   Water Manifold Piping ($ per cell) | 11.58 | PEC Cells > Number > Value |
+   Water pump | 213.0 | None | USD | Based on Pinaud 2013.
+   Water Manifold Piping | 11.58 | USD | PEC Cells > Number > Value |
 
 The entry indicates that the cost of water manifold piping is **11.58 $ per cell**.  
 The total cost therefore depends on the number of PEC cells defined elsewhere in the model.
@@ -222,7 +224,7 @@ This multiplication is performed automatically when the table entry is processed
 
   .. admonition:: Code implementation
 
-     The multiplication is handled by the ``process_input()`` method, which is called internally by ``process_table()``. If a ``Path`` column exists, the value retrieved from that path is multiplied with the entry in the ``Value`` column, and the resulting number replaces the original value in the dictionary.
+     The multiplication is handled by the ``process_input()`` method, which is called internally by ``input_resolver_function``. If a ``Path`` column exists, the value retrieved from that path is multiplied with the entry in the ``Value`` column, and the resulting number replaces the original value in the dictionary.
 
 
 7. Flexible Rows and Table Groups
@@ -242,7 +244,7 @@ For example, in the ``Variable_Operating_Cost_Plugin`` the method ``other_variab
 .. code-block:: python
 
    self.other = dcf.chemical_inflator * sum_all_tables(dcf.inp,'Other Variable Operating Cost','Value',
-       insert_total = True, class_object = dcf, print_info = print_info
+       insert_total = True, class_object = dcf, print_info = print_info, unit = 'USD'
    )
 
 In this case, the individual row names inside the table do not influence the calculation.  
@@ -261,7 +263,7 @@ For example, in ``Fixed_Operating_Cost_Plugin`` the method ``other_cost`` perfor
 .. code-block:: python
 
    self.other = sum_all_tables(dcf.inp, 'Other Fixed Operating Cost', 'Value',
-       insert_total = True, class_object = dcf, print_info = print_info
+       insert_total = True, class_object = dcf, print_info = print_info, unit = 'USD'
    ) * dcf.combined_inflator
 
 Here, every table whose name contains the string ``Other Fixed Operating Cost`` is included in the calculation.
@@ -278,67 +280,82 @@ Each table can contain its own entries, but all their values are combined when t
 Purpose of These Mechanisms
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Flexible rows and table groups provide a way to structure input files in a clear and modular way.
+Flexible rows and table groups enable to structure input files in a clear and modular way.
 
 Users can separate different cost contributions into individual rows or tables for readability, while the plugin logic automatically aggregates them during the calculation.
 
-8. Inserting or Updating Values: the ``output_resolver`` method
----------------------------------------------------------------
+8. Inserting or Updating Values: ``output_inserter_function``
+-------------------------------------------------------------
 
-After performing calculations, plugins store their results in the dictionary using the ``output_resolver`` method.
+This paragraph gives an overview of how each plugin makes its calculated Quantites available in the dictionary. More detailed explanations :ref:`are provided separately <output_inserter_guide>`.
+
+After performing calculations, plugins store their results in the dictionary using the ``output_inserter_function`` call.
 
 This method can either:
 
 - create a **new dictionary entry**, or
 - **update the value** of an existing entry.
 
+The variable to be inserted at a given dictionary location is defined in the output_dict structure that is found in each plugin
+
 Example: in ``Solar_Concentrator_Plugin``
+
+- The output_dict structure contains 
+.. code-block:: python
+   "Non-Depreciable Capital Costs": {
+      "Land required": {
+         "Value": {
+               "inserted_value": "total_land_area",
+               "type": {float,},
+               "dimension": "area",
+         },
+         "optional": False,
+      },
+      "Solar Collection Area": {
+         "Value": {
+               "inserted_value": "total_solar_collection_area",
+               "type": {float,},
+               "dimension": "area",
+         },
+         "optional": False,
+      },      
 
 - creating a new entry:
 
-The variable ``total_land_area_acres`` is calculated and inserted with:
+The variable ``self.total_land_area`` is calculated in the plugin, and the call to ``output_inserter_function(output_dict, self, dcf, 'Solar_Concentrator_Plugin')`` creates the following dictionary entry to make it equal to ``self.total_land_area``:
 
 .. code-block:: python
 
-   insert(
-       dcf,
-       'Non-Depreciable Capital Costs', 'Land required (acres)', 'Value',
-       self.total_land_area_acres,
-       __name__,print_info = print_info
-   )
-
-This creates the dictionary entry:
-
-.. code-block:: python
-
-   dcf.inp['Non-Depreciable Capital Costs']['Land required (acres)']['Value']
+   dcf.inp['Non-Depreciable Capital Costs']['Land required']['Value']
 
 
 - updating an existing entry.
 
-The plugin reads the existing values of the ``Non-Depreciable Capital Costs`` table, including the existing value of the ``Solar Collection Area (m2)`` row:
+The plugin reads the existing values of the ``Non-Depreciable Capital Costs`` table, including the existing value of the ``Solar Collection Area`` row, as specified in the ``input_dict``:
 
 .. code-block:: python
 
-   process_table(dcf.inp, 'Non-Depreciable Capital Costs', 'Value')
+	"Non-Depreciable Capital Costs": {
+		"Solar collection area": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "area",
+			},
+			"optional": False,
+			"description": "Total solar collection area."
+		},
 
 
-A new value ``total_solar_collection_area_m2`` is calculated, and its value is assigned to ``dcf.inp['Non-Depreciable Capital Costs']['Solar Collection Area (m2)']['Value']``:
-
-.. code-block:: python
-
-   insert(
-       dcf,
-       'Non-Depreciable Capital Costs', 'Solar Collection Area (m2)','Value',
-       self.total_solar_collection_area_m2,
-       __name__,print_info = print_info
-   )
+A new value ``self.total_solar_collection_area`` is calculated, and its value is assigned to ``dcf.inp['Non-Depreciable Capital Costs']['Solar Collection Area']['Value']``, as seen in the ``output_dict`` above.
 
 In other words, this operation updates:
 
 .. code-block:: python
 
-   dcf.inp['Non-Depreciable Capital Costs']['Solar Collection Area (m2)']['Value']
+   dcf.inp['Non-Depreciable Capital Costs']['Solar Collection Area']['Value']
 
 
 9. Dependency Between Plugins

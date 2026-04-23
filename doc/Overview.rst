@@ -67,26 +67,29 @@ The structure below can be read as a map indicating where each of these elements
    │
    ├── Utilities/
    │   │
-   │   └── Input_Resolver/ 
+   │   └── IO/ 
    │   │   Modules for handling inputs and outputs
    │   │   └── input_resolver.py 
-   │   │   │   - Orchestrates the resolution of the inputs: retrieving values, conversion and sanity checks
-   │   │   │   - Contains the input_resolver_function and its related  
-   │   │   │   - Calls functions and methods from table_processor.py and unit_processor.py, which in turn call functions from the input_modification.py file (for example: ``process_table``)
+   │   │   │   - Orchestrates the resolution of the inputs: retrieving values, conversion into Quantity objects and sanity checks
+   │   │   │   - Contains the input_resolver_function and the related functions 
    │   │   │
-   │   │   └── check_functions.py 
-   │   │       - Functions performing sanity checks, called by the input resolver     
+   │   │   └── output_inserter.py 
+   │   │       - Orchestrates the resolution of the outputs: dimension and type checks, insertion in the dcf.inp dictionary
+   │   │       - Contains the output_inserter_function and the related functions 
    │   │
    │   └── Unit_Handler/ 
    │   │   └── quantity.py    
    │   │   │   - Modules for creating ``quantity`` objects, which associate a value to a unit
    │   │   └── config.py       
    │   │       - Contains the conversion factors between the base units (considered as the reference) and the units thta are supported in the input file
+   │   │   
+   │   └── check_functions.py 
+   │   │    - Functions performing sanity checks, called by the input resolver and by the output inserter
    │   │            
    │   └── input_modification.py 
    │   │   Functions for handling inputs and outputs, that is: to modify the dcf.inp dictionary :     
    │   │   - Conversion of input (.md) files into the dictionary structure
-   │   │   - Functions such as ``convert_input_to_dictionary``, ``process_table``, ``insert`` etc. 
+   │   │   - Functions such as ``convert_input_to_dictionary``, ``process_input``, ``insert``, ``sum_table``  etc. 
    │   │
    │   └── plugin_input_output_processing.py
    │   │   Serves to generate an input file template, based on a user-specified Workflow    
@@ -95,7 +98,7 @@ The structure below can be read as a map indicating where each of these elements
    │   │   Serves to define the final outputs format
    │   │
    │   └── find_nearest.py  
-   │       Used by some analysis modules 
+   │        - used in plugins (for example to identify the year index corresponding to a certain duration), and in some analysis modules   
    │
    ├── Analysis/
    │   Advanced analysis modules (not used in the base case calculation):
@@ -118,7 +121,7 @@ Files are available to test pyH2A execution.
 
 ::
 
-   pyH2A/src/tests/
+   pyH2A/src/
    │
    ├── end_to_end/
    │   Input (.md) files for various complete hydrogen production pathways
@@ -182,11 +185,13 @@ The calculation is organized as an ordered series of units referred to as :ref:`
 
 When a plugin is executed:
 
-- It reads the quantities it requires from the current dictionary. These quantities may originate from the input (.md) file or from previous plugins.
+- It reads the variables it requires from the current dictionary. These variables may originate from the input (.md) file or from previous plugins.
 
   .. admonition:: Code implementation
 
-     Within the plugin, the ``input_resolver_function`` call retrieves the actual value from the dictionary (``dcf.inp``) and applies conversions and checks. More detailed explanations about the dictionary structure and processing :ref:`are provided separately <dictionary-structure>`.
+     Within the plugin, the ``input_resolver_function`` call retrieves the actual value from the shared dictionary (``dcf.inp``), applies checks and creates the Quantity objects from the respective variables. 
+     The Quantity objects are stored in a local dictionary called ``self.input_dict_resolved``
+     More detailed explanations about the dictionary structure and processing :ref:`are provided separately <dictionary-structure>`.
 
 - It performs a defined set of calculations.
 
@@ -194,9 +199,10 @@ When a plugin is executed:
 
   .. admonition:: Code implementation
 
-     Within the plugin, the ``output_resolver`` method call inserts new variables, or updates existing ones, in the dictionary.
+     Within the plugin, the ``output_inserter_function`` method call inserts new variables, or updates existing ones, in the dcf.inp dictionary.
 
-The dictionary therefore represents the evolving economic model. At any stage, it contains all quantities defined up to that point, and a plugin can only rely on what is already present when it is executed. The execution order therefore defines the logical dependency structure of the model.
+The ``dcf.inp`` dictionary therefore represents the evolving economic model. At any stage, it contains all quantities defined up to that point, and a plugin can only rely on what is already present when it is executed. 
+The execution order therefore defines the logical dependency structure of the model.
 
 .. admonition:: Code implementation
 
@@ -222,12 +228,14 @@ The calculation sequence used in pyH2A is based on two categories of plugins:
 1. Default plugins, which define the common financial structure of the model.
 2. Scenario-specific plugins, which introduce calculations particular to a given hydrogen production pathway or study.
 
-The default plugins are specified in the ``Defaults.md`` file. They are always included in a calculation and provide the general discounted cash flow framework. This includes the construction of capital costs, operating costs, replacement costs, and the financial evaluation that leads to metrics such as annual cash flows and the levelized cost of hydrogen. 
+The default plugins are specified in the ``Defaults.md`` file. They are always included in a calculation and provide the general discounted cash flow framework. 
+This includes the construction of capital costs, operating costs, replacement costs, and the financial evaluation that leads to metrics such as annual cash flows and the levelized cost of hydrogen. 
 Note that the default Workflow (as defined in the ``Defaults.md`` file) also calls functions after each default plugin execution. These functions can be found as methods of the Discounted_Cash_Flow class.
 
 Scenario-specific plugins are specified in the user-defined input (.md) file. They typically introduce technical calculations (e.g., production performance, equipment sizing, technology-dependent costs) whose results enter the financial structure defined by the defaults.
 
-At runtime, pyH2A combines the predefined default plugins with the scenario-specific plugins into a single ordered sequence. The relative position of each plugin determines how technical quantities are incorporated into capital and operating costs, and how these costs ultimately influence the discounted cash flow results.
+At runtime, pyH2A combines the predefined default plugins with the scenario-specific plugins into a single ordered sequence. 
+The relative position of each plugin determines how technical quantities are incorporated into capital and operating costs, and how these costs ultimately influence the discounted cash flow results.
 
 Detailed guidance on plugin ordering is provided separately.
 
@@ -261,6 +269,7 @@ The default financial structure follows a defined economic progression:
 
      this is handled by the ``Fixed_Operating_Cost_Plugin`` and ``Variable_Operating_Cost_Plugin``.
 
-After these quantities have been established (production, capital costs, replacement costs, and operating costs) the discounted cash flow calculation is performed. Financial parameters such as discount rate, depreciation treatment, and taxation are applied to compute annual cash flows over the project lifetime. From these, net present value–based indicators, including the levelized cost of hydrogen, are derived.
+After these quantities have been established (production, capital costs, replacement costs, and operating costs) the discounted cash flow calculation is performed. 
+Financial parameters such as discount rate, depreciation treatment, and taxation are applied to compute annual cash flows over the project lifetime. From these, net present value–based indicators, including the levelized cost of hydrogen, are derived.
 
 The economic results therefore arise from a clearly structured sequence: production definition, cost construction, and financial evaluation, implemented through the default plugin sequence.
