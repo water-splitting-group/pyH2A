@@ -1,4 +1,5 @@
-from pyH2A.Utilities.input_modification import insert, process_table
+from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
+from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
 input_dict = {
 	"Water Volume": {
@@ -48,7 +49,7 @@ output_dict = {
             "Value": {
                 "inserted_value": "yearly_cost",
                 "type": {float,},
-                "dimension": "currency",
+				"dimension":"currency",
             },
             "description": "Yearly cost of catalyst seperation.",
             "optional": False,
