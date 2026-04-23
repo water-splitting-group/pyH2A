@@ -1,5 +1,6 @@
 import numpy as np
-from pyH2A.Utilities.input_modification import insert, process_table
+from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
+from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
 input_dict = {
 	"Technical Operating Parameters and Specifications": {
@@ -35,7 +36,7 @@ input_dict = {
 				"bounds": (0, None),
 			},
 			"Unit": {
-				"dimension": "dimensionless / area",
+				"dimension": "area",
 			},
 			"optional": False,
 			"description": "Solar collection area that can be covered by one staffer."
