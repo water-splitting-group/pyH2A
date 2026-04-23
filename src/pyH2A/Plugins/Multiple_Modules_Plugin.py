@@ -103,21 +103,20 @@ class Multiple_Modules_Plugin:
 	''' 
 
 	def __init__(self, dcf, print_info):
-		process_table(dcf.inp, 'Technical Operating Parameters and Specifications', 'Value')
-		process_table(dcf.inp, 'Non-Depreciable Capital Costs', 'Value')
-		process_table(dcf.inp, 'Fixed Operating Costs', 'Value')
 
-		self.required_staff(dcf)
+		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Multiple_Modules_Plugin')
+		
+		self.required_staff()
+		
+		output_inserter_function(output_dict, self, dcf, 'Multiple_Modules_Plugin') 
 
-		insert(dcf, 'Fixed Operating Costs', 'staff', 'Value', self.staff_per_module, __name__, print_info = print_info)
-
-	def required_staff(self, dcf):
+	def required_staff(self):
 		'''Calculation of total required staff for all plant modules, then scaling down to staff
 		requirements for one module.'''
 
-		area = dcf.inp['Technical Operating Parameters and Specifications']['Plant Modules']['Value'] * dcf.inp['Non-Depreciable Capital Costs']['Solar Collection Area (m2)']['Value']
+		area = self.input_dict_resolved['Technical Operating Parameters and Specifications']['Plant Modules']['Value'].unit['-'] * self.input_dict_resolved['Non-Depreciable Capital Costs']['Solar Collection Area']['Value'].unit['m2']
 
-		staff = np.ceil(area / dcf.inp['Fixed Operating Costs']['area']['Value']) + dcf.inp['Fixed Operating Costs']['supervisor']['Value']
-		staff = staff * dcf.inp['Fixed Operating Costs']['shifts']['Value']
+		staff = np.ceil(area / self.input_dict_resolved['Fixed Operating Costs']['Solar collection area per staffer']['Value']).unit['m2'] + self.input_dict_resolved['Fixed Operating Costs']['Number of supervisors']['Value'].unit['-']
+		staff = staff * self.input_dict_resolved['Fixed Operating Costs']['Number of 8-hour shifts']['Value'].unit['-']
 
-		self.staff_per_module = staff / dcf.inp['Technical Operating Parameters and Specifications']['Plant Modules']['Value']
+		self.staff_per_module = Quantity(staff / self.input_dict_resolved['Technical Operating Parameters and Specifications']['Plant Modules']['Value'].unit['-'], '-')
