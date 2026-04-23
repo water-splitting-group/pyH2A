@@ -1,7 +1,7 @@
 Quantity (Unit Handler) Guide
 =============================
 
-The ``pyH2A.Utilities.Unit_Handler.quantity`` module provides a lightweight, computationally efficient replacement for explicit external unit libraries (like Pint). It is designed specifically for pyH2A to manage multi-unit conversions gracefully, support single values and ``numpy`` arrays, and handle lazy evaluation for performance optimizations.
+The ``pyH2A.Utilities.Unit_handler.quantity`` module provides a lightweight, computationally efficient replacement for explicit external unit libraries (like Pint). It is designed specifically for pyH2A to manage multi-unit conversions gracefully, support single values and ``numpy`` arrays, and handle lazy evaluation for performance optimizations.
 
 Core Concepts
 -------------
@@ -106,7 +106,7 @@ To instantiate a ``Quantity``, you simply pass the numerical value alongside its
 
 .. code-block:: python
 
-    from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+    from pyH2A.Utilities.Unit_handler.quantity import Quantity
     import numpy as np
 
     # Scalar numerical values

@@ -6,8 +6,7 @@ from pathlib import Path
 import ast
 import operator
 import numpy as np
-
-from pyH2A.Utilities.Unit_Handler import Quantity
+from pyH2A.Utilities.Unit_handler import Quantity
 
 def import_plugin(plugin_name, plugin_module):
 	'''Importing module.

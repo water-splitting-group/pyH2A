@@ -1,0 +1,22 @@
+from pyH2A.Utilities.IO import output_inserter_function
+from output_inserter_test_data import DummyDCF, DummyPlugin, output_dict, DummyDCF_after_insertion
+from tests.Utilities.check_dicts_for_testing import check_dicts
+
+
+def test_output_inserter():
+
+    DummyDCF_instance = DummyDCF()
+    DummyPlugin_instance = DummyPlugin(DummyDCF_instance, print_info=False)
+
+    output_inserter_function(output_dict,
+                             DummyPlugin_instance,
+                             DummyDCF_instance,
+                             'Test_Plugin')
+
+    expected = DummyDCF_after_insertion()
+
+    check_dicts(DummyDCF_instance.inp, expected.inp)
+
+
+if __name__ == "__main__":
+    test_output_inserter()
