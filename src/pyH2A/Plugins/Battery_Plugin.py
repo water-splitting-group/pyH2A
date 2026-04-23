@@ -1,6 +1,6 @@
-from pyH2A.Utilities.input_modification import insert, process_table
-import numpy as np
+from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+import numpy as np
 
 input_dict = {    
     "Power Generation": {
@@ -74,7 +74,7 @@ output_dict = {
             "Value": {
                 "inserted_value": "yearly_recovered_energy",
                 "type": {dict,},
-                "dimesion": "energy",
+                "dimension": "energy",
             },
             "description": "Energy stored in battery daily (dictionary of years)",
             "optional": False,
@@ -92,7 +92,7 @@ output_dict = {
             "Value": {
                 "inserted_value": Quantity(0, 'J'),
                  "type": {float,},
-                "dimension": "energy",
+                 "dimension": "energy",
             },
             "description": "Available energy is set to zero, since available energy is now only in daily format.",
             "optional": False,
