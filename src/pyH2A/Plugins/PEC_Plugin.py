@@ -125,6 +125,67 @@ input_dict = {
 	}
 }
 
+output_dict = {
+	"Non-Depreciable Capital Costs": {
+		"Land required": {
+			"Value": {
+				"inserted_value": "total_land_area_acres", 
+				"type": {float,},
+				"dimension": "area",
+        	},
+			"description": "Total land area required.",
+			"optional": False,
+		},
+		"Solar collection area": {
+			"Value": {
+				"inserted_value": "total_solar_collection_area",
+				"type": {float,},
+				"dimension": "area",
+			},
+			"description": "Solar collection area.",
+			"optional": False,
+		}
+	},
+	"Planned Replacement": {
+		"Planned replacement PEC Cells": {
+			"Cost": {
+				"inserted_value": "cell_cost",
+				"type": {float,},
+				"dimension": "currency",
+			},
+			"Frequency (years)": {
+				"inserted_value": "input_dict_resolved['PEC Cells']['Lifetime (years)']['Value'].unit['year']",
+				"type": {float,},
+				"dimension": "time",
+			},
+			"description": "Total cost of replacing all PEC cells once.",
+			"optional": False,		
+		}
+	},
+ 	"Direct capital costs - PEC Cells": {
+		"PEC cell cost": {
+			"Value": {
+				"inserted_value": "cell_cost",
+				"type": {float,},
+				"dimension": "currency"
+			},
+			"description": "Total cost of all PEC cells.",
+			"optional": False,
+		}
+	},
+	"PEC Cells": {
+		"Number": {
+			"Value": {
+				"inserted_value": "cell_number",
+				"type": {float,},
+				"dimension": "dimensionless",
+			},
+			"description": "Number of individual PEC cells required for design H2 output capacity.",
+			"optional": False,
+		}
+	},
+}
+
 class PEC_Plugin:
 	'''Simulating H2 production using photoelectrochemical water splitting.
 
