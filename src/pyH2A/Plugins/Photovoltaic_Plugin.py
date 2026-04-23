@@ -80,7 +80,7 @@ output_dict = {
     "Photovoltaic": {
 		"Scaling factor": {
 			"Value": {
-       			"inserted_value": "self.pv_scaling_factor",
+       			"inserted_value": "pv_scaling_factor",
 				"type": {float,},
        		},
             "description": "CAPEX scaling factor for PV array calculated based on CAPEX multiplier, reference and nominal power.",
@@ -90,7 +90,7 @@ output_dict = {
 	"Power Generation": {
 		"PV hourly power generation": {
 			"Value": {
-				"inserted_value": "self.power_generation_yearly_data",
+				"inserted_value": "power_generation_yearly_data",
 				"type": {dict,},
 			},
 			"description": "Hourly power generation of PV array (dictionary of years).",
@@ -98,7 +98,7 @@ output_dict = {
 		},
 		"Available energy (hourly)": {
 			"Value": {
-				"inserted_value": "self.power_generation_yearly_data",
+				"inserted_value": "power_generation_yearly_data",
 				"type": {dict,},
 			},
 			"description": "Available energy, hourly basis, dictionary of years.",
@@ -106,7 +106,7 @@ output_dict = {
 		},
 		"Available energy (daily)": {
 			"Value": {
-				"inserted_value": "self.power_generation_yearly_data_daily_power",
+				"inserted_value": "power_generation_yearly_data_daily_power",
 				"type": {dict,},
 			},
 			"description": "Available energy, daily basis, dictionary of years.",
@@ -116,7 +116,7 @@ output_dict = {
 	"Non-Depreciable Capital Costs": {
 		"Land required": {
 			"Value": {
-				"inserted_value": "self.area_acres",
+				"inserted_value": "area_acres",
 				"type": {float,},
 			},
 			"description": "Total land required.",
@@ -124,7 +124,7 @@ output_dict = {
 		},
 		"Solar collection area": {
 			"Value": {
-				"inserted_value": "self.area_m2",
+				"inserted_value": "area_m2",
 				"type": {float,},
 			},
 			"description": "Solar collection area.",

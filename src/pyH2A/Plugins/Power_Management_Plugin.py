@@ -64,7 +64,7 @@ output_dict = {
     "Power Generation": {
         "Available energy (yearly)": {
             "Value": {
-                "inserted_value": "self.remaining_flexible",
+                "inserted_value": "remaining_flexible",
                 "type": {np.ndarray,}
             },
             "description": "Remaining available energy, yearly basis.",
@@ -72,7 +72,7 @@ output_dict = {
         },
         "Stored energy (yearly)": {
             "Value": {
-                "inserted_value": "self.remaining_stored",
+                "inserted_value": "remaining_stored",
                 "type": {np.ndarray,}
             },
             "description": "Remaining stored energy, yearly basis.",
@@ -80,7 +80,7 @@ output_dict = {
         },
         "Available energy (daily)": {
             "Value": {
-                "inserted_value": Quantity(0, 'kWh'),
+                "inserted_value": Quantity(0, 'J'),
                 "type": {float,}
             },
             "description": "Remaining available energy, daily basis.",
@@ -88,7 +88,7 @@ output_dict = {
         },
         "Stored energy (daily)": {
             "Value": {
-                "inserted_value": Quantity(0, 'kWh'),
+                "inserted_value": Quantity(0, 'J'),
                 "type": {float,}
             },
             "description": "Remaining stored energy, daily basis.",
@@ -98,7 +98,7 @@ output_dict = {
     "Grid Electricity": {
         "Used grid electricity (yearly)": {
             "Value": {
-                "inserted_value": "self.total_unfulfilled",
+                "inserted_value": "total_unfulfilled",
                 "type": {np.ndarray,}
             },
             "description": "Used grid electricity, yearly basis.",
@@ -108,7 +108,7 @@ output_dict = {
     "Other Variable Operating Cost - Grid Electricity": {
         "Cost of grid electricity (yearly)": {
             "Value": {
-                "inserted_value": "self.electricity_cost",
+                "inserted_value": "electricity_cost",
                 "type": {np.ndarray,}
             },
             "description": "Cost of grid electricity, yearly basis.",

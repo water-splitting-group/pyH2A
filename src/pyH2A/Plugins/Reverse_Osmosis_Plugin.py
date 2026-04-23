@@ -69,7 +69,7 @@ output_dict = {
     "Power Consumption": {
         "Reverse osmosis consumption (yearly)": {
             "Value": {
-                "inserted_value": "self.electricity_demand_kWh",
+                "inserted_value": "electricity_demand_kWh",
                 "type": {np.ndarray,}
             },
             "Type": {
@@ -83,7 +83,7 @@ output_dict = {
     "Reverse Osmosis": {
         "Capacity": {
             "Value": {
-                "inserted_value": "self.maximum_sea_water_processing_m3_per_hour",
+                "inserted_value": "maximum_sea_water_processing_m3_per_hour",
                 "type": {float,}
             },
             "description": "Maximum sea water processing capacity per hour of reverse osmosis plant.",
