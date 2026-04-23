@@ -1,6 +1,6 @@
 import numpy as np
-from pyH2A.Utilities.Energy_Conversion import Energy, kWh, eV
-from pyH2A.Utilities.input_modification import insert, process_table
+from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
+from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
 input_dict = {
 	"Technical Operating Parameters and Specifications": {
@@ -130,8 +130,8 @@ output_dict = {
 		"Land required": {
 			"Value": {
 				"inserted_value": "total_land_area", 
-				"type": {float,},
-				"dimension": "area",
+				"type": {float,}, 
+				"dimension":"area",
         	},
 			"description": "Total land area required.",
 			"optional": False,
@@ -140,7 +140,7 @@ output_dict = {
 			"Value": {
 				"inserted_value": "total_solar_collection_area",
 				"type": {float,},
-				"dimension": "area",
+				"dimension":"area",
 			},
 			"description": "Solar collection area.",
 			"optional": False,
@@ -151,12 +151,12 @@ output_dict = {
 			"Cost": {
 				"inserted_value": "cell_cost",
 				"type": {float,},
-				"dimension": "currency",
+				"dimension":"currency",
 			},
 			"Frequency": {
 				"inserted_value": "input_dict_resolved['PEC Cells']['Lifetime']['Value']",
-				"type": {float,},
-				"dimension": "time",
+				"type": {float,}, 
+				"dimension":"time",
 			},
 			"description": "Total cost of replacing all PEC cells once.",
 			"optional": False,		
@@ -166,7 +166,7 @@ output_dict = {
 		"PEC cell cost": {
 			"Value": {
 				"inserted_value": "cell_cost",
-				"type": {float,},
+				"type": {float,}, 
 				"dimension": "currency"
 			},
 			"description": "Total cost of all PEC cells.",
@@ -177,8 +177,8 @@ output_dict = {
 		"Number": {
 			"Value": {
 				"inserted_value": "cell_number",
-				"type": {float,},
-				"dimension": "dimensionless",
+				"type": {float,}, 
+				"dimension":"dimensionless",
 			},
 			"description": "Number of individual PEC cells required for design H2 output capacity.",
 			"optional": False,
