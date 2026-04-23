@@ -1,6 +1,6 @@
 from src.pyH2A.Utilities.IO import input_resolver_function
-from input_resolver_test_data import DummyDCF, input_dict, input_dict_resolved
-from check_dicts_for_testing import check_dicts
+from tests.Utilities.Input_resolver.input_resolver_test_data import DummyDCF, input_dict, input_dict_resolved
+from tests.Utilities.check_dicts_for_testing import check_dicts
 
 
 def test_input_resolver():

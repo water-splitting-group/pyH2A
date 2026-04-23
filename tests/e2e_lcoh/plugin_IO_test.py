@@ -1,15 +1,14 @@
 import numpy as np
-from src.pyH2A.run_pyH2A import pyH2A
-from src.pyH2A.Utilities.Unit_handler.quantity import Quantity
-
+from pyH2A.run_pyH2A import pyH2A
+from pyH2A.Utilities.Unit_handler.quantity import Quantity
 from tests.Utilities.check_dicts_for_testing import check_dicts
 
 
 def test_plugin_IO():
 
-    result = pyH2A('src/tests/end_to_end/PV_E_Plugin_IO.md', 
-                   'src/tests/end_to_end/')
-    
+    result = pyH2A('tests/end_to_end/PV_E_Plugin_IO.md',
+                   'tests/end_to_end/')
+
     expected_plugin_a_input = {
         'Power': {
             'Former Value': 10,
@@ -45,10 +44,15 @@ def test_plugin_IO():
         }
     }
 
-    check_dicts(result.base_case.inp['Plugin A Input'], expected_plugin_a_input)
-    check_dicts(result.base_case.inp['Plugin A Output'], expected_plugin_a_output)
-    check_dicts(result.base_case.inp['Plugin B Input'], expected_plugin_b_input)
-    check_dicts(result.base_case.inp['Plugin B Output'], expected_plugin_b_output)
-    
+    check_dicts(
+        result.base_case.inp['Plugin A Input'], expected_plugin_a_input)
+    check_dicts(
+        result.base_case.inp['Plugin A Output'], expected_plugin_a_output)
+    check_dicts(
+        result.base_case.inp['Plugin B Input'], expected_plugin_b_input)
+    check_dicts(
+        result.base_case.inp['Plugin B Output'], expected_plugin_b_output)
+
+
 if __name__ == '__main__':
     test_plugin_IO()

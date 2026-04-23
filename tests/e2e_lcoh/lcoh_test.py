@@ -7,8 +7,8 @@ from pyH2A.run_pyH2A import pyH2A
     [
         {
             "input": {
-                "input_file": "src/tests/end_to_end/PEC_Base.md",
-                "output_directory": "src/tests/end_to_end/",
+                "input_file": "tests/end_to_end/PEC_Base.md",
+                "output_directory": "tests/end_to_end/",
             },
             "expected": {
                 "lcoh": 139.41887561917213
@@ -16,8 +16,8 @@ from pyH2A.run_pyH2A import pyH2A
         },
         {
             "input": {
-                "input_file": "src/tests/end_to_end/Photocatalytic_Base.md",
-                "output_directory": "src/tests/end_to_end/",
+                "input_file": "tests/end_to_end/Photocatalytic_Base.md",
+                "output_directory": "tests/end_to_end/",
             },
             "expected": {
                 "lcoh": 185.44329282256822
@@ -25,8 +25,8 @@ from pyH2A.run_pyH2A import pyH2A
         },
         {
             "input": {
-                "input_file": "src/tests/end_to_end/PV_E_Base.md",
-                "output_directory": "src/tests/end_to_end/",
+                "input_file": "tests/end_to_end/PV_E_Base.md",
+                "output_directory": "tests/end_to_end/",
             },
             "expected": {
                 "lcoh": 4.194302976489675
@@ -34,8 +34,8 @@ from pyH2A.run_pyH2A import pyH2A
         },
         {
             "input": {
-                "input_file": "src/tests/end_to_end/Thermal_Base.md",
-                "output_directory": "src/tests/end_to_end/",
+                "input_file": "tests/end_to_end/Thermal_Base.md",
+                "output_directory": "tests/end_to_end/",
             },
             "expected": {
                 "lcoh": 3.270581409704611

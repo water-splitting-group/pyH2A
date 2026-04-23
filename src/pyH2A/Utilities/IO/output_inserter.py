@@ -2,8 +2,6 @@ from pyH2A.Utilities.input_modification import insert
 from pyH2A.Utilities.check_functions import check_type, check_dimension
 from pyH2A.Utilities.Unit_handler.quantity import Quantity
 
-from tests.Utilities.Output_Inserter.output_inserter_test_data import DummyDCF, DummyPlugin, output_dict
-
 # Properties of rows (middle level)
 OPTIONAL_KEY = 'optional'
 ADD_PROCESSED_KEY = 'add_processed'
@@ -213,6 +211,7 @@ def output_inserter_function(output_dict,
 
 
 if __name__ == "__main__":
+    from tests.Utilities.Output_Inserter.output_inserter_test_data import DummyDCF, DummyPlugin, output_dict
 
     import pprint as pp
 

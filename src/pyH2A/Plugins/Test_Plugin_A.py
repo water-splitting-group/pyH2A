@@ -1,7 +1,7 @@
 import numpy as np
 
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
-from pyH2A.Utilities.Unit_Handler import Quantity
+from pyH2A.Utilities.Unit_handler import Quantity
 
 input_dict = {
     'Plugin A Input': {

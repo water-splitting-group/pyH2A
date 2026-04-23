@@ -1,5 +1,5 @@
-from pyH2A.Utilities.IO import output_inserter_function
-from output_inserter_test_data import DummyDCF, DummyPlugin, output_dict, DummyDCF_after_insertion
+from src.pyH2A.Utilities.IO import output_inserter_function
+from tests.Utilities.Output_Inserter.output_inserter_test_data import DummyDCF, DummyPlugin, output_dict, DummyDCF_after_insertion
 from tests.Utilities.check_dicts_for_testing import check_dicts
 
 
