@@ -1,5 +1,6 @@
 from pyH2A.Utilities.input_modification import insert, process_table
 import numpy as np
+from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
 input_dict = {    
     "Power Generation": {
@@ -65,6 +66,38 @@ input_dict = {
             "description": "Round trip efficiency of battery."
         },  
     } 
+}
+
+output_dict = {
+    "Power Generation": {
+        "Stored energy (daily)": {
+            "Value": {
+                "inserted_value": "daily_stored_power",
+                "type": {dict,},
+                "dimesion": "energy",
+            },
+            "description": "Energy stored in battery daily (dictionary of years)",
+            "optional": False,
+        },
+        "Available energy (daily)": {
+            "Value": {
+                "inserted_value": "daily_unstored_power",
+                "type": {dict,},
+                "dimension": "energy",
+            },
+            "description": "Available energy, daily basis, dictionary of years - energy which has not been stored in battery",
+            "optional": False,
+        },
+        "Available energy (hourly)": {
+            "Value": {
+                "inserted_value": Quantity(0, 'J'),
+                 "type": {float,},
+                "dimension": "energy",
+            },
+            "description": "Available energy is set to zero, since available energy is now only in daily format.",
+            "optional": False,
+        }
+    }
 }
 
 class Battery_Plugin:
