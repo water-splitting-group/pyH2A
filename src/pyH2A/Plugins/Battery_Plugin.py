@@ -166,7 +166,7 @@ class Battery_Plugin:
     def calculate_battery_capacity(self, year):
 
         capacity_decrease = (1. - self.input_dict_resolved['Battery']['Capacity loss per year']['Value'].unit['-'] ) ** year
-        nominal_capacity = self.input_dict_resolved['Battery']['Design Capacity']['Value'].unit['J'] * (1. - self.input_dict_resolved['Battery']['Lowest discharge level']['Value'].unit['-'])
+        nominal_capacity = self.input_dict_resolved['Battery']['Design capacity']['Value'].unit['J'] * (1. - self.input_dict_resolved['Battery']['Lowest discharge level']['Value'].unit['-'])
 
         capacity = nominal_capacity * capacity_decrease
 
