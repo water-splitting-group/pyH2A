@@ -71,7 +71,7 @@ output_dict = {
 	"Direct Capital Costs": {
 		"Total": {
 			"Value": {
-				"inserted_value": "currency",
+				"inserted_value": "direct",
 				"type": {float,},	
 				"dimension": "currency",
 			},
@@ -80,7 +80,7 @@ output_dict = {
 		},
 		"Inflated": {
 			"Value": {
-				"inserted_value": "currency",
+				"inserted_value": "direct_inflated",
 				"type": {float,},
 				"dimension": "currency",
 			},
@@ -91,7 +91,7 @@ output_dict = {
 	"Indirect Capital Costs": {
 		"Total": {
 			"Value": {
-				"inserted_value": "currency",
+				"inserted_value": "indirect",
 				"type": {float,},
 				"dimension": "currency",
 			},
@@ -100,7 +100,7 @@ output_dict = {
 		},
 		"Inflated": {
 			"Value": {
-				"inserted_value": "currency",
+				"inserted_value": "indirect_inflated",
 				"type": {float,},
 				"dimension": "currency",
 			},
@@ -111,7 +111,7 @@ output_dict = {
 	"Non-Depreciable Capital Costs": {
 		"Total": {
 			"Value": {	
-				"inserted_value": "currency",
+				"inserted_value": "non_depreciable",
 				"type": {float,},
 				"dimension": "currency",		
 			},
@@ -120,7 +120,7 @@ output_dict = {
 		},
 		"Inflated": {
 			"Value": {
-				"inserted_value": "currency",	
+				"inserted_value": "non_depreciable_inflated",
 				"type": {float,},
 				"dimension": "currency",
 			},
@@ -131,7 +131,7 @@ output_dict = {
 	"Depreciable Capital Costs": {
 		"Total": {
 			"Value": {
-				"inserted_value": "currency",
+				"inserted_value": "depreciable",
 				"type": {float,},
 				"dimension": "currency",
 			},	
@@ -140,7 +140,7 @@ output_dict = {
 		},
 		"Inflated": {
 			"Value": {
-				"inserted_value": "currency",
+				"inserted_value": "depreciable_inflated",
 				"type": {float,},	
 				"dimension": "currency",
 			},	
@@ -151,7 +151,7 @@ output_dict = {
 	"Total Capital Costs": {
 		"Total": {
 			"Value": {
-				"inserted_value": "currency",
+				"inserted_value": "total",
 				"type": {float,},
 				"dimension": "currency",
 			},	
@@ -160,7 +160,7 @@ output_dict = {
 		},
 		"Inflated": {
 			"Value": {
-				"inserted_value": "currency",
+				"inserted_value": "total_inflated",
 				"type": {float,},
 				"dimension": "currency",
 			},
