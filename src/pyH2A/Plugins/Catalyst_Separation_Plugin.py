@@ -96,7 +96,7 @@ class Catalyst_Separation_Plugin:
 		'''Yearly cost of water filtration to remove catalyst.
 		'''
 
-		self.yearly_cost = Quantity(self.yearly_filtration_volume.unit['m3'] * self.input_dict_resolved['Catalyst Separation']['Filtration cost ($/m3)']['Value'].unit['USD/m3'], 'USD')
+		self.yearly_cost = Quantity(self.yearly_filtration_volume.unit['m3'] * self.input_dict_resolved['Catalyst Separation']['Filtration cost']['Value'].unit['USD/m3'], 'USD')
 
 
 
