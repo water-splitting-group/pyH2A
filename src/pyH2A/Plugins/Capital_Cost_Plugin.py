@@ -250,18 +250,18 @@ class Capital_Cost_Plugin:
 	['Capital_Cost_Plugin'].direct_contributions : dict
 		Attribute containing cost contributions for "Direct Capital Cost" group.
 	'''
-		def __init__(self, dcf, print_info):
+	def __init__(self, dcf, print_info):
 		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Capital_Cost_Plugin')
-        
+		
 		# All the self.X variable are converted into Quantites just before their insertion, to avoid unnecessary complications
 		self.direct_capital_costs(dcf, print_info)  
 		self.direct_inflated = self.direct * dcf.combined_inflator
-        
+		
 		self.indirect_capital_costs(dcf, print_info)
 		self.indirect_inflated = self.indirect * dcf.combined_inflator
 		self.depreciable = self.direct + self.indirect
 		self.depreciable_inflated = self.direct_inflated + self.indirect_inflated
-        
+		
 		self.non_depreciable_capital_costs(dcf, print_info)
 		self.non_depreciable_inflated = self.non_depreciable * dcf.ci_inflator
 		self.total = self.depreciable + self.non_depreciable
@@ -279,7 +279,7 @@ class Capital_Cost_Plugin:
 		self.total = Quantity(self.total, 'USD')
 		self.total_inflated = Quantity(self.total_inflated, 'USD')     
 
-		output_inserter_function(output_dict, self, dcf, 'Capital_Cost_Plugin')
+	output_inserter_function(output_dict, self, dcf, 'Capital_Cost_Plugin')
         
 	def direct_capital_costs(self, dcf, print_info):
 		'''Calculation of direct capital costs by applying ``sum_all_tables()`` to "Direct Capital Cost" group.'''
