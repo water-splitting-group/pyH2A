@@ -60,6 +60,52 @@ input_dict = {
 	}
 }
 
+
+output_dict = {
+    "Variable Operating Costs": {
+		"Total": {
+			"Value": {
+				"inserted_value": "utilities + other",
+				"type": {float, np.ndarray},
+				"dimension": "currency / time",
+			},
+			"optional": False,
+			"description": "Total variable operating costs, including utilities and other variable operating costs."
+		},
+		"Utilities": {
+			"Value": {
+				"inserted_value": "utilities",
+				"type": {float, np.ndarray},
+				"dimension": "currency / time",
+			},
+			"optional": False,
+			"description": "Total variable operating costs for utilities, including inflation correction."
+		},
+		"Other": {
+			"Value": {
+				"inserted_value": "other",
+				"type": {float},
+				"dimension": "currency / time",
+			},
+			"optional": False,
+			"description": "Total variable operating costs for other variable operating costs."
+		},
+	},
+    "special_insertions":
+        {"sum_all_tables": {
+            "<...> Other Variable Operating Cost <...>": {
+                "Summed Total": {
+                    "Value": {
+                        "type": {int, float},
+                    },
+                    "optional": True,
+                    "description": "Summed total of other variable operating costs across all tables"
+                },
+            },
+		},
+	}
+}
+
 class Variable_Operating_Cost_Plugin:
 	'''Calculation of variable operating costs.
 
