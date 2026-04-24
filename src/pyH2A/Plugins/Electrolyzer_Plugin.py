@@ -162,7 +162,7 @@ output_dict = {
             "Value": {
                 "insert_value": "yearly_data",
                 "type": {np.ndarray,},
-                "dimension": {"dimensionless", "mass", "time"}, # does that work?
+                "dimension": "(dimensionless, mass, time)", # does that work? This is coherent with what we had decided on the input_dict side, when Yearly operation data is used in stored_power_electrolysis
             },
             "optional": False,
             "description": "Yearly operation data of electrolyzer in (year, H2 produced, electrolyzer capacity) format."
@@ -304,7 +304,7 @@ class Electrolyzer_Plugin:
             yearly_data_unused_energy_daily[year] = Quantity(hourly_to_daily_power(unused_energy), 'J')
 
         data_array = np.asarray(yearly_data)
-        self.yearly_data = np.column_stack((data_array[:,0], Quantity(data_array[:,1],'kg'), Quantity(data_array[:,2],'h'))) # does that work?
+        self.yearly_data = np.column_stack((data_array[:,0], Quantity(data_array[:,1],'kg'), Quantity(data_array[:,2],'h'))) 
 
         self.h2_production = np.concatenate([np.zeros(dcf.inp['Financial Input Values']['construction time']['Value']), self.yearly_data[:,1].unit['kg']])
         self.h2_production = Quantity(self.h2_production, 'kg/year') # needs to be expressed as a flowrate, as it ultimately serves as the plant design capacity etc
