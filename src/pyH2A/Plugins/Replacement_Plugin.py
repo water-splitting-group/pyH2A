@@ -36,6 +36,33 @@ input_dict = {
 			"description": "Unplanned replacement costs. Can be provided for multiple entries under Unplanned Replacement, in which case they will be summed up to the total unplanned replacement costs."
 		},
 	}
+}
+
+output_dict = {
+	"Replacement": {
+		"Total": {
+			"Value": {
+				"inserted_value": "total",
+				"type": {np.ndarray,},
+				"dimension": "currency",
+			},
+			"optional": False,
+			"description": "Total replacement costs for each year, including both planned and unplanned replacement costs, and corrected for inflation."
+		},
+	},
+	"special_insertions":
+        {"sum_all_tables": {
+            "<...> Unplanned Replacement <...>": {
+                "Summed Total": {
+                    "Value": {
+                        "type": {int, float},
+                    },
+                    "optional": True,
+                    "description": "Summed total of unplanned replacement across all tables"
+                },
+            },
+		}
+	},
 }	
 
 class Replacement_Plugin:
