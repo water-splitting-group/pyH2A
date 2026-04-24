@@ -1,4 +1,6 @@
-from pyH2A.Utilities.input_modification import insert, sum_all_tables, process_table
+from pyH2A.Utilities.input_modification import sum_all_tables
+from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
+from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
 input_dict = {
 	"Fixed Operating Costs": {
@@ -62,7 +64,7 @@ output_dict = {
 		},
 		"Total": {
 			"Value": {
-				"insert_value": "labor + other",
+				"insert_value": "total_fixed_operating_cost",
 				"type": {float,},
 				"dimension": "currency / time",	
 			},
@@ -111,24 +113,25 @@ class Fixed_Operating_Cost_Plugin:
 
 
 	def __init__(self, dcf, print_info):
+		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Fixed_Operating_Cost_Plugin')
+		
 		self.labor_cost(dcf)
-		insert(dcf, 'Fixed Operating Costs', 'Labor Cost - Uninflated', 'Value', self.labor_uninflated, __name__, print_info = print_info)
-		insert(dcf, 'Fixed Operating Costs', 'Labor Cost', 'Value', self.labor, __name__, print_info = print_info)
-
 		self.other_cost(dcf, print_info)
-		insert(dcf, 'Fixed Operating Costs', 'Total', 'Value', self.labor + self.other, __name__, print_info = print_info)
+
+		# The self variables are converted into Quantities at the last moment to avoid unnecessary complications
+		self.labor_uninflated = Quantity(self.labor_uninflated, 'USD')
+		self.total_fixed_operating_cost = Quantity(self.labor + self.other, 'USD')		
+		self.labor = Quantity(self.labor, 'USD')
+		output_inserter_function(output_dict, self, dcf, 'Fixed_Operating_Cost_Plugin')  
 
 	def labor_cost(self, dcf):
 		'''Calculation of yearly labor costs by multiplying number of staff times hourly labor cost.'''
-
-		process_table(dcf.inp, 'Fixed Operating Costs', 'Value')
-
-		self.labor_uninflated = dcf.inp['Fixed Operating Costs']['staff']['Value'] * dcf.inp['Fixed Operating Costs']['hourly labor cost']['Value'] * 2080.
+		self.labor_uninflated = self.input_dict_resolved['Fixed Operating Costs']['Staff']['Value'].unit['-'] * self.input_dict_resolved['Fixed Operating Costs']['Hourly labor cost']['Value'].unit['USD/year']
 		self.labor = self.labor_uninflated * dcf.labor_inflator 
 	
 	def other_cost(self, dcf, print_info):
 		'''Calculation of yearly other fixed operating costs by applying ``sum_all_tables()`` 
 		to "Other Fixed Operating Cost" group.'''
 
-		self.other = sum_all_tables(dcf.inp, 'Other Fixed Operating Cost', 'Value', insert_total = True, class_object = dcf, print_info = print_info) * dcf.combined_inflator
+		self.other = sum_all_tables(dcf.inp, 'Other Fixed Operating Cost', 'Value', insert_total = True, class_object = dcf, print_info = print_info, unit = 'USD') * dcf.combined_inflator
 
