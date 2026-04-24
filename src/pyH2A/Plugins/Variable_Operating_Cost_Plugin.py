@@ -1,4 +1,6 @@
-from pyH2A.Utilities.input_modification import insert, sum_all_tables, process_table, read_textfile
+from pyH2A.Utilities.input_modification import sum_all_tables, read_textfile
+from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
+from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import pyH2A.Utilities.find_nearest as fn
 import numpy as np
 
@@ -22,22 +24,28 @@ input_dict = {
 				"type": {float, str, np.ndarray},
 				"bounds": (0, None)
 			},
+			"Cost_Unit": {
+				"dimension": "currency" # we omit the basis on purpose
+			},			
 			"Usage_Value": {
 				"type": {float},
 				"bounds": (0, None)
 			},
-			"Price Conversion Factor Value": {
+			"Usage_Unit": {
+				"dimension": "dimensionless/mass" # basis per kg of hydrogen
+			},			
+			"Price_Conversion_Factor_Value": {
 				"type": {float},
 				"bounds": (0, None)
 			},
-			"Price Conversion Factor Unit": {
+			"Price_Conversion_Factor_Unit": {
 				"dimension": "dimensionless"
 			},
 			"Path_Value": {
 				"type": {str},
 				"bounds": None
 			},
-			"Usage Path Value": {
+			"Usage_Path_Value": {
 				"type": {str},
 				"bounds": None
 			},
@@ -60,14 +68,13 @@ input_dict = {
 	}
 }
 
-
 output_dict = {
     "Variable Operating Costs": {
 		"Total": {
 			"Value": {
-				"inserted_value": "utilities + other",
+				"inserted_value": "total_variable_costs",
 				"type": {float, np.ndarray},
-				"dimension": "currency / time",
+				"dimension": "currency",
 			},
 			"optional": False,
 			"description": "Total variable operating costs, including utilities and other variable operating costs."
@@ -76,7 +83,7 @@ output_dict = {
 			"Value": {
 				"inserted_value": "utilities",
 				"type": {float, np.ndarray},
-				"dimension": "currency / time",
+				"dimension": "currency",
 			},
 			"optional": False,
 			"description": "Total variable operating costs for utilities, including inflation correction."
@@ -85,7 +92,7 @@ output_dict = {
 			"Value": {
 				"inserted_value": "other",
 				"type": {float},
-				"dimension": "currency / time",
+				"dimension": "currency",
 			},
 			"optional": False,
 			"description": "Total variable operating costs for other variable operating costs."
@@ -96,7 +103,7 @@ output_dict = {
             "<...> Other Variable Operating Cost <...>": {
                 "Summed Total": {
                     "Value": {
-                        "type": {int, float},
+                        "type": {float},
                     },
                     "optional": True,
                     "description": "Summed total of other variable operating costs across all tables"
@@ -143,18 +150,14 @@ class Variable_Operating_Cost_Plugin:
 	'''
 
 	def __init__(self, dcf, print_info):
-		process_table(dcf.inp, 'Technical Operating Parameters and Specifications', 'Value')
-		process_table(dcf.inp, 'Utilities', ['Cost', 'Usage per kg H2'], path_key = ['Path', 'Usage Path'])
+		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Variable_Operating_Cost_Plugin')
 
 		self.calculate_utilities_cost(dcf)
 		self.other_variable_costs(dcf, print_info)
+		self.total_variable_costs = Quantity(self.utilities.unit['USD'] + self.other.unit['USD'], 'USD')	
 
-		insert(dcf, 'Variable Operating Costs', 'Total', 'Value', 
-				self.utilities + self.other, __name__, print_info = print_info)
-		insert(dcf, 'Variable Operating Costs', 'Utilities', 'Value', 
-				self.utilities, __name__, print_info = print_info)
-		insert(dcf, 'Variable Operating Costs', 'Other', 'Value', 
-				self.other, __name__, print_info = print_info)
+		output_inserter_function(output_dict, self, dcf, 'Variable_Operating_Cost_Plugin')   
+
 
 	def calculate_utilities_cost(self, dcf):
 		'''Iterating over all utilities and computing summed yearly costs.
@@ -162,11 +165,12 @@ class Variable_Operating_Cost_Plugin:
 
 		self.utilities = 0.
 
-		for key in dcf.inp['Utilities']:
-			utility = Utility(dcf.inp['Utilities'][key], dcf)
-			self.utilities += utility.cost_per_kg_H2
+		for key in self.input_dict_resolved['Utilities']:
+			utility = Utility(self.input_dict_resolved['Utilities'][key], dcf)
+			self.utilities += utility.cost_per_kg_H2.unit['USD/kg']
 
-		self.utilities = self.utilities * dcf.inp['Technical Operating Parameters and Specifications']['Output per Year']['Value']
+		self.utilities = self.utilities * self.input_dict_resolved['Technical Operating Parameters and Specifications']['Output per year']['Value'].unit['kg/year']
+		self.utilities = Quantity(self.utilities, 'USD')
 
 	def other_variable_costs(self, dcf, print_info):
 		'''Applying ``sum_all_tables()`` to "Other Variable Operating Cost" group.
@@ -174,7 +178,8 @@ class Variable_Operating_Cost_Plugin:
 
 		self.other = dcf.chemical_inflator * sum_all_tables(dcf.inp, 'Other Variable Operating Cost', 'Value', 
 																insert_total = True, class_object = dcf, 
-																print_info = print_info)
+																print_info = print_info, unit = 'USD')
+		self.other = Quantity(self.other, 'USD')
 
 class Utility:
 	'''Individual utility objects.
@@ -197,8 +202,8 @@ class Utility:
 			years_idx = fn.find_nearest(prices, dcf.years)
 			prices = prices[years_idx]
 
-			self.cost_per_kg_H2 = prices[:,1] * dcf.inflation_correction * dictionary['Price Conversion Factor'] * dictionary['Usage per kg H2']
+			self.cost_per_kg_H2 = Quantity(prices[:,1] * dcf.inflation_correction * dictionary['Price Conversion Factor'].unit['-'] * dictionary['Usage'], 'USD/kg') # probleme in this plugin: we don't know the units in advance
 
 		else:
-			annual_cost_per_kg_H2 = dcf.inflation_correction * dictionary['Cost'] * dictionary['Usage per kg H2'] * dictionary['Price Conversion Factor']
-			self.cost_per_kg_H2 = np.ones(len(dcf.inflation_factor)) * annual_cost_per_kg_H2
+			annual_cost_per_kg_H2 = dcf.inflation_correction * dictionary['Cost'].unit['USD'] * dictionary['Usage'].unit['-/kg'] * dictionary['Price Conversion Factor'].unit['-']
+			self.cost_per_kg_H2 = Quantity(np.ones(len(dcf.inflation_factor)) * annual_cost_per_kg_H2, 'USD/kg')
