@@ -80,7 +80,7 @@ input_dict = {
                 "bounds": (0, None)
             },
             "Unit": {
-                "dimension": "(dimensionless, mass, dimensionless)"
+                "dimension": "(dimensionless, mass, time)"
             },
             "optional": False,
             "description": "Yearly operation data of electrolyzer in format."
