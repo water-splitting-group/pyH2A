@@ -499,21 +499,21 @@ def input_resolver_function(input_dict, dcf_class, plugin_name):
             f"[Plugin: {plugin_name}] {error_message}") from error
 
 
-if __name__ == "__main__":
-    from tests.Utilities.Input_resolver.input_resolver_test_data import DummyDCF, input_dict
+# if __name__ == "__main__":
+#     from tests.Utilities.Input_resolver.input_resolver_test_data import DummyDCF, input_dict
 
-    DummyDCF_instance = DummyDCF()
+#     DummyDCF_instance = DummyDCF()
 
-    from timeit import default_timer as timer
+#     from timeit import default_timer as timer
 
-    start_time = timer()
+#     start_time = timer()
 
-    input_dict_resolved = input_resolver_function(
-        input_dict, DummyDCF_instance, 'TestPlugin')
+#     input_dict_resolved = input_resolver_function(
+#         input_dict, DummyDCF_instance, 'TestPlugin')
 
-    end_time = timer()
+#     end_time = timer()
 
-    pp.pprint(input_dict_resolved)
+#     pp.pprint(input_dict_resolved)
 
-    print('--------------------------------')
-    print(end_time - start_time, 's passed')
+#     print('--------------------------------')
+#     print(end_time - start_time, 's passed')

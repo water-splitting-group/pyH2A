@@ -210,19 +210,19 @@ def output_inserter_function(output_dict,
 
 
 
-if __name__ == "__main__":
-    from tests.Utilities.Output_Inserter.output_inserter_test_data import DummyDCF, DummyPlugin, output_dict
+# if __name__ == "__main__":
+#     from tests.Utilities.Output_Inserter.output_inserter_test_data import DummyDCF, DummyPlugin, output_dict
 
-    import pprint as pp
+#     import pprint as pp
 
-    DummyDCF_instance = DummyDCF()
-    DummyPlugin_instance = DummyPlugin(DummyDCF_instance, print_info = False)
+#     DummyDCF_instance = DummyDCF()
+#     DummyPlugin_instance = DummyPlugin(DummyDCF_instance, print_info = False)
 
-    output_inserter_function(output_dict, 
-                             DummyPlugin_instance, 
-                             DummyDCF_instance, 
-                             'Test_Plugin')
+#     output_inserter_function(output_dict, 
+#                              DummyPlugin_instance, 
+#                              DummyDCF_instance, 
+#                              'Test_Plugin')
     
-    pp.pprint(DummyDCF_instance.inp)
+#     pp.pprint(DummyDCF_instance.inp)
     
     

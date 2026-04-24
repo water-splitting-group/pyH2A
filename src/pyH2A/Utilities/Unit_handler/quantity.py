@@ -1,7 +1,7 @@
 import re
 import numpy as np
 
-from pyH2A.Utilities.Unit_handler.config import FLAT_MULTIPLIERS, FLAT_BASES, FLAT_DIMENSIONS, ABSOLUTE_TEMPERATURE
+from .config import FLAT_MULTIPLIERS, FLAT_BASES, FLAT_DIMENSIONS, ABSOLUTE_TEMPERATURE
 
 # Regex pattern for lenient parsing. Splits by math operators and keeps them as tokens.
 # Filters out spaces and empty strings automatically based on regex logic.
