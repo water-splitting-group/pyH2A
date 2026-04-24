@@ -158,15 +158,33 @@ output_dict = {
             "optional": False,
             "description": "CAPEX scaling factor for electrolyzer calculated based on CAPEX multiplier, reference and nominal power."
         },
-        "Yearly operation data": {
+        "Operation data year": {
             "Value": {
-                "insert_value": "yearly_data",
+                "insert_value": "yearly_data_year",
                 "type": {np.ndarray,},
-                "dimension": "(dimensionless, mass, time)", # does that work? This is coherent with what we had decided on the input_dict side, when Yearly operation data is used in stored_power_electrolysis
+                "dimension": "dimensionless", 
             },
             "optional": False,
-            "description": "Yearly operation data of electrolyzer in (year, H2 produced, electrolyzer capacity) format."
+            "description": "Yearly operation data of electrolyzer: year"
         },
+        "Operation data production": {
+            "Value": {
+                "insert_value": "yearly_data_production",
+                "type": {np.ndarray,},
+                "dimension": "mass", 
+            },
+            "optional": False,
+            "description": "Yearly operation data of electrolyzer: H2 produced"
+        },
+        "Operation data duration": {
+            "Value": {
+                "insert_value": "yearly_data_duration",
+                "type": {np.ndarray,},
+                "dimension": "time", 
+            },
+            "optional": False,
+            "description": "Yearly operation data of electrolyzer: duration of operation"
+        },                
         "H2 production (yearly)": {
             "Value": {
                 "insert_value": "h2_production",
@@ -256,7 +274,7 @@ class Electrolyzer_Plugin:
         self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Electrolyzer_Plugin')
 
         self.calculate_H2_production(dcf)
-        self.replacement_frequency = calculate_stack_replacement(self.yearly_data[:,2], 
+        self.replacement_frequency = calculate_stack_replacement(self.yearly_data_duration, 
                                     self.input_dict_resolved['Electrolyzer']['Replacement time']['Value'].unit['h'])
         self.calculate_scaling_factors()
 
@@ -269,7 +287,9 @@ class Electrolyzer_Plugin:
 
         energy_generation_yearly_data = self.input_dict_resolved['Power Generation']['Available energy (hourly)']['Value']
 
-        yearly_data = []
+        yearly_data_year = []
+        yearly_data_production = []
+        yearly_data_duration = []
         yearly_data_unused_energy = {}
         yearly_data_unused_energy_daily = {}
 
@@ -296,17 +316,21 @@ class Electrolyzer_Plugin:
                                                         self.input_dict_resolved['Electrolyzer']['Conversion efficiency']['Value'].unit['kg/J'],
                                                         power_increase_ratio) # returns an array of kg of H2 produced during each hour
             
-            yearly_data.append([year, np.sum(h2_produced), np.sum(electrolyzer_capacity)]) # year, kg H2 produced during this year, number of hours of operation during this year
+            yearly_data_year.append(year)
+            yearly_data_production.append(np.sum(h2_produced),)
+            yearly_data_duration.append(np.sum(electrolyzer_capacity))
+
 
             # Calculation of unused energy
             unused_energy = energy_generation - electrolyzer_energy_consumption
             yearly_data_unused_energy[year] = Quantity(unused_energy, 'J')
             yearly_data_unused_energy_daily[year] = Quantity(hourly_to_daily_power(unused_energy), 'J')
 
-        data_array = np.asarray(yearly_data)
-        self.yearly_data = np.column_stack((data_array[:,0], Quantity(data_array[:,1],'kg'), Quantity(data_array[:,2],'h'))) 
+        self.yearly_data_year = Quantity(np.asarray(yearly_data_year), '-')
+        self.yearly_data_production = Quantity(np.asarray(yearly_data_production), 'kg')
+        self.yearly_data_duration = Quantity(np.asarray(yearly_data_duration), 'h')
 
-        self.h2_production = np.concatenate([np.zeros(dcf.inp['Financial Input Values']['construction time']['Value']), self.yearly_data[:,1].unit['kg']])
+        self.h2_production = np.concatenate([np.zeros(dcf.inp['Financial Input Values']['construction time']['Value']), self.yearly_data_production.unit['kg']])
         self.h2_production = Quantity(self.h2_production, 'kg/year') # needs to be expressed as a flowrate, as it ultimately serves as the plant design capacity etc
         
         self.yearly_data_unused_energy = yearly_data_unused_energy
