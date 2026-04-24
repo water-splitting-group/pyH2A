@@ -1,4 +1,6 @@
-from pyH2A.Utilities.input_modification import insert, process_input, sum_all_tables, process_table
+from pyH2A.Utilities.input_modification import process_input, sum_all_tables
+from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
+from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import pyH2A.Utilities.find_nearest as fn
 import numpy as np
 
@@ -36,13 +38,13 @@ input_dict = {
 			"description": "Unplanned replacement costs. Can be provided for multiple entries under Unplanned Replacement, in which case they will be summed up to the total unplanned replacement costs."
 		},
 	}
-}
+}	
 
 output_dict = {
 	"Replacement": {
 		"Total": {
 			"Value": {
-				"inserted_value": "total",
+				"inserted_value": "yearly_inflated",
 				"type": {np.ndarray,},
 				"dimension": "currency",
 			},
@@ -55,7 +57,7 @@ output_dict = {
             "<...> Unplanned Replacement <...>": {
                 "Summed Total": {
                     "Value": {
-                        "type": {int, float},
+                        "type": {float},
                     },
                     "optional": True,
                     "description": "Summed total of unplanned replacement across all tables"
@@ -89,21 +91,20 @@ class Replacement_Plugin:
 		Total inflated replacement costs (sum of `Planned Replacement` entries and
 		unplanned replacement costs).
 	'''
+
 	def __init__(self, dcf, print_info):
-		# process_table(dcf.inp, 'Planned Replacement', ['Cost ($)', 'Frequency (years)'], 
-		# 				path_key = ['Path', 'Frequency Path'])
+
+		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Replacement_Plugin')
 
 		self.initialize_yearly_costs(dcf)
-		self.initialize_contributions(dcf)
+		self.initialize_contributions()
 		self.calculate_planned_replacement(dcf)
 		self.unplanned_replacement(dcf, print_info)
-
-		self.contributions['Total'] = np.sum(self.yearly)
+		# contrary to the general rule of having self.* as Quantity objects, in the present plugin, only self.yearly_inflated and self.contributions['Total'] are Quantity objects to avoid the unnecessary complication of having in each look "self.X = Quantity(self.X.unit[] + ...) ".
+		self.contributions['Total'] = Quantity(np.sum(self.yearly), 'USD')
 		
-		yearly_inflated = self.yearly * dcf.inflation_correction * dcf.inflation_factor
-
-
-		insert(dcf, 'Replacement', 'Total', 'Value', yearly_inflated, __name__, print_info = print_info)
+		self.yearly_inflated = Quantity(self.yearly * dcf.inflation_correction * dcf.inflation_factor, 'USD')
+		output_inserter_function(output_dict, self, dcf, 'Replacement_Plugin') 
 
 	def initialize_yearly_costs(self, dcf):
 		'''Initializes ndarray filled with zeros with same length as dcf.inflation_factor.
@@ -111,7 +112,7 @@ class Replacement_Plugin:
 
 		self.yearly = np.zeros(len(dcf.inflation_factor))
 
-	def initialize_contributions(self, dcf):
+	def initialize_contributions(self):
 		'''Initializes contributions to replacement costs.
 		'''
 		self.contributions = {}
@@ -124,7 +125,7 @@ class Replacement_Plugin:
 		'''
 
 		for key in dcf.inp['Planned Replacement']:
-			planned_replacement = Planned_Replacement(dcf.inp['Planned Replacement'][key], key, dcf)
+			planned_replacement = Planned_Replacement(self.input_dict_resolved['Planned Replacement'][key], key, dcf)
 			self.yearly[planned_replacement.years_idx] += planned_replacement.cost
 			self.contributions['Data'][key] = planned_replacement.total_cost
 
@@ -133,9 +134,9 @@ class Replacement_Plugin:
 		"Unplanned Replacement" group.
 		'''
 
-		self.unplanned = sum_all_tables(dcf.inp, 'Unplanned Replacement', 'Value', 
+		self.unplanned = sum_all_tables(self.input_dict_resolved, 'Unplanned Replacement', 'Value', 
 										insert_total = True, class_object = dcf, 
-										print_info = print_info)
+										print_info = print_info, unit = 'USD')
 		self.yearly += self.unplanned
 		self.contributions['Data']['Unplanned Replacement'] = np.sum(np.ones_like(self.yearly) * self.unplanned)
 
@@ -159,10 +160,10 @@ class Planned_Replacement:
 		are corrected using non_integer_correction.
 		'''
 
-		replacement_frequency = int(np.ceil(dictionary['Frequency (years)']))
-		non_integer_correction = replacement_frequency / dictionary['Frequency (years)']
+		replacement_frequency = int(np.ceil(dictionary['Frequency'].unit['year']))
+		non_integer_correction = replacement_frequency / dictionary['Frequency'].unit['year']
 
-		raw_replacement_cost = process_input(dcf.inp, 'Planned Replacement', key, 'Cost ($)')
+		raw_replacement_cost = self.input_dict_resolved['Planned Replacement'][key]['Cost'].unit['USD'] 
 		initial_replacement_year_idx = fn.find_nearest(dcf.plant_years, replacement_frequency)[0]
 
 		self.cost = raw_replacement_cost * non_integer_correction * dcf.combined_inflator
