@@ -82,6 +82,83 @@ input_dict = {
 	},
 }
 
+output_dict = {
+	"Hourly Irradiation": {
+		"Latitude": {
+			"Value": {
+				"insert_value": "Latitude (decimal degrees)",
+				"type": {float,},
+				"dimension": "angle",
+			},
+			"optional": False,
+			"description": "Latitude of location of hourly irradiation data."
+		},
+		"Longitude": {
+			"Value": {
+				"insert_value": "Longitude (decimal degrees)",
+				"type": {float,},
+				"dimension": "angle",
+			},
+			"optional": False,
+			"description": "Longitude of location of hourly irradiation data."
+		},
+		"No tracking": {
+			"Value": {
+				"insert_value": "power_kW",
+				"type": {np.ndarray,},
+				"dimension": "power / area",
+			},
+			"optional": False,
+			"description": "Hourly irradiation with no tracking per m2."
+		},
+		"Horizontal single axis tracking": {
+			"Value": {
+				"insert_value": "power_sat_kW",
+				"type": {np.ndarray,},
+				"dimension": "power / area",
+			},
+			"optional": False,
+			"description": "Hourly irradiation with single axis tracking per m2."
+		},
+		"Two axis tracking": {
+			"Value": {
+				"insert_value": "power_dat_kW",
+				"type": {np.ndarray,},
+				"dimension": "power / area",
+			},
+			"optional": False,
+			"description": "Hourly irradiation with two axis tracking per m2."
+		},
+		"Mean solar input no tracking": {
+			"Value": {
+				"insert_value": "np.sum(power_kW)/365.",
+				"type": {float,},
+				"dimension": "energy / area / time",
+			},
+			"optional": False,
+			"description": "Mean solar input with no tracking."
+		},
+		"Mean solar input single axis tracking": {
+			"Value": {
+				"insert_value": "np.sum(power_sat_kW)/365.",
+				"type": {float,},
+				"dimension": "energy / area / time",
+			},
+			"optional": False,
+			"description": "Mean solar input with single axis tracking."
+		},
+		"Mean solar input two axis tracking": {
+			"Value": {
+				"insert_value": "np.sum(power_dat_kW)/365.",
+				"type": {float,},
+				"dimension": "energy / area / time",
+			},
+			"optional": False,
+			"description": "Mean solar input with two axis tracking."
+		},
+	},
+}
+
 class Hourly_Irradiation_Plugin:
 	'''Calculation of hourly and mean daily irradiation data with different module configurations.
 	
