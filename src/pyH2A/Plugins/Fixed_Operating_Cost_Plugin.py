@@ -62,7 +62,7 @@ output_dict = {
 		},
 		"Total": {
 			"Value": {
-				"insert_value": "total",
+				"insert_value": "labor + other",
 				"type": {float,},
 				"dimension": "currency / time",	
 			},
