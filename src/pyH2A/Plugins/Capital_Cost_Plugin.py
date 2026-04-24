@@ -66,6 +66,141 @@ input_dict = {
 	}
 }
 
+
+output_dict = {
+	"Direct Capital Costs": {
+		"Total": {
+			"Value": {
+				"inserted_value": "currency",
+				"type": {float,},	
+				"dimension": "currency",
+			},
+			"description": "Total direct capital costs.",
+			"optional": False,
+		},
+		"Inflated": {
+			"Value": {
+				"inserted_value": "currency",
+				"type": {float,},
+				"dimension": "currency",
+			},
+			"description": "Total direct capital costs multiplied by combined inflator.",
+			"optional": False,
+		},
+	},
+	"Indirect Capital Costs": {
+		"Total": {
+			"Value": {
+				"inserted_value": "currency",
+				"type": {float,},
+				"dimension": "currency",
+			},
+			"description": "Total indirect capital costs.",
+			"optional": False,
+		},
+		"Inflated": {
+			"Value": {
+				"inserted_value": "currency",
+				"type": {float,},
+				"dimension": "currency",
+			},
+			"description": "Total indirect capital costs multiplied by combined inflator.",
+			"optional": False,
+		},
+	},
+	"Non-Depreciable Capital Costs": {
+		"Total": {
+			"Value": {	
+				"inserted_value": "currency",
+				"type": {float,},
+				"dimension": "currency",		
+			},
+			"description": "Total non-depreciable capital costs.",
+			"optional": False,
+		},
+		"Inflated": {
+			"Value": {
+				"inserted_value": "currency",	
+				"type": {float,},
+				"dimension": "currency",
+			},
+			"description": "Total non-depreciable capital costs multiplied by combined inflator.",
+			"optional": False,
+		},
+	},
+	"Depreciable Capital Costs": {
+		"Total": {
+			"Value": {
+				"inserted_value": "currency",
+				"type": {float,},
+				"dimension": "currency",
+			},	
+			"description": "Total depreciable capital costs.",
+			"optional": False,
+		},
+		"Inflated": {
+			"Value": {
+				"inserted_value": "currency",
+				"type": {float,},	
+				"dimension": "currency",
+			},	
+			"description": "Total depreciable capital costs multiplied by combined inflator.",
+			"optional": False,
+		},
+	},
+	"Total Capital Costs": {
+		"Total": {
+			"Value": {
+				"inserted_value": "currency",
+				"type": {float,},
+				"dimension": "currency",
+			},	
+			"description": "Total capital costs.",
+			"optional": False,
+		},
+		"Inflated": {
+			"Value": {
+				"inserted_value": "currency",
+				"type": {float,},
+				"dimension": "currency",
+			},
+			"description": "Total capital costs multiplied by combined inflator.",
+			"optional": False,	
+		},
+	},
+	"special_insertions":
+        {"sum_all_tables": {
+            "<...> Direct Capital Cost <...>": {
+                "Summed Total": {
+                    "Value": {
+                        "type": {int, float},
+                    },
+                    "optional": True,
+                    "description": "Summed total of direct capital costs across all tables"
+                },
+            },
+            "<...> Indirect Capital Cost <...>": {
+                "Summed Total": {
+                    "Value": {
+                        "type": {int, float},
+                    },
+                    "optional": True,
+                    "description": "Summed total of indirect capital costs across all tables"
+                },
+            },
+            "<...> Other Non-Depreciable Capital Cost <...>": {
+                "Summed Total": {
+                    "Value": {
+                        "type": {int, float},
+                    },
+                    "optional": True,
+                    "description": "Summed total of other non-depreciable capital costs across all tables"
+                },
+            },
+        },
+    },
+}
+
 class Capital_Cost_Plugin:
 	'''
 
