@@ -78,8 +78,9 @@ class DummyDCF:
             'Power Generation': {
                 'Available Power': {
                     'Value': {
-                        '2025':Quantity(np.array([400.*3600, 250.*3600, 350.*3600]), 'kJ'), '2024':Quantity(np.array([500., 350., 450.]), 'kWh')
+                        '2025':Quantity(np.array([400.*3600, 250.*3600, 350.*3600]), 'kJ'), '2024':np.array([500., 350., 450.])
                     }, 
+                    'Unit': 'kWh',                    
                     'Processed': True
                 },
                 'Stored Power': {

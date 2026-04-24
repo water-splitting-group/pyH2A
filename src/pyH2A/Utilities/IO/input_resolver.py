@@ -154,6 +154,19 @@ def _create_quantity_and_validate(value_retrieved,
             )
         return processed_dict
 
+    # Existing Quantity: validate only
+    elif isinstance(value_retrieved, Quantity):
+        _perform_checks_on_quantity(
+            value_retrieved,
+            value_specification,
+            unit_specification,
+            top_key,
+            middle_key,
+            bottom_key
+        )
+
+        return value_retrieved
+    
     # Upon finding numerical values, run our processing
     elif isinstance(value_retrieved, (float, int, np.ndarray)):
         # 1. Create Quantity object
@@ -284,29 +297,14 @@ def value_with_unit_resolver_function(top_key,
         
         return value_retrieved
     
-    elif isinstance(value_retrieved, dict) and all(isinstance(value, Quantity) for value in value_retrieved.values()):
-        unit_specification = row_dict[bottom_key_group[1]]
-
-        for quantity in value_retrieved.values():
-            _perform_checks_on_quantity(
-                quantity,
-                value_specification,
-                unit_specification,
-                top_key,
-                middle_key,
-                bottom_key_group[0],
-            ) 
-        return value_retrieved    
-
     # If retrieved value is numerical, quantity object is created, 
     # checks are performed and newly created quantity object is returned
     elif isinstance(value_retrieved, (int, float, np.ndarray, dict)):
 
-        unit_specification, unit_retrieved = unit_resolver_function(top_key, 
-                                                                    middle_key, 
-                                                                    bottom_key_group[1], 
-                                                                    row_dict, 
-                                                                    dcf_class)
+        unit_specification = row_dict[bottom_key_group[1]]
+
+        # Only try to get Unit from dcf.inp if it exists
+        unit_retrieved = dcf_class.inp[top_key][middle_key].get(bottom_key_group[1], None)
 
 
         # Create quantities and check them based on specifications 
