@@ -78,6 +78,49 @@ input_dict = {
 	},
 }
 
+output_dict = {
+	"Non-Depreciable Capital Costs": {
+		"Land required": { # do we use unit here? because if we reomve both are identical middle keys
+			"Value": {
+				"inserted_value": "total_land_area_m2",
+				"type": {float,},
+				"dimension": "area",
+			},	
+			"optional": False,
+			"description": "Total land requirement."
+		},
+		"Land required": {
+			"Value": {
+				"inserted_value": "total_land_area_acres",
+				"type": {float,},
+				"dimension": "area",
+			},
+			"optional": False,
+			"description": "Total land requirement."
+		},
+		"Solar collection area": {
+			"Value": {
+				"inserted_value": "total_solar_collection_area_m2",
+				"type": {float,},
+				"dimension": "area",
+			},
+			"optional": False,
+			"description": "Total solar collection area."
+		},
+	},
+	"Direct Capital Costs - Solar Concentrator": {
+		"Solar concentrator cost": {
+			"Value": {
+				"inserted_value": "concentrator_cost",
+				"type": {float,},
+				"dimension": "currency",
+			},
+			"optional": False,
+			"description": "Total cost of all solar concentrators."
+		},
+	},
+}
+
 class Solar_Concentrator_Plugin:
 	'''Simulation of solar concentration (used in combination with PEC cells).
 
