@@ -112,6 +112,89 @@ input_dict = {
     },
 }
 
+output_dict = {
+    "Technical Operating Parameters and Specifications": {
+        "Plant design capacity": {
+            "Value": {
+                "insert_type": "calculated",
+                "type": {np.ndarray,},
+                "dimension": "mass / time",
+            },
+            "optional": False,
+            "description": "Plant design capacity calculated from installed electrolysis power capacity and hourly power generation data."
+        },
+        "Operating capacity factor": {
+            "Value": {
+                "insert_type": "calculated",
+                "type": {float,},
+                "dimension": "dimensionless",
+            },
+            "optional": False,
+            "description": "Operating capacity factor is set to 1."
+        },
+    },
+    "Planned Replacement": {
+        "Electrolyzer stack replacement": {
+            "Frequency (years)": {
+                "insert_type": "calculated",
+                "type": {float,},
+                "dimension": "time",
+            },
+            "optional": False,
+            "description": "Frequency of electrolyzer stack replacements in years, calculated from replacement time and hourly irradiation data."
+        },
+    },
+    "Electrolyzer": {
+        "Scaling factor": {
+            "Value": {
+                "insert_type": "calculated",
+                "type": {float,},
+                "dimension": "dimensionless",
+            },
+            "optional": False,
+            "description": "CAPEX scaling factor for electrolyzer calculated based on CAPEX multiplier, reference and nominal power."
+        },
+        "Yearly operation data": {
+            "Value": {
+                "insert_type": "calculated",
+                "type": {np.ndarray,},
+                "dimension": "time",
+            },
+            "optional": False,
+            "description": "Yearly operation data of electrolyzer in (year, H2 produced, electrolyzer capacity) format."
+        },
+        "H2 production (yearly)": {
+            "Value": {
+                "insert_type": "calculated",
+                "type": {np.ndarray,},
+                "dimension": "mass",
+            },
+            "optional": False,
+            "description": "Yearly hydrogen production."
+        }
+    },
+    "Power Generation": {
+        "Available energy (hourly)": {
+            "Value": {
+                "insert_type": "calculated",
+                "type": {dict,},
+                "dimension": "energy",
+            },
+            "optional": False,
+            "description": "Available energy (hourly) after subtracting power consumed by electrolyzer. (dictionary of years)."
+        },
+        "Available energy (daily)": {
+            "Value": {
+                "insert_type": "calculated",
+                "type": {dict,},
+                "dimension": "energy",
+            },
+            "optional": False,
+            "description": "Available energy (daily) after subtracting power consumed by electrolyzer. (dictionary of years)."
+        },
+    },
+}
+
 class Electrolyzer_Plugin:
     '''Simulation of hydrogen production using electrolysis.
 
