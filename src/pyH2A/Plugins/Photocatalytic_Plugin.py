@@ -224,6 +224,112 @@ input_dict = {
 	},	
 }
   
+output_dict = {
+	"Non-Depreciable Capital Costs": {
+		"Land required": {
+			"Value": {
+				"inserted_value": "total_land_area_acres",
+				"type": {float,},
+				"dimension": "area",
+			},
+			"optional": False,
+			"description": "Total land area required."
+		},
+		"Solar Collection area": {
+			"Value": {
+				"inserted_value": "total_solar_collection_area",
+				"type": {float,},
+				"dimension": "area",
+			},
+			"optional": False,
+			"description": "Solar colelction area in m2."
+		},
+	},
+	"Planned Replacement": {
+		"Planned replacement catalyst": {
+			"Cost": {
+				"inserted_value": "catalyst_cost",
+				"type": {float,},
+				"dimension": "currency",
+			},
+			"Frequency": {
+				"inserted_value": "input_dict_resolved['Catalyst']['Lifetime (years)']['Value']",
+				"type": {float,},
+				"dimension": "time",
+			},
+			"optional": False,
+			"description": "Total cost of completely replacing the catalyst once and replacement frequency in years, identical to catalyst lifetime."
+		},
+		"Planned Replacement Baggie": {
+			"Cost": {
+				"inserted_value": "baggies_cost",
+				"type": {float,},
+				"dimension": "currency",
+			},
+			"Frequency": {
+				"inserted_value": "input_dict_resolved['Reactor Baggies']['Lifetime (years)']['Value']",
+				"type": {float,},
+				"dimension": "time",
+			},
+			"optional": False,
+			"description": "Total cost of replacing all  baggies and replacement frequency in year, identical to baggie lifetime."
+		},
+	},
+	"Direct Capital Costs - Reactor Baggies": {
+		"Baggie cost": {
+			"Value": {
+				"inserted_value": "baggies_cost",
+				"type": {float,},
+				"dimension": "currency",
+			},
+			"optional": False,
+			"description": "Total baggie cost."
+		},
+	},
+ 	"Direct Capital Costs - Photocatalyst": {
+		"Catalyst cost": {
+			"Value": {
+				"inserted_value": "catalyst_cost",
+				"type": {float,},
+				"dimension": "currency",
+			},
+			"optional": False,
+			"description": "Total catalyst cost."
+		},
+	},
+	"Reactor Baggies": {
+		"Number": {
+			"Value": {
+				"inserted_value": "baggie_number",
+				"type": {int,},
+				"dimension": "dimensionless",
+			},
+			"optional": False,
+			"description": "Number of individual baggies required for design H2 production capacity."
+		},
+	},
+	"Catalyst": {
+		"Properties": {
+			"Value": {
+				"inserted_value": "catalyst_properties",
+				"type": {dict,},
+			},
+			"optional": False,
+			"description": "Dictionary containing detailed catalyst properties calculated from provided parameters."
+		},
+	},
+	"Water Volume": {
+		"Volume": {
+			"Value": {
+				"inserted_value": "total_volume_liters",
+				"type": {float,},
+				"dimension": "volume",
+			},
+			"optional": False,
+			"description": "Total water volume in liters."
+		},
+	},
+}
 
 class Photocatalytic_Plugin:
 	'''Simulating H2 production using photocatalytic water splitting in plastic baggie reactors.
