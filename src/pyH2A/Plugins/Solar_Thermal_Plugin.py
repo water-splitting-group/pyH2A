@@ -57,6 +57,20 @@ input_dict = {
 	},
 }
 
+output_dict = {
+	"Non-Depreciable Capital Costs": {
+		"Land required": {
+			"Value": {
+				"inserted_value": "area_acres",
+				"type": {float,},
+				"dimension": "area",
+			},
+			"description": "Total land requirement.",
+			"optional": False,	
+		},
+	},
+}
+
 class Solar_Thermal_Plugin:
 	'''Simulation of hydrogen production using solar thermal water splitting.
 
