@@ -1,5 +1,5 @@
-from pyH2A.Utilities.Energy_Conversion import Energy, kWh, eV
-from pyH2A.Utilities.input_modification import insert, process_table
+from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
+from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
 input_dict = {
 	"Technical Operating Parameters and Specifications": {
@@ -61,8 +61,8 @@ output_dict = {
 	"Non-Depreciable Capital Costs": {
 		"Land required": {
 			"Value": {
-				"inserted_value": "area_acres",
-				"type": {float,},
+				"inserted_value": "area",
+				"type": {float,}, 
 				"dimension": "area",
 			},
 			"description": "Total land requirement.",
@@ -94,26 +94,21 @@ class Solar_Thermal_Plugin:
 	'''
 	
 	def __init__(self, dcf, print_info):
-		process_table(dcf.inp, 'Technical Operating Parameters and Specifications', 'Value')
-		process_table(dcf.inp, 'Solar-to-Hydrogen Efficiency', 'Value')
-		process_table(dcf.inp, 'Solar Input', 'Value')
-		process_table(dcf.inp, 'Non-Depreciable Capital Costs', 'Value')
+		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Solar_Thermal_Plugin')
 
-		self.calculate_land_area(dcf)
+		self.calculate_land_area()
+		
+		output_inserter_function(output_dict, self, dcf, 'Solar_Thermal_Plugin')  		
 
-		insert(dcf, 'Non-Depreciable Capital Costs', 'Land required (acres)', 'Value', self.area_acres, __name__, print_info = print_info)
-
-	def calculate_land_area(self, dcf):
+	def calculate_land_area(self):
 		'''Calculation of required land area based on solar input, solar-to-hydrogen efficiency
 		and addtional land are requirements.
 		'''
+		self.H2_molecule_energy = Quantity(2*1.229, 'eV/entity') # we must add an "entity" subkey in the "substance" dict, to convert entity count into moles
+		self.H2_molecular_weight = Quantity(2, 'g/mol')
+		H2_mol_per_m2 = (self.input_dict_resolved['Solar Input']['Mean solar input']['Value'].unit['W/m2'] * self.input_dict_resolved['Solar-to-Hydrogen Efficiency']['STH']['Value'].unit['-']) / self.H2_molecule_energy.unit['J/mol']
+		H2_kg_per_m2 = H2_mol_per_m2*self.H2_molecular_weight.unit['kg/mol']
 
-		insolation_per_m2_per_day = Energy(dcf.inp['Solar Input']['Mean solar input (kWh/m2/day)']['Value'], kWh)
+		required_area_m2 = self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output per day']['Value'].unit['kg'] / H2_kg_per_m2
 
-		mol_H2_per_m2_per_day = (insolation_per_m2_per_day.J * dcf.inp['Solar-to-Hydrogen Efficiency']['STH (%)']['Value']) / Energy(2*1.229, eV).Jmol
-		kg_H2_per_m2_per_day = (2 * mol_H2_per_m2_per_day)/1000.
-
-		required_area_m2 = dcf.inp['Technical Operating Parameters and Specifications']['Design Output per Day']['Value'] / kg_H2_per_m2_per_day
-
-		self.area_m2 = required_area_m2 * (1. + dcf.inp['Non-Depreciable Capital Costs']['Additional Land Area (%)']['Value'])
-		self.area_acres = self.area_m2 * 0.000247105
+		self.area = Quantity(required_area_m2 * (1. + self.input_dict_resolved['Non-Depreciable Capital Costs']['Additional land area']['Value'].unit['-']), 'm2')
