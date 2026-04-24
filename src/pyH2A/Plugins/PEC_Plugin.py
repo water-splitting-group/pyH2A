@@ -4,7 +4,7 @@ from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
 input_dict = {
 	"Technical Operating Parameters and Specifications": {
-		"Design output per Day": {
+		"Design output per day": {
 			"Value": {
 				"type": {float,},
 				"bounds": (0, None),
@@ -147,7 +147,7 @@ output_dict = {
 		}
 	},
 	"Planned Replacement": {
-		"Planned replacement PEC Cells": {
+		"Planned replacement PEC cells": {
 			"Cost": {
 				"inserted_value": "cell_cost",
 				"type": {float,},
@@ -255,8 +255,8 @@ class PEC_Plugin:
 		'''Calculation of cost per cell, number of required cells and total cell cost.
 		'''
 
-		cost_per_cell = self.cell_area.unit['m2'] * self.input_dict_resolved['PEC Cells']['Cell Cost']['Value'].unit['USD/m2']
-		self.cell_number = Quantity(np.ceil(self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design Output per Day']['Value'].unit['kg'] / self.mass_rate_H2_per_cell.unit['kg/day']), '-')
+		cost_per_cell = self.cell_area.unit['m2'] * self.input_dict_resolved['PEC Cells']['Cell cost']['Value'].unit['USD/m2']
+		self.cell_number = Quantity(np.ceil(self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output per day']['Value'].unit['kg'] / self.mass_rate_H2_per_cell.unit['kg/day']), '-')
 		self.cell_cost = Quantity(self.cell_number.unit['-'] * cost_per_cell, 'USD')
 
 	def land_area(self):
@@ -268,8 +268,8 @@ class PEC_Plugin:
 
 		self.total_solar_collection_area = Quantity(self.cell_area.unit['m2'] * self.cell_number.unit['-'], 'm2')
 
-		cell_plan_view = self.pec['Length']['Value'].unit['m'] * np.cos(self.land['Cell Angle']['Value'].unit['rad'])
-		total_length = cell_plan_view + self.land['South Spacing']['Value'].unit['m']	
-		total_width = self.pec['Width']['Value'].unit['m2'] + self.land['East/West Spacing']['Value'].unit['m2']
+		cell_plan_view = self.pec['Length']['Value'].unit['m'] * np.cos(self.land['Cell angle']['Value'].unit['rad'])
+		total_length = cell_plan_view + self.land['South spacing']['Value'].unit['m']	
+		total_width = self.pec['Width']['Value'].unit['m2'] + self.land['East/West spacing']['Value'].unit['m2']
 
 		self.total_land_area = Quantity(total_width * total_length * self.cell_number.unit['-'], 'm2')
