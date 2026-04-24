@@ -110,6 +110,49 @@ input_dict = {
     },
 }
 
+output_dict = {
+    "Technical Operating Parameters and Specifications": {
+        "Plant design capacity": {
+            "Value": {
+                "Inserted_value": "new_h2_production_kg/365.",
+                "type": {float,},
+                "dimension": "mass / time",
+            }, 
+            "optional": False,
+            "description": "Plant design capacity in mass of H2 per day calculated from installed electrolysis power capacity and hourly power generation data."
+        },
+    },
+    "Planned Replacement": {
+        "Electrolyzer stack replacement": {
+            "Frequency (years)": {
+                "Inserted_value": "replacement_frequency",
+                "type": {float,},
+                "dimension": "time",
+            },
+            "add_processed": False,
+            "insert_path": False,
+            "optional": False,
+            "description": "Frequency of electrolyzer stack replacements in years, calculated from replacement time and hourly irradiation data."
+        },
+    },
+    "Power Consumption": {
+        "Stored energy electrolysis (yearly)": {
+            "Value": {
+                "Inserted_value": "power_consumption_kWh",
+                "type": {np.ndarray,},
+                "dimension": "energy",
+            },
+            "Type": {
+                "Inserted_value": "on_demand",
+                "type": {str,},
+                "dimension": "dimensionless",
+            },
+            "optional": False,
+            "description": "Electricity demand of electrolysis using stored energy per year. Type of power consumer is 'on_demand' (only uses stored power)."
+        },
+    },
+}
+
 class Stored_Power_Electrolysis_Plugin:
     '''Simulation of hydrogen production using electrolysis.
 
