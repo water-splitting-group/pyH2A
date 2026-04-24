@@ -1,3 +1,4 @@
+from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 from pyH2A.Utilities.input_modification import insert, process_table, daily_to_yearly_power
 import numpy as np
 
@@ -54,6 +55,69 @@ input_dict = {
             },
             "optional": False,
             "description": "Cost of grid electricity. Can be provided as a single value or as an array with values for each year. If not provided, it is assumed that grid electricity is not used."
+        },
+    },
+}
+
+output_dict = {
+    "Power Generation": {
+        "Available energy (yearly)": {
+            "Value": {
+                "inserted_value": "remaining_flexible",
+                "type": {np.ndarray,},
+                "dimension": "energy",
+            },
+            "description": "Remaining available energy, yearly basis.",
+            "optional": False,
+        },
+        "Stored energy (yearly)": {
+            "Value": {
+                "inserted_value": "remaining_stored",
+                "type": {np.ndarray,},
+                "dimension": "energy",
+            },
+            "description": "Remaining stored energy, yearly basis.",
+            "optional": False,
+        },
+        "Available energy (daily)": {
+            "Value": {
+                "inserted_value": Quantity(0, 'J'),
+                "type": {float,},
+                "dimension": "energy",
+            },
+            "description": "Remaining available energy, daily basis.",
+            "optional": False,
+        },
+        "Stored energy (daily)": {
+            "Value": {
+                "inserted_value": Quantity(0, 'J'),
+                "type": {float,},
+                "dimension": "energy",
+            },
+            "description": "Remaining stored energy, daily basis.",
+            "optional": False,
+        },
+    },
+    "Grid Electricity": {
+        "Used grid electricity (yearly)": {
+            "Value": {
+                "inserted_value": "total_unfulfilled",
+                "type": {np.ndarray,},
+                "dimension": "energy",
+            },
+            "description": "Used grid electricity, yearly basis.",
+            "optional": False,
+        },
+    },
+    "Other Variable Operating Cost - Grid Electricity": {
+        "Cost of grid electricity (yearly)": {
+            "Value": {
+                "inserted_value": "electricity_cost",
+                "type": {np.ndarray,},
+                "dimension": "currency",
+            },
+            "description": "Cost of grid electricity, yearly basis.",
+            "optional": False,
         },
     },
 }
