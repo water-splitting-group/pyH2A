@@ -74,17 +74,39 @@ input_dict = {
             "optional": False,
             "description": "Operating time in hours before stack replacement of electrolyzer is required."
         },
-        "Yearly operation data": {
+        "Operation data year": {
             "Value": {
                 "type": {np.ndarray},
                 "bounds": (0, None)
             },
             "Unit": {
-                "dimension": "(dimensionless, mass, time)"
+                "dimension": "dimensionless"
             },
             "optional": False,
-            "description": "Yearly operation data of electrolyzer in format."
+            "description": "Yearly operation data of electrolyzer: year"
         },
+        "Operation data production": {
+            "Value": {
+                "type": {np.ndarray},
+                "bounds": (0, None)
+            },
+            "Unit": {
+                "dimension": "mass"
+            },
+            "optional": False,
+            "description": "Yearly operation data of electrolyzer: H2 produced"
+        },
+        "Operation data duration": {
+            "Value": {
+                "type": {np.ndarray},
+                "bounds": (0, None)
+            },
+            "Unit": {
+                "dimension": "time"
+            },
+            "optional": False,
+            "description": "Yearly operation data of electrolyzer: duration of operation"
+        },                
         "H2 production (yearly)": {
             "Value": {
                 "type": {np.ndarray},
@@ -210,7 +232,9 @@ class Stored_Power_Electrolysis_Plugin:
 
         SECONDS_IN_A_YEAR = 8760*3600
 
-        electrolyzer_yearly_data = self.input_dict_resolved['Electrolyzer']['Yearly Operation Data']['Value']
+        electrolyzer_yearly_data = np.column_stack((self.input_dict_resolved['Electrolyzer']['Operation data year']['Value'], self.input_dict_resolved['Electrolyzer']['Operation data production']['Value'], self.input_dict_resolved['Electrolyzer']['Operation data duration']['Value'])) 
+
+
         remaining_run_time_per_year_in_seconds = SECONDS_IN_A_YEAR - electrolyzer_yearly_data[:,2].unit['s']
         
         electrolyzer_power_demand, power_increase_ratio = calculate_electrolyzer_power_demand(self.input_dict_resolved['Electrolyzer']['Power requirement increase per year']['Value'].unit['-'],
