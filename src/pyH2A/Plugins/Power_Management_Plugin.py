@@ -1,6 +1,6 @@
+from pyH2A.Utilities.input_modification import daily_to_yearly_power
+from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
-from pyH2A.Utilities.input_modification import insert, process_table, daily_to_yearly_power
-import numpy as np
 
 input_dict = {
     "Power Generation": {
@@ -64,7 +64,7 @@ output_dict = {
         "Available energy (yearly)": {
             "Value": {
                 "inserted_value": "remaining_flexible",
-                "type": {np.ndarray,},
+                "type": {np.ndarray,}, 
                 "dimension": "energy",
             },
             "description": "Remaining available energy, yearly basis.",
@@ -161,29 +161,13 @@ class Power_Management_Plugin:
 
     def __init__(self, dcf, print_info):
 
-        if 'Power Generation' in dcf.inp:
-            process_table(dcf.inp, 'Power Generation', 'Value')
+        self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Power_Management_Plugin')  
 
-        if 'Power Consumption' in dcf.inp:
-            process_table(dcf.inp, 'Power Consumption', 'Value')
-            process_table(dcf.inp, 'Grid Electricity', 'Value')
+        if 'Power Consumption' in dcf.inp:    
             self.calculate_consumers(dcf)
             self.calculate_electricity_cost(dcf)
 
-        insert(dcf, 'Power Generation', 'Available Power (yearly, kWh)', 'Value',
-               self.remaining_flexible, __name__, print_info = print_info)
-        insert(dcf, 'Power Generation', 'Stored Power (yearly, kWh)', 'Value',
-                self.remaining_stored, __name__, print_info = print_info)
-        insert(dcf, 'Power Generation', 'Available Power (daily, kWh)', 'Value',
-                0, __name__, print_info = print_info)
-        insert(dcf, 'Power Generation', 'Stored Power (daily, kWh)', 'Value',
-                0, __name__, print_info = print_info)
-        
-        insert(dcf, 'Grid Electricity', 'Used grid electricity (yearly, kWh)', 'Value',
-                self.total_unfulfilled, __name__, print_info = print_info)
-        
-        insert(dcf, 'Other Variable Operating Cost - Grid Electricity', 'Cost of grid electricity (yearly, $)', 'Value',
-                self.electricity_cost, __name__, print_info = print_info)
+        output_inserter_function(output_dict, self, dcf, 'Power_Management_Plugin') 
         
     def calculate_consumers(self, dcf):
         '''Negoitate available and stored power with power consumers. 
@@ -192,29 +176,31 @@ class Power_Management_Plugin:
         '''
 
         try:
-            flexible_available_power = dcf.inp['Power Generation']['Available Power (daily, kWh)']['Value']
-            flexible_available_power_yearly = daily_to_yearly_power(flexible_available_power)
+            flexible_available_energy = self.input_dict_resolved['Power Generation']['Available energy (daily)']['Value'].unit['J']
+            flexible_available_energy_yearly = daily_to_yearly_power(flexible_available_energy)
         except KeyError:
-            flexible_available_power_yearly = np.zeros(len(dcf.operation_years))
+            flexible_available_energy_yearly = np.zeros(len(dcf.operation_years))
 
         try:
-            stored_available_power = dcf.inp['Power Generation']['Stored Power (daily, kWh)']['Value']
-            stored_available_power_yearly = daily_to_yearly_power(stored_available_power)
+            stored_available_energy = self.input_dict_resolved['Power Generation']['Stored energy (daily']['Value']['J']
+            stored_available_energy_yearly = daily_to_yearly_power(stored_available_energy)
         except KeyError:
-            stored_available_power_yearly = np.zeros(len(dcf.operation_years))
+            stored_available_energy_yearly = np.zeros(len(dcf.operation_years))
 
-        self.total_unfulfilled, self.remaining_flexible, self.remaining_stored = allocate_power(dcf.inp['Power Consumption'], 
-                                                                                                flexible_available_power_yearly, 
-                                                                                                stored_available_power_yearly)
+        self.total_unfulfilled, self.remaining_flexible, self.remaining_stored = allocate_power(self.input_dict_resolved['Power Consumption'], 
+                                                                                                flexible_available_energy_yearly, 
+                                                                                                stored_available_energy_yearly)
 
     def calculate_electricity_cost(self, dcf):
 
-        cost_per_kWh = dcf.inp['Grid Electricity']['Cost ($/kWh)']['Value']
+        cost_per_J = self.input_dict_resolved['Grid Electricity']['Cost']['Value'].unit['USD/J']
 
-        electricity_cost = self.total_unfulfilled * cost_per_kWh
+        electricity_cost = self.total_unfulfilled.unit['J'] * cost_per_J
 
         self.electricity_cost = np.concatenate([np.zeros(dcf.inp['Financial Input Values']['construction time']['Value']), 
                                                 electricity_cost])
+        
+        self.electricity_cost = Quantity(self.electricity_cost, 'USD')
     
 def allocate_power(consumption, flexible_power, stored_power):
     """Allocate available power to consumers based on their type."""
@@ -230,7 +216,7 @@ def allocate_power(consumption, flexible_power, stored_power):
     for key, consumer in consumption.items():
         if consumer['Type'] == 'on_demand':
 
-            demand = consumer['Value']
+            demand = consumer['Value'].unit['J']
 
             remaining_stored, unfulfilled = calculate_fulfillment(demand, remaining_stored)
 
@@ -240,7 +226,7 @@ def allocate_power(consumption, flexible_power, stored_power):
     for key, consumer in consumption.items():
         if consumer['Type'] == 'flexible':
 
-            demand = consumer['Value']
+            demand = consumer['Value'].unit['J']
             
             # Try flexible power first
             remaining_flexible, remaining_demand = calculate_fulfillment(demand, remaining_flexible)
@@ -255,7 +241,7 @@ def allocate_power(consumption, flexible_power, stored_power):
         else:
             print('Warning: Unknown power consumer type:', consumer['Type'], f',    in Power Consumption > {key} > Type')
     
-    return total_unfulfilled, remaining_flexible, remaining_stored
+    return Quantity(total_unfulfilled.unit['J']), Quantity(remaining_flexible.unit['J']), Quantity(remaining_stored.unit['J'])
         
 def calculate_fulfillment(demand, remaining):
     """Calculate fulfillment of demand using stored power."""
