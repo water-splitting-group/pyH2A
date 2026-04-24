@@ -141,6 +141,8 @@ output_dict = {
                 "type": {float,},
                 "dimension": "time",
             },
+            "add_processed": False,
+            "insert_path": False,
             "optional": False,
             "description": "Frequency of electrolyzer stack replacements in years, calculated from replacement time and hourly irradiation data."
         },
