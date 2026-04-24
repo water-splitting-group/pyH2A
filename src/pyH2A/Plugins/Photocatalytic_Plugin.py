@@ -308,17 +308,6 @@ output_dict = {
 			"description": "Number of individual baggies required for design H2 production capacity."
 		},
 	},
-	"Catalyst": {
-		"Properties": {
-			"Value": {
-				"inserted_value": "catalyst_properties",
-				"type": {dict,},
-				"dimension": {"substance/time/mass","substance/time/area", "mass/area", "mass/volume", "substance/volume", "substance/area", "dimensionless/time", "dimensionless"},								
-			},
-			"optional": False,
-			"description": "Dictionary containing detailed catalyst properties calculated from provided parameters."
-		},
-	},
 	"Water Volume": {
 		"Volume": {
 			"Value": {
