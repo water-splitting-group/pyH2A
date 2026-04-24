@@ -1,4 +1,5 @@
-from pyH2A.Utilities.input_modification import insert, process_table
+from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
+from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
 input_dict = {
     "Technical Operating Parameters and Specifications": {
@@ -81,7 +82,6 @@ input_dict = {
 		},
 	},	
 }
-
 
 output_dict = {
 	"Technical Operating Parameters and Specifications": {
@@ -209,63 +209,52 @@ class Production_Scaling_Plugin:
 	'''
 
 	def __init__(self, dcf, print_info):
-		process_table(dcf.inp, 'Technical Operating Parameters and Specifications', 'Value')
+		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Production_Scaling_Plugin')
+		self.dictionary = self.input_dict_resolved['Technical Operating Parameters and Specifications']
 
-		self.dictionary = dcf.inp['Technical Operating Parameters and Specifications']
+		self.calculate_scaling()
+		self.calculate_output()
 
-		self.calculate_scaling(dcf, print_info)
-		self.calculate_output(dcf)
+		output_inserter_function(output_dict, self, dcf, 'Production_Scaling_Plugin')     
 
-		insert(dcf, 'Technical Operating Parameters and Specifications', 'Design Output per Day', 'Value', 
-				self.design_output_per_day, __name__, print_info = print_info)
-		insert(dcf, 'Technical Operating Parameters and Specifications', 'Max Gate Output per Day', 'Value', 
-				self.max_gate_output_per_day, __name__, print_info = print_info)
-
-		insert(dcf, 'Technical Operating Parameters and Specifications', 'Output per Year', 'Value', 
-				self.output_per_year, __name__, print_info = print_info)
-		insert(dcf, 'Technical Operating Parameters and Specifications', 'Output per Year at Gate', 'Value', 
-				self.output_per_year_at_gate, __name__, print_info = print_info)
-
-	def calculate_scaling(self, dcf, print_info):
-		'''Calculation of scaling if scaling is requested (either `New Plant Design Capacity (kg of H2/day)` or
+	def calculate_scaling(self):
+		'''Calculation of scaling if scaling is requested (either `New Plant Design Capacity` or
 		`Scaling Ratio` was provided). Otherwise returns regular design output and output at gate per day in (kg H2).
 		'''
 
-		if 'Maximum Output at Gate' not in self.dictionary:
-			maximum_output_at_gate = self.dictionary['Plant Design Capacity (kg of H2/day)']['Value']
-			insert(dcf, 'Technical Operating Parameters and Specifications', 'Maximum Output at Gate', 'Value', 
-					maximum_output_at_gate, __name__, print_info = print_info)
-	
-		if 'New Plant Design Capacity (kg of H2/day)' in self.dictionary:
-			scaling_ratio = self.dictionary['New Plant Design Capacity (kg of H2/day)']['Value'] / self.dictionary['Plant Design Capacity (kg of H2/day)']['Value']
-			insert(dcf, 'Technical Operating Parameters and Specifications', 'Scaling Ratio', 'Value', 
-					scaling_ratio, __name__, print_info = print_info)
+		if 'Maximum Output at Gate' in self.dictionary:
+			self.maximum_output_at_gate = self.dictionary['Maximum Output at Gate']['Value']
+		else:
+			self.maximum_output_at_gate = self.dictionary['Plant Design Capacity']['Value']
 
-		if 'Scaling Ratio' in self.dictionary:
-			self.design_output_per_day = self.dictionary['Plant Design Capacity (kg of H2/day)']['Value'] * self.dictionary['Scaling Ratio']['Value']
-			self.max_gate_output_per_day = self.dictionary['Maximum Output at Gate']['Value'] * self.dictionary['Scaling Ratio']['Value']
+		if ('Scaling Ratio' in self.dictionary):
+			self.scaling_ratio = self.dictionary['Scaling Ratio']['Value']
+
+		if 'New Plant Design Capacity' in self.dictionary: # possibility to overwrite the existing scaling ratio
+			self.scaling_ratio = Quantity(self.dictionary['New plant design capacity']['Value'].unit['kg/day'] / self.dictionary['Plant design capacity']['Value'].unit['kg/day'], '-')
+
+		if ('Scaling Ratio' in self.dictionary) or ('New plant design capacity' in self.dictionary):
+			self.design_output_per_day = Quantity(self.dictionary['Plant design capacity']['Value'].unit['kg/day'] * self.scaling_ratio.unit['-'], 'kg/day')
+			self.max_gate_output_per_day = Quantity(self.maximum_output_at_gate.unit['kg/day'] * self.scaling_ratio.unit['-'], 'kg/day')
 
 			if 'Capital Scaling Exponent' in self.dictionary:
-				self.capital_scaling_factor = self.dictionary['Scaling Ratio']['Value'] ** self.dictionary['Capital Scaling Exponent']['Value']
+				self.capital_scaling_factor = Quantity(self.scaling_ratio.unit['-'] ** self.dictionary['Capital scaling exponent']['Value'].unit['-'], '-')
 			else:
-				self.capital_scaling_factor = self.dictionary['Scaling Ratio']['Value'] ** 0.78
+				self.capital_scaling_factor = Quantity(self.scaling_ratio.unit['-'] ** 0.78, '-')
 
 			if 'Labor Scaling Exponent' in self.dictionary:
-				self.labor_scaling_factor = self.dictionary['Scaling Ratio']['Value'] ** self.dictionary['Labor Scaling Exponent']['Value']
+				self.labor_scaling_factor = Quantity(self.scaling_ratio.unit['-'] ** self.dictionary['Labor Scaling exponent']['Value'].unit['-'], '-')
 			else:
-				self.labor_scaling_factor = self.dictionary['Scaling Ratio']['Value'] ** 0.25
-
-			insert(dcf, 'Scaling', 'Capital Scaling Factor', 'Value', self.capital_scaling_factor, __name__, print_info = print_info)
-			insert(dcf, 'Scaling', 'Labor Scaling Factor', 'Value', self.labor_scaling_factor, __name__, print_info = print_info)
+				self.labor_scaling_factor = Quantity(self.scaling_ratio.unit['-'] ** 0.25, '-')
 
 		else:
-			self.design_output_per_day = self.dictionary['Plant Design Capacity (kg of H2/day)']['Value']
-			self.max_gate_output_per_day = self.dictionary['Maximum Output at Gate']['Value']
+			self.design_output_per_day = self.dictionary['Plant Design Capacity']['Value']
+			self.max_gate_output_per_day = self.maximum_output_at_gate
 
-	def calculate_output(self, dcf):
+	def calculate_output(self):
 		'''Calculation of yearly output in kg and yearly output at gate in kg.
 		'''
 
-		self.output_per_year = self.design_output_per_day * 365. * self.dictionary['Operating Capacity Factor (%)']['Value']
-		self.output_per_year_at_gate = self.max_gate_output_per_day * 365. * self.dictionary['Operating Capacity Factor (%)']['Value']
+		self.output_per_year = Quantity(self.design_output_per_day.unit['kg/year'] * self.dictionary['Operating capacity factor']['Value'].unit['-'], 'kg/year')
+		self.output_per_year_at_gate = Quantity(self.max_gate_output_per_day.unit['kg/year'] * self.dictionary['Operating capacity factor']['Value'].unit['-'], 'kg/year')
 		
