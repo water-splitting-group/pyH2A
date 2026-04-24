@@ -82,6 +82,86 @@ input_dict = {
 	},	
 }
 
+
+output_dict = {
+	"Technical Operating Parameters and Specifications": {
+		"Design output per day": {
+			"Value": {
+				"inserted_value": "design_output_per_day",
+				"type": {float,},
+				"dimension": "mass / time",
+			},
+			"optional": False,
+			"description": "Design output of hydrogen production plant per day."
+		},
+		"Max gate output per day": {
+			"Value": {
+				"inserted_value": "max_gate_output_per_day",
+				"type": {float,},
+				"dimension": "mass / time",
+    		},
+			"optional": False,
+			"description": "Maximum gate ouput per day."
+		},
+		"Output per year": {
+			"Value": {
+				"inserted_value": "output_per_year",
+				"type": {float,},
+				"dimension": "mass / time",
+			},
+			"optional": False,
+			"description": "Yearly output taking operating capacity factor into account."
+		},
+		"Output per year at gate": {
+			"Value": {
+				"inserted_value": "output_per_year_at_gate",
+				"type": {float,},
+				"dimension": "mass / time",
+			},
+			"optional": False,
+			"description": "Actual yearly output at gate."
+		},
+		"Maximum output at gate": {
+			"Value": {
+				"inserted_value": "maximum_output_at_gate",
+				"type": {float,},
+				"dimension": "mass / time",
+			},
+			"optional": True,
+			"description": "Maximum output at gate. If not specified it defaults to `Plant Design Capacity`."
+		},
+		"Scaling ratio": {
+			"Value": {
+				"inserted_value": "scaling_ratio",
+				"type": {float,},
+				"dimension": "dimensionless",
+			},
+			"optional": True,
+			"description": "Returned if New Plant Design Capacity was specified."
+		},
+	},
+	"Scaling": {
+		"Capital scaling factor": {
+			"Value": {
+				"inserted_value": "capital_scaling_factor",
+				"type": {float,},
+				"dimension": "dimensionless",
+			},
+			"optional": True,
+			"description": "Returned if scaling is active (`Scaling Ratio` or `New Plant Design Capacity (kg of H2/day)` specified)."
+		},
+		"Labor scaling factor": {
+			"Value": {
+				"inserted_value": "labor_scaling_factor",
+				"type": {float,},
+				"dimension": "dimensionless",
+			},
+			"optional": True,
+			"description": "Returned if scaling is active (`Scaling Ratio` or `New Plant Design Capacity (kg of H2/day)` specified)."
+		},
+	},
+}
+
 class Production_Scaling_Plugin:
 	'''Calculation of plant output and potential scaling.
 
