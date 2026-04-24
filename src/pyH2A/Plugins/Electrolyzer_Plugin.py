@@ -1,3 +1,4 @@
+from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 from pyH2A.Utilities.input_modification import insert, process_table, hourly_to_daily_power
 import numpy as np
 
@@ -116,7 +117,7 @@ output_dict = {
     "Technical Operating Parameters and Specifications": {
         "Plant design capacity": {
             "Value": {
-                "insert_type": "calculated",
+                "insert_value": "h2_production/365.",
                 "type": {np.ndarray,},
                 "dimension": "mass / time",
             },
@@ -125,7 +126,7 @@ output_dict = {
         },
         "Operating capacity factor": {
             "Value": {
-                "insert_type": "calculated",
+                "insert_value": Quantity(1., 'dimensionless'),
                 "type": {float,},
                 "dimension": "dimensionless",
             },
@@ -136,7 +137,7 @@ output_dict = {
     "Planned Replacement": {
         "Electrolyzer stack replacement": {
             "Frequency (years)": {
-                "insert_type": "calculated",
+                "insert_value": "replacement_frequency",
                 "type": {float,},
                 "dimension": "time",
             },
@@ -147,7 +148,7 @@ output_dict = {
     "Electrolyzer": {
         "Scaling factor": {
             "Value": {
-                "insert_type": "calculated",
+                "insert_value": "electrolyzer_scaling_factor",
                 "type": {float,},
                 "dimension": "dimensionless",
             },
@@ -156,7 +157,7 @@ output_dict = {
         },
         "Yearly operation data": {
             "Value": {
-                "insert_type": "calculated",
+                "insert_value": "yearly_data",
                 "type": {np.ndarray,},
                 "dimension": "time",
             },
@@ -165,7 +166,7 @@ output_dict = {
         },
         "H2 production (yearly)": {
             "Value": {
-                "insert_type": "calculated",
+                "insert_value": "h2_production",
                 "type": {np.ndarray,},
                 "dimension": "mass",
             },
@@ -176,7 +177,7 @@ output_dict = {
     "Power Generation": {
         "Available energy (hourly)": {
             "Value": {
-                "insert_type": "calculated",
+                "insert_value": "yearly_data_unused_power",
                 "type": {dict,},
                 "dimension": "energy",
             },
@@ -185,7 +186,7 @@ output_dict = {
         },
         "Available energy (daily)": {
             "Value": {
-                "insert_type": "calculated",
+                "insert_value": "yearly_data_unused_power_daily",
                 "type": {dict,},
                 "dimension": "energy",
             },
