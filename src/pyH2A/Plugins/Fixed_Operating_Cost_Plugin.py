@@ -40,6 +40,51 @@ input_dict = {
 	},
 }
 
+output_dict = {
+	"Fixed Operating Costs": {
+		"Labor cost - uninflated": {
+			"Value": {
+				"insert_value": "labor_uninflated",
+				"type": {float,},
+				"dimension": "currency / time",
+			},	
+			"optional": False,
+			"description": "Yearly total labor cost without applying labor inflator."
+		},
+		"Labor cost": {
+			"Value": {
+				"insert_value": "labor",
+				"type": {float,},
+				"dimension": "currency / time",	
+			},
+			"optional": False,
+			"description": "Yearly total labor cost after applying labor inflator."
+		},
+		"Total": {
+			"Value": {
+				"insert_value": "total",
+				"type": {float,},
+				"dimension": "currency / time",	
+			},
+			"optional": False,
+			"description": "Total yearly fixed operating cost, sum of total labor cost and total other fixed operating cost."
+		},
+	},
+	 "special_insertions":
+        {"sum_all_tables": {
+            "<...> Other Fixed Operating Cost <...>": {
+                "Summed Total": {
+                    "Value": {
+                        "type": {int, float},
+                    },
+                    "optional": True,
+                    "description": "Summed total of other fixed operating costs across all tables"
+                },
+            },
+        },
+    },
+}
+
 class Fixed_Operating_Cost_Plugin:
 	'''Calculation of yearly fixed operating costs.
 
