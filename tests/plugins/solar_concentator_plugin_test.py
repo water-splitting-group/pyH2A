@@ -1,5 +1,5 @@
 import pytest
-from src.pyH2A.Plugins.Solar_Concentrator_Plugin import Solar_Concentrator_Plugin
+from pyH2A.Plugins.Solar_Concentrator_Plugin import Solar_Concentrator_Plugin
 
 
 class DummyDCF:

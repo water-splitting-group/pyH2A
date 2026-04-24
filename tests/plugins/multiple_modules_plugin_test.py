@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from src.pyH2A.Plugins.Multiple_Modules_Plugin import Multiple_Modules_Plugin
+from pyH2A.Plugins.Multiple_Modules_Plugin import Multiple_Modules_Plugin
 
 
 class DummyDCF:

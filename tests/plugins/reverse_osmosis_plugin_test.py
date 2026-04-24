@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from src.pyH2A.Plugins.Reverse_Osmosis_Plugin import Reverse_Osmosis_Plugin
+from pyH2A.Plugins.Reverse_Osmosis_Plugin import Reverse_Osmosis_Plugin
 
 
 class DummyDCF:

@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from src.pyH2A.Utilities.Unit_handler.quantity import parse_composite_unit, Quantity
+from pyH2A.Utilities.Unit_handler.quantity import parse_composite_unit, Quantity
 
 
 def test_parse_composite_unit_simple():

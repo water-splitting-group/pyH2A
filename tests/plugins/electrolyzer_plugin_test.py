@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from src.pyH2A.Plugins.Electrolyzer_Plugin import Electrolyzer_Plugin
+from pyH2A.Plugins.Electrolyzer_Plugin import Electrolyzer_Plugin
 
 
 class DummyDCF:

@@ -1,5 +1,5 @@
 import pytest
-from src.pyH2A.Plugins.Capital_Cost_Plugin import Capital_Cost_Plugin
+from pyH2A.Plugins.Capital_Cost_Plugin import Capital_Cost_Plugin
 
 
 class DummyDCF:

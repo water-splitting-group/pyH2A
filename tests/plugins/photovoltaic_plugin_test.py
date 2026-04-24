@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from src.pyH2A.Plugins.Photovoltaic_Plugin import Photovoltaic_Plugin
+from pyH2A.Plugins.Photovoltaic_Plugin import Photovoltaic_Plugin
 
 
 class DummyDCF:

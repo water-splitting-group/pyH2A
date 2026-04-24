@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from src.pyH2A.Utilities.Unit_handler.quantity import Quantity
+from pyH2A.Utilities.Unit_handler.quantity import Quantity
 
 
 def check_dicts(actual, expected, tolerance=1e-12, path=""):

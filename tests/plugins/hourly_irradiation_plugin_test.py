@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from src.pyH2A.Plugins.Hourly_Irradiation_Plugin import (
+from pyH2A.Plugins.Hourly_Irradiation_Plugin import (
     Hourly_Irradiation_Plugin,
     import_hourly_data,
 )

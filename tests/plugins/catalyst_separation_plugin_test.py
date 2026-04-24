@@ -1,5 +1,5 @@
 import pytest
-from src.pyH2A.Plugins.Catalyst_Separation_Plugin import Catalyst_Separation_Plugin
+from pyH2A.Plugins.Catalyst_Separation_Plugin import Catalyst_Separation_Plugin
 
 
 class DummyDCF:

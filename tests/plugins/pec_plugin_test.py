@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from src.pyH2A.Plugins.PEC_Plugin import PEC_Plugin
+from pyH2A.Plugins.PEC_Plugin import PEC_Plugin
 
 
 class DummyDCF:

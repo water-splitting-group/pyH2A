@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from src.pyH2A.Plugins.Replacement_Plugin import Replacement_Plugin
+from pyH2A.Plugins.Replacement_Plugin import Replacement_Plugin
 
 class DummyDCF:
     """Minimal DCF object for Replacement_Plugin with simple variable-value inputs."""

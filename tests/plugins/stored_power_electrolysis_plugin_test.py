@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from src.pyH2A.Plugins.Stored_Power_Electrolysis_Plugin import Stored_Power_Electrolysis_Plugin
+from pyH2A.Plugins.Stored_Power_Electrolysis_Plugin import Stored_Power_Electrolysis_Plugin
 
 
 class DummyDCF:

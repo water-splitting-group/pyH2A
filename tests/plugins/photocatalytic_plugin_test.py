@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from src.pyH2A.Plugins.Photocatalytic_Plugin import Photocatalytic_Plugin
+from pyH2A.Plugins.Photocatalytic_Plugin import Photocatalytic_Plugin
 
 
 class DummyDCF:

@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from src.pyH2A.Plugins.Power_Management_Plugin import Power_Management_Plugin
+from pyH2A.Plugins.Power_Management_Plugin import Power_Management_Plugin
 
 
 class DummyDCF:

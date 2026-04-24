@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from src.pyH2A.Plugins.Fixed_Operating_Cost_Plugin import Fixed_Operating_Cost_Plugin
+from pyH2A.Plugins.Fixed_Operating_Cost_Plugin import Fixed_Operating_Cost_Plugin
 
 
 class DummyDCF:

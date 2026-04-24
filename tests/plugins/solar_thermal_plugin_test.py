@@ -1,5 +1,5 @@
 import pytest
-from src.pyH2A.Plugins.Solar_Thermal_Plugin import Solar_Thermal_Plugin
+from pyH2A.Plugins.Solar_Thermal_Plugin import Solar_Thermal_Plugin
 
 
 class DummyDCF:

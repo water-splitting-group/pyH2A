@@ -1,5 +1,5 @@
 import pytest
-from src.pyH2A.Plugins.Production_Scaling_Plugin import Production_Scaling_Plugin
+from pyH2A.Plugins.Production_Scaling_Plugin import Production_Scaling_Plugin
 
 class DummyDCF:
     """Minimal DCF object for Production_Scaling_Plugin testing with configurable inputs."""
