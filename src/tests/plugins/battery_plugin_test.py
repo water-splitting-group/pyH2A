@@ -70,6 +70,9 @@ class DummyDCF:
             },
         }
     ],
+    ids=[
+        "Realistic case - Battery Plugin",
+    ]
 )
 def test_battery_plugin(case):
     """Check plugin handles edge and real cases without errors and returns correct daily stored/unstored power."""
