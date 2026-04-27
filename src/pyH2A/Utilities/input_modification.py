@@ -774,7 +774,7 @@ def process_table(dictionary, top_key, bottom_key, path_key = 'Path',
 						  path_key = path_key[-1], add_processed = True,
 						  print_processing_warning = print_processing_warning)
 
-def sum_table(dictionary, top_key, bottom_key, path_key = 'Path', unit = ''):
+def sum_table(dictionary, top_key, bottom_key, path_key = 'Path'):
 	'''For the provided `dictionary`, all entries in dictionary[top_key] are processed 
 	using ``process_input()`` (positions: top_key > key > bottom key) and summed.
 
@@ -793,17 +793,14 @@ def sum_table(dictionary, top_key, bottom_key, path_key = 'Path', unit = ''):
 	value = 0.
 
 	for key in dictionary[top_key]:
-		if isinstance(dictionary[top_key][key][bottom_key], Quantity):
-			# process_input doesn't handle Quantities objects; but if it's a Quantity, it means it has been processed already so we can return the magnitude directly		
-			value +=  dictionary[top_key][key][bottom_key].unit[unit] 			
-		else:
-			value += process_input(dictionary, top_key, key, bottom_key, path_key = path_key)
+		value += process_input(dictionary, top_key, key, bottom_key, path_key = path_key)
+
 	return value
 
 def sum_all_tables(dictionary, table_group, bottom_key, insert_total = False, 
 				   class_object = None, middle_key_insertion = 'Summed Total', 
 				   bottom_key_insertion = 'Value', print_info = True, 
-				   path_key = 'Path', return_contributions = False, unit = ''):
+				   path_key = 'Path', return_contributions = False):
 	'''Applies ``sum_table()`` to all dictionary entries with a key that contains `table_group`. 
 	Resulting ``sum_table()`` values are summed to return total.
 
@@ -850,7 +847,7 @@ def sum_all_tables(dictionary, table_group, bottom_key, insert_total = False,
 	for key in dictionary:
 
 		if table_group in key:
-			value = sum_table(dictionary, key, bottom_key, path_key = path_key, unit = unit)
+			value = sum_table(dictionary, key, bottom_key, path_key = path_key)
 			total += value
 			contributions['Data'][key] = value
 
