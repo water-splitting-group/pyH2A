@@ -8,11 +8,10 @@ input_dict = {
         "construction time": {
             "Value": {
                 "type": {int,},
-                "bounds": (0, 40),
+                "bounds": (0, 40*365*86400),
             },
             "Unit": {
                 "dimension": "time",
-                "enforced_unit": "year",
             },
             "optional": False,
             "description": "Construction time of hydrogen production plant."
@@ -118,7 +117,7 @@ output_dict = {
     "Technical Operating Parameters and Specifications": {
         "Plant design capacity": {
             "Value": {
-                "insert_value": "h2_production",
+                "inserted_value": "h2_production",
                 "type": {np.ndarray,},
                 "dimension": "mass / time",
             },
@@ -127,7 +126,7 @@ output_dict = {
         },
         "Operating capacity factor": {
             "Value": {
-                "insert_value": Quantity(1., 'dimensionless'),
+                "inserted_value": Quantity(1., '-'),
                 "type": {float,},
                 "dimension": "dimensionless",
             },
@@ -138,7 +137,7 @@ output_dict = {
     "Planned Replacement": {
         "Electrolyzer stack replacement": {
             "Frequency (years)": {
-                "insert_value": "replacement_frequency",
+                "inserted_value": "replacement_frequency",
                 "type": {float,},
                 "dimension": "time",
             },
@@ -151,7 +150,7 @@ output_dict = {
     "Electrolyzer": {
         "Scaling factor": {
             "Value": {
-                "insert_value": "electrolyzer_scaling_factor",
+                "inserted_value": "electrolyzer_scaling_factor",
                 "type": {float,},
                 "dimension": "dimensionless",
             },
@@ -160,17 +159,17 @@ output_dict = {
         },
         "Yearly operation data": {
             "Year_Value": {
-                "insert_value": "yearly_data_year",
+                "inserted_value": "yearly_data_year",
                 "type": {np.ndarray,},
                 "dimension": "dimensionless", 
             },
             "Production_Value": {
-                "insert_value": "yearly_data_production",
+                "inserted_value": "yearly_data_production",
                 "type": {np.ndarray,},
                 "dimension": "mass", 
             },  
             "Duration_Value": {
-                "insert_value": "yearly_data_duration",
+                "inserted_value": "yearly_data_duration",
                 "type": {np.ndarray,},
                 "dimension": "time", 
             },                      
@@ -181,7 +180,7 @@ output_dict = {
     "Power Generation": {
         "Available energy (hourly)": {
             "Value": {
-                "insert_value": "yearly_data_unused_energy",
+                "inserted_value": "yearly_data_unused_energy",
                 "type": {dict,},
                 "dimension": "energy",
             },
@@ -190,7 +189,7 @@ output_dict = {
         },
         "Available energy (daily)": {
             "Value": {
-                "insert_value": "yearly_data_unused_energy_daily",
+                "inserted_value": "yearly_data_unused_energy_daily",
                 "type": {dict,},
                 "dimension": "energy",
             },
