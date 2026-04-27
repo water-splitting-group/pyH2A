@@ -158,41 +158,24 @@ output_dict = {
             "optional": False,
             "description": "CAPEX scaling factor for electrolyzer calculated based on CAPEX multiplier, reference and nominal power."
         },
-        "Operation data year": {
-            "Value": {
+        "Yearly operation data": {
+            "Year_Value": {
                 "insert_value": "yearly_data_year",
                 "type": {np.ndarray,},
                 "dimension": "dimensionless", 
             },
-            "optional": False,
-            "description": "Yearly operation data of electrolyzer: year"
-        },
-        "Operation data production": {
-            "Value": {
+            "Production_Value": {
                 "insert_value": "yearly_data_production",
                 "type": {np.ndarray,},
                 "dimension": "mass", 
-            },
-            "optional": False,
-            "description": "Yearly operation data of electrolyzer: H2 produced"
-        },
-        "Operation data duration": {
-            "Value": {
+            },  
+            "Duration_Value": {
                 "insert_value": "yearly_data_duration",
                 "type": {np.ndarray,},
                 "dimension": "time", 
-            },
+            },                      
             "optional": False,
-            "description": "Yearly operation data of electrolyzer: duration of operation"
-        },                
-        "H2 production (yearly)": {
-            "Value": {
-                "insert_value": "h2_production",
-                "type": {np.ndarray,},
-                "dimension": "mass/time",
-            },
-            "optional": False,
-            "description": "Yearly hydrogen production."
+            "description": "Yearly operation data of electrolyzer: year, H2 produced, duration of operation."
         }
     },
     "Power Generation": {
@@ -229,44 +212,48 @@ class Electrolyzer_Plugin:
         increase of power relative to CAPEX reference power. Based on the multiplier the CAPEX
         scaling factor is calculated as: multiplier ^ (number of ten-fold increases). A value
         of 1 leads to no CAPEX reduction, a value < 1 enables cost reduction.
-    Electrolyzer > Nominal Power (kW) > Value : float
-        Nominal power of electrolyzer in kW.
-    Electrolyzer > CAPEX Reference Power (kW) > Value : float
-        Reference power of electrolyzer in kW for cost reduction calculation.
+    Electrolyzer > Nominal power > Value : float
+        Nominal power of electrolyzer.
+    Electrolyzer > CAPEX reference power > Value : float
+        Reference power of electrolyzer for cost reduction calculation.
     Electrolyzer > Power requirement increase per year > Value : float
-        Electrolyzer power requirement increase per year due to stack degradation. Percentage 
-        or value > 0. Increase calculated as: (1 + increase per year) ^ year.
+        Electrolyzer power requirement increase per year due to stack degradation. 
+        Dimensioless value > 0. Increase calculated as: (1 + increase per year) ^ year.
     Electrolyzer > Minimum capacity > Value : float
-        Minimum capacity required for electrolyzer operation. Percentage or value between 0 and 1.
-    Electrolyzer > Conversion efficiency (kg H2/kWh) > Value : float
-        Electrical conversion efficiency of electrolyzer in (kg H2)/kWh.
-    Electrolyzer > Replacement time (h) > Value : float
-        Operating time in hours before stack replacement of electrolyzer is required.
-    Power Generation > Available Power (hourly, kWh) > Value : dict
-        Available power, hourly basis, dictionary of years (in kWh).
+        Minimum capacity required for electrolyzer operation. Dimensionless value between 0 and 1.
+    Electrolyzer > Hydrogen yield per unit energy > Value : float
+        Electrical conversion efficiency of electrolyzer in (mass H2)/energy.
+    Electrolyzer > Replacement time > Value : float
+        Operating time before stack replacement of electrolyzer is required.
+    Power Generation > Available energy (hourly) > Value : dict
+        Available energy, hourly basis, dictionary of years.
 
     Returns
     -------
-    Technical Operating Parameters and Specifications > Plant Design Capacity (kg of H2/day) > Value : nd.array
-        Plant design capacity in (kg of H2)/day calculated from installed 
+    Technical Operating Parameters and Specifications > Plant design capacity > Value : nd.array
+        Plant design capacity calculated from installed 
         electrolysis power capacity and hourly power generation data.
-    Technical Operating Parameters and Specifications >	Operating Capacity Factor (%) > Value : float
-        Operating capacity factor is set to 1 (100%).
-    Planned Replacement > Electrolyzer Stack Replacement > Frequency (years) : float
-        Frequency of electrolyzer stack replacements in years, calculated from replacement time and hourly
+    Technical Operating Parameters and Specifications >	Operating capacity factor > Value : float
+        Operating capacity factor is set to 1.
+    Planned Replacement > Electrolyzer stack replacement > Frequency : float
+        Frequency of electrolyzer stack replacements, calculated from replacement time and hourly
         irradiation data.
-    Electrolyzer > Scaling Factor > Value : float
+    Electrolyzer > Scaling factor > Value : float
         CAPEX scaling factor for electrolyzer calculated based on CAPEX multiplier, 
         reference and nominal power.
-    Electrolyzer > Yearly Operation Data > Value : nd.array
-        Yearly operation data of electrolyzer in (year, H2 produced, electrolyzer capacity) format.
-    Electrolyzer > H2 Production (yearly, kg) > Value : nd.array
-        Yearly hydrogen production in kg.
-    Power Generation > Available Power (hourly, kWh) > Value : dict
-        Available power (hourly, kWh) after subtracting power consumed by electrolyzer. 
+    Electrolyzer > Yearly operation data > Year_Value : nd.array
+        Yearly operation data of electrolyzer : year.
+    Electrolyzer > Yearly operation data > Production_Value : nd.array
+        Yearly operation data of electrolyzer : H2 produced during the year.
+    Electrolyzer > Yearly operation data > Duration_Value : nd.array
+        Yearly operation data of electrolyzer : duration of operation during the year.                
+    Electrolyzer > H2 production (yearly) > Value : nd.array
+        Yearly hydrogen production.
+    Power Generation > Available energy (hourly) > Value : dict
+        Available energy (hourly) after subtracting power consumed by electrolyzer. 
         (dictionary of years).
-    Power Generation > Available Power (daily, kWh) > Value : dict
-        Available power (daily, kWh) after subtracting power consumed by electrolyzer.
+    Power Generation > Available energy (daily) > Value : dict
+        Available power (daily) after subtracting power consumed by electrolyzer.
     '''
 
     def __init__(self, dcf, print_info):
@@ -313,7 +300,7 @@ class Electrolyzer_Plugin:
             electrolyzer_energy_consumption *= electrolyzer_capacity
 
             h2_produced = calculate_hydrogen_production(electrolyzer_energy_consumption,
-                                                        self.input_dict_resolved['Electrolyzer']['Conversion efficiency']['Value'].unit['kg/J'],
+                                                        self.input_dict_resolved['Electrolyzer']['Hydrogen yield per unit energy']['Value'].unit['kg/J'],
                                                         power_increase_ratio) # returns an array of kg of H2 produced during each hour
             
             yearly_data_year.append(year)
