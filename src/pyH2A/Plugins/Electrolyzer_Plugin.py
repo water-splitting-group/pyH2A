@@ -118,7 +118,7 @@ output_dict = {
         "Plant design capacity": {
             "Value": {
                 "inserted_value": "h2_production",
-                "type": {np.ndarray,},
+                "type": {np.ndarray,float,},
                 "dimension": "mass / time",
             },
             "optional": False,
@@ -136,7 +136,7 @@ output_dict = {
     },
     "Planned Replacement": {
         "Electrolyzer stack replacement": {
-            "Frequency (years)": {
+            "Frequency": {
                 "inserted_value": "replacement_frequency",
                 "type": {float,},
                 "dimension": "time",
