@@ -107,26 +107,26 @@ class Battery_Plugin:
 
     Parameters
     ----------
-    Power Generation > Available Power (daily, kWh) > Value : dict
-        Available power, daily basis, dictionary of years (in kWh).
-    Battery > Design Capacity (kWh) > Value : float
-        Full design capacity of battery in kWh.
+    Power Generation > Available energy (daily) > Value : dict
+        Available energy, daily basis, dictionary of years.
+    Battery > Design capacity > Value : float
+        Full design capacity of battery.
     Battery > Lowest discharge level > Value : float
-        Lowest level to which battery can be discharged. Percentage or value between 0 and 1.
+        Lowest level to which battery can be discharged. Dimensionless value between 0 and 1.
     Battery > Capacity loss per year > Value : float
-        Loss of capacity per year. Percentage or value > 0.
+        Loss of capacity per year. Dimensionless value > 0.
     Battery > Round trip efficiency > Value : float
-        Round trip efficiency of battery. Percentage or value between 0 and 1.
+        Round trip efficiency of battery. Dimensionless value between 0 and 1.
     
     Returns
     -------
-    Power Generation > Stored Power (daily, kWh) > Value : dict
-        Power stored in battery daily in kWh (dictionary of years).
-    Power Generation > Available Power (daily, kWh) > Value : dict
-        Available power, daily basis, dictionary of years (in kWh) - power which 
+    Power Generation > Stored energy (daily) > Value : dict
+        Energy stored in battery daily (dictionary of years).
+    Power Generation > Available energy (daily) > Value : dict
+        Available energy, daily basis, dictionary of years - power which 
         has not been stored in battery
-    Power Generation > Available Power (hourly, kWh) > Value : float
-        Available power (hourly, kWh) is set to zero, since available power is now 
+    Power Generation > Available energy (hourly) > Value : float
+        Available energy (hourly) is set to zero, since available power is now 
         only in daily format. 
     '''
 
