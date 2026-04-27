@@ -118,7 +118,8 @@ DIMENSIONS = {
         "conversions": {
             "mol": 1.0,
             "umol": 1e-6,
-            "mmol": 1e-3
+            "mmol": 1e-3, 
+            "entity": 1/6.022e23
         }
     },
     "voltage": {
