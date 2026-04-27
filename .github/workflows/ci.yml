@@ -2,9 +2,9 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [master]
+    branches: [master, feat/plugin_refactor]
   pull_request:
-    branches: [master]
+    branches: [master, feat/plugin_refactor]
 
 jobs:
   test:
@@ -30,4 +30,4 @@ jobs:
 
       - name: Run tests
         run: |
-          uv run pytest src/tests/ -v
+          uv run pytest
