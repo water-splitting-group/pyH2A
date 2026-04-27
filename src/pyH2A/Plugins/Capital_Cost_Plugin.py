@@ -208,24 +208,24 @@ class Capital_Cost_Plugin:
 
 	Parameters
 	----------
-	[...] Direct Capital Cost [...] >> Value : float
+	<...> Direct Capital Cost <...> >> Value : float
 		``sum_all_tables()`` is used.
-	[...] Indirect Capital Cost [...] >> Value : float
+	<...> Indirect Capital Cost <...> >> Value : float
 		``sum_all_tables()`` is used.
-	Non-Depreciable Capital Costs > Cost of land ($ per acre) > Value : float
+	Non-Depreciable Capital Costs > Cost of land > Value : float
 		Cost of land in $ per acre, ``process_table()`` is used.
-	Non-Depreciable Capital Costs > Land required (acres) > Value : float
+	Non-Depreciable Capital Costs > Land required > Value : float
 		Total land are required in acres, ``process_table()`` is used.
-	[...] Other Non-Depreciable Capital Cost [...] >> Value : float
+	<...> Other Non-Depreciable Capital Cost <...> >> Value : float
 		``sum_all_tables()`` is used.
 
 	Returns
 	-------
-	[...] Direct Capital Cost [...] > Summed Total > Value : float
+	<...> Direct Capital Cost <...> > Summed Total > Value : float
 		Summed total for each individual table in "Direct Capital Cost" group.
-	[...] Indirect Capital Cost [...] > Summed Total > Value : float
+	<...> Indirect Capital Cost <...> > Summed Total > Value : float
 		Summed total for each individual table in "Indirect Capital Cost" group.
-	[...] Other Non-Depreciable Capital Cost  [...] > Summed Total > Value : float
+	<...> Other Non-Depreciable Capital Cost  <...> > Summed Total > Value : float
 		Summed total for each individual table in "Other Non-Depreciable Capital Cost" group.
 	Direct Capital Costs > Total > Value : float
 		Total direct capital costs.
@@ -279,7 +279,7 @@ class Capital_Cost_Plugin:
 		self.total = Quantity(self.total, 'USD')
 		self.total_inflated = Quantity(self.total_inflated, 'USD')     
 
-	output_inserter_function(output_dict, self, dcf, 'Capital_Cost_Plugin')
+		output_inserter_function(output_dict, self, dcf, 'Capital_Cost_Plugin')
         
 	def direct_capital_costs(self, dcf, print_info):
 		'''Calculation of direct capital costs by applying ``sum_all_tables()`` to "Direct Capital Cost" group.'''
@@ -301,4 +301,3 @@ class Capital_Cost_Plugin:
 		non_depreciable = self.input_dict_resolved['Non-Depreciable Capital Costs']
 		self.non_depreciable = non_depreciable['Cost of land']['Value'].unit['USD/m2'] * non_depreciable['Land required']['Value'].unit['m2']
 		self.non_depreciable += sum_all_tables(self.input_dict_resolved, 'Other Non-Depreciable Capital Cost', 'Value', insert_total = True, class_object = dcf, print_info = print_info, unit = 'USD')
-
