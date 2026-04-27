@@ -1,5 +1,6 @@
 import pytest
 from pyH2A.Plugins.Capital_Cost_Plugin import Capital_Cost_Plugin
+from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
 
 class DummyDCF:
@@ -17,18 +18,35 @@ class DummyDCF:
     ):
 
         self.inp = {
-            "Dummy Left Direct Capital Cost Dummy Right": {
-                key: {"Value": value} for key, value in direct_costs.items()
+            "<...> Direct Capital Cost <...>": {
+                key: {
+                    "Value": value,
+                    "Unit": "USD"
+                } 
+                for key, value in direct_costs.items()
             },
-            "Dummy Left Indirect Capital Cost Dummy Right": {
-                key: {"Value": value} for key, value in indirect_costs.items()
+            "<...> Indirect Capital Cost <...>": {
+                key: {
+                    "Value": value,
+                    "Unit": "USD"
+                }
+                for key, value in indirect_costs.items()
             },
             "Non-Depreciable Capital Costs": {
-                "Cost of land ($ per acre)": {"Value": land_cost_per_acre},
-                "Land required (acres)": {"Value": land_required_acres},
+                "Cost of land": {
+                    "Value": land_cost_per_acre,
+                    "Unit": "USD/acre"
+                },
+                "Land required": {
+                    "Value": land_required_acres,
+                    "Unit": "acre"
+                },
             },  
             "Dummy Left Other Non-Depreciable Capital Cost Dummy Right": {
-                key: {"Value": value}
+                key: {
+                    "Value": value,
+                    "Unit": "USD"
+                }
                 for key, value in other_non_depreciable_costs.items()
             },
         }
@@ -61,12 +79,15 @@ class DummyDCF:
                 "ci_inflator": 1.05,
             },
             "expected": {
-                "direct": 9400000.0,
-                "indirect": 2000000.0,
-                "non_depreciable": 251000.0,
+                "direct": Quantity(9400000.0, "USD"),
+                "indirect": Quantity(2000000.0, "USD"),
+                "non_depreciable": Quantity(251000.0, "USD")
             },
         }
     ],
+    ids=[
+        "Realistic case - Capital Cost"
+    ]
 )
 def test_capital_cost_plugin(case):
     """Check plugin handles edge and real cases without errors and returns correct annualized costs."""
@@ -81,17 +102,17 @@ def test_capital_cost_plugin(case):
     # Tolerance (very small)
     tolerance = 1e-12
     
-    assert plugin.direct == pytest.approx(
-        expected["direct"],
+    assert plugin.direct.unit["USD"] == pytest.approx(
+        expected["direct"].unit["USD"],
         abs=tolerance
     )
     
-    assert plugin.indirect == pytest.approx(
-        expected["indirect"],
+    assert plugin.indirect.unit["USD"] == pytest.approx(
+        expected["indirect"].unit["USD"],
         abs=tolerance
     )
     
-    assert plugin.non_depreciable == pytest.approx(
-        expected["non_depreciable"],
+    assert plugin.non_depreciable.unit["USD"] == pytest.approx(
+        expected["non_depreciable"].unit["USD"],
         abs=tolerance
     )
