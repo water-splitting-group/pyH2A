@@ -6,7 +6,7 @@ import numpy as np
 
 input_dict = {	
 	"Technical Operating Parameters and Specifications": {
-		"Output per Year": {
+		"Output per year": {
 			"Value": {
 				"type": {float},
 				"bounds": (0, None)
@@ -25,7 +25,7 @@ input_dict = {
 				"bounds": (0, None)
 			},
 			"Cost_Unit": {
-				"dimension": "currency" # we omit the basis on purpose
+				"dimension": "currency" # we omit the basis on purpose, at it is transparent, and will simplify with the basis per kg; the raito is precisely what the conversion factor is there for
 			},			
 			"Usage_Value": {
 				"type": {float},
@@ -41,13 +41,9 @@ input_dict = {
 			"Price_Conversion_Factor_Unit": {
 				"dimension": "dimensionless"
 			},
-			"Path_Value": {
+			"Usage_Path": {
 				"type": {str},
-				"bounds": None
-			},
-			"Usage_Path_Value": {
-				"type": {str},
-				"bounds": None
+				"bounds": None, 
 			},
 			"optional": True,
 			"description": "Utilities are specified by specifying the cost of a given utility (e.g. $/kWh(electricity) and specifying the usage of the utility per mass of product (e.g. kWh(electricity)/kg(H2). The cost of the utility may be either a float, a ndarray with the same length as `dcf.inflation_correction` or a textfile containing cost values (cost values have to be in second column). For cost the path key is Path and for usage the path key is Usage Path"
@@ -118,20 +114,18 @@ class Variable_Operating_Cost_Plugin:
 
 	Parameters
 	----------
-	Technical Operating Parameters and Specifications > Output per Year > Value : float
+	Technical Operating Parameters and Specifications > Output per year > Value : float
 		Yearly output taking operating capacity factor into account, in (kg of H2)/year.
 	Utilities > [...] > Cost : float, ndarray or str
 		Cost of utility (e.g. $/kWh for electricity). May be either a float, a ndarray with the
 		same length as `dcf.inflation_correction` or a textfile containing cost values (cost values 
 		have to be in second column).
-	Utilities > [...] > Usage per kg H2 : float
-		Usage of utility per kg H2 (e.g. kWh/(kg of H2) for electricity).
-	Utilities > [...] > Price Conversion Factor : float
+	Utilities > [...] > Usage : float
+		Usage of utility per functional unit (e.g. kWh/(kg of H2) for electricity).
+	Utilities > [...] > Price_Conversion_Factor : float
 		Conversion factor between cost and usage units. Should be set to 1 if no conversion is
 		required.
-	Utilities > [...] > Path : str, optional
-		Path for `Cost` entry.
-	Utilities > [...] > Usage Path : str, optional
+	Utilities > [...] > Usage_Path : str, optional
 		Path for `Usage per kg H2` entry.
 	[...] Other Variable Operating Operating Cost [...] >> Value : float
 		``sum_all_tables()`` is used.
@@ -176,9 +170,9 @@ class Variable_Operating_Cost_Plugin:
 		'''Applying ``sum_all_tables()`` to "Other Variable Operating Cost" group.
 		'''
 
-		self.other = dcf.chemical_inflator * sum_all_tables(dcf.inp, 'Other Variable Operating Cost', 'Value', 
+		self.other = dcf.chemical_inflator * sum_all_tables(self.input_dict_resolved, 'Other Variable Operating Cost', 'Value', 
 																insert_total = True, class_object = dcf, 
-																print_info = print_info, unit = 'USD')
+																print_info = print_info, unit = 'USD') # Unit will need to be removed after we correct sum_all_tables
 		self.other = Quantity(self.other, 'USD')
 
 class Utility:
@@ -197,13 +191,13 @@ class Utility:
 		'''Calculation of utility cost per kg of H2 with inflation correction.
 		'''
 		
-		if isinstance(dictionary['Cost'], str):
-			prices = read_textfile(dictionary['Cost'], delimiter = '	')
+		if isinstance(dictionary['Cost_Value'], str):
+			prices = read_textfile(dictionary['Cost_Value'], delimiter = '	')
 			years_idx = fn.find_nearest(prices, dcf.years)
 			prices = prices[years_idx]
 
 			self.cost_per_kg_H2 = Quantity(prices[:,1] * dcf.inflation_correction * dictionary['Price Conversion Factor'].unit['-'] * dictionary['Usage'], 'USD/kg') # probleme in this plugin: we don't know the units in advance
 
 		else:
-			annual_cost_per_kg_H2 = dcf.inflation_correction * dictionary['Cost'].unit['USD'] * dictionary['Usage'].unit['-/kg'] * dictionary['Price Conversion Factor'].unit['-']
+			annual_cost_per_kg_H2 = dcf.inflation_correction * dictionary['Cost_Value'].unit['USD'] * dictionary['Usage_Value'].unit['-/kg'] * dictionary['Price_Conversion_Factor_Value'].unit['-']
 			self.cost_per_kg_H2 = Quantity(np.ones(len(dcf.inflation_factor)) * annual_cost_per_kg_H2, 'USD/kg')
