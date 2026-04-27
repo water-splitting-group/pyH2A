@@ -213,9 +213,9 @@ class Capital_Cost_Plugin:
 	<...> Indirect Capital Cost <...> >> Value : float
 		``sum_all_tables()`` is used.
 	Non-Depreciable Capital Costs > Cost of land > Value : float
-		Cost of land in $ per acre, ``process_table()`` is used.
+		Cost of land, ``process_table()`` is used.
 	Non-Depreciable Capital Costs > Land required > Value : float
-		Total land are required in acres, ``process_table()`` is used.
+		Total land are required, ``process_table()`` is used.
 	<...> Other Non-Depreciable Capital Cost <...> >> Value : float
 		``sum_all_tables()`` is used.
 
