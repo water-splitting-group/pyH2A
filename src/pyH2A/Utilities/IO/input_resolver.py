@@ -247,23 +247,6 @@ def value_resolver_function(top_key,
         return value_specification, value_retrieved
     else:
         return value_retrieved
-            
-def unit_resolver_function(top_key, 
-                           middle_key, 
-                           bottom_key, 
-                           row_dict, 
-                           dcf_class):
-    '''
-    Resolve unit
-    '''
-    
-    unit_specification, unit_retrieved = _get_specification_and_retrieved_value(top_key,
-                                                                               middle_key,
-                                                                               bottom_key,
-                                                                               row_dict,
-                                                                               dcf_class)
-    
-    return unit_specification, unit_retrieved
      
 def value_with_unit_resolver_function(top_key, 
                                       middle_key, 
