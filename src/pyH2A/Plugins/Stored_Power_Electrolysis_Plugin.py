@@ -130,8 +130,8 @@ output_dict = {
     "Technical Operating Parameters and Specifications": {
         "Plant design capacity": {
             "Value": {
-                "Inserted_value": "new_h2_production",
-                "type": {float,},
+                "inserted_value": "new_h2_production",
+                "type": {float,np.ndarray, },
                 "dimension": "mass / time",
             }, 
             "optional": False,
@@ -140,28 +140,27 @@ output_dict = {
     },
     "Planned Replacement": {
         "Electrolyzer stack replacement": {
-            "Frequency (years)": {
-                "Inserted_value": "replacement_frequency",
+            "Frequency": {
+                "inserted_value": "replacement_frequency",
                 "type": {float,},
                 "dimension": "time",
             },
             "add_processed": False,
             "insert_path": False,
             "optional": False,
-            "description": "Frequency of electrolyzer stack replacements in years, calculated from replacement time and hourly irradiation data."
+            "description": "Frequency of electrolyzer stack replacements, calculated from replacement time and hourly irradiation data."
         },
     },
     "Power Consumption": {
         "Stored energy electrolysis (yearly)": {
             "Value": {
-                "Inserted_value": "energy_consumption",
+                "inserted_value": "energy_consumption",
                 "type": {np.ndarray,},
                 "dimension": "energy",
             },
             "Type": {
-                "Inserted_value": "on_demand",
+                "inserted_value": "on_demand",
                 "type": {str,},
-                "dimension": "dimensionless",
             },
             "optional": False,
             "description": "Electricity demand of electrolysis using stored energy per year. Type of power consumer is 'on_demand' (only uses stored power)."
@@ -176,7 +175,7 @@ class Stored_Power_Electrolysis_Plugin:
     ----------
     Electrolysis Using Stored Power > Fraction of stored power used for electrolysis > Value : float
         Fraction of stored power used for electrolysis.
-    Electrolyzer > Nominal Power > Value : float
+    Electrolyzer > Nominal power > Value : float
         Nominal power of electrolyzer.
     Electrolyzer > Power requirement increase per year > Value : float
         Electrolyzer power requirement increase per year due to stack degradation. 
@@ -203,7 +202,7 @@ class Stored_Power_Electrolysis_Plugin:
     Technical Operating Parameters and Specifications > Plant design capacity > Value : nd.array
         Plant design capacity in (mass of H2)/time calculated from installed 
         electrolysis power capacity and hourly power generation data.
-    Planned Replacement > Electrolyzer Stack Replacement > Frequency : float
+    Planned Replacement > Electrolyzer stack replacement > Frequency : float
         Frequency of electrolyzer stack replacements in years, calculated from replacement time and hourly
         irradiation data.
     Power Consumption > Stored energy electrolysis (yearly) > Value : nd.array
@@ -216,6 +215,7 @@ class Stored_Power_Electrolysis_Plugin:
         self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Stored_Power_Electrolysis_Plugin')
 
         self.calculate_H2_production(dcf)
+        self.on_demand = "on_demand"
 
         self.replacement_frequency = calculate_stack_replacement(self.operation_hours, 
                                     self.input_dict_resolved['Electrolyzer']['Replacement time']['Value'].unit['h']) # operation hours being for each year, the result is in years between replacement
@@ -231,12 +231,14 @@ class Stored_Power_Electrolysis_Plugin:
         remaining_run_time_per_year_in_seconds = SECONDS_IN_A_YEAR - self.input_dict_resolved['Electrolyzer']['Yearly operation data']['Duration_Value'].unit['s']
         
         electrolyzer_power_demand, power_increase_ratio = calculate_electrolyzer_power_demand(self.input_dict_resolved['Electrolyzer']['Power requirement increase per year']['Value'].unit['-'],
-                                                                                        self.input_dict_resolved['Electrolyzer']['Nominal power']['Value']['W'],
+                                                                                        self.input_dict_resolved['Electrolyzer']['Nominal power']['Value'].unit['W'],
                                                                                         dcf.operation_years)
 
         maximum_consumable_energy = remaining_run_time_per_year_in_seconds * electrolyzer_power_demand # result in Joules
         
-        stored_energy = self.input_dict_resolved['Power Generation']['Stored energy (daily)']['Value'].unit['J']
+        stored_energy = {}
+        for year in dcf.operation_years:
+            stored_energy[year] = self.input_dict_resolved['Power Generation']['Stored energy (daily)']['Value'][year].unit['J']
         stored_energy_yearly = daily_to_yearly_power(stored_energy)
 
         stored_energy_yearly_available_for_use = stored_energy_yearly * self.input_dict_resolved['Electrolysis Using Stored Power']['Fraction of stored power used for electrolysis']['Value'].unit['-']
