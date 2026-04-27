@@ -50,7 +50,18 @@ input_dict = {
 			"optional": False,
 			"description": "Number of ports per baggie."
 		},
-		"Other costs per baggies": {
+		"Cost of port": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "currency",
+			},
+			"optional": False,
+			"description": "Cost of a port."
+		},		
+		"Other costs per baggie": {
 			"Value": {
 				"type": {float,},
 				"bounds": (0, None),
@@ -179,7 +190,7 @@ input_dict = {
 				"bounds": (0, None),
 			},
 			"Unit": {
-				"dimension": "volume / (substance * length)",
+				"dimension": "volume / (length * substance)",
 			},
 			"optional": True,
 			"description": "If the molar attenuation coefficient is specified (along with the molar weight), absorbance and the fraction of absorbed light are also calculated."
@@ -253,7 +264,7 @@ output_dict = {
 				"dimension": "currency",
 			},
 			"Frequency": {
-				"inserted_value": "input_dict_resolved['Catalyst']['Lifetime']['Value']",
+				"inserted_value": "catalyst_lifetime",
 				"type": {float,},
 				"dimension": "time",
 			},
@@ -267,7 +278,7 @@ output_dict = {
 				"dimension": "currency",
 			},
 			"Frequency": {
-				"inserted_value": "input_dict_resolved['Reactor Baggies']['Lifetime']['Value']",
+				"inserted_value": "baggie_lifetime",
 				"type": {float,},
 				"dimension": "time",
 			},
@@ -301,7 +312,7 @@ output_dict = {
 		"Number": {
 			"Value": {
 				"inserted_value": "baggie_number",
-				"type": {int,},
+				"type": {int,float}, # should only be an int, but going throught the output isnerte makes it a float despite the use of the .astype(int)
 				"dimension": "dimensionless",
 			},
 			"optional": False,
@@ -326,76 +337,74 @@ class Photocatalytic_Plugin:
 
 	Parameters
 	----------
-	Technical Operating Parameters and Specifications > Design Output per Day > Value : float
+	Technical Operating Parameters and Specifications > Design output per day > Value : float
 		Design output in (kg of H2)/day, ``process_table()`` is used.
-	Reactor Baggies > Cost Material Top ($/m2) > Value : float
-		Cost of baggie top material in $/m2.
-	Reactor Baggies > Cost Material Bottom ($/m2) > Value : float
-		Cost of baggie bottom material in $/m2.
-	Reactor Baggies > Number of ports > Value : int
+	Reactor Baggies > Cost material top > Value : float
+		Cost of baggie top material.
+	Reactor Baggies > Cost Material Bottom > Value : float
+		Cost of baggie bottom material.
+	Reactor Baggies > Number of ports per baggie > Value : int
 		Number of ports per baggie.
-	Reactor Baggies > Other Costs ($) > Value : float
+	Reactor Baggies > Cost of port > Value : float
+		Cost of a port.		
+	Reactor Baggies > Other Costs > Value : float
 		Other costs per baggie.
 	Reactor Baggies > Markup factor > Value : float
 		Markup factor for baggies, typically > 1.
-	Reactor Baggies > Length (m) > Value : float
+	Reactor Baggies > Length > Value : float
 		Length of single baggie in m.
-	Reactor Baggies > Width (m) > Value : float
+	Reactor Baggies > Width > Value : float
 		Width of single baggie in m.
-	Reactor Baggies > Height (m) > Value : float
+	Reactor Baggies > Filling height > Value : float
 		Height of reactor baggie in m. In this simulation this value determines the height
 		of the water level and hence is an important parameter ultimately determining the
 		level of light absorption and total catalyst amount.
-	Reactor Baggies > Additional land area (%) > Value : float
+	Reactor Baggies > Additional land area > Value : float
 		Additional land area required, percentage or value > 0. 
 		Calculated as: (1 + addtional land area) * baggie area.
-	Reactor Baggies > Lifetime (years) > Value : float
+	Reactor Baggies > Lifetime > Value : float
 		Lifetime of reactor baggies in years before replacement is required.
-	Catalyst > Cost per kg ($) > Value : float
-		Cost per kg of catalyst.
-	Catalyst > Concentration (g/L) > Value : float
-		Concentration of catalyst in g/L.
-	Catalyst > Lifetime (years) > Value : float
-		Lifetime of catalysts in year before replacement is required.
-	Catalyst > Molar Weight (g/mol) > Value : float, optional
-		If the molar weight of the catalyst (in g/mol) is specified, homogeneous catalyst
+	Catalyst > Cost per unit of mass > Value : float
+		Cost per mass of catalyst.
+	Catalyst > Concentration > Value : float
+		Concentration of catalyst.
+	Catalyst > Lifetime > Value : float
+		Lifetime of catalysts before replacement is required.
+	Catalyst > Molar Weight > Value : float, optional
+		If the molar weight of the catalyst is specified, homogeneous catalyst
 		properties (TON, TOF etc. are calculated).
-	Catalyst > Molar Attenuation Coefficient (M^-1 cm^-1) > Value : float, optional
-		If the molar attenuation coefficient (in M^-1 cm^-1) is specified (along with the molar weight),
+	Catalyst > Molar Attenuation Coefficient > Value : float, optional
+		If the molar attenuation coefficient is specified (along with the molar weight),
 		absorbance and the fraction of absorbed light are also calculated.
-	Solar-to-Hydrogen Efficiency > STH (%) > Value : float
+	Solar-to-Hydrogen Efficiency > STH > Value : float
 		Solar-to-hydrogen efficiency in percentage or as a value between 0 and 1.
-	Solar Input > Mean solar input (kWh/m2/day) > Value : float
-		Mean solar input in kWh/m2/day, ``process_table()`` is used.
-	Solar Input > Hourly (kWh/m2) > Value : ndarray
+	Solar Input > Mean solar input > Value : float
+		Mean solar input power, ``process_table()`` is used.
+	Solar Input > Hourly > Value : ndarray
 		Hourly irradiation data.
 
 	Returns
 	-------
-	Non-Depreciable Capital Costs > Land required (acres) > Value : float
+	Non-Depreciable Capital Costs > Land required > Value : float
 		Total land area required in acres.
-	Non-Depreciable Capital Costs > Solar Collection Area (m2) > Value : float
+	Non-Depreciable Capital Costs > Solar collection area > Value : float
 		Solar colelction area in m2.
-	Planned Replacement > Planned Replacement Catalyst > Cost ($) : float
+	Planned Replacement > Planned replacement catalyst > Cost : float
 		Total cost of completely replacing the catalyst once.
-	Planned Replacement > Planned Replacement Catalyst > Frequency (years) : float
+	Planned Replacement > Planned replacement catalyst > Frequency : float
 		Replacement frequency of catalyst in years, identical to catalyst lifetime.
-	Planned Replacement > Planned Replacement Baggie > Cost ($) : float
+	Planned Replacement > Planned replacement baggie > Cost : float
 		Total cost of replacing all  baggies.
-	Planned Replacement > Planned Replacement Baggie > Frequency (years) : float
+	Planned Replacement > Planned replacement baggie > Frequency : float
 		Replacement frequency of baggies in year, identical to baggie lifetime.
-	Direct Capital Costs - Reactor Baggies > Baggie Cost ($) > Value : float
+	Direct Capital Costs - Reactor Baggies > Baggie cost > Value : float
 		Total baggie cost.
-	Direct Capital Costs - Photocatalyst > Catalyst Cost ($) > Value : float
+	Direct Capital Costs - Photocatalyst > Catalyst cost > Value : float
 		Total catalyst cost.
 	Reactor Baggies > Number > Value : int
 		Number of individual baggies required for design H2 production capacity.
-	Catalyst > Properties > Value : dict
-		Dictionary containing detailed catalyst properties calculated from provided parameters.
-	['Photocatalytic_Plugin'].catalyst_properties : dict
-		Attribute containing catalyst properties dictionary.
-	Water Volume > Volume (liters) > Value : float
-		Total water volume in liters.
+	Water Volume > Volume > Value : float
+		Total water volume.
 	'''
 
 	def __init__(self, dcf, print_info):
@@ -409,6 +418,8 @@ class Photocatalytic_Plugin:
 		self.catalyst_cost(dcf)
 		self.land_area(dcf)
 		self.catalyst_activity(dcf)
+		self.catalyst_lifetime = self.input_dict_resolved['Catalyst']['Lifetime']['Value']
+		self.baggie_lifetime = self.input_dict_resolved['Reactor Baggies']['Lifetime']['Value']
 
 		output_inserter_function(output_dict, self, dcf, 'Photocatalytic_Plugin') 
 
@@ -438,11 +449,11 @@ class Photocatalytic_Plugin:
 		peak_mol_H2_per_m2_per_h = peak_hourly_irradiation_per_m2 * self.input_dict_resolved['Solar-to-Hydrogen Efficiency']['STH']['Value'].unit['-'] / self.H2_molecule_energy.unit['J/mol']
 
 		self.mean_mol_rate_H2_per_surface = Quantity(
-			self.input_dict_resolved['Solar Input']['Mean solar input']['Value'].unit['W/m2'] *self.input_dict_resolved['Solar-to-Hydrogen Efficiency']['STH']['Value'] / self.H2_molecule_energy.unit['J/mol'], 
+			self.input_dict_resolved['Solar Input']['Mean solar input']['Value'].unit['W/m2'] *self.input_dict_resolved['Solar-to-Hydrogen Efficiency']['STH']['Value'].unit['-'] / self.H2_molecule_energy.unit['J/mol'], 
 			'mol/s/m2'
 		)
 
-		kg_catalyst_per_m2 = self.input_dict_resolved['Reactor Baggies']['Height']['Value'].unit['m'] * self.input_dict_resolved['Catalyst']['Concentration']['Value'].unit['kg/m3']
+		kg_catalyst_per_m2 = self.input_dict_resolved['Reactor Baggies']['Filling height']['Value'].unit['m'] * self.input_dict_resolved['Catalyst']['Concentration']['Value'].unit['kg/m3']
 
 		self.activity_H2_rate_per_catalyst_mass = Quantity(peak_mol_H2_per_m2_per_h / kg_catalyst_per_m2, 'mol/h/kg')
 
@@ -455,7 +466,7 @@ class Photocatalytic_Plugin:
 
 			catalyst_mol_per_L = self.input_dict_resolved['Catalyst']['Concentration']['Value'].unit['g/liter'] / self.input_dict_resolved['Catalyst']['Molar Weight']['Value'].unit['g/mol']
 
-			liter_per_m2 = self.input_dict_resolved['Reactor Baggies']['Height']['Value'].unit['mm']
+			liter_per_m2 = self.input_dict_resolved['Reactor Baggies']['Filling height']['Value'].unit['mm']
 
 			mol_catalyst_per_m2 = liter_per_m2 * catalyst_mol_per_L
 
@@ -471,7 +482,7 @@ class Photocatalytic_Plugin:
 			catalyst_properties['Homogeneous']['TON'] = Quantity(TON, '-')
 
 			if 'Molar Attenuation Coefficient' in self.input_dict_resolved['Catalyst']:
-				absorbance = catalyst_mol_per_L * self.input_dict_resolved['Reactor Baggies']['Height']['Value'].unit['cm'] * self.input_dict_resolved['Catalyst']['Molar Attenuation Coefficient']['Value'].unit['liter/cm/mol']
+				absorbance = catalyst_mol_per_L * self.input_dict_resolved['Reactor Baggies']['Filling height']['Value'].unit['cm'] * self.input_dict_resolved['Catalyst']['Molar Attenuation Coefficient']['Value'].unit['liter/cm/mol']
 
 				catalyst_properties['Homogeneous']['Absorbance'] = Quantity(absorbance, '-')
 				catalyst_properties['Homogeneous']['Absorbed light'] = Quantity(1 - 10**(-absorbance), '-')
@@ -491,11 +502,11 @@ class Photocatalytic_Plugin:
 		baggie = self.input_dict_resolved['Reactor Baggies']
 
 		material_cost = self.baggie_area.unit['m2'] * (baggie['Cost material top']['Value'].unit['USD/m2'] + baggie['Cost material bottom']['Value'].unit['USD/m2'])
-		port_cost = baggie['Number of ports']['Value'].unit['-'] * baggie['Cost of port']['Value'].unit['USD']
+		port_cost = baggie['Number of ports per baggie']['Value'].unit['-'] * baggie['Cost of port']['Value'].unit['USD']
 
-		cost_per_baggie = baggie['Markup factor']['Value'].unit['-'] * (material_cost + port_cost + baggie['Other Costs']['Value'].unit['USD'])
+		cost_per_baggie = baggie['Markup factor']['Value'].unit['-'] * (material_cost + port_cost + baggie['Other costs per baggie']['Value'].unit['USD'])
 
-		self.baggie_number = Quantity(np.ceil(self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output per day']['Value'].unit['kg'] / self.mass_rate_H2_per_baggie.unit['kg/day']), '-')
+		self.baggie_number = Quantity((np.ceil(self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output per day']['Value'].unit['kg'] / self.mass_rate_H2_per_baggie.unit['kg/day'])).astype(int), '-')
 		self.baggies_cost = Quantity(self.baggie_number.unit['-'] * cost_per_baggie, 'USD')
 
 	def catalyst_cost(self, dcf):
@@ -505,14 +516,14 @@ class Photocatalytic_Plugin:
 
 		baggie = self.input_dict_resolved['Reactor Baggies']
 
-		baggie_volume = baggie['Length']['Value'].unit['m'] * baggie['Width']['Value'].unit['m'] * baggie['Height']['Value'].unit['m']
+		baggie_volume = baggie['Length']['Value'].unit['m'] * baggie['Width']['Value'].unit['m'] * baggie['Filling height']['Value'].unit['m']
 
-		self.total_volume = Quantity(baggie_volume * self.baggie_number, 'm3')
+		self.total_volume = Quantity(baggie_volume * self.baggie_number.unit['-'], 'm3')
 
 		self.catalyst_amount_per_baggie = Quantity(baggie_volume * self.input_dict_resolved['Catalyst']['Concentration']['Value'].unit['kg/m3'], 'kg')
 		self.catalyst_amount = Quantity(self.catalyst_amount_per_baggie.unit['kg'] * self.baggie_number.unit['-'], 'kg')
 
-		self.catalyst_cost = Quantity(self.catalyst_amount.unit['kg'] * self.input_dict_resolved['Catalyst']['Cost per unit mass']['Value'].unit['USD/kg'], 'USD')
+		self.catalyst_cost = Quantity(self.catalyst_amount.unit['kg'] * self.input_dict_resolved['Catalyst']['Cost per unit of mass']['Value'].unit['USD/kg'], 'USD')
 
 	def land_area(self, dcf):
 		'''Calculation of total required land area and solar collection area.
