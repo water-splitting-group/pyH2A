@@ -2,6 +2,129 @@ from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import numpy as np
 
+input_dict = {    
+    "Time": {
+        "Years": {
+            "Value": {
+                "type": {dict,},
+                "bounds": (None, None),
+            },
+            "Unit": {
+                "dimension": "dimensionless",
+            },
+            "optional": False,
+            "description": "Dictionary containing all time-related quantities."
+        }, 
+    },        
+    "Power Generation": {
+        "Available energy (daily)": {
+            "Value": {
+                "type": {dict,},
+                "bounds": (0, None),
+            },
+            "Unit": {
+                "dimension": "energy",
+            },                    
+            "optional": False,
+            "description": " Available energy, daily basis, dictionary of years."
+        },                      
+    },
+    
+    "Battery": {
+        "Design capacity": { 
+            "Value": {
+                "type": {int, float,},
+                "bounds": (0, None),
+            },
+            "Unit": {
+                "dimension": "energy",
+            },                    
+            "optional": False,
+            "description": "Full design capacity of battery."
+        },
+        
+        "Lowest discharge level": {
+            "Value": {
+                "type": {int, float,},
+                "bounds": (0, 1),
+            },
+            "Unit": {
+                "dimension": "dimensionless",
+            },                    
+            "optional": False,
+            "description": "Lowest level to which battery can be discharged."
+        },
+        
+        "Capacity loss per year": {
+            "Value": {
+                "type": {int, float,},
+                "bounds": (0, 1),
+            },
+            "Unit": {
+                "dimension": "dimensionless",
+            },                    
+            "optional": False,
+            "description": "Loss of capacity per year."
+        },
+        
+        "Round trip efficiency": {
+            "Value": {
+                "type": {int, float,},
+                "bounds": (0, 1),
+            },
+            "Unit": {
+                "dimension": "dimensionless",
+            },                    
+            "optional": False,
+            "description": "Round trip efficiency of battery."
+        },
+
+        "Energy density": {
+            "Value": {
+                "type": {float,},
+                "bounds": (0, None),
+            },
+            "Unit": {
+                "dimension": "energy / mass",
+            },
+            "optional": True,
+            "description": "Battery specific energy for analyses (kWh/kg)."
+        },
+    } 
+}
+
+output_dict = {
+    "Power Generation": {
+        "Stored energy (daily)": {
+            "Value": {
+                "inserted_value": "yearly_recovered_energy",
+                "type": {dict,},
+                "dimension": "energy",
+            },
+            "description": "Energy stored in battery daily (dictionary of years)",
+            "optional": False,
+        },
+        "Available energy (daily)": {
+            "Value": {
+                "inserted_value": "yearly_unstored_energy",
+                "type": {dict,},
+                "dimension": "energy",
+            },
+            "description": "Available energy, daily basis, dictionary of years - energy which has not been stored in battery",
+            "optional": False,
+        },
+        "Available energy (hourly)": {
+            "Value": {
+                "inserted_value": Quantity(0, 'J'),
+                 "type": {float,},
+                 "dimension": "energy",
+            },
+            "description": "Available energy is set to zero, since available energy is now only in daily format.",
+            "optional": False,
+        }
+    }
+}
+
 class Battery_Plugin:
     '''Simulation of electricity storage using a battery.
     Simulation assumes that battery is charged and completely discharged every day.
@@ -32,6 +155,9 @@ class Battery_Plugin:
     Power Generation > Available energy (hourly) > Value : float
         Available energy (hourly) is set to zero, since available power is now 
         only in daily format. 
+    Battery > Mass (kg) > Value : float
+        Installed battery mass in kg, calculated as design capacity divided by
+        energy density.
     '''
 
     def __init__(self, dcf, print_info, run = True):
@@ -161,7 +287,11 @@ class Battery_Plugin:
         
         output_inserter_function(self.output_dict, self, dcf, 'Battery_Plugin')            
 
-    def calculate_electricity_storage(self):
+        if self.battery_mass is not None:
+            insert(dcf, 'Battery', 'Mass (kg)', 'Value',
+                self.battery_mass, __name__, print_info = print_info)
+
+    def calculate_electricity_storage(self, dcf):
         '''Using hourly energy generation data and electrolyzer parameters,
         H2 production is calculated.
         '''
