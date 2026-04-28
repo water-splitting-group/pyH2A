@@ -52,6 +52,17 @@ input_dict = {
             "optional": False,
             "description": "Reference power of electrolyzer for cost reduction calculation."
         },
+        "Unit nominal power": {
+            "Value": {
+                "type": {float,},
+                "bounds": (0, None),
+            },
+            "Unit": {
+                "dimension": "power",
+            },
+            "optional": True,
+            "description": "Nominal power of one electrolyzer unit for unit-count calculation."
+        },
         "Power requirement increase per year": {
             "Value": {
                 "type": {float,},
@@ -128,6 +139,9 @@ class Electrolyzer_Plugin:
         Nominal power of electrolyzer in kW.
     Electrolyzer > CAPEX Reference Power (kW) > Value : float
         Reference power of electrolyzer in kW for cost reduction calculation.
+    Electrolyzer > Unit Nominal Power (kW) > Value : float, optional
+        Nominal power of one electrolyzer unit in kW. If not provided, CAPEX Reference
+        Power (kW) is used as fallback for unit-count calculation.
     Electrolyzer > Power requirement increase per year > Value : float
         Electrolyzer power requirement increase per year due to stack degradation. Percentage 
         or value > 0. Increase calculated as: (1 + increase per year) ^ year.
@@ -157,6 +171,9 @@ class Electrolyzer_Plugin:
         Yearly operation data of electrolyzer in (year, H2 produced, electrolyzer capacity) format.
     Electrolyzer > H2 Production (yearly, kg) > Value : nd.array
         Yearly hydrogen production in kg.
+    Electrolyzer > Number of electrolyzers required > Value : int
+        Number of electrolyzer units required, calculated as ceiling of total nominal
+        electrolyzer power divided by unit nominal power.
     Power Generation > Available Power (hourly, kWh) > Value : dict
         Available power (hourly, kWh) after subtracting power consumed by electrolyzer. 
         (dictionary of years).
@@ -173,6 +190,7 @@ class Electrolyzer_Plugin:
         self.replacement_frequency = calculate_stack_replacement(self.yearly_data[:,2], 
                                     dcf.inp['Electrolyzer']['Replacement time (h)']['Value'])
         self.calculate_scaling_factors(dcf)
+        self.calculate_number_of_electrolyzers_required(dcf)
 
         insert(dcf, 'Technical Operating Parameters and Specifications', 'Plant Design Capacity (kg of H2/day)', 'Value', 
                 self.h2_production/365., __name__, print_info = print_info)
@@ -189,6 +207,8 @@ class Electrolyzer_Plugin:
                self.yearly_data, __name__, print_info = print_info)
         insert(dcf, 'Electrolyzer','H2 Production (yearly, kg)', 'Value',
                 self.h2_production, __name__, print_info = print_info)
+        insert(dcf, 'Electrolyzer', 'Number of electrolyzers required', 'Value',
+            self.number_of_electrolyzers_required, __name__, print_info = print_info)
 
         insert(dcf, 'Power Generation', 'Available Power (hourly, kWh)', 'Value',
                 self.yearly_data_unused_power, __name__, print_info = print_info)
@@ -254,6 +274,19 @@ class Electrolyzer_Plugin:
         number_of_tenfold_increases = np.log10(power/reference)
 
         return dcf.inp['CAPEX Multiplier']['Multiplier']['Value'] ** number_of_tenfold_increases
+
+    def calculate_number_of_electrolyzers_required(self, dcf):
+        '''Calculation of required number of electrolyzer units.
+        '''
+
+        total_power = dcf.inp['Electrolyzer']['Nominal Power (kW)']['Value']
+
+        if 'Unit Nominal Power (kW)' in dcf.inp['Electrolyzer']:
+            unit_power = dcf.inp['Electrolyzer']['Unit Nominal Power (kW)']['Value']
+        else:
+            unit_power = dcf.inp['Electrolyzer']['CAPEX Reference Power (kW)']['Value']
+
+        self.number_of_electrolyzers_required = int(np.ceil(total_power / unit_power))
     
 def calculate_electrolyzer_power_demand(power_requirement_increase, nominal_power, year):
     '''Calculation of yearly increase in electrolyzer power demand.
