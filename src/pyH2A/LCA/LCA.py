@@ -80,6 +80,8 @@ class LCA:
         self.folder = self.import_folder(matrix_folder)
         self.tech_index_dict = self.folder.tech_index()
         self.A, self.B, self.C, self.f = self.load_matrices()
+        self.A_modified = None  # Will be set by update_A_matrix_with_lca_components
+        self.update_A_matrix_with_lca_components(dcf)
         self.build_scaling_vector(dcf)
 
         self.perform_LCA()
@@ -137,6 +139,14 @@ class LCA:
         f = self.folder.load(Matrix.f)
 
         return A, B, C, f
+
+    def _get_lca_component_table_names(self, dcf):
+        """Return input-table names that start with 'LCA'."""
+        return [
+            table_name
+            for table_name in dcf.inp
+            if table_name.lower().startswith('lca')
+        ]
     
     def build_scaling_vector(self, dcf):
         """
@@ -165,22 +175,97 @@ class LCA:
             or inconsistent pyH2A input definitions.
         """
 
-        table_group = 'LCA'
-        self.scaling_vector = np.zeros_like(self.f)
-
-        total_H2_production = np.sum(dcf.inp['Technical Operating Parameters and Specifications']['Output per Year at Gate']['Value'])
-        self.scaling_vector[0] = total_H2_production
-
-        for key in dcf.inp:
-            if table_group in key:
-                process_table(dcf.inp, key, 'Value')
-                process_LCA_table(self.scaling_vector, dcf.inp[key], self.tech_index_dict)
+        self.scaling_vector = np.asarray(solve(self.A_modified, self.f)).reshape(-1)
 
         ### Adding check that scaling vector is completely populated with data (no zeros).
         if np.any(self.scaling_vector == 0):
             zero_indices = np.where(self.scaling_vector == 0)[0]
             missing_processes = [k for k, v in self.tech_index_dict.items() if v.index in zero_indices]
             raise ValueError(f"Scaling vector has unpopulated entries at indices {zero_indices}. Missing processes: {missing_processes}")
+
+
+    def update_A_matrix_with_lca_components(self, dcf):
+        """
+            Updates the first column of the A matrix with LCA component values.
+            
+            For each LCA component defined in dcf.inp with a UUID, this method
+            finds the corresponding index in the technosphere matrix and updates
+            the first column with the component's value. If the value is an array/list
+            like yearly H2 production, the sum is used.
+
+            Parameters
+            ----------
+            dcf : pyH2A.Discounted_Cash_Flow
+                pyH2A Discounted_Cash_Flow object containing LCA components table.
+        """
+
+        lca_table_names = self._get_lca_component_table_names(dcf)
+        if len(lca_table_names) == 0:
+            raise ValueError(
+                "No LCA component tables found in input. "
+                "Define at least one table whose name starts with 'LCA'."
+            )
+
+        # Resolve any path-based references (e.g. "A > B > Value") into numbers.
+        for lca_table_name in lca_table_names:
+            process_table(dcf.inp, lca_table_name, 'Value')
+
+        # Safely copy the A matrix (handles both dense and sparse)
+        try:
+                self.A_modified = self.A.copy()
+        except AttributeError:
+            # If no copy method, assume it's already safe or convert
+                self.A_modified = np.array(self.A)
+
+        component_counter = 0
+        for lca_table_name in lca_table_names:
+            lca_components = dcf.inp[lca_table_name]
+
+            for component_name, component_data in lca_components.items():
+                if 'UUID' not in component_data or 'Value' not in component_data:
+                    missing_fields = [
+                        key for key in ('UUID', 'Value') if key not in component_data
+                    ]
+                    raise ValueError(
+                        f"LCA component '{component_name}' is missing required "
+                        f"field(s): {missing_fields}"
+                    )
+
+                uuid = component_data['UUID']
+                value = component_data['Value']
+
+                if uuid not in self.tech_index_dict:
+                    raise ValueError(
+                        f"LCA component '{component_name}' has UUID '{uuid}' "
+                        f"which was not found in the technosphere matrix index."
+                    )
+
+                # Get the index for this UUID
+                tech_index = self.tech_index_dict[uuid].index
+
+                # Handle array values by summing
+                if isinstance(value, np.ndarray):
+                    value = np.sum(value)
+
+                # Convert list/tuple values similarly and enforce scalar float output.
+                if isinstance(value, (list, tuple)):
+                    value = np.sum(value)
+
+                try:
+                    value = float(value)
+                except (TypeError, ValueError) as exc:
+                    raise ValueError(
+                        f"LCA component '{component_name}' resolved to non-numeric value: {value}"
+                    ) from exc
+
+                # Update first column (column 0) at the appropriate index.
+                # The first component keeps its original sign as product; all others are negated as inputs.
+                if component_counter == 0:
+                    self.A_modified[tech_index, 0] = value
+                else:
+                    self.A_modified[tech_index, 0] = -value
+
+                component_counter += 1
 
     def perform_LCA(self):
         """
@@ -239,8 +324,11 @@ def process_LCA_table(scaling_vector: np.ndarray, input_table: dict, tech_index_
     unit_conversion = {
         ('ton', 'kg'): 1000,
         ('kg', 'kg'): 1,
+        ('m2', 'm2'): 1,
         ('kWh', 'MJ'): 3.6,
-        ('MJ', 'MJ'): 1
+        ('MJ', 'MJ'): 1,
+        ('-', 'Item(s)'): 1,
+        ('Item(s)', 'Item(s)'): 1
     }
 
     for key in input_table:
