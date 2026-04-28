@@ -72,7 +72,7 @@ output_dict = {
 			"Value": {
 				"inserted_value": "staff_per_module",
 				"type": {float,},
-				"dimesion": "dimensionless",
+				"dimension": "dimensionless",
 			},
 			"description": "Number of 8-hour equivalent staff required for operating one plant module.",
 			"optional": False,
@@ -88,18 +88,18 @@ class Multiple_Modules_Plugin:
 	----------
 	Technical Operating Parameters and Specifications > Plant Modules > Value : float or int
 		Number of plant modules considered in this calculation, ``process_table()`` is used.
-	Non-Depreciable Capital Costs > Solar Collection Area (m2) > Value : float
-		Solar collection area for one plant module in m2, ``process_table()`` is used.
-	Fixed Operating Costs > area > Value : float
-		Solar collection area in m2 that can be covered by one staffer.
-	Fixed Operating Costs > shifts > Value : float or int
+	Non-Depreciable Capital Costs > Solar Collection Area > Value : float
+		Solar collection area for one plant module, ``process_table()`` is used.
+	Fixed Operating Costs > Solar collection area per staffer > Value : float
+		Solar collection area that can be covered by one staffer.
+	Fixed Operating Costs > Number of 8-hour shifts > Value : float or int
 		Number of 8-hour shifts (typically 3 for 24h operation).
-	Fixed Operating Costs > supervisor > Value : float or int
+	Fixed Operating Costs > Number of supervisors > Value : float or int
 		Number of shift supervisors.
 
 	Returns
 	-------
-	Fixed Operating Costs > staff > Value : float
+	Fixed Operating Costs > Staff > Value : float
 		Number of 8-hour equivalent staff required for operating one plant module.
 	''' 
 
@@ -117,7 +117,10 @@ class Multiple_Modules_Plugin:
 
 		area = self.input_dict_resolved['Technical Operating Parameters and Specifications']['Plant modules']['Value'].unit['-'] * self.input_dict_resolved['Non-Depreciable Capital Costs']['Solar collection area']['Value'].unit['m2']
 
-		staff = np.ceil(area / self.input_dict_resolved['Fixed Operating Costs']['Solar collection area per staffer']['Value']).unit['m2'] + self.input_dict_resolved['Fixed Operating Costs']['Number of supervisors']['Value'].unit['-']
+		staff = np.ceil(
+			area / self.input_dict_resolved['Fixed Operating Costs']
+			['Solar collection area per staffer']['Value'].unit['m2']
+		) + self.input_dict_resolved['Fixed Operating Costs']['Number of supervisors']['Value'].unit['-']
 		staff = staff * self.input_dict_resolved['Fixed Operating Costs']['Number of 8-hour shifts']['Value'].unit['-']
 
 		self.staff_per_module = Quantity(staff / self.input_dict_resolved['Technical Operating Parameters and Specifications']['Plant modules']['Value'].unit['-'], '-')
