@@ -172,7 +172,7 @@ class Variable_Operating_Cost_Plugin:
 
 		self.other = dcf.chemical_inflator * sum_all_tables(self.input_dict_resolved, 'Other Variable Operating Cost', 'Value', 
 																insert_total = True, class_object = dcf, 
-																print_info = print_info, unit = 'USD') # Unit will need to be removed after we correct sum_all_tables
+																print_info = print_info) # Unit will need to be removed after we correct sum_all_tables
 		self.other = Quantity(self.other, 'USD')
 
 class Utility:
