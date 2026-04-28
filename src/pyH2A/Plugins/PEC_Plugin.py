@@ -191,38 +191,38 @@ class PEC_Plugin:
 
 	Parameters
 	----------
-	Technical Operating Parameters and Specifications > Design Output per Day > Value : float
-		Design output in (kg of H2)/day, ``process_table()`` is used.
-	PEC Cells > Cell Cost ($/m2) > Value : float
+	Technical Operating Parameters and Specifications > Design output per Day > Value : float
+		Design output, ``process_table()`` is used.
+	PEC Cells > Cell cost > Value : float
 		Cost of PEC cells in $/m2.
-	PEC Cells > Lifetime (year) > Value : float
+	PEC Cells > Lifetime > Value : float
 		Lifetime of PEC cells in years before replacement is required.
-	PEC Cells > Length (m) > Value : float
-		Length of single PEC cell in m.
-	PEC Cells > Width (m) > Value : float
-		Width of single PEC cell in m.
-	Land Area Requirement > Cell Angle (degree) > Value : float
-		Angle of PEC cells from the ground, in degrees.
-	Land Area Requirement > South Spacing (m) > Value : float
-		South spacing of PEC cells in m.
-	Land Area Requirement > East/West Spacing (m) > Value : float
-		East/West Spacing of PEC cells in m.
-	Solar-to-Hydrogen Efficiency > STH (%) > Value : float
+	PEC Cells > Length > Value : float
+		Length of single PEC cell.
+	PEC Cells > Width > Value : float
+		Width of single PEC cell.
+	Land Area Requirement > Cell angle > Value : float
+		Angle of PEC cells from the ground.
+	Land Area Requirement > South spacing > Value : float
+		South spacing of PEC cells.
+	Land Area Requirement > East/West spacing > Value : float
+		East/West Spacing of PEC cells.
+	Solar-to-Hydrogen Efficiency > STH > Value : float
 		Solar-to-hydrogen efficiency in percentage or as a value between 0 and 1.
-	Solar Input > Mean solar input (kWh/m2/day) > Value : float
-		Mean solar input in kWh/m2/day, ``process_table()`` is used.
+	Solar Input > Mean solar input > Value : float
+		Mean solar input, ``process_table()`` is used.
 
 	Returns
 	-------
-	Non-Depreciable Capital Costs > Land required (acres) > Value : float
-		Total land area required in acres.
-	Non-Depreciable Capital Costs > Solar Collection Area (m2) > Value : float
-		Solar collection area in m2.
-	Planned Replacement > Planned Replacement PEC Cells > Cost ($) : float
+	Non-Depreciable Capital Costs > Land required > Value : float
+		Total land area required.
+	Non-Depreciable Capital Costs > Solar collection area > Value : float
+		Solar collection area.
+	Planned Replacement > Planned replacement PEC Cells > Cost : float
 		Total cost of replacing all PEC cells once.
-	Planned Replacement > Planned Replacement PEC Cells > Frequency (years) : float
+	Planned Replacement > Planned replacement PEC Cells > Frequency : float
 		Replacement frequency of PEC cells in years, identical to PEC cell lifetime.
-	Direct Capital Costs - PEC Cells > PEC Cell Cost ($) > Value : float
+	Direct Capital Costs - PEC Cells > PEC cell cost > Value : float
 		Total cost of all PEC cells.
 	PEC Cells > Number > Value : float
 		Number of individual PEC cells required for design H2 output capacity.
@@ -273,3 +273,4 @@ class PEC_Plugin:
 		total_width = self.pec['Width']['Value'].unit['m2'] + self.land['East/West spacing']['Value'].unit['m2']
 
 		self.total_land_area = Quantity(total_width * total_length * self.cell_number.unit['-'], 'm2')
+  
