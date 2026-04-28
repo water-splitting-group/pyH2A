@@ -11,7 +11,7 @@ input_dict = {
 				"bounds": (0, None),
 			},
 			"Unit": {
-				"dimension": "energy / area",
+				"dimension": "power / area",
 			},
 			"optional": False,
 			"description": "Hourly power ratio data for electricity production calculation. Either a path to a text file containing the data or ndarray. A suitable array can be retrieved from 'Hourly Irradiation > *type of tracking* > Value'."
@@ -155,9 +155,9 @@ class Photovoltaic_Plugin:
 		increase of power relative to CAPEX reference power. Based on the multiplier the CAPEX
 		scaling factor is calculated as: multiplier ^ (number of ten-fold increases). A value
 		of 1 leads to no CAPEX reduction, a value < 1 enables cost reduction.
-	Photovoltaic > Nominal Power (kW) > Value : float
-		Nominal power of PV array in kW.
-	Photovoltaic > CAPEX Reference Power (kW) > Value : float
+	Photovoltaic > Nominal power > Value : float
+		Nominal power of PV array.
+	Photovoltaic > CAPEX reference power > Value : float
 		Reference power of PV array for cost reduction calculations.
 	Photovoltaic > Power loss per year > Value : float
 		Reduction in power produced by PV array per year due to degradation. Percentage or value
@@ -167,19 +167,19 @@ class Photovoltaic_Plugin:
 
 	Returns
 	-------
-	Photovoltaic > Scaling Factor > Value : float
+	Photovoltaic > Scaling factor > Value : float
 		CAPEX scaling factor for PV array calculated based on CAPEX multiplier, 
 		reference and nominal power.
-	Power Generation > PV Hourly Power Generation (kWh) > Value : dict
-		Hourly power generation of PV array in kWh (dictionary of years).
-	Power Generation > Available Power (hourly, kWh) > Value : dict
-		Available power, hourly basis, dictionary of years (in kWh).
-	Power Generation > Available Power (daily, kWh) > Value : dict
-		Available power, daily basis, dictionary of years (in kWh).
-	Non-Depreciable Capital Costs > Land required (acres) > Value : float
-		Total land required in acres.
-	Non-Depreciable Capital Costs > Solar Collection Area (m2) > Value : float
-		Solar collection area in m2.
+	Power Generation > PV hourly power generation > Value : dict
+		Hourly power generation of PV array (dictionary of years).
+	Power Generation > Available energy (hourly) > Value : dict
+		Available power, hourly basis, dictionary of years
+    Power Generation > Available energy (daily) > Value : dict
+		Available energy, daily basis, dictionary of years .
+	Non-Depreciable Capital Costs > Land required > Value : float
+		Total land required.
+	Non-Depreciable Capital Costs > Solar collection area > Value : float
+		Solar collection area.
 	'''
 
 
@@ -225,7 +225,7 @@ class Photovoltaic_Plugin:
 		'''Calculation of PV CAPEX scaling factors.
 		'''
 
-		self.pv_scaling_factor = Quantity(self.scaling_factor(self.input_dict_resolved['Photovoltaic']['Nominal power']['Value'].unit['W'], self.input_dict_resolved['Photovoltaic']['CAPEX Reference Power']['Value'].unit['W']), '-')
+		self.pv_scaling_factor = Quantity(self.scaling_factor(self.input_dict_resolved['Photovoltaic']['Nominal power']['Value'].unit['W'], self.input_dict_resolved['Photovoltaic']['CAPEX reference power']['Value'].unit['W']), '-')
 		
 	def scaling_factor(self, power, reference):
 		'''Calculation of CAPEX scaling factor based on nominal and reference power.
@@ -239,4 +239,4 @@ class Photovoltaic_Plugin:
 		'''Area requirement calculation assuming 1000 W/m2 peak power.'''
 
 		peak_kW_per_m2 = self.input_dict_resolved['Photovoltaic']['Efficiency']['Value'].unit['-'] * 1.
-		self.area_m2 = Quantity(dcf.inp['Photovoltaic']['Nominal power']['Value'].unit['kW'] / peak_kW_per_m2, 'm2')
+		self.area_m2 = Quantity(dcf.inp['Photovoltaic']['Nominal power']['Value'] / peak_kW_per_m2, 'm2')
