@@ -6,12 +6,27 @@ License 2.0 (MPL 2.0; see https://github.com/GreenDelta/olca-app).
 from __future__ import annotations
 
 import csv
+import importlib
 import os
 from typing import Iterator, List
 
 import numpy
 import numpy.linalg
 import scipy.sparse
+import scipy.sparse.linalg
+
+try:
+    pypardiso = importlib.import_module('pypardiso')
+except ImportError:
+    pypardiso = None
+
+try:
+    scikit_umfpack = importlib.import_module('scikits.umfpack')
+except ImportError:
+    scikit_umfpack = None
+
+
+_SPARSE_CSC_CACHE = {}
 
 
 class TechEntry:
@@ -133,7 +148,8 @@ class ImpactEntry:
 def matrix_of(file_path: str):
     if file_path.endswith('.npz'):
         return scipy.sparse.load_npz(file_path)
-    return numpy.load(file_path)
+    else:
+        return numpy.load(file_path)
 
 
 def _csv_rows_of(f: str) -> Iterator[List[str]]:
@@ -198,8 +214,45 @@ def _as_dense(matrix):
 
 
 def solve(matrix, f):
-    """Note that we currently convert sparse matrices to a dense format."""
-    return numpy.linalg.solve(_as_dense(matrix), f)
+    """
+    Solve matrix * x = f using sparse backends when possible.
+    
+    Attempts to use the fastest available solver in this order:
+    1. pypardiso (MKL-backed, very fast on Windows/Linux, optional on Mac)
+    2. scikit-umfpack (UMFPACK-backed, cross-platform including Mac)
+    3. scipy.sparse.linalg.splu (default, always available)
+    """
+    if scipy.sparse.issparse(matrix):
+        rhs = numpy.asarray(f).reshape(-1)
+
+        # Try pypardiso first (MKL-backed, fastest when available)
+        if pypardiso is not None:
+            return pypardiso.spsolve(matrix, rhs)
+
+        # Try scikit-umfpack next (cross-platform, including Mac)
+        if scikit_umfpack is not None:
+            try:
+                if not scipy.sparse.isspmatrix_csc(matrix):
+                    matrix = matrix.tocsc()
+                return scikit_umfpack.spsolve(matrix, rhs)
+            except Exception:
+                # Fall through to scipy default if umfpack fails
+                pass
+
+        # Fall back to scipy's default sparse solver
+        if scipy.sparse.isspmatrix_csc(matrix):
+            csc_matrix = matrix
+        else:
+            matrix_id = id(matrix)
+            csc_matrix = _SPARSE_CSC_CACHE.get(matrix_id)
+            if csc_matrix is None:
+                csc_matrix = matrix.tocsc()
+                _SPARSE_CSC_CACHE[matrix_id] = csc_matrix
+
+        lu_factor = scipy.sparse.linalg.splu(csc_matrix)
+        return lu_factor.solve(rhs)
+
+    return numpy.linalg.solve(matrix, f)
 
 
 def invert(matrix):
