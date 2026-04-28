@@ -46,27 +46,27 @@ output_dict = {
 	"Fixed Operating Costs": {
 		"Labor cost - uninflated": {
 			"Value": {
-				"insert_value": "labor_uninflated",
+				"inserted_value": "labor_uninflated",
 				"type": {float,},
-				"dimension": "currency / time",
+				"dimension": "currency",
 			},	
 			"optional": False,
 			"description": "Yearly total labor cost without applying labor inflator."
 		},
 		"Labor cost": {
 			"Value": {
-				"insert_value": "labor",
+				"inserted_value": "labor",
 				"type": {float,},
-				"dimension": "currency / time",	
+				"dimension": "currency",	
 			},
 			"optional": False,
 			"description": "Yearly total labor cost after applying labor inflator."
 		},
 		"Total": {
 			"Value": {
-				"insert_value": "total_fixed_operating_cost",
+				"inserted_value": "total_fixed_operating_cost",
 				"type": {float,},
-				"dimension": "currency / time",	
+				"dimension": "currency",	
 			},
 			"optional": False,
 			"description": "Total yearly fixed operating cost, sum of total labor cost and total other fixed operating cost."
@@ -96,12 +96,12 @@ class Fixed_Operating_Cost_Plugin:
 		Number of staff, ``process_table()`` is used.
 	Fixed Operating Costs > hourly labor cost > Value : float
 		Hourly labor cost of staff, ``process_table()`` is used.
-	[...] Other Fixed Operating Cost [...] >> Value : float
+	<...> Other Fixed Operating Cost <...> >> Value : float
 		Yearly other fixed operating costs, ``sum_all_tables()`` is used.
 
 	Returns
 	-------
-	[...] Other Fixed Operating Cost [...] > Summed Total > Value : float
+	<...> Other Fixed Operating Cost <...> > Summed Total > Value : float
 		Summed total for each individual table in "Other Fixed Operating Cost" group.
 	Fixed Operating Costs > Labor Cost - Uninflated > Value : float
 		Yearly total labor cost.
@@ -133,5 +133,5 @@ class Fixed_Operating_Cost_Plugin:
 		'''Calculation of yearly other fixed operating costs by applying ``sum_all_tables()`` 
 		to "Other Fixed Operating Cost" group.'''
 
-		self.other = sum_all_tables(dcf.inp, 'Other Fixed Operating Cost', 'Value', insert_total = True, class_object = dcf, print_info = print_info, unit = 'USD') * dcf.combined_inflator
+		self.other = sum_all_tables(dcf.inp, 'Other Fixed Operating Cost', 'Value', insert_total = True, class_object = dcf, print_info = print_info) * dcf.combined_inflator
 
