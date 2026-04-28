@@ -167,40 +167,38 @@ class Production_Scaling_Plugin:
 
 	Parameters
 	----------
-	Technical Operating Parameters and Specifications > Plant Design Capacity (kg of H2/day) > Value : float
-		Plant design capacity in kg of H2/day, ``process_table()`` is used.
-	Technical Operating Parameters and Specifications > Operating Capacity Factor (%) > Value : float
-		Operating capacity factor in %, ``process_table()`` is used.
-	Technical Operating Parameters and Specifications > Maximum Output at Gate > Value : float, optional
-		Maximum output at gate in (kg of H2)/day, ``process_table()`` is used. If this parameter is
-		not specified it defaults to `Plant Design Capacity (kg of H2/day)`.
-	Technical Operating Parameters and Specifications > New Plant Design Capacity (kg of H2/day) > Value : float, optional
-		New plant design capacity in kg of H2/day to calculate scaling, which overwrites possible Scaling Ratio,
-		``process_table()`` is used.
-	Technical Operating Parameters and Specifications > Scaling Ratio > Value : float, optional
-		Scaling ratio which is multiplied by current plant design capacity to obtain scaled plant size,
-		``process_table`` is used.
-	Technical Operating Parameters and Specifications > Capital Scaling Exponent > Value : float, optional
-		Exponent to calculate capital scaling factor, ``process_table()`` is used. Defaults to 0.78.
-	Technical Operating Parameters and Specifications > Labor Scaling Exponent > Value : float, optional
-		Exponent to calculcate labor scaling factor, ``process_table()`` is used. Defaults to 0.25.
+	Technical Operating Parameters and Specifications > Plant design capacity > Value : float
+		Plant design capacity (mass per time).
+	Technical Operating Parameters and Specifications > Operating capacity factor > Value : float
+		Operating capacity factor.
+	Technical Operating Parameters and Specifications > Maximum output at gate > Value : float, optional
+		Maximum output at gate in (mass of H2)/time. 
+		If this parameter is not specified it defaults to `Plant design capacity`.
+	Technical Operating Parameters and Specifications > New plant design capacity > Value : float, optional
+		New plant design capacity in mass of H2/time to calculate scaling, which overwrites possible Scaling ratio.
+	Technical Operating Parameters and Specifications > Scaling ratio > Value : float, optional
+		Scaling ratio which is multiplied by current plant design capacity to obtain scaled plant size.
+	Technical Operating Parameters and Specifications > Capital scaling exponent > Value : float, optional
+		Exponent to calculate capital scaling factor. Defaults to 0.78.
+	Technical Operating Parameters and Specifications > Labor scaling exponent > Value : float, optional
+		Exponent to calculcate labor scaling factor. Defaults to 0.25.
 
 	Returns
 	-------
-	Technical Operating Parameters and Specifications > Design Output per Day > Value : float
-		Design output in (kg of H2)/day.
-	Technical Operating Parameters and Specifications > Max Gate Output per Day > Value : float
-		Maximum gate ouput in (kg of H2)/day.
-	Technical Operating Parameters and Specifications > Output per Year > Value : float
-		Yearly output taking operating capacity factor into account, in (kg of H2)/year.
-	Technical Operating Parameters and Specifications > Output per Year at Gate > Value	: float
-		Actual yearly output at gate, in (kg of H2)/year.
-	Technical Operating Parameters and Specifications > Scaling Ratio > Value : float or None
-		Returned if New Plant Design Capacity was specified.
-	Scaling > Capital Scaling Factor > Value : float or None
-		Returned if scaling is active (`Scaling Ratio` or `New Plant Design Capacity (kg of H2/day)` specified).
-	Scaling > Labor Scaling Factor > Value : float or None
-		Returned if scaling is active (`Scaling Ratio` or `New Plant Design Capacity (kg of H2/day)` specified).
+	Technical Operating Parameters and Specifications > Design output per day > Value : float
+		Design output.
+	Technical Operating Parameters and Specifications > Max gate output per day > Value : float
+		Maximum gate ouput.
+	Technical Operating Parameters and Specifications > Output per year > Value : float
+		Yearly output taking operating capacity factor into account.
+	Technical Operating Parameters and Specifications > Output per year at gate > Value	: float
+		Actual yearly output at gate.
+	Technical Operating Parameters and Specifications > Scaling ratio > Value : float or None
+		Returned if New plant design capacity was specified.
+	Scaling > Capital scaling factor > Value : float or None
+		Returned if scaling is active (`Scaling Ratio` or `New plant design capacity` specified).
+	Scaling > Labor scaling factor > Value : float or None
+		Returned if scaling is active (`Scaling ratio` or `New plant design capacity` specified).
 
 	Notes
 	-----
