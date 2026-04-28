@@ -1,0 +1,26 @@
+index,indicator ID,indicator name,indicator unit
+0,f71dc4f9-5575-4b5f-a6f3-9e5619afeb4b,Acidification,mol H+-Eq
+1,ad8c1cb1-c309-475c-9ce9-07e2bee533a2,Climate change,kg CO2-Eq
+2,a11ecb81-2e94-4d01-a35d-ccb67b57c102,Climate change: biogenic,kg CO2-Eq
+3,113bef4b-1c5e-4ef9-8573-8b3308bdaa8c,Climate change: fossil,kg CO2-Eq
+4,63e62e1d-9073-41d9-8a46-b00a2a54345b,Climate change: land use and land use change,kg CO2-Eq
+5,18bc98e1-39eb-43fc-ade1-ad18ba350a36,Ecotoxicity: freshwater,CTUe
+6,b9bdc45e-509c-4207-8107-5ae3ef159acd,"Ecotoxicity: freshwater, inorganics",CTUe
+7,5d14fb1c-3b62-4e5a-bccc-ada2109930d0,"Ecotoxicity: freshwater, organics",CTUe
+8,99b104d5-822c-47c4-b003-99056caeb281,Energy resources: non-renewable,"MJ, net calorific value"
+9,cc07dfc0-ecf3-410d-bab0-8f7c3bccb3d2,Eutrophication: freshwater,kg P-Eq
+10,a8484cf1-382b-4139-8852-b733e839bed8,Eutrophication: marine,kg N-Eq
+11,ce11b310-54da-4a9e-8fc1-18210c980ef2,Eutrophication: terrestrial,mol N-Eq
+12,c3c62975-cac9-4f6a-8c0f-2704052375fe,Human toxicity: carcinogenic,CTUh
+13,3d084978-b111-438b-99d9-edde58a404e8,"Human toxicity: carcinogenic, inorganics",CTUh
+14,e261390b-c501-42bc-9b27-f0ef15f8ae5b,"Human toxicity: carcinogenic, organics",CTUh
+15,227c3bcd-8735-46b1-81f4-3e9b7489c9d8,Human toxicity: non-carcinogenic,CTUh
+16,27683c99-2505-49e2-b008-207f10300029,"Human toxicity: non-carcinogenic, inorganics",CTUh
+17,d32122cd-b0d0-4386-add7-26b57c6bbdfe,"Human toxicity: non-carcinogenic, organics",CTUh
+18,145d88a8-1dc8-4074-aa7d-d62be504cab9,Ionising radiation: human health,kBq U235-Eq
+19,111eb037-d655-4e16-9657-eff2b66f9ec8,Land use,dimensionless
+20,bd40efa0-919e-4a43-9861-cd03220d03ca,Material resources: metals/minerals,kg Sb-Eq
+21,15d3fc3d-cea9-4bb3-954c-f8aec0e63935,Ozone depletion,kg CFC-11-Eq
+22,b79f2292-959c-4595-bb3e-5bdf81c389ed,Particulate matter formation,disease incidence
+23,c790a732-0b1b-4b2c-898b-83c29a6b133b,Photochemical oxidant formation: human health,kg NMVOC-Eq
+24,859c6b81-4848-4f0a-ba6f-5bbdb454c3ec,Water use,m3 world Eq deprived
