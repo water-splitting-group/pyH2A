@@ -40,6 +40,28 @@ Documentation for pyH2A is available at: https://pyh2a.readthedocs.io
 
 pyH2A uses Python >=3.7 with the following libraries: `NumPy`, `SciPy`, `Pandas`, `Matplotlib` and `Click`
 
+For sparse linear solves in LCA workflows, pyH2A can optionally use faster sparse solvers:
+- `pypardiso` (MKL-backed, fast on Windows/Linux)
+- `scikit-umfpack` (UMFPACK-backed, cross-platform including Mac)
+
+If either is installed, pyH2A will use it automatically for performance. If neither is available, pyH2A falls back to SciPy's default sparse solvers.
+
+To install performance backends:
+```bash
+# For Windows/Linux with MKL support:
+pip install pypardiso
+
+# For cross-platform support (recommended for Mac):
+pip install scikit-umfpack
+
+# Or install the platform-appropriate backend automatically:
+pip install pyH2A[performance]
+```
+
+With `pyH2A[performance]`, pip uses platform markers to install:
+- `pypardiso` on Windows/Linux
+- `scikit-umfpack` on macOS
+
 # Use
 
 pyH2A can be used from the command line:
