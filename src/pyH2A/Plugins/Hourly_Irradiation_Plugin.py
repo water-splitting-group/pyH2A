@@ -23,7 +23,7 @@ input_dict = {
 			"Unit": {
 				"dimension": "angle",
 			},
-			"optional": False,
+			"optional": True, # we always need a tilt, but it's optional as an explicit input because it defaults to the latitude
 			"description": "Tilt of irradiated module."
 		},
 		"Array azimuth": {
@@ -43,7 +43,7 @@ input_dict = {
 				"bounds": (250, 500),
 			},
 			"Unit": {
-				"dimension": "temperature",
+				"dimension": "absolute_temperature",
 			},
 			"optional": False,
 			"description": "Nominal operating temperature of irradiated module."
@@ -76,7 +76,7 @@ input_dict = {
 				"bounds": (-0.1, 0), 
 			},
 			"Unit": {
-				"dimension": "dimensionless/temperature",
+				"dimension": "dimensionless/temperature_diff",
 			},
 			"optional": False,
 			"description": "Performance decrease of irradiated module per degree increase."
@@ -88,7 +88,7 @@ output_dict = {
 	"Hourly Irradiation": {
 		"No tracking": {
 			"Value": {
-				"insert_value": "power",
+				"inserted_value": "power",
 				"type": {np.ndarray,},
 				"dimension": "power / area",
 			},
@@ -97,7 +97,7 @@ output_dict = {
 		},
 		"Horizontal single axis tracking": {
 			"Value": {
-				"insert_value": "power_sat",
+				"inserted_value": "power_sat",
 				"type": {np.ndarray,},
 				"dimension": "power / area",
 			},
@@ -106,7 +106,7 @@ output_dict = {
 		},
 		"Two axis tracking": {
 			"Value": {
-				"insert_value": "power_dat",
+				"inserted_value": "power_dat",
 				"type": {np.ndarray,},
 				"dimension": "power / area",
 			},
@@ -115,7 +115,7 @@ output_dict = {
 		},
 		"Mean solar input no tracking": {
 			"Value": {
-				"insert_value": "self.yearly_averaged_power",
+				"inserted_value": "yearly_averaged_power",
 				"type": {float,},
 				"dimension": "power / area",
 			},
@@ -124,7 +124,7 @@ output_dict = {
 		},
 		"Mean solar input single axis tracking": {
 			"Value": {
-				"insert_value": "self.yearly_averaged_power_sat",
+				"inserted_value": "yearly_averaged_power_sat",
 				"type": {float,},
 				"dimension": "power / area",
 			},
@@ -133,7 +133,7 @@ output_dict = {
 		},
 		"Mean solar input two axis tracking": {
 			"Value": {
-				"insert_value": "self.yearly_averaged_power_dat",
+				"inserted_value": "yearly_averaged_power_dat",
 				"type": {float,},
 				"dimension": "power / area",
 			},
@@ -151,33 +151,33 @@ class Hourly_Irradiation_Plugin:
 	Hourly Irradiation > File > Value : str
 		Path to a `.csv` file containing hourly irradiance data as provided by
 		https://re.jrc.ec.europa.eu/pvg_tools/en/#TMY, ``process_table()`` is used.
-	Irradiance Area Parameters > Module Tilt (degrees) > Value : float
-		Tilt of irradiated module in degrees.
-	Irradiance Area Parameters > Array Azimuth (degrees) > Value : float
-		Azimuth angle of irradiated module in degrees.
-	Irradiance Area Parameters > Nominal Operating Temperature (Celsius) > Value : float
-		Nominal operating temperature of irradiated module in degrees Celsius.
-	Irradiance Area Parameters > Mismatch Derating > Value : float
-		Derating value due to mismatch (percentage or value between 0 and 1).
-	Irradiance Area Parameters > Dirt Derating > Value : float
-		Derating value due to dirt buildup (percentage or value between 0 and 1).
-	Irradiance Area Parameters > Temperature Coefficient (per Celsius) > Value : float
-		Performance decrease of irradiated module per degree Celsius increase.
+	Irradiance Area Parameters > Module tilt > Value : float, optional
+		Tilt angle of irradiated module. Defaults to the absolute value of the latitude.
+	Irradiance Area Parameters > Array azimuth > Value : float
+		Azimuth angle of irradiated module.
+	Irradiance Area Parameters > Nominal operating temperature > Value : float
+		Nominal operating temperature of irradiated module.
+	Irradiance Area Parameters > Mismatch derating > Value : float
+		Derating value due to mismatch (dimensionless value between 0 and 1).
+	Irradiance Area Parameters > Dirt derating > Value : float
+		Derating value due to dirt buildup (dimensionless value between 0 and 1).
+	Irradiance Area Parameters > Temperature coefficient > Value : float
+		Performance decrease of irradiated module per temperature unit increase.
 
 	Returns
 	-------
-	Hourly Irradiation > No Tracking (kW) > Value : ndarray
-		Hourly irradiation with no tracking per m2 in kW.
-	Hourly Irradiation > Horizontal Single Axis Tracking (kW) > Value : ndarray
-		Hourly irradiation with single axis tracking per m2 in kW.
-	Hourly Irradiation > Two Axis Tracking (kW) > Value : ndarray
-		Hourly irradiation with two axis tracking per m2 in kW.
-	Hourly Irradiation > Mean solar input (kWh/m2/day) > Value : float
-		Mean solar input with no tracking in kWh/m2/day.
-	Hourly Irradiation > Mean solar input, single axis tracking (kWh/m2/day) > Value : float
-		Mean solar input with single axis tracking in kWh/m2/day.
-	Hourly Irradiation > Mean solar input, two axis tracking (kWh/m2/day) > Value : float
-		Mean solar input with two axis tracking in kWh/m2/day.
+	Hourly Irradiation > No tracking > Value : ndarray
+		Hourly irradiation poer with no tracking per area.
+	Hourly Irradiation > Horizontal single axis tracking > Value : ndarray
+		Hourly irradiation power with single axis tracking per area.
+	Hourly Irradiation > Two axis tracking > Value : ndarray
+		Hourly irradiation power with two axis tracking per area.
+	Hourly Irradiation > Mean solar input > Value : float
+		Mean solar input power with no tracking in per area.
+	Hourly Irradiation > Mean solar input, single axis tracking > Value : float
+		Mean solar input power with single axis tracking per area.
+	Hourly Irradiation > Mean solar input, two axis tracking > Value : float
+		Mean solar input power with two axis tracking per area.
 	'''
 
 	def __init__(self, dcf, print_info):
@@ -185,8 +185,8 @@ class Hourly_Irradiation_Plugin:
 		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Hourly_Irradiation_Plugin')
 
 		pv = self.input_dict_resolved['Irradiance Area Parameters']
-		if 'Module Tilt (degrees)' in pv:
-			tilt = pv['Module Tilt (degrees)']['Value']
+		if 'Module tilt' in pv:
+			tilt = pv['Module tilt']['Value']
 		else: # if we want to make the tilt equal to latitude, we don't point it through a path in the input fiale, we let it be the default
 			tilt = 'Default' 
 
@@ -267,10 +267,10 @@ def calculate_PV_power_ratio(file_name, module_tilt, array_azimuth, nominal_oper
 	latitude = Quantity(location['Latitude (decimal degrees)'], 'deg')
 	longitude = Quantity(location['Longitude (decimal degrees)'], 'deg')
 
-	if module_tilt is 'Default':
+	if module_tilt == 'Default':
 		module_tilt = Quantity(np.abs(location['Latitude (decimal degrees)']), 'deg')
 
-	day_number = np.arange(1, len(data['Time']) + 1) / 24
+	day_number = np.arange(1, len(data['Time'].unit['-']) + 1) / 24
 	#day_number = np.arange(0, len(data['Time'])) / 24
 
 	declination_angle = Quantity(23.45 * np.sin((day_number - 81) * 2 * np.pi / 365.),'deg')
@@ -278,14 +278,14 @@ def calculate_PV_power_ratio(file_name, module_tilt, array_azimuth, nominal_oper
 
 	altitude_angle = Quantity(
 					np.arcsin(np.sin(declination_angle.unit['rad']) * 
-					np.sin(latitude.unit('rad')) + np.cos(declination_angle.unit['rad']) * 
-					np.cos(latitude.unit('rad')) * np.cos(2 * np.pi / 360 * hour_angle)), 
+					np.sin(latitude.unit['rad']) + np.cos(declination_angle.unit['rad']) * 
+					np.cos(latitude.unit['rad']) * np.cos(hour_angle.unit['rad'])), 
 					'rad')
 
 	azimuth_angle = Quantity(
 					np.arccos((np.sin(declination_angle.unit['rad']) * 
-					np.cos(latitude.unit('rad')) - np.cos(declination_angle.unit['rad']) * 
-					np.sin(latitude.unit('rad')) * np.cos(hour_angle.unit['rad'])) / 
+					np.cos(latitude.unit['rad']) - np.cos(declination_angle.unit['rad']) * 
+					np.sin(latitude.unit['rad']) * np.cos(hour_angle.unit['rad'])) / 
 					np.cos(altitude_angle.unit['rad'])) * np.sign(hour_angle.unit['rad']), 
 					'rad')
 
@@ -300,7 +300,7 @@ def calculate_PV_power_ratio(file_name, module_tilt, array_azimuth, nominal_oper
 	cell_temperature = data['Temperature'].unit['degC'] + (nominal_operating_temperature.unit['degC'] - 
 					   20) * total_plane_radiation/800  #where does this formula come from?
 
-	temperature_derating = 1 + temperature_coefficient.unit['-/degC'] * (cell_temperature - 25)  # why the 25 correction?
+	temperature_derating = 1 + temperature_coefficient.unit['-/delta_degC'] * (cell_temperature - 25)  # why the 25 correction?
 
 	power = Quantity((temperature_derating * mismatch_derating.unit['-'] * 
 					 dirt_derating.unit['-'] * total_plane_radiation), 'W/m2')
