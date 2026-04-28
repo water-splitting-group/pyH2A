@@ -62,12 +62,12 @@ class Catalyst_Separation_Plugin:
 
 	Parameters
 	----------
-	Water Volume > Volume (liters) > Value : float
-		Total water volume in liters.
-	Catalyst > Lifetime (years) > Value : float
-		Lifetime of catalysts in year before replacement is required.
-	Catalyst Separation > Filtration cost ($/m3) > Value : float
-		Cost of filtration in $ per m3.
+	Water Volume > Volume > Value : float
+		Total water volume.
+	Catalyst > Lifetime > Value : float
+		Lifetime of catalysts before replacement is required.
+	Catalyst Separation > Filtration cost > Value : float
+		Cost of filtration.
 
 	Returns
 	-------
