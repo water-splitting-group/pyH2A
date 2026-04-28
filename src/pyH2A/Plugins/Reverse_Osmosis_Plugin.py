@@ -61,6 +61,17 @@ input_dict = {
             "optional": False,
             "description": "Fraction of fresh water obtained from given volume of sea water."
         },
+        "Device throughput": {
+            "Value": {
+                "type": {float,},
+                "bounds": (0, None),
+            },
+            "Unit": {
+                "dimension": "volume / time",
+            },
+            "optional": True,
+            "description": "Sea-water processing throughput of one reverse osmosis device."
+        },
     },
 }
 
@@ -79,6 +90,8 @@ class Reverse_Osmosis_Plugin:
         Average daily operating hours of reverse osmosis plant, used for scaling of reverse osmosis plant.
     Reverse Osmosis > Recovery Rate > Value : float
         Fraction of fresh water obtained from given volume of sea water.
+    Reverse Osmosis > Device throughput (L/year) > Value : float, optional
+        Sea-water processing throughput of one reverse osmosis device in L/year.
   
     Returns
     -------
@@ -87,7 +100,10 @@ class Reverse_Osmosis_Plugin:
     Power Consumption > Reverse Osmosis Consumption (kWh, yearly) > Type : str
         Type of power consumer, type is 'flexible', uses both stored and available power.
     Reverse Osmosis > Capacity (m3/h) > Value : float
-        Maximum sea water processing capacity per hour of reverse osmosis plant.   
+        Maximum sea water processing capacity per hour of reverse osmosis plant.
+    Reverse Osmosis > Number of devices required > Value : float
+        Number of reverse osmosis devices required, calculated as
+        maximum yearly sea-water demand divided by throughput of one device.
     '''
 
     def __init__(self, dcf, print_info):
@@ -96,6 +112,7 @@ class Reverse_Osmosis_Plugin:
  
         self.calculate_electricity_demand(dcf)
         self.calculate_reverse_osmosis_scaling(dcf)
+        self.calculate_number_of_reverse_osmosis_devices(dcf)
 
         insert(dcf, 'Power Consumption', 'Reverse Osmosis Consumption (kWh, yearly)', 'Value',
                 self.electricity_demand_kWh, __name__, print_info = print_info)
@@ -104,6 +121,10 @@ class Reverse_Osmosis_Plugin:
                 
         insert(dcf, 'Reverse Osmosis', 'Capacity (m3/h)', 'Value',
                 self.maximum_sea_water_processing_m3_per_hour, __name__, print_info = print_info)
+
+        if self.number_of_devices_required is not None:
+            insert(dcf, 'Reverse Osmosis', 'Number of devices required', 'Value',
+                self.number_of_devices_required, __name__, print_info = print_info)
                 
     def calculate_electricity_demand(self, dcf):
         '''Calculation of electricity demand for reverse osmosis based on
@@ -139,3 +160,25 @@ class Reverse_Osmosis_Plugin:
             maximum_yearly_sea_water_demand_m3 = self.sea_water_demand_m3
 
         self.maximum_sea_water_processing_m3_per_hour = maximum_yearly_sea_water_demand_m3 / yearly_operating_hours
+
+    def calculate_number_of_reverse_osmosis_devices(self, dcf):
+        '''
+        Calculation of required number of reverse osmosis devices.
+        '''
+
+        self.number_of_devices_required = None
+
+        if 'Device throughput (L/year)' not in dcf.inp['Reverse Osmosis']:
+            return
+
+        try:
+            maximum_yearly_sea_water_demand_m3 = max(self.sea_water_demand_m3)
+        except TypeError:
+            maximum_yearly_sea_water_demand_m3 = self.sea_water_demand_m3
+
+        device_throughput_l_per_year = dcf.inp['Reverse Osmosis']['Device throughput (L/year)']['Value']
+        device_throughput_m3_per_year = device_throughput_l_per_year / 1000.0
+
+        self.number_of_devices_required = (
+            maximum_yearly_sea_water_demand_m3 / device_throughput_m3_per_year
+        )

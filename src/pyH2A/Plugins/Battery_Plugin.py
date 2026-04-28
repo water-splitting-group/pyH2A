@@ -63,7 +63,19 @@ input_dict = {
             },                    
             "optional": False,
             "description": "Round trip efficiency of battery."
-        },  
+        },
+
+        "Energy density": {
+            "Value": {
+                "type": {float,},
+                "bounds": (0, None),
+            },
+            "Unit": {
+                "dimension": "energy / mass",
+            },
+            "optional": True,
+            "description": "Battery specific energy for analyses (kWh/kg)."
+        },
     } 
 }
 
@@ -84,6 +96,9 @@ class Battery_Plugin:
         Loss of capacity per year. Percentage or value > 0.
     Battery > Round trip efficiency > Value : float
         Round trip efficiency of battery. Percentage or value between 0 and 1.
+    Battery > Energy density (kWh/kg) > Value : float, optional
+        Battery specific energy in kWh/kg. Used to calculate installed battery mass
+        from design capacity.
     
     Returns
     -------
@@ -95,6 +110,9 @@ class Battery_Plugin:
     Power Generation > Available Power (hourly, kWh) > Value : float
         Available power (hourly, kWh) is set to zero, since available power is now 
         only in daily format. 
+    Battery > Mass (kg) > Value : float
+        Installed battery mass in kg, calculated as design capacity divided by
+        energy density.
     '''
 
     def __init__(self, dcf, print_info):
@@ -102,6 +120,7 @@ class Battery_Plugin:
         process_table(dcf.inp, 'Battery', 'Value')
 
         self.calculate_electricity_storage(dcf)
+        self.calculate_battery_mass(dcf)
 
         insert(dcf, 'Power Generation', 'Stored Power (daily, kWh)', 'Value',
                 self.yearly_recovered_power, __name__, print_info = print_info)
@@ -109,6 +128,10 @@ class Battery_Plugin:
                 self.yearly_unstored_power, __name__, print_info = print_info)
         insert(dcf, 'Power Generation', 'Available Power (hourly, kWh)', 'Value',
                 0, __name__, print_info = print_info)
+
+        if self.battery_mass is not None:
+            insert(dcf, 'Battery', 'Mass (kg)', 'Value',
+                self.battery_mass, __name__, print_info = print_info)
 
     def calculate_electricity_storage(self, dcf):
         '''Using hourly power generation data and electrolyzer parameters,
@@ -145,3 +168,11 @@ class Battery_Plugin:
         capacity = nominal_capacity * capacity_decrease
 
         return capacity, capacity_decrease
+
+    def calculate_battery_mass(self, dcf):
+        self.battery_mass = None
+
+        if 'Energy density (kWh/kg)' in dcf.inp['Battery']:
+            energy_density = dcf.inp['Battery']['Energy density (kWh/kg)']['Value']
+            design_capacity = dcf.inp['Battery']['Design Capacity (kWh)']['Value']
+            self.battery_mass = design_capacity / energy_density
