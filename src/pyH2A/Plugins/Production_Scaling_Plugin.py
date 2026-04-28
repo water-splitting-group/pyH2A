@@ -222,33 +222,33 @@ class Production_Scaling_Plugin:
 		`Scaling Ratio` was provided). Otherwise returns regular design output and output at gate per day in (kg H2).
 		'''
 
-		if 'Maximum Output at Gate' in self.dictionary:
-			self.maximum_output_at_gate = self.dictionary['Maximum Output at Gate']['Value']
+		if 'Maximum output at gate' in self.dictionary:
+			self.maximum_output_at_gate = self.dictionary['Maximum output at gate']['Value']
 		else:
-			self.maximum_output_at_gate = self.dictionary['Plant Design Capacity']['Value']
+			self.maximum_output_at_gate = self.dictionary['Plant design capacity']['Value']
 
-		if ('Scaling Ratio' in self.dictionary):
-			self.scaling_ratio = self.dictionary['Scaling Ratio']['Value']
+		if ('Scaling ratio' in self.dictionary):
+			self.scaling_ratio = self.dictionary['Scaling ratio']['Value']
 
-		if 'New Plant Design Capacity' in self.dictionary: # possibility to overwrite the existing scaling ratio
+		if 'New plant design capacity' in self.dictionary: # possibility to overwrite the existing scaling ratio
 			self.scaling_ratio = Quantity(self.dictionary['New plant design capacity']['Value'].unit['kg/day'] / self.dictionary['Plant design capacity']['Value'].unit['kg/day'], '-')
 
-		if ('Scaling Ratio' in self.dictionary) or ('New plant design capacity' in self.dictionary):
+		if ('Scaling ratio' in self.dictionary) or ('New plant design capacity' in self.dictionary):
 			self.design_output_per_day = Quantity(self.dictionary['Plant design capacity']['Value'].unit['kg/day'] * self.scaling_ratio.unit['-'], 'kg/day')
 			self.max_gate_output_per_day = Quantity(self.maximum_output_at_gate.unit['kg/day'] * self.scaling_ratio.unit['-'], 'kg/day')
 
-			if 'Capital Scaling Exponent' in self.dictionary:
+			if 'Capital scaling exponent' in self.dictionary:
 				self.capital_scaling_factor = Quantity(self.scaling_ratio.unit['-'] ** self.dictionary['Capital scaling exponent']['Value'].unit['-'], '-')
 			else:
 				self.capital_scaling_factor = Quantity(self.scaling_ratio.unit['-'] ** 0.78, '-')
 
-			if 'Labor Scaling Exponent' in self.dictionary:
-				self.labor_scaling_factor = Quantity(self.scaling_ratio.unit['-'] ** self.dictionary['Labor Scaling exponent']['Value'].unit['-'], '-')
+			if 'Labor scaling exponent' in self.dictionary:
+				self.labor_scaling_factor = Quantity(self.scaling_ratio.unit['-'] ** self.dictionary['Labor scaling exponent']['Value'].unit['-'], '-')
 			else:
 				self.labor_scaling_factor = Quantity(self.scaling_ratio.unit['-'] ** 0.25, '-')
 
 		else:
-			self.design_output_per_day = self.dictionary['Plant Design Capacity']['Value']
+			self.design_output_per_day = self.dictionary['Plant design capacity']['Value']
 			self.max_gate_output_per_day = self.maximum_output_at_gate
 
 	def calculate_output(self):
