@@ -402,7 +402,9 @@ class Discounted_Cash_Flow:
 
 		insert(self, 'Financial Input Values', 'construction time', 'Value', 
 			   len(self.inp['Construction']), __name__, print_info = self.print_info)
-
+		insert(self, 'Financial Input Values', 'construction time', 'Unit', 
+			   'year', __name__, print_info = self.print_info)
+		
 		construction_start = self.fin['startup year']['Value'] - self.fin['construction time']['Value']
 		end_of_life = self.fin['startup year']['Value'] + self.fin['plant life']['Value']
 
