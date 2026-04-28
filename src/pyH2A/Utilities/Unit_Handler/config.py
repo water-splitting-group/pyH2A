@@ -72,7 +72,7 @@ DIMENSIONS = {
             "mm3": 1e-9,
             "cm3": 1e-6,
             "L": 1e-3,
-            "liters": 1e-3,
+            "liter": 1e-3,
             "km3": 1e9,
             "mL": 1e-6,
             "uL": 1e-9
