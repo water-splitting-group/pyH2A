@@ -122,7 +122,7 @@ output_dict = {
 	"Non-Depreciable Capital Costs": {
 		"Land required": {
 			"Value": {
-				"inserted_value": "area_m2",
+				"inserted_value": "area",
 				"type": {float,},
 				"dimension": "area",
 			},
@@ -131,7 +131,7 @@ output_dict = {
 		},
 		"Solar collection area": {
 			"Value": {
-				"inserted_value": "area_m2",
+				"inserted_value": "area",
 				"type": {float,},
 				"dimension": "area",
 			},
@@ -239,4 +239,4 @@ class Photovoltaic_Plugin:
 		'''Area requirement calculation assuming 1000 W/m2 peak power.'''
 
 		peak_kW_per_m2 = self.input_dict_resolved['Photovoltaic']['Efficiency']['Value'].unit['-'] * 1.
-		self.area_m2 = Quantity(dcf.inp['Photovoltaic']['Nominal power']['Value'] / peak_kW_per_m2, 'm2')
+		self.area = Quantity(self.input_dict_resolved['Photovoltaic']['Nominal power']['Value'].unit['kW'] / peak_kW_per_m2, 'm2')
