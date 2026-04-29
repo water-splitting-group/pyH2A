@@ -253,13 +253,14 @@ class Capital_Cost_Plugin:
 	def __init__(self, dcf, print_info):
 		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Capital_Cost_Plugin')
 		
-		# All the self.X variable are converted into Quantites just before their insertion, to avoid unnecessary complications
+		# Except for self.direct and self.indirect, which are natively Quantities as they are the results of sum_all_tables calls, 
+		# all the self.X variable are converted into Quantites just before their insertion, to avoid unnecessary complications
 		self.direct_capital_costs(dcf, print_info)  
-		self.direct_inflated = self.direct * dcf.combined_inflator
+		self.direct_inflated = self.direct.unit['USD'] * dcf.combined_inflator
 		
 		self.indirect_capital_costs(dcf, print_info)
-		self.indirect_inflated = self.indirect * dcf.combined_inflator
-		self.depreciable = self.direct + self.indirect
+		self.indirect_inflated = self.indirect.unit['USD'] * dcf.combined_inflator
+		self.depreciable = self.direct.unit['USD'] + self.indirect.unit['USD']
 		self.depreciable_inflated = self.direct_inflated + self.indirect_inflated
 		
 		self.non_depreciable_capital_costs(dcf, print_info)
@@ -268,9 +269,7 @@ class Capital_Cost_Plugin:
 		self.total_inflated = self.depreciable_inflated + self.non_depreciable_inflated
 
 		# convert the values into Quantities
-		self.direct = Quantity(self.direct, 'USD')
 		self.direct_inflated = Quantity(self.direct_inflated, 'USD')
-		self.indirect = Quantity(self.indirect, 'USD')
 		self.indirect_inflated = Quantity(self.indirect_inflated, 'USD')
 		self.depreciable = Quantity(self.depreciable, 'USD')
 		self.depreciable_inflated = Quantity(self.depreciable_inflated, 'USD')
@@ -285,13 +284,13 @@ class Capital_Cost_Plugin:
 		'''Calculation of direct capital costs by applying ``sum_all_tables()`` to "Direct Capital Cost" group.'''
                                                                
 		self.direct, self.direct_contributions = sum_all_tables(self.input_dict_resolved, 'Direct Capital Cost', 'Value', insert_total = True, 
-																class_object = dcf, print_info = print_info, return_contributions = True, unit = 'USD')
+																class_object = dcf, print_info = print_info, return_contributions = True)
 
 	def indirect_capital_costs(self, dcf, print_info):
 		'''Calculation of indirect capital costs by applying ``sum_all_tables()`` to "Indirect Capital Cost" group.'''
 
 		self.indirect = sum_all_tables(self.input_dict_resolved, 'Indirect Capital Cost', 'Value', insert_total = True, 
-									   class_object = dcf, print_info = print_info, unit = 'USD')
+									   class_object = dcf, print_info = print_info)
 
 	def non_depreciable_capital_costs(self, dcf, print_info):
 		'''Calculation of non-depreciable capital costs by calculating cost of land and applying
@@ -300,4 +299,4 @@ class Capital_Cost_Plugin:
 
 		non_depreciable = self.input_dict_resolved['Non-Depreciable Capital Costs']
 		self.non_depreciable = non_depreciable['Cost of land']['Value'].unit['USD/m2'] * non_depreciable['Land required']['Value'].unit['m2']
-		self.non_depreciable += sum_all_tables(self.input_dict_resolved, 'Other Non-Depreciable Capital Cost', 'Value', insert_total = True, class_object = dcf, print_info = print_info, unit = 'USD')
+		self.non_depreciable += sum_all_tables(self.input_dict_resolved, 'Other Non-Depreciable Capital Cost', 'Value', insert_total = True, class_object = dcf, print_info = print_info).unit['USD']
