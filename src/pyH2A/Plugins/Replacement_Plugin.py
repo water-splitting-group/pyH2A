@@ -72,11 +72,11 @@ class Replacement_Plugin:
 
 	Parameters
 	----------
-	Planned Replacement > [...] > Frequency (years) : float
-		Replacement frequency of [...] in years. 
+	Planned Replacement > [...] > Frequency : float
+		Replacement frequency of [...]. 
 		Iteration over all entries in `Planned Replacement` table. No path key
 		available.
-	Planned Replacement > [...] > Cost ($) : float
+	Planned Replacement > [...] > Cost : float
 		One-time replacement cost of [...].
 		Iteration over all entries in `Planned Replacement` table. Path key
 		is 'Path'.
