@@ -1,5 +1,6 @@
 import pytest
 from pyH2A.Plugins.Solar_Concentrator_Plugin import Solar_Concentrator_Plugin
+from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
 
 class DummyDCF:
@@ -16,29 +17,35 @@ class DummyDCF:
     ):
         self.inp = {
             "Solar Concentrator": {
-                "Concentration Factor": {
+                "Concentration factor": {
                     "Value": concentration_factor,
+                    "Unit": "-",
                 },
-                "Cost ($/m2)": {
+                "Cost": {
                     "Value": concentrator_cost_per_m2,
+                    "Unit": "USD/m2",
                 },
             },
             "PEC Cells": {
                 "Number": {
                     "Value": pec_number,
+                    "Unit": "-",
                 }
             },
             "Land Area Requirement": {
-                "South Spacing (m)": {
+                "South spacing": {
                     "Value": south_spacing_m,
+                    "Unit": "m",
                 },
-                "East/West Spacing (m)": {
+                "East/West spacing": {
                     "Value": ew_spacing_m,
+                    "Unit": "m",
                 },
             },
             "Non-Depreciable Capital Costs": {
-                "Solar Collection Area (m2)": {
+                "Solar collection area": {
                     "Value": solar_collection_area_m2,
+                    "Unit": "m2",
                 }
             },
         }
@@ -51,19 +58,21 @@ class DummyDCF:
             "input": {
                 "concentration_factor": 1.5,
                 "concentrator_cost_per_m2": 300.0,
-                "pec_number": 10,
+                "pec_number": 10.0,
                 "south_spacing_m": 2.0,
                 "ew_spacing_m": 1.5,
                 "solar_collection_area_m2": 100.0,
             },
             "expected": {
-                "total_solar_collection_area_m2": 150.0,
-                "total_land_area_m2": 225.2772085586298,
-                "total_land_area_acres": 0.05566712462088022,
-                "concentrator_cost": 45000.0,
+                "total_solar_collection_area": Quantity(150.0, "m2"),
+                "total_land_area": Quantity(225.2772085586298, "m2"),
+                "concentrator_cost": Quantity(45000.0, "USD"),
             },
         }
     ],
+    ids= [
+        "Realistic case - Solar Concentrator Plugin"
+    ]
 )
 def test_solar_concentrator_plugin(case):
     """Test Solar_Concentrator_Plugin using variable-value inputs."""
@@ -78,22 +87,17 @@ def test_solar_concentrator_plugin(case):
     # Tolerance (very small)
     tolerance = 1e-12
 
-    assert plugin.total_land_area_m2 == pytest.approx(
-        expected["total_land_area_m2"],
+    assert plugin.total_land_area.base_value == pytest.approx(
+        expected["total_land_area"].base_value,
         abs=tolerance
     )
     
-    assert plugin.total_land_area_acres == pytest.approx(
-        expected["total_land_area_acres"],
+    assert plugin.total_solar_collection_area.base_value == pytest.approx(
+        expected["total_solar_collection_area"].base_value,
         abs=tolerance
     )
     
-    assert plugin.total_solar_collection_area_m2 == pytest.approx(
-        expected["total_solar_collection_area_m2"],
-        abs=tolerance
-    )
-    
-    assert plugin.concentrator_cost == pytest.approx(
-        expected["concentrator_cost"],
+    assert plugin.concentrator_cost.base_value == pytest.approx(
+        expected["concentrator_cost"].base_value,
         abs=tolerance
     )
