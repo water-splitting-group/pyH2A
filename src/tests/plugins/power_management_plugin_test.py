@@ -17,12 +17,14 @@ class DummyDCF:
 
         self.inp = {
             "Power Generation": {
-                "Available Power (daily, kWh)": {
+                "Available energy (daily)": {
                     "Value": available_daily,
+                    "Unit": "kWh",
                     "Processed": "Yes",
                 },
-                "Stored Power (daily, kWh)": {
+                "Stored energy (daily)": {
                     "Value": stored_daily,
+                    "Unit": "kWh",
                     "Processed": "Yes",
                 },
             },
@@ -30,12 +32,21 @@ class DummyDCF:
                 "Test Consumer": {
                     "Value": power_consumption["value"],
                     "Type": power_consumption["type"],
+                    "Unit": "kWh",
                     "Processed": "Yes",
                 },
             },
-            "Grid Electricity": {"Cost ($/kWh)": {"Value": grid_cost}},
+            "Grid Electricity": {
+                "Cost": {
+                    "Value": grid_cost,
+                    "Unit": "USD / kWh",
+                }
+            },
             "Financial Input Values": {
-                "construction time": {"Value": construction_time}
+                "construction time": {
+                    "Value": construction_time,
+                    "Unit": "year"
+                }
             },
         }
 
