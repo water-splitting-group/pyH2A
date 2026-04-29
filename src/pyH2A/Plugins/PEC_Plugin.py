@@ -154,7 +154,7 @@ output_dict = {
 				"dimension":"currency",
 			},
 			"Frequency": {
-				"inserted_value": "input_dict_resolved['PEC Cells']['Lifetime']['Value']",
+				"inserted_value": "cell_lifetime",
 				"type": {float,}, 
 				"dimension":"time",
 			},
@@ -230,6 +230,7 @@ class PEC_Plugin:
 
 	def __init__(self, dcf, print_info):
 		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'PEC_Plugin')
+		self.cell_lifetime = self.input_dict_resolved['PEC Cells']['Lifetime']['Value']
 
 		self.hydrogen_production()
 		self.PEC_cost()
@@ -249,7 +250,7 @@ class PEC_Plugin:
 		self.H2_molecular_weight = Quantity(2, 'g/mol')
 		mol_H2_per_cell_per_second = cell_insolation * self.input_dict_resolved['Solar-to-Hydrogen Efficiency']['STH']['Value'].unit['-'] / self.H2_molecule_energy.unit['J/mol']
 		self.mass_rate_H2_per_cell = Quantity(mol_H2_per_cell_per_second*self.H2_molecular_weight.unit['kg/mol'], 'kg/s')
-		self.mol_rate_H2_per_m2 = Quantity(mol_H2_per_cell_per_second / self.cell_area.unit['m2'], 'mol/s')
+		self.mol_rate_H2_per_surface = Quantity(mol_H2_per_cell_per_second / self.cell_area.unit['m2'], 'mol/s/m2')
 
 	def PEC_cost(self):
 		'''Calculation of cost per cell, number of required cells and total cell cost.
@@ -270,7 +271,6 @@ class PEC_Plugin:
 
 		cell_plan_view = self.pec['Length']['Value'].unit['m'] * np.cos(self.land['Cell angle']['Value'].unit['rad'])
 		total_length = cell_plan_view + self.land['South spacing']['Value'].unit['m']	
-		total_width = self.pec['Width']['Value'].unit['m2'] + self.land['East/West spacing']['Value'].unit['m2']
+		total_width = self.pec['Width']['Value'].unit['m'] + self.land['East/West spacing']['Value'].unit['m']
 
 		self.total_land_area = Quantity(total_width * total_length * self.cell_number.unit['-'], 'm2')
-  
