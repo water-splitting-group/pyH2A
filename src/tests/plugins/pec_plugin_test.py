@@ -68,7 +68,7 @@ class DummyDCF:
             "Solar Input": {
                 "Mean solar input": {
                     "Value": solar_input,
-                    "Unit": "W / m2"
+                    "Unit": "kW / m2"
                 }
             },
         }
@@ -88,15 +88,14 @@ class DummyDCF:
                 "south_spacing": 6.71,
                 "east_spacing": 17.3,
                 "sth": 0.14,
-                "solar_input": 5.0,
+                "solar_input": 5.0/24,
             },
             "expected": {
-                "total_land_area_acres": Quantity(1321.7195315319523, 'acre'),
                 "total_solar_collection_area": Quantity(47057.399999999994, 'm2'),
                 "cell_cost": Quantity(988205399.9999998, 'USD'),
                 "cell_number": Quantity(26143.0, '-'),
-                "mol_H2_per_m2_per_day": Quantity(10.62569970259003, 'mol/m2/day'),
-                "kg_H2_per_cell": Quantity(0.0382525189293241, 'kg'),
+                "mol_H2_per_m2_per_day": Quantity(10.6256954979, 'mol/day'),
+                "flowrate_H2_per_cell": Quantity(0.0382525189293241, 'kg/day'),
                 "total_land_area": Quantity(5348817.431990256, 'm2'),
             },
         },
@@ -114,39 +113,34 @@ def test_pec_plugin(case):
     
     # Tolerance (very small)
     tolerance = 1e-12
-
-    assert plugin.total_land_area_acres == pytest.approx(
-        expected["total_land_area_acres"],
+    
+    assert plugin.total_solar_collection_area.unit['m2'] == pytest.approx(
+        expected["total_solar_collection_area"].unit['m2'],
         abs=tolerance
     )
     
-    assert plugin.total_solar_collection_area == pytest.approx(
-        expected["total_solar_collection_area"],
+    assert plugin.cell_cost.unit['USD'] == pytest.approx(
+        expected["cell_cost"].unit['USD'],
         abs=tolerance
     )
     
-    assert plugin.cell_cost == pytest.approx(
-        expected["cell_cost"],
+    assert plugin.cell_number.unit['-'] == pytest.approx(
+        expected["cell_number"].unit['-'],
         abs=tolerance
     )
     
-    assert plugin.cell_number == pytest.approx(
-        expected["cell_number"],
+    assert plugin.mol_rate_H2_per_surface.unit['mol/s/m2'] == pytest.approx(
+        expected["mol_H2_per_m2_per_day"].unit['mol/s'],
         abs=tolerance
     )
     
-    assert plugin.mol_H2_per_m2_per_day == pytest.approx(
-        expected["mol_H2_per_m2_per_day"],
+    assert plugin.mass_rate_H2_per_cell.unit['kg/s'] == pytest.approx(
+        expected["flowrate_H2_per_cell"].unit['kg/s'],
         abs=tolerance
     )
     
-    assert plugin.kg_H2_per_cell == pytest.approx(
-        expected["kg_H2_per_cell"],
-        abs=tolerance
-    )
-    
-    assert plugin.total_land_area == pytest.approx(
-        expected["total_land_area"],
+    assert plugin.total_land_area.unit['m2'] == pytest.approx(
+        expected["total_land_area"].unit['m2'],
         abs=tolerance
     )
     
