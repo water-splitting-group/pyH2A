@@ -10,7 +10,6 @@ input_dict = {
 			},
 			"Unit": {
 				"dimension": "mass / time",	
-				"enforced_unit": "kg / day",
 			},
 			"optional": False,
 			"description": "Design output of hydrogen production plant per day."
@@ -76,20 +75,20 @@ class Solar_Thermal_Plugin:
 
 	Parameters
 	----------
-	Technical Operating Parameters and Specifications > Design Output per Day > Value : float
-		Design output of hydrogen production plant per day in kg.
-	Solar-to-Hydrogen Efficiency > STH (%) > Value : float
+	Technical Operating Parameters and Specifications > Design output per day > Value : float
+		Design output of hydrogen production plant per day.
+	Solar-to-Hydrogen Efficiency > STH > Value : float
 		Solar-to-Hydrogen Efficiency of thermal water splitting process. Percentage of value 
 		between 0 and 1.
-	Solar Input > Mean solar input (kWh/m2/day) > Value : float
-		Mean solar input in kWh/m2/day.
-	Non-Depreciable Capital Costs > Additional Land Area (%) > Value : float
+	Solar Input > Mean solar input > Value : float
+		Mean solar input.
+	Non-Depreciable Capital Costs > Additional land area > Value : float
 		Additional land area required. Percentage or value > 0. Calculated as:
 		(1 + Addtional Land Area) * solar collection area.
 
 	Returns
 	-------
-	Non-Depreciable Capital Costs > Land required (acres) > Value : float
+	Non-Depreciable Capital Costs > Land required > Value : float
 		Total land requirement in acres.
 	'''
 	
@@ -104,11 +103,11 @@ class Solar_Thermal_Plugin:
 		'''Calculation of required land area based on solar input, solar-to-hydrogen efficiency
 		and addtional land are requirements.
 		'''
-		self.H2_molecule_energy = Quantity(2*1.229, 'eV/entity') # we must add an "entity" subkey in the "substance" dict, to convert entity count into moles
+		self.H2_molecule_energy = Quantity(2*1.229, 'eV/entity')
 		self.H2_molecular_weight = Quantity(2, 'g/mol')
 		H2_mol_per_m2 = (self.input_dict_resolved['Solar Input']['Mean solar input']['Value'].unit['W/m2'] * self.input_dict_resolved['Solar-to-Hydrogen Efficiency']['STH']['Value'].unit['-']) / self.H2_molecule_energy.unit['J/mol']
 		H2_kg_per_m2 = H2_mol_per_m2*self.H2_molecular_weight.unit['kg/mol']
 
-		required_area_m2 = self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output per day']['Value'].unit['kg'] / H2_kg_per_m2
+		required_area_m2 = self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output per day']['Value'].unit['kg/day'] / H2_kg_per_m2
 
 		self.area = Quantity(required_area_m2 * (1. + self.input_dict_resolved['Non-Depreciable Capital Costs']['Additional land area']['Value'].unit['-']), 'm2')
