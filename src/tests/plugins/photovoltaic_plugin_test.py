@@ -79,7 +79,7 @@ class DummyDCF:
             },
             "expected": {
                 "pv_scaling_factor": Quantity(0.990984576405111, '-'),
-                "area_m2": Quantity(5000.0, 'm2'),
+                "area": Quantity(5000.0, 'm2'),
                 "power_generation_yearly_data": {
                     2026: Quantity(np.array([
                         0.3964256642812647, 0.20209935826103692, 0.4741561866893559, 0.0,
@@ -134,13 +134,13 @@ def test_photovoltaic_plugin(case):
     # Tolerance (very small)
     tolerance = 1e-12
 
-    assert plugin.pv_scaling_factor.base_value == pytest.approx(
-        expected["pv_scaling_factor"].base_value, 
+    assert plugin.pv_scaling_factor.unit['-'] == pytest.approx(
+        expected["pv_scaling_factor"].unit['-'], 
         abs=tolerance
     )
 
-    assert plugin.area_m2.base_value == pytest.approx(
-        expected["area_m2"].base_value, 
+    assert plugin.area.unit['m2'] == pytest.approx(
+        expected["area"].unit['m2'], 
         abs=tolerance
     )
 
