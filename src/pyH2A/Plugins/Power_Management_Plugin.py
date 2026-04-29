@@ -1,6 +1,7 @@
 from pyH2A.Utilities.input_modification import daily_to_yearly_power
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+import numpy as np
 
 input_dict = {
     "Power Generation": {
@@ -127,36 +128,36 @@ class Power_Management_Plugin:
     
     Parameters
     ----------
-	Power Generation > Available Power (daily, kWh) > Value : dict, optional
-        Available power, daily basis, dictionary of years (in kWh)
-    Power Generation > Stored Power (daily, kWh) > Value : dict, optional
-        Stored power, daily basis, dictionary of years (in kWh)
+	Power Generation > Available energy (daily) > Value : dict, optional
+        Available energy, daily basis, dictionary of years
+    Power Generation > Stored energy (daily) > Value : dict, optional
+        Stored energy, daily basis, dictionary of years
     Power Consumption > [...] > Value : nd.array, optional
         Array of yearly power consumption values
     Power Consumption > [...] > Type : str, optional
         Type of power consumer, either 'flexible' for power consumer that can consume both 
         available power (not stored) or stored power, or 'on_demand' for power consumer that 
         can only consume stored power.
-    Grid Electricity > Cost ($/kWh) > Value : float or nd.array, optional
-        Cost of grid electricity in $/kWh, can be float or nd.array with same shape
+    Grid Electricity > Cost > Value : float or nd.array, optional
+        Cost of grid electricity, can be float or nd.array with same shape
         as Technical Operating Parameters and Specifications> Output per Year > Value
 
     Returns
     -------
-    Power Generation > Available Power (yearly, kWh) > Value : nd.array
-        Reamining available power, yearly basis, in kWh.
-    Power Generation > Stored Power (yearly, kWh) > Value : nd.array
-        Reamining stored power, yearly basis, in kWh.
-    Power Generation > Available Power (daily, kWh) > Value : float
-        Available power (daily, kWh) is set to zero, since available power is now 
+    Power Generation > Available energy (yearly, kWh) > Value : nd.array
+        Reamining available energy, yearly basis.
+    Power Generation > Stored energy (yearly, kWh) > Value : nd.array
+        Reamining stored energy, yearly basis.
+    Power Generation > Available energy (daily) > Value : float
+        Available energy (daily) is set to zero, since available energy is now 
         only in yearly format.
-    Power Generation > Stored Power (daily, kWh) > Value : float
-        Stored power (daily, kWh) is set to zero, since stored power is now
+    Power Generation > Stored energy (daily) > Value : float
+        Stored energy (daily) is set to zero, since stored energy is now
         only in yearly format.
-    Grid Electricity > Used grid electricity (yearly, kWh) > Value : nd.array
-        Used grid electricity, yearly basis, in kWh.
+    Grid Electricity > Used grid electricity (yearly) > Value : nd.array
+        Used grid electricity, yearly basis.
     Other Variable Operating Cost - Grid Electricity > Cost of grid electricity (yearly, $) > Value : nd.array
-        Cost of grid electricity, yearly basis, in $.
+        Cost of grid electricity, yearly basis.
     '''
 
     def __init__(self, dcf, print_info):
@@ -176,13 +177,13 @@ class Power_Management_Plugin:
         '''
 
         try:
-            flexible_available_energy = self.input_dict_resolved['Power Generation']['Available energy (daily)']['Value'].unit['J']
+            flexible_available_energy = self.input_dict_resolved['Power Generation']['Available energy (daily)']['Value']['J']
             flexible_available_energy_yearly = daily_to_yearly_power(flexible_available_energy)
         except KeyError:
             flexible_available_energy_yearly = np.zeros(len(dcf.operation_years))
 
         try:
-            stored_available_energy = self.input_dict_resolved['Power Generation']['Stored energy (daily']['Value']['J']
+            stored_available_energy = self.input_dict_resolved['Power Generation']['Stored energy (daily)']['Value']['J']
             stored_available_energy_yearly = daily_to_yearly_power(stored_available_energy)
         except KeyError:
             stored_available_energy_yearly = np.zeros(len(dcf.operation_years))
