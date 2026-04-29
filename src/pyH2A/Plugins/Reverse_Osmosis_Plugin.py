@@ -124,9 +124,6 @@ class Reverse_Osmosis_Plugin:
     def __init__(self, dcf, print_info):
         self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Reverse_Osmosis_Plugin')
 
-        process_table(dcf.inp, 'Reverse Osmosis', 'Value')
-        process_table(dcf.inp, 'Technical Operating Parameters and Specifications', 'Value')
- 
         self.calculate_electricity_demand(dcf)
         self.calculate_reverse_osmosis_scaling()
 
