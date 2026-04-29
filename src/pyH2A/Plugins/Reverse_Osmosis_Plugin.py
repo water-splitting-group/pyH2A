@@ -1,5 +1,6 @@
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+import numpy as np
 
 input_dict = {
     "Financial Input Values": {
@@ -99,24 +100,24 @@ class Reverse_Osmosis_Plugin:
     
     Parameters
     ----------
-    Financial Input Values > construction time > Value : int
+    Financial Input Values > Construction time > Value : int
         Construction time of hydrogen production plant in years.
-	Technical Operating Parameters and Specifications > Output per Year > Value : float
-		Yearly output taking operating capacity factor into account, in (kg of H2)/year.
-    Reverse Osmosis > Power Demand (kWh/m3) > Value : float
-        Power demand of reverse osmosis plant in kWh per m3 of sea water.
+	Technical Operating Parameters and Specifications > Output per year > Value : float
+		Yearly output taking operating capacity factor into account.
+    Reverse Osmosis > Power demand > Value : float
+        Power demand of reverse osmosis plant of sea water.
     Reverse Osmosis > Average daily operating hours > Value : float
         Average daily operating hours of reverse osmosis plant, used for scaling of reverse osmosis plant.
-    Reverse Osmosis > Recovery Rate > Value : float
+    Reverse Osmosis > Recovery rate > Value : float
         Fraction of fresh water obtained from given volume of sea water.
   
     Returns
     -------
-    Power Consumption > Reverse Osmosis Consumption (kWh, yearly) > Value : nd.array
+    Power Consumption > Reverse osmosis consumption (yearly) > Value : nd.array
         Electricity demand of reverse osmosis plant in kWh per year.
-    Power Consumption > Reverse Osmosis Consumption (kWh, yearly) > Type : str
+    Power Consumption > Reverse osmosis consumption (yearly) > Type : str
         Type of power consumer, type is 'flexible', uses both stored and available power.
-    Reverse Osmosis > Capacity (m3/h) > Value : float
+    Reverse Osmosis > Capacity > Value : float
         Maximum sea water processing capacity per hour of reverse osmosis plant.   
     '''
 
