@@ -100,7 +100,8 @@ class Replacement_Plugin:
 		self.initialize_contributions()
 		self.calculate_planned_replacement(dcf)
 		self.unplanned_replacement(dcf, print_info)
-		# contrary to the general rule of having self.* as Quantity objects, in the present plugin, only self.yearly_inflated and self.contributions['Total'] are Quantity objects to avoid the unnecessary complication of having in each look "self.X = Quantity(self.X.unit[] + ...) ".
+		# contrary to the general rule of having self.* as Quantity objects, in the present plugin, only self.yearly_inflated, self.unplanned and self.contributions['Total'] are Quantity objects 
+		# to avoid the unnecessary complication of having in each look "self.X = Quantity(self.X.unit[] + ...) ".
 		self.contributions['Total'] = Quantity(np.sum(self.yearly), 'USD')
 		
 		self.yearly_inflated = Quantity(self.yearly * dcf.inflation_correction * dcf.inflation_factor, 'USD')
@@ -125,7 +126,7 @@ class Replacement_Plugin:
 		'''
 
 		for key in dcf.inp['Planned Replacement']:
-			planned_replacement = Planned_Replacement(self.input_dict_resolved['Planned Replacement'][key], key, dcf)
+			planned_replacement = Planned_Replacement(self.input_dict_resolved['Planned Replacement'][key], dcf)
 			self.yearly[planned_replacement.years_idx] += planned_replacement.cost
 			self.contributions['Data'][key] = planned_replacement.total_cost
 
@@ -136,9 +137,9 @@ class Replacement_Plugin:
 
 		self.unplanned = sum_all_tables(self.input_dict_resolved, 'Unplanned Replacement', 'Value', 
 										insert_total = True, class_object = dcf, 
-										print_info = print_info, unit = 'USD')
-		self.yearly += self.unplanned
-		self.contributions['Data']['Unplanned Replacement'] = np.sum(np.ones_like(self.yearly) * self.unplanned)
+										print_info = print_info)
+		self.yearly += self.unplanned.unit['USD']
+		self.contributions['Data']['Unplanned Replacement'] = np.sum(np.ones_like(self.yearly) * self.unplanned.unit['USD'])
 
 class Planned_Replacement:
 	'''
@@ -150,20 +151,20 @@ class Planned_Replacement:
 		Calculation of yearly costs from one-time cost and replacement frequency.
 	'''
 
-	def __init__(self, dictionary, key, dcf):
-		self.calculate_yearly_cost(dictionary, key, dcf)
+	def __init__(self, dictionary, dcf):
+		self.calculate_yearly_cost(dictionary, dcf)
 		
-	def calculate_yearly_cost(self, dictionary, key, dcf):
+	def calculate_yearly_cost(self, dictionary, dcf):
 		'''Calculation of yearly replacement costs.
 
 		Replacement costs are billed annually, replacements which are performed at a non-integer rate 
 		are corrected using non_integer_correction.
 		'''
 
-		replacement_frequency = int(np.ceil(dictionary['Frequency'].unit['year']))
-		non_integer_correction = replacement_frequency / dictionary['Frequency'].unit['year']
+		replacement_frequency = int(np.ceil(dictionary['Frequency_Value'].unit['year']))
+		non_integer_correction = replacement_frequency / dictionary['Frequency_Value'].unit['year']
 
-		raw_replacement_cost = self.input_dict_resolved['Planned Replacement'][key]['Cost'].unit['USD'] 
+		raw_replacement_cost = dictionary['Cost_Value'].unit['USD'] 
 		initial_replacement_year_idx = fn.find_nearest(dcf.plant_years, replacement_frequency)[0]
 
 		self.cost = raw_replacement_cost * non_integer_correction * dcf.combined_inflator
