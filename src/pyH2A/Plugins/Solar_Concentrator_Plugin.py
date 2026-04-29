@@ -127,36 +127,36 @@ class Solar_Concentrator_Plugin:
 
 	Parameters
 	----------
-	Solar Concentrator > Concentration Factor > Value : float
+	Solar Concentrator > Concentration factor > Value : float
 		Concentration factor of solar concentration, value > 1.
-	Solar Concentrator > Cost ($/m2) > Value : float
-		Cost of solar concentrator in $/m2.
+	Solar Concentrator > Cost > Value : float
+		Cost of solar concentrator.
 	PEC Cells > Number > Value : float
 		Number of PEC cells required for design H2 production capacity.
-	Land Area Requirement > South Spacing (m) > Value : float
+	Land Area Requirement > South spacing > Value : float
 		South spacing of solar concentrators in m.
-	Land Area Requirement > East/West Spacing (m) > Value : float
-		East/West Spacing (m) of solar concentrators in m.
-	Non-Depreciable Capital Costs > Solar Collection Area (m2) > Value : float
-		Total solar collection area in m2.
+	Land Area Requirement > East/West spacing > Value : float
+		East/West spacing of solar concentrators.
+	Non-Depreciable Capital Costs > Solar Collection Area > Value : float
+		Total solar collection area.
 
 	Returns
 	-------
-	Non-Depreciable Capital Costs > Land required (m2) > Value : float
-		Total land requirement in m2.
-	Non-Depreciable Capital Costs > Land required (acres) > Value : float
-		Total land requirement in acres.
-	Non-Depreciable Capital Costs > Solar Collection Area (m2) > Value : float
-		Total solar collection area in m2.
-	Direct Capital Costs - Solar Concentrator > Solar Concentrator Cost ($) > Value : float
+	Non-Depreciable Capital Costs > Land required > Value : float
+		Total land requirement.
+	Non-Depreciable Capital Costs > Land required > Value : float
+		Total land requirement.
+	Non-Depreciable Capital Costs > Solar Collection Area > Value : float
+		Total solar collection area.
+	Direct Capital Costs - Solar Concentrator > Solar Concentrator Cost > Value : float
 		Total cost of all solar concentrators.
 	'''
 
 	def __init__(self, dcf, print_info):
 		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Solar_Concentrator_Plugin')
 
-		self.land_area(dcf)
-		self.calculate_cost(dcf)
+		self.land_area()
+		self.calculate_cost()
 
 		output_inserter_function(output_dict, self, dcf, 'Solar_Concentrator_Plugin') 
 
@@ -170,7 +170,7 @@ class Solar_Concentrator_Plugin:
 
 		self.total_solar_collection_area = Quantity(self.input_dict_resolved['Solar Concentrator']['Concentration factor']['Value'].unit['-'] * self.input_dict_resolved['Non-Depreciable Capital Costs']['Solar collection area']['Value'].unit['m2'], 'm2')
 
-		area_per_element_m2 = self.total_solar_collection_area.unit['m2'] / self.input_dict_resolved['PEC Cells']['Number']['Value']
+		area_per_element_m2 = self.total_solar_collection_area.unit['m2'] / self.input_dict_resolved['PEC Cells']['Number']['Value'].unit['-']
 		side_length_m = np.sqrt(area_per_element_m2)
 
 		x_length_m = side_length_m + land['East/West spacing']['Value'].unit['m']/2.
