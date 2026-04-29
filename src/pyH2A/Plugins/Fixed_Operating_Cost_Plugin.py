@@ -77,7 +77,7 @@ output_dict = {
             "<...> Other Fixed Operating Cost <...>": {
                 "Summed Total": {
                     "Value": {
-                        "type": {int, float},
+                        "type": {float},
                     },
                     "optional": True,
                     "description": "Summed total of other fixed operating costs across all tables"
