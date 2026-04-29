@@ -16,15 +16,31 @@ class DummyDCF:
     ):
         self.inp = {
             "Financial Input Values": {
-                "construction time": {"Value": construction_time}
+                "construction time": {
+                    "Value": construction_time,
+                    "Unit": "s",
+                }
             },
             "Technical Operating Parameters and Specifications": {
-                "Output per Year": {"Value": plant_output_per_year, "Processed": "Yes"}
+                "Output per year": {
+                    "Value": plant_output_per_year, 
+                    "Unit": "kg / year",
+                    "Processed": "Yes"
+                }
             },
             "Reverse Osmosis": {
-                "Power Demand (kWh/m3)": {"Value": power_demand_kWh_per_m3},
-                "Average daily operating hours": {"Value": avg_daily_hours},
-                "Recovery Rate": {"Value": recovery_rate},
+                "Power Demand (kWh/m3)": {
+                    "Value": power_demand_kWh_per_m3,
+                    "Unit": "kWh / m3",
+                },
+                "Average daily operating hours": {
+                    "Value": avg_daily_hours,
+                    "Unit": "hour / day"
+                },
+                "Recovery Rate": {
+                    "Value": recovery_rate,
+                    "Unit": "-"
+                },
             },
         }
         
