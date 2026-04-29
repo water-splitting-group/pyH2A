@@ -1,6 +1,7 @@
 import pytest
 import numpy as np
 from pyH2A.Plugins.Replacement_Plugin import Replacement_Plugin
+from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
 class DummyDCF:
     """Minimal DCF object for Replacement_Plugin with simple variable-value inputs."""
@@ -15,11 +16,11 @@ class DummyDCF:
     ):
         self.inp = {
             "Planned Replacement": {
-                key: {"Cost ($)": value["cost"], "Frequency (years)": value["frequency"]}
+                key: {"Cost_Value": value["cost"],"Cost_Unit": "USD", "Frequency_Value": value["frequency"],"Frequency_Unit": "year"}
                 for key, value in planned_replacement.items()
             },
             "Dummy Left Unplanned Replacement Dummy Right": {
-                key: {"Value": value} for key, value in unplanned_replacement.items()
+                key: {"Value": value, "Unit":"USD"} for key, value in unplanned_replacement.items()
             }
         }
         
@@ -36,16 +37,16 @@ class DummyDCF:
             "input": {
                 "planned_replacement": {
                     "Electrolyzer Stack": {
-                        "cost": 5000,
-                        "frequency": 5
+                        "cost": 5000.,
+                        "frequency": 5.
                     },
                     "Valve": {
-                        "cost": 2000,
-                        "frequency": 3
+                        "cost": 2000.,
+                        "frequency": 3.
                     },
                 },
                 "unplanned_replacement": {
-                    "Misc": 1000
+                    "Misc": 1000.
                 },
                 "plant_years": np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
                 "combined_inflator": 1.0,
@@ -53,7 +54,7 @@ class DummyDCF:
                 "inflation_factor": np.ones(10),
             },
             "expected": {
-                "total": 26000.0,
+                "total": Quantity(26000.0, "USD"),
             },
         }
     ]
@@ -72,6 +73,6 @@ def test_replacement_plugin(case):
     tolerance = 1e-12
     
     assert np.sum(plugin.yearly) == pytest.approx(
-        expected["total"],
+        expected["total"].unit["USD"],
         abs=tolerance
     )
