@@ -241,7 +241,7 @@ def allocate_power(consumption, flexible_power, stored_power):
         else:
             print('Warning: Unknown power consumer type:', consumer['Type'], f',    in Power Consumption > {key} > Type')
     
-    return Quantity(total_unfulfilled.unit['J']), Quantity(remaining_flexible.unit['J']), Quantity(remaining_stored.unit['J'])
+    return Quantity(total_unfulfilled, 'J'), Quantity(remaining_flexible, 'J'), Quantity(remaining_stored, 'J')
         
 def calculate_fulfillment(demand, remaining):
     """Calculate fulfillment of demand using stored power."""
