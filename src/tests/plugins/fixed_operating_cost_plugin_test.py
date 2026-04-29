@@ -56,7 +56,7 @@ class DummyDCF:
             "expected": {
                 "labor_uninflated": Quantity(104000.0, "USD"),
                 "labor": Quantity(109200.0, "USD"),
-                "other": Quantity(0.44000000000000006, "USD"),
+                "total_fixed_operating_cost": Quantity(109200.44000000000000006, "USD"),
             },
         },
     ],
@@ -74,18 +74,18 @@ def test_fixed_operating_cost_plugin(case):
     # Tolerance (very small)
     tolerance = 1e-12
 
-    assert plugin.labor_uninflated.base_value == pytest.approx(
-        expected["labor_uninflated"].base_value,
+    assert plugin.labor_uninflated.unit['USD'] == pytest.approx(
+        expected["labor_uninflated"].unit['USD'],
         abs=tolerance
     )
 
-    assert plugin.labor.base_value == pytest.approx(
-        expected["labor"].base_value,
+    assert plugin.labor.unit['USD'] == pytest.approx(
+        expected["labor"].unit['USD'],
         abs=tolerance
     )
 
-    assert plugin.other == pytest.approx(
-        expected["other"].base_value,
+    assert plugin.total_fixed_operating_cost.unit['USD'] == pytest.approx(
+        expected["total_fixed_operating_cost"].unit['USD'],
         abs=tolerance
     )
 
