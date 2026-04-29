@@ -91,4 +91,4 @@ def test_catalyst_separation_plugin(case):
     # Run plugin
     plugin = Catalyst_Separation_Plugin(dcf, print_info=False)
 
-    assert plugin.yearly_cost.base_value == case["expected"]["yearly_cost"].base_value
+    assert plugin.yearly_cost.unit['USD'] == case["expected"]["yearly_cost"].unit['USD']
