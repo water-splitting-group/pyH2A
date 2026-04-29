@@ -822,7 +822,7 @@ def sum_all_tables(dictionary, table_group, bottom_key, insert_total = False,
 	for key in dictionary:
 
 		if table_group in key:
-			value = sum_table(dictionary, key, bottom_key, path_key = path_key) # value is a Quantity object
+			value = sum_table(dictionary, key, bottom_key) # value is a Quantity object
 			total += value.base_value
 			contributions['Data'][key] = value.base_value
 			base_unit = value.base_unit
