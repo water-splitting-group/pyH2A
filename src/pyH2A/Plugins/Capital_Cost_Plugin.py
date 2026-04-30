@@ -177,7 +177,7 @@ output_dict = {
                     "Value": {
                         "type": {float},
                     },
-                    "optional": True,
+                    "optional": False,
                     "description": "Summed total of direct capital costs across all tables"
                 },
             },
@@ -186,7 +186,7 @@ output_dict = {
                     "Value": {
                         "type": {float},
                     },
-                    "optional": True,
+                    "optional": False,
                     "description": "Summed total of indirect capital costs across all tables"
                 },
             },
@@ -195,7 +195,7 @@ output_dict = {
                     "Value": {
                         "type": {float},
                     },
-                    "optional": True,
+                    "optional": False,
                     "description": "Summed total of other non-depreciable capital costs across all tables"
                 },
             },
@@ -213,9 +213,9 @@ class Capital_Cost_Plugin:
 	<...> Indirect Capital Cost <...> >> Value : float
 		``sum_all_tables()`` is used.
 	Non-Depreciable Capital Costs > Cost of land > Value : float
-		Cost of land, ``process_table()`` is used.
+		Cost of land.
 	Non-Depreciable Capital Costs > Land required > Value : float
-		Total land are required, ``process_table()`` is used.
+		Total land area required.
 	<...> Other Non-Depreciable Capital Cost <...> >> Value : float
 		``sum_all_tables()`` is used.
 
