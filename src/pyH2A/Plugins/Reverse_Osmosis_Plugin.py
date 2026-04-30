@@ -114,7 +114,7 @@ class Reverse_Osmosis_Plugin:
     Returns
     -------
     Power Consumption > Reverse osmosis consumption (yearly) > Value : nd.array
-        Electricity demand of reverse osmosis plant in kWh per year.
+        Electricity demand of reverse osmosis plant on each year.
     Power Consumption > Reverse osmosis consumption (yearly) > Type : str
         Type of power consumer, type is 'flexible', uses both stored and available power.
     Reverse Osmosis > Capacity > Value : float
@@ -122,7 +122,7 @@ class Reverse_Osmosis_Plugin:
     '''
 
 
-    def __init__(self, dcf, print_info):
+    def __init__(self, dcf):
         self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Reverse_Osmosis_Plugin')
 
         self.calculate_electricity_demand(dcf)
