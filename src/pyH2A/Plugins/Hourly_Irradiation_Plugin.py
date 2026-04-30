@@ -150,7 +150,7 @@ class Hourly_Irradiation_Plugin:
 	----------
 	Hourly Irradiation > File > Value : str
 		Path to a `.csv` file containing hourly irradiance data as provided by
-		https://re.jrc.ec.europa.eu/pvg_tools/en/#TMY, ``process_table()`` is used.
+		https://re.jrc.ec.europa.eu/pvg_tools/en/#TMY.
 	Irradiance Area Parameters > Module tilt > Value : float, optional
 		Tilt angle of irradiated module. Defaults to the absolute value of the latitude.
 	Irradiance Area Parameters > Array azimuth > Value : float
@@ -298,9 +298,9 @@ def calculate_PV_power_ratio(file_name, module_tilt, array_azimuth, nominal_oper
 	total_plane_radiation = direct_plane_radiation + diffuse_plane_radiation
 
 	cell_temperature = data['Temperature'].unit['degC'] + (nominal_operating_temperature.unit['degC'] - 
-					   20) * total_plane_radiation/800  #where does this formula come from?
+					   20) * total_plane_radiation/800  
 
-	temperature_derating = 1 + temperature_coefficient.unit['-/delta_degC'] * (cell_temperature - 25)  # why the 25 correction?
+	temperature_derating = 1 + temperature_coefficient.unit['-/delta_degC'] * (cell_temperature - 25)  
 
 	power = Quantity((temperature_derating * mismatch_derating.unit['-'] * 
 					 dirt_derating.unit['-'] * total_plane_radiation), 'W/m2')
