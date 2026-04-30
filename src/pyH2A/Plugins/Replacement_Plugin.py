@@ -1,4 +1,4 @@
-from pyH2A.Utilities.input_modification import process_input, sum_all_tables
+from pyH2A.Utilities.input_modification import sum_all_tables
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import pyH2A.Utilities.find_nearest as fn
@@ -59,7 +59,7 @@ output_dict = {
                     "Value": {
                         "type": {float},
                     },
-                    "optional": True,
+                    "optional": False,
                     "description": "Summed total of unplanned replacement across all tables"
                 },
             },
