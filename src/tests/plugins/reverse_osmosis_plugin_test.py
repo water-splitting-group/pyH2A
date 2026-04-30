@@ -71,7 +71,7 @@ def test_reverse_osmosis_plugin(case):
     dcf = DummyDCF(**case["input"])
 
     # Run plugin
-    plugin = Reverse_Osmosis_Plugin(dcf, print_info=False)
+    plugin = Reverse_Osmosis_Plugin(dcf)
     expected = case["expected"]
 
     # Tolerance (very small)
