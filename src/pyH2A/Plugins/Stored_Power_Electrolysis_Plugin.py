@@ -72,7 +72,7 @@ input_dict = {
                 "dimension": "time"
             },
             "optional": False,
-            "description": "Operating time in hours before stack replacement of electrolyzer is required."
+            "description": "Operating time before stack replacement of electrolyzer is required."
         },
         "Yearly operation data": {
             "Year_Value": {
@@ -135,7 +135,7 @@ output_dict = {
                 "dimension": "mass / time",
             }, 
             "optional": False,
-            "description": "Plant design capacity in mass of H2 per day calculated from installed electrolysis power capacity and hourly power generation data."
+            "description": "Plant design capacity in mass flowrate of H2 calculated from installed electrolysis power capacity and hourly power generation data."
         },
     },
     "Planned Replacement": {
