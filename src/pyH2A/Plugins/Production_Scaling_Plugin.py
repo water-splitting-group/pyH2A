@@ -33,7 +33,7 @@ input_dict = {
 			"Unit": {
 				"dimension": "mass / time",
 			},
-			"optional": True,
+			"optional": False,
 			"description": "Maximum output at gate. If not specified it defaults to `Plant Design Capacity`."
 		},
 		"New plant design capacity": {
@@ -127,7 +127,7 @@ output_dict = {
 				"type": {float,},
 				"dimension": "mass / time",
 			},
-			"optional": True,
+			"optional": False,
 			"description": "Maximum output at gate. If not specified it defaults to `Plant Design Capacity`."
 		},
 		"Scaling ratio": {
@@ -137,7 +137,7 @@ output_dict = {
 				"dimension": "dimensionless",
 			},
 			"optional": True,
-			"description": "Returned if New Plant Design Capacity was specified."
+			"description": "Returned or overwritten if New Plant Design Capacity was specified."
 		},
 	},
 	"Scaling": {
@@ -148,7 +148,7 @@ output_dict = {
 				"dimension": "dimensionless",
 			},
 			"optional": True,
-			"description": "Returned if scaling is active (`Scaling Ratio` or `New Plant Design Capacity (kg of H2/day)` specified)."
+			"description": "Returned if scaling is active (`Scaling Ratio` or `New Plant Design Capacity` specified)."
 		},
 		"Labor scaling factor": {
 			"Value": {
@@ -157,7 +157,7 @@ output_dict = {
 				"dimension": "dimensionless",
 			},
 			"optional": True,
-			"description": "Returned if scaling is active (`Scaling Ratio` or `New Plant Design Capacity (kg of H2/day)` specified)."
+			"description": "Returned if scaling is active (`Scaling Ratio` or `New Plant Design Capacity` specified)."
 		},
 	},
 }
@@ -193,6 +193,8 @@ class Production_Scaling_Plugin:
 		Yearly output taking operating capacity factor into account.
 	Technical Operating Parameters and Specifications > Output per year at gate > Value	: float
 		Actual yearly output at gate.
+	Technical Operating Parameters and Specifications > Maximum output at gate > Value	: float
+		Specified or equal to to `Plant design capacity`.				
 	Technical Operating Parameters and Specifications > Scaling ratio > Value : float or None
 		Returned if New plant design capacity was specified.
 	Scaling > Capital scaling factor > Value : float or None
