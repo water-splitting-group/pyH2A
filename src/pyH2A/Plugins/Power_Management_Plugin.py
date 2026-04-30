@@ -144,9 +144,9 @@ class Power_Management_Plugin:
 
     Returns
     -------
-    Power Generation > Available energy (yearly, kWh) > Value : nd.array
+    Power Generation > Available energy (yearly) > Value : nd.array
         Reamining available energy, yearly basis.
-    Power Generation > Stored energy (yearly, kWh) > Value : nd.array
+    Power Generation > Stored energy (yearly) > Value : nd.array
         Reamining stored energy, yearly basis.
     Power Generation > Available energy (daily) > Value : float
         Available energy (daily) is set to zero, since available energy is now 
@@ -156,7 +156,7 @@ class Power_Management_Plugin:
         only in yearly format.
     Grid Electricity > Used grid electricity (yearly) > Value : nd.array
         Used grid electricity, yearly basis.
-    Other Variable Operating Cost - Grid Electricity > Cost of grid electricity (yearly, $) > Value : nd.array
+    Other Variable Operating Cost - Grid Electricity > Cost of grid electricity (yearly) > Value : nd.array
         Cost of grid electricity, yearly basis.
     '''
 
