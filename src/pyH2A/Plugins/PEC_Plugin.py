@@ -192,7 +192,7 @@ class PEC_Plugin:
 	Parameters
 	----------
 	Technical Operating Parameters and Specifications > Design output per Day > Value : float
-		Design output, ``process_table()`` is used.
+		Design output flowrate.
 	PEC Cells > Cell cost > Value : float
 		Cost of PEC cells in $/m2.
 	PEC Cells > Lifetime > Value : float
@@ -210,7 +210,7 @@ class PEC_Plugin:
 	Solar-to-Hydrogen Efficiency > STH > Value : float
 		Solar-to-hydrogen efficiency in percentage or as a value between 0 and 1.
 	Solar Input > Mean solar input > Value : float
-		Mean solar input, ``process_table()`` is used.
+		Mean solar power per surface.
 
 	Returns
 	-------
