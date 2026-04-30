@@ -81,15 +81,6 @@ input_dict = {
 
 output_dict = {
 	"Non-Depreciable Capital Costs": {
-		"Land required": { # do we use unit here? because if we reomve both are identical middle keys
-			"Value": {
-				"inserted_value": "total_land_area",
-				"type": {float,},
-				"dimension": "area",
-			},	
-			"optional": False,
-			"description": "Total land requirement."
-		},
 		"Land required": {
 			"Value": {
 				"inserted_value": "total_land_area",
