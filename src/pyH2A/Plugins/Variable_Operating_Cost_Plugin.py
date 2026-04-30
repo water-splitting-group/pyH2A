@@ -101,7 +101,7 @@ output_dict = {
                     "Value": {
                         "type": {float},
                     },
-                    "optional": True,
+                    "optional": False,
                     "description": "Summed total of other variable operating costs across all tables"
                 },
             },
