@@ -79,7 +79,7 @@ output_dict = {
                     "Value": {
                         "type": {float},
                     },
-                    "optional": True,
+                    "optional": False,
                     "description": "Summed total of other fixed operating costs across all tables"
                 },
             },
@@ -93,9 +93,9 @@ class Fixed_Operating_Cost_Plugin:
 	Parameters
 	----------
 	Fixed Operating Costs > staff > Value : float
-		Number of staff, ``process_table()`` is used.
+		Number of staff.
 	Fixed Operating Costs > hourly labor cost > Value : float
-		Hourly labor cost of staff, ``process_table()`` is used.
+		Hourly labor cost of staff.
 	<...> Other Fixed Operating Cost <...> >> Value : float
 		Yearly other fixed operating costs, ``sum_all_tables()`` is used.
 
