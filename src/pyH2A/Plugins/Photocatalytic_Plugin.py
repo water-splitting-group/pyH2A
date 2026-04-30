@@ -338,7 +338,7 @@ class Photocatalytic_Plugin:
 	Parameters
 	----------
 	Technical Operating Parameters and Specifications > Design output per day > Value : float
-		Design output in (kg of H2)/day, ``process_table()`` is used.
+		Design output flowrate.
 	Reactor Baggies > Cost material top > Value : float
 		Cost of baggie top material.
 	Reactor Baggies > Cost Material Bottom > Value : float
@@ -379,7 +379,7 @@ class Photocatalytic_Plugin:
 	Solar-to-Hydrogen Efficiency > STH > Value : float
 		Solar-to-hydrogen efficiency in percentage or as a value between 0 and 1.
 	Solar Input > Mean solar input > Value : float
-		Mean solar input power, ``process_table()`` is used.
+		Mean solar input power per area.
 	Solar Input > Hourly > Value : ndarray
 		Hourly irradiation data.
 
