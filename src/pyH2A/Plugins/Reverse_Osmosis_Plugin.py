@@ -7,7 +7,7 @@ input_dict = {
         "construction time": {
             "Value": {
                 "type": {int,},
-                "bounds": (0, 40),
+                "bounds": (0, 40*365*86400),
             },
             "Unit": {
                 "dimension": "time",
@@ -19,7 +19,7 @@ input_dict = {
     "Technical Operating Parameters and Specifications": {
         "Output per year": {
             "Value": {
-                "type": {float,},
+                "type": {float, np.ndarray},
                 "bounds": (0, None),
             },
             "Unit": {
@@ -75,7 +75,7 @@ output_dict = {
                 "dimension": "energy",
             },
             "Type": {
-                "inserted_value": "flexible",
+                "inserted_value": "consumption_type",
                 "type": {str,},
             },
             "description": "Electricity demand of reverse osmosis plant per year.",
@@ -100,7 +100,7 @@ class Reverse_Osmosis_Plugin:
     
     Parameters
     ----------
-    Financial Input Values > Construction time > Value : int
+    Financial Input Values > construction time > Value : int
         Construction time of hydrogen production plant in years.
 	Technical Operating Parameters and Specifications > Output per year > Value : float
 		Yearly output taking operating capacity factor into account.
@@ -127,6 +127,7 @@ class Reverse_Osmosis_Plugin:
 
         self.calculate_electricity_demand(dcf)
         self.calculate_reverse_osmosis_scaling()
+        self.consumption_type = "flexible"
 
         output_inserter_function(output_dict, self, dcf, 'Reverse_Osmosis_Plugin') 
                 
@@ -137,7 +138,7 @@ class Reverse_Osmosis_Plugin:
         MOLAR_RATIO_WATER = 18.01528 / 2.016
         DENSITY_WATER_KG_PER_M3 = 997
 
-        output_per_year_kg_H2 = self.input_dict_resolved['Technical Operating Parameters and Specifications']['Output per Year']['Value'].unit['kg/year']
+        output_per_year_kg_H2 = self.input_dict_resolved['Technical Operating Parameters and Specifications']['Output per year']['Value'].unit['kg/year']
 
         fresh_water_demand_kg = output_per_year_kg_H2 * MOLAR_RATIO_WATER
         fresh_water_demand_m3 = fresh_water_demand_kg / DENSITY_WATER_KG_PER_M3
