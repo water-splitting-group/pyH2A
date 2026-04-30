@@ -19,11 +19,11 @@ input_dict = {
     "Technical Operating Parameters and Specifications": {
         "Output per year": {
             "Value": {
-                "type": {float, np.ndarray},
+                "type": {np.ndarray},
                 "bounds": (0, None),
             },
             "Unit": {
-                "dimension": "mass / time",
+                "dimension": "mass",
             },
             "optional": False,
             "description": "Yearly output taking operating capacity factor into account."
@@ -138,7 +138,7 @@ class Reverse_Osmosis_Plugin:
         MOLAR_RATIO_WATER = 18.01528 / 2.016
         DENSITY_WATER_KG_PER_M3 = 997
 
-        output_per_year_kg_H2 = self.input_dict_resolved['Technical Operating Parameters and Specifications']['Output per year']['Value'].unit['kg/year']
+        output_per_year_kg_H2 = self.input_dict_resolved['Technical Operating Parameters and Specifications']['Output per year']['Value'].unit['kg']
 
         fresh_water_demand_kg = output_per_year_kg_H2 * MOLAR_RATIO_WATER
         fresh_water_demand_m3 = fresh_water_demand_kg / DENSITY_WATER_KG_PER_M3
