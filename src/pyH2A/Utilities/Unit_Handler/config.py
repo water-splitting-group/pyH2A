@@ -3,6 +3,8 @@ Configuration for the custom pyH2A lightweight unit handler.
 Defines supported dimensions, base units, and conversions.
 """
 
+from scipy import constants as con
+
 # Temperature handles as a special case because of offsets vs multipliers
 ABSOLUTE_TEMPERATURE = {
     "base": "K",
@@ -72,7 +74,7 @@ DIMENSIONS = {
             "mm3": 1e-9,
             "cm3": 1e-6,
             "L": 1e-3,
-            "liters": 1e-3,
+            "liter": 1e-3,
             "km3": 1e9,
             "mL": 1e-6,
             "uL": 1e-9
@@ -118,7 +120,8 @@ DIMENSIONS = {
         "conversions": {
             "mol": 1.0,
             "umol": 1e-6,
-            "mmol": 1e-3
+            "mmol": 1e-3, 
+            "entity": 1/con.Avogadro
         }
     },
     "voltage": {
