@@ -87,9 +87,9 @@ class Multiple_Modules_Plugin:
 	Parameters
 	----------
 	Technical Operating Parameters and Specifications > Plant Modules > Value : float or int
-		Number of plant modules considered in this calculation, ``process_table()`` is used.
+		Number of plant modules considered in this calculation.
 	Non-Depreciable Capital Costs > Solar Collection Area > Value : float
-		Solar collection area for one plant module, ``process_table()`` is used.
+		Solar collection area for one plant module.
 	Fixed Operating Costs > Solar collection area per staffer > Value : float
 		Solar collection area that can be covered by one staffer.
 	Fixed Operating Costs > Number of 8-hour shifts > Value : float or int
