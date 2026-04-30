@@ -108,6 +108,6 @@ class Solar_Thermal_Plugin:
 		H2_mol_per_m2 = (self.input_dict_resolved['Solar Input']['Mean solar input']['Value'].unit['W/m2'] * self.input_dict_resolved['Solar-to-Hydrogen Efficiency']['STH']['Value'].unit['-']) / self.H2_molecule_energy.unit['J/mol']
 		H2_kg_per_m2 = H2_mol_per_m2*self.H2_molecular_weight.unit['kg/mol']
 
-		required_area_m2 = self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output per day']['Value'].unit['kg/day'] / H2_kg_per_m2
+		required_area_m2 = self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output per day']['Value'].unit['kg/s'] / H2_kg_per_m2
 
 		self.area = Quantity(required_area_m2 * (1. + self.input_dict_resolved['Non-Depreciable Capital Costs']['Additional land area']['Value'].unit['-']), 'm2')
