@@ -177,13 +177,17 @@ class Power_Management_Plugin:
         '''
 
         try:
-            flexible_available_energy = self.input_dict_resolved['Power Generation']['Available energy (daily)']['Value']['J']
+            flexible_available_energy = {}
+            for year in self.input_dict_resolved['Power Generation']['Available energy (daily)']['Value']:
+                flexible_available_energy[year] = self.input_dict_resolved['Power Generation']['Available energy (daily)']['Value'][year].unit['J']
             flexible_available_energy_yearly = daily_to_yearly_power(flexible_available_energy)
         except KeyError:
             flexible_available_energy_yearly = np.zeros(len(dcf.operation_years))
 
         try:
-            stored_available_energy = self.input_dict_resolved['Power Generation']['Stored energy (daily)']['Value']['J']
+            stored_available_energy = {}
+            for year in self.input_dict_resolved['Power Generation']['Stored energy (daily)']['Value']:
+                stored_available_energy[year] = self.input_dict_resolved['Power Generation']['Stored energy (daily)']['Value'][year].unit['J']
             stored_available_energy_yearly = daily_to_yearly_power(stored_available_energy)
         except KeyError:
             stored_available_energy_yearly = np.zeros(len(dcf.operation_years))
