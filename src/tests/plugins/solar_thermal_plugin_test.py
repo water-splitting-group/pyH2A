@@ -29,7 +29,7 @@ class DummyDCF:
             "Solar Input": {
                 "Mean solar input": {
                     "Value": mean_solar_input,
-                    "Unit": "W/m2",
+                    "Unit": "kW/m2",
                 }
             },
             "Non-Depreciable Capital Costs": {
@@ -48,11 +48,11 @@ class DummyDCF:
             "input": {
                 "design_output_per_day": 1000.0,
                 "sth_efficiency": 0.14,
-                "mean_solar_input": 5.499228123213646,
+                "mean_solar_input": 5.499228123213646/24, # /24 to convert the original kWh / day into kW
                 "additional_land_area": 0.0,
             },
             "expected": {
-                "area": Quantity(42783.93590009135, "m2"),
+                "area": Quantity(42783.952830200986, "m2"),
             },
         }
     ],
