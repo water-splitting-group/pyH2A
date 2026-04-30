@@ -87,17 +87,17 @@ def test_solar_concentrator_plugin(case):
     # Tolerance (very small)
     tolerance = 1e-12
 
-    assert plugin.total_land_area.base_value == pytest.approx(
-        expected["total_land_area"].base_value,
+    assert plugin.total_land_area.unit['m2'] == pytest.approx(
+        expected["total_land_area"].unit['m2'],
         abs=tolerance
     )
     
-    assert plugin.total_solar_collection_area.base_value == pytest.approx(
-        expected["total_solar_collection_area"].base_value,
+    assert plugin.total_solar_collection_area.unit['m2'] == pytest.approx(
+        expected["total_solar_collection_area"].unit['m2'],
         abs=tolerance
     )
     
-    assert plugin.concentrator_cost.base_value == pytest.approx(
-        expected["concentrator_cost"].base_value,
+    assert plugin.concentrator_cost.unit['USD'] == pytest.approx(
+        expected["concentrator_cost"].unit['USD'],
         abs=tolerance
     )
