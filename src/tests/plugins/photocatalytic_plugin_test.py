@@ -50,11 +50,11 @@ class DummyDCF:
             },
             "Catalyst": {
                 "Cost per unit of mass": {"Value": catalyst_cost, "Unit":"USD/kg"},
-                "Concentration": {"Value": catalyst_conc, "Unit":"g/liters"},
+                "Concentration": {"Value": catalyst_conc, "Unit":"g/liter"},
                 "Lifetime": {"Value": catalyst_lifetime, "Unit":"year"},
                 "Molar Weight": {"Value": molar_weight, "Unit":"g/mol"},
                 "Molar attenuation coefficient": {
-                    "Value": attenuation_coeff, "Unit":"liters/(cm * mol)"
+                    "Value": attenuation_coeff, "Unit":"liter/(cm * mol)"
                 },
             },
             "Solar-to-Hydrogen Efficiency": {"STH": {"Value": sth, "Unit":"-"}},
@@ -124,7 +124,7 @@ class DummyDCF:
                 "catalyst_cost": Quantity(2835458.73,"USD"),
                 "baggies_cost": Quantity(66834.53099999999,"USD"),
                 "baggie_number": Quantity(9,"-"),
-                "total_volume": Quantity(1773270.0,"liters")
+                "total_volume": Quantity(1773270.0,"liter")
             },
         },
     ],
@@ -167,7 +167,7 @@ def test_photocatalytic_plugin_optional_catalyst(case):
         abs=tolerance
     )
 
-    assert plugin.total_volume.unit["liters"] == pytest.approx(
-        expected["total_volume"].unit["liters"], 
+    assert plugin.total_volume.unit["liter"] == pytest.approx(
+        expected["total_volume"].unit["liter"], 
         abs=tolerance
     )
