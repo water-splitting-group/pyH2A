@@ -402,9 +402,9 @@ class Discounted_Cash_Flow:
 
 		insert(self, 'Financial Input Values', 'construction time', 'Value', 
 			   len(self.inp['Construction']), __name__, print_info = self.print_info)
-		insert(self, 'Financial Input Values', 'construction time', 'Unit', 
-			   'year', __name__, print_info = self.print_info)
-		
+		insert(self, 'Financial Input Values', 'construction time', 'Unit',
+		 'year', __name__, print_info = self.print_info)
+
 		construction_start = self.fin['startup year']['Value'] - self.fin['construction time']['Value']
 		end_of_life = self.fin['startup year']['Value'] + self.fin['plant life']['Value']
 
@@ -453,13 +453,13 @@ class Discounted_Cash_Flow:
 
 		Parameters
 		----------
-		Technical Operating Parameters and Specifications > Output per Year at Gate > Value : float
+		Technical Operating Parameters and Specifications > Output per year at gate > Value : float
 			Output per year at gate in kg.
 		'''
 
 		self.output_per_year_at_gate = process_input(self.inp, 
 										'Technical Operating Parameters and Specifications', 
-										'Output per Year at Gate', 
+										'Output per year at gate', 
 										'Value')
 
 		return 0.
@@ -478,7 +478,7 @@ class Discounted_Cash_Flow:
 		'''
 
 		self.depreciable_capital = process_input(self.inp, 'Depreciable Capital Costs', 'Inflated', 'Value')
-		self.depreciable_capital_inflation = self.depreciable_capital * self.inflation_correction
+		self.depreciable_capital_inflation = self.depreciable_capital.unit['USD'] * self.inflation_correction
 
 		process_table(self.inp, 'Construction', 'Value')
 
@@ -506,7 +506,7 @@ class Discounted_Cash_Flow:
 		'''
 		
 		self.non_depreciable_capital = process_input(self.inp, 'Non-Depreciable Capital Costs', 'Inflated', 'Value')
-		self.non_depreciable_capital_inflated = self.non_depreciable_capital * self.inflation_correction
+		self.non_depreciable_capital_inflated = self.non_depreciable_capital.unit['USD'] * self.inflation_correction
 		non_depreciable_capital_inflation_corrected = self.non_depreciable_capital_inflated * self.inflation_factor[0]
 
 		self.annual_non_depreciable_capital = np.zeros(len(self.inflation_factor))
@@ -523,7 +523,7 @@ class Discounted_Cash_Flow:
 			Total replacement costs.
 		'''
 	
-		yearly_costs = self.inp['Replacement']['Total']['Value']
+		yearly_costs = self.inp['Replacement']['Total']['Value'].unit['USD']
 
 		self.start_idx = fn.find_nearest(self.plant_years, 0)[0]
 		yearly_costs[:self.start_idx] = 0
@@ -545,7 +545,7 @@ class Discounted_Cash_Flow:
 		'''
 
 		fixed_operating = process_input(self.inp, 'Fixed Operating Costs', 'Total', 'Value')
-		fixed_operating_inflated = fixed_operating * self.inflation_correction
+		fixed_operating_inflated = fixed_operating.unit['USD'] * self.inflation_correction
 
 		self.start_up_time_idx = self.start_idx + self.fin['startup time']['Value']
 
@@ -568,7 +568,7 @@ class Discounted_Cash_Flow:
 			Total variable operating costs.
 		'''
 
-		variable_operating_costs = self.inflation_factor * self.inp['Variable Operating Costs']['Total']['Value']
+		variable_operating_costs = self.inflation_factor * self.inp['Variable Operating Costs']['Total']['Value'].unit['USD']
 		variable_operating_costs[:self.start_up_time_idx] = variable_operating_costs[:self.start_up_time_idx] * self.fin['startup cost variable']['Value']
 		variable_operating_costs[:self.start_idx] = 0
 
@@ -634,7 +634,7 @@ class Discounted_Cash_Flow:
 		'''Calculate H2 sales.
 		'''
 
-		self.annual_sales = np.ones(len(self.inflation_factor)) * self.output_per_year_at_gate
+		self.annual_sales = np.ones(len(self.inflation_factor)) * self.output_per_year_at_gate.unit['kg/year']
 		self.annual_sales[:self.start_up_time_idx] = self.annual_sales[:self.start_up_time_idx] * self.fin['startup revenues']['Value']
 		self.annual_sales[:self.start_idx] = 0
 
