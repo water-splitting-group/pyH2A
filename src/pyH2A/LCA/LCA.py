@@ -177,6 +177,7 @@ class LCA:
 
         self.scaling_vector = np.asarray(solve(self.A_modified, self.f)).reshape(-1)
 
+
     def update_A_matrix_with_lca_components(self, dcf):
         """
             Updates the first column of the A matrix with LCA component values.
