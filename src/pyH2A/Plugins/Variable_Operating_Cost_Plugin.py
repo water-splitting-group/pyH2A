@@ -196,7 +196,7 @@ class Utility:
 			years_idx = fn.find_nearest(prices, dcf.years)
 			prices = prices[years_idx]
 
-			self.cost_per_kg_H2 = Quantity(prices[:,1] * dcf.inflation_correction * dictionary['Price_Conversion_Factor_Value'].unit['-'] * dictionary['Usage_Value'], 'USD/kg') 
+			self.cost_per_kg_H2 = Quantity(prices[:,1] * dcf.inflation_correction * dictionary['Price_Conversion_Factor_Value'].unit['-'] * dictionary['Usage_Value'].unit['-/kg'], 'USD/kg') 
 
 		else:
 			annual_cost_per_kg_H2 = dcf.inflation_correction * dictionary['Cost_Value'].unit['USD'] * dictionary['Usage_Value'].unit['-/kg'] * dictionary['Price_Conversion_Factor_Value'].unit['-']
