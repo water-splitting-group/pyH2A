@@ -33,7 +33,7 @@ input_dict = {
 			"Unit": {
 				"dimension": "mass / time",
 			},
-			"optional": False,
+			"optional": True,
 			"description": "Maximum output at gate. If not specified it defaults to `Plant Design Capacity`."
 		},
 		"New plant design capacity": {
