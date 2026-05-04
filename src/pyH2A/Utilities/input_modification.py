@@ -818,6 +818,7 @@ def sum_all_tables(dictionary, table_group, bottom_key, insert_total = False,
 	total = 0.
 	contributions = {}
 	contributions['Data'] = {}
+	base_unit = 'USD'
 
 	for key in dictionary:
 
