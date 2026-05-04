@@ -177,12 +177,6 @@ class LCA:
 
         self.scaling_vector = np.asarray(solve(self.A_modified, self.f)).reshape(-1)
 
-        ### Adding check that scaling vector is completely populated with data (no zeros).
-        if np.any(self.scaling_vector == 0):
-            zero_indices = np.where(self.scaling_vector == 0)[0]
-            missing_processes = [k for k, v in self.tech_index_dict.items() if v.index in zero_indices]
-            raise ValueError(f"Scaling vector has unpopulated entries at indices {zero_indices}. Missing processes: {missing_processes}")
-
 
     def update_A_matrix_with_lca_components(self, dcf):
         """
