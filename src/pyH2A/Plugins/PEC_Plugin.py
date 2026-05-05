@@ -4,16 +4,16 @@ from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
 input_dict = {
 	"Technical Operating Parameters and Specifications": {
-		"Design output per day": {
+		"Design output flowrate": {
 			"Value": {
 				"type": {float,},
 				"bounds": (0, None),
 			},
 			"Unit": {
-				"dimension": "mass",
+				"dimension": "mass / time",
 			},
 			"optional": False,
-			"description": "Design output in mass per day."
+			"description": "Design output in mass per unit time."
 		},
 	},
 	"PEC Cells": {
@@ -191,7 +191,7 @@ class PEC_Plugin:
 
 	Parameters
 	----------
-	Technical Operating Parameters and Specifications > Design output per Day > Value : float
+	Technical Operating Parameters and Specifications > Design output flowrate > Value : float
 		Design output flowrate.
 	PEC Cells > Cell cost > Value : float
 		Cost of PEC cells in $/m2.
@@ -257,7 +257,7 @@ class PEC_Plugin:
 		'''
 
 		cost_per_cell = self.cell_area.unit['m2'] * self.input_dict_resolved['PEC Cells']['Cell cost']['Value'].unit['USD/m2']
-		self.cell_number = Quantity(np.ceil(self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output per day']['Value'].unit['kg'] / self.mass_rate_H2_per_cell.unit['kg/day']), '-')
+		self.cell_number = Quantity(np.ceil(self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output flowrate']['Value'].unit['kg/day'] / self.mass_rate_H2_per_cell.unit['kg/day']), '-')
 		self.cell_cost = Quantity(self.cell_number.unit['-'] * cost_per_cell, 'USD')
 
 	def land_area(self):
