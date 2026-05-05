@@ -22,9 +22,9 @@ class DummyDCF:
     ):
         self.inp = {
             "Technical Operating Parameters and Specifications": {
-                "Design output per day": {
+                "Design output flowrate": {
                     "Value": design_output,
-                    "Unit": "kg",
+                    "Unit": "kg/day",
                 },
             },
             "PEC Cells": {
