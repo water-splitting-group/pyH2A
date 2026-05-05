@@ -1,5 +1,6 @@
 import numpy as np
-from pyH2A.Utilities.input_modification import insert, process_table
+from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
+from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
 input_dict = {
 	"Technical Operating Parameters and Specifications": {
@@ -35,7 +36,7 @@ input_dict = {
 				"bounds": (0, None),
 			},
 			"Unit": {
-				"dimension": "dimensionless / area",
+				"dimension": "area",
 			},
 			"optional": False,
 			"description": "Solar collection area that can be covered by one staffer."
@@ -65,6 +66,20 @@ input_dict = {
 	},
 }
 
+output_dict = {
+	"Fixed Operating Costs": {
+		"Staff": {
+			"Value": {
+				"inserted_value": "staff_per_module",
+				"type": {float,},
+				"dimension": "dimensionless",
+			},
+			"description": "Number of 8-hour equivalent staff required for operating one plant module.",
+			"optional": False,
+		},
+	},
+}
+
 class Multiple_Modules_Plugin:
 	''' Simulating mutliple plant modules which are operated together, assuming that only labor cost is reduced. 
 	Calculation of required labor to operate all modules, scaling down labor requirement to one module for subsequent calculations.
@@ -72,38 +87,40 @@ class Multiple_Modules_Plugin:
 	Parameters
 	----------
 	Technical Operating Parameters and Specifications > Plant Modules > Value : float or int
-		Number of plant modules considered in this calculation, ``process_table()`` is used.
-	Non-Depreciable Capital Costs > Solar Collection Area (m2) > Value : float
-		Solar collection area for one plant module in m2, ``process_table()`` is used.
-	Fixed Operating Costs > area > Value : float
-		Solar collection area in m2 that can be covered by one staffer.
-	Fixed Operating Costs > shifts > Value : float or int
+		Number of plant modules considered in this calculation.
+	Non-Depreciable Capital Costs > Solar Collection Area > Value : float
+		Solar collection area for one plant module.
+	Fixed Operating Costs > Solar collection area per staffer > Value : float
+		Solar collection area that can be covered by one staffer.
+	Fixed Operating Costs > Number of 8-hour shifts > Value : float or int
 		Number of 8-hour shifts (typically 3 for 24h operation).
-	Fixed Operating Costs > supervisor > Value : float or int
+	Fixed Operating Costs > Number of supervisors > Value : float or int
 		Number of shift supervisors.
 
 	Returns
 	-------
-	Fixed Operating Costs > staff > Value : float
+	Fixed Operating Costs > Staff > Value : float
 		Number of 8-hour equivalent staff required for operating one plant module.
 	''' 
 
 	def __init__(self, dcf, print_info):
-		process_table(dcf.inp, 'Technical Operating Parameters and Specifications', 'Value')
-		process_table(dcf.inp, 'Non-Depreciable Capital Costs', 'Value')
-		process_table(dcf.inp, 'Fixed Operating Costs', 'Value')
 
-		self.required_staff(dcf)
+		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Multiple_Modules_Plugin')
+		
+		self.required_staff()
+		
+		output_inserter_function(output_dict, self, dcf, 'Multiple_Modules_Plugin') 
 
-		insert(dcf, 'Fixed Operating Costs', 'staff', 'Value', self.staff_per_module, __name__, print_info = print_info)
-
-	def required_staff(self, dcf):
+	def required_staff(self):
 		'''Calculation of total required staff for all plant modules, then scaling down to staff
 		requirements for one module.'''
 
-		area = dcf.inp['Technical Operating Parameters and Specifications']['Plant Modules']['Value'] * dcf.inp['Non-Depreciable Capital Costs']['Solar Collection Area (m2)']['Value']
+		area = self.input_dict_resolved['Technical Operating Parameters and Specifications']['Plant modules']['Value'].unit['-'] * self.input_dict_resolved['Non-Depreciable Capital Costs']['Solar collection area']['Value'].unit['m2']
 
-		staff = np.ceil(area / dcf.inp['Fixed Operating Costs']['area']['Value']) + dcf.inp['Fixed Operating Costs']['supervisor']['Value']
-		staff = staff * dcf.inp['Fixed Operating Costs']['shifts']['Value']
+		staff = np.ceil(
+			area / self.input_dict_resolved['Fixed Operating Costs']
+			['Solar collection area per staffer']['Value'].unit['m2']
+		) + self.input_dict_resolved['Fixed Operating Costs']['Number of supervisors']['Value'].unit['-']
+		staff = staff * self.input_dict_resolved['Fixed Operating Costs']['Number of 8-hour shifts']['Value'].unit['-']
 
-		self.staff_per_module = staff / dcf.inp['Technical Operating Parameters and Specifications']['Plant Modules']['Value']
+		self.staff_per_module = Quantity(staff / self.input_dict_resolved['Technical Operating Parameters and Specifications']['Plant modules']['Value'].unit['-'], '-')

@@ -750,7 +750,7 @@ def process_table(dictionary, top_key, bottom_key, path_key = 'Path',
 						  path_key = path_key[-1], add_processed = True,
 						  print_processing_warning = print_processing_warning)
 
-def sum_table(dictionary, top_key, bottom_key, path_key = 'Path'):
+def sum_table(dictionary, top_key, bottom_key):
 	'''For the provided `dictionary`, all entries in dictionary[top_key] are processed 
 	using ``process_input()`` (positions: top_key > key > bottom key) and summed.
 
@@ -762,16 +762,15 @@ def sum_table(dictionary, top_key, bottom_key, path_key = 'Path'):
 		Top key.
 	bottom_key : str, ndarray or list
 		Bottom key.
-	path_key : str, optional
-		Key used for path column. Defaults to 'Path'.
 	'''
 
 	value = 0.
 
 	for key in dictionary[top_key]:
-		value += process_input(dictionary, top_key, key, bottom_key, path_key = path_key)
+		value += dictionary[top_key][key][bottom_key].base_value
+		base_unit = dictionary[top_key][key][bottom_key].base_unit
 
-	return value
+	return Quantity(value, base_unit)
 
 def sum_all_tables(dictionary, table_group, bottom_key, insert_total = False, 
 				   class_object = None, middle_key_insertion = 'Summed Total', 
@@ -819,20 +818,23 @@ def sum_all_tables(dictionary, table_group, bottom_key, insert_total = False,
 	total = 0.
 	contributions = {}
 	contributions['Data'] = {}
+	base_unit = 'USD'
 
 	for key in dictionary:
 
 		if table_group in key:
-			value = sum_table(dictionary, key, bottom_key, path_key = path_key)
-			total += value
-			contributions['Data'][key] = value
+			value = sum_table(dictionary, key, bottom_key) # value is a Quantity object
+			total += value.base_value
+			contributions['Data'][key] = value.base_value
+			base_unit = value.base_unit
 
 			if insert_total is True:
 				insert(class_object, key, middle_key_insertion, bottom_key_insertion, 
-					    value, __name__, print_info = print_info)
+					    value.base_value, __name__, print_info = print_info)
 
 	contributions['Total'] = total
 	contributions['Table Group'] = table_group
+	total = Quantity(total, base_unit)
 
 	if return_contributions is True:
 		return total, contributions

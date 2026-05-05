@@ -1,4 +1,6 @@
-from pyH2A.Utilities.input_modification import insert, process_table, read_textfile, hourly_to_daily_power
+from pyH2A.Utilities.input_modification import read_textfile, hourly_to_daily_power
+from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
+from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import numpy as np
 
 input_dict = {
@@ -9,7 +11,7 @@ input_dict = {
 				"bounds": (0, None),
 			},
 			"Unit": {
-				"dimension": "energy / area",
+				"dimension": "power / area",
 			},
 			"optional": False,
 			"description": "Hourly power ratio data for electricity production calculation. Either a path to a text file containing the data or ndarray. A suitable array can be retrieved from 'Hourly Irradiation > *type of tracking* > Value'."
@@ -76,6 +78,69 @@ input_dict = {
 	},
 }
 
+output_dict = {
+    "Photovoltaic": {
+		"Scaling factor": {
+			"Value": {
+       			"inserted_value": "pv_scaling_factor",
+				"type": {float,},
+				"dimension": "dimensionless",
+       		},
+            "description": "CAPEX scaling factor for PV array calculated based on CAPEX multiplier, reference and nominal power.",
+            "optional": False,
+		},
+    },
+	"Power Generation": {
+		"PV hourly power generation": {
+			"Value": {
+				"inserted_value": "power_generation_yearly_data",
+				"type": {dict,},
+				"dimension": "energy",
+			},
+			"description": "Hourly power generation of PV array (dictionary of years).",
+			"optional": False,
+		},
+		"Available energy (hourly)": {
+			"Value": {
+				"inserted_value": "power_generation_yearly_data",
+				"type": {dict,},
+				"dimension": "energy",
+			},
+			"description": "Available energy, hourly basis, dictionary of years.",
+			"optional": False,
+		},
+		"Available energy (daily)": {
+			"Value": {
+				"inserted_value": "power_generation_yearly_data_daily_power",
+				"type": {dict,},
+				"dimension": "energy",
+			},
+			"description": "Available energy, daily basis, dictionary of years.",
+			"optional": False,
+		},
+	},
+	"Non-Depreciable Capital Costs": {
+		"Land required": {
+			"Value": {
+				"inserted_value": "area",
+				"type": {float,},
+				"dimension": "area",
+			},
+			"description": "Total land required.",
+			"optional": False,	
+		},
+		"Solar collection area": {
+			"Value": {
+				"inserted_value": "area",
+				"type": {float,},
+				"dimension": "area",
+			},
+			"description": "Solar collection area.",
+			"optional": False,	
+		},
+	},
+}
+
 class Photovoltaic_Plugin:
 	'''Simulation of electricity production using PV.
 
@@ -90,9 +155,9 @@ class Photovoltaic_Plugin:
 		increase of power relative to CAPEX reference power. Based on the multiplier the CAPEX
 		scaling factor is calculated as: multiplier ^ (number of ten-fold increases). A value
 		of 1 leads to no CAPEX reduction, a value < 1 enables cost reduction.
-	Photovoltaic > Nominal Power (kW) > Value : float
-		Nominal power of PV array in kW.
-	Photovoltaic > CAPEX Reference Power (kW) > Value : float
+	Photovoltaic > Nominal power > Value : float
+		Nominal power of PV array.
+	Photovoltaic > CAPEX reference power > Value : float
 		Reference power of PV array for cost reduction calculations.
 	Photovoltaic > Power loss per year > Value : float
 		Reduction in power produced by PV array per year due to degradation. Percentage or value
@@ -102,91 +167,76 @@ class Photovoltaic_Plugin:
 
 	Returns
 	-------
-	Photovoltaic > Scaling Factor > Value : float
+	Photovoltaic > Scaling factor > Value : float
 		CAPEX scaling factor for PV array calculated based on CAPEX multiplier, 
 		reference and nominal power.
-	Power Generation > PV Hourly Power Generation (kWh) > Value : dict
-		Hourly power generation of PV array in kWh (dictionary of years).
-	Power Generation > Available Power (hourly, kWh) > Value : dict
-		Available power, hourly basis, dictionary of years (in kWh).
-	Power Generation > Available Power (daily, kWh) > Value : dict
-		Available power, daily basis, dictionary of years (in kWh).
-	Non-Depreciable Capital Costs > Land required (acres) > Value : float
-		Total land required in acres.
-	Non-Depreciable Capital Costs > Solar Collection Area (m2) > Value : float
-		Solar collection area in m2.
+	Power Generation > PV hourly power generation > Value : dict
+		Hourly power generation of PV array (dictionary of years).
+	Power Generation > Available energy (hourly) > Value : dict
+		Available power, hourly basis, dictionary of years
+    Power Generation > Available energy (daily) > Value : dict
+		Available energy, daily basis, dictionary of years .
+	Non-Depreciable Capital Costs > Land required > Value : float
+		Total land required.
+	Non-Depreciable Capital Costs > Solar collection area > Value : float
+		Solar collection area.
 	'''
 
+
 	def __init__(self, dcf, print_info):
-		process_table(dcf.inp, 'Irradiation Used', 'Value')
-		process_table(dcf.inp, 'CAPEX Multiplier', 'Value')
-		process_table(dcf.inp, 'Photovoltaic', 'Value', print_processing_warning = False)
+		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Photovoltaic_Plugin')
 
 		self.calculate_power_production(dcf)
 		self.calculate_scaling_factors(dcf)
 		self.calculate_area(dcf)
 
-		insert(dcf, 'Photovoltaic', 'Scaling Factor', 'Value', 
-				self.pv_scaling_factor, __name__, print_info = print_info)
-		
-		insert(dcf, 'Power Generation', 'PV Hourly Power Generation (kWh)', 'Value',
-				self.power_generation_yearly_data, __name__, print_info = print_info)
-		insert(dcf, 'Power Generation', 'Available Power (hourly, kWh)', 'Value',
-				self.power_generation_yearly_data, __name__, print_info = print_info)
-		insert(dcf, 'Power Generation', 'Available Power (daily, kWh)', 'Value',
-		 		self.power_generation_yearly_data_daily_power, __name__, print_info = print_info)
-
-		insert(dcf, 'Non-Depreciable Capital Costs', 'Land required (acres)', 'Value', 
-				self.area_acres, __name__, print_info = print_info)
-		insert(dcf, 'Non-Depreciable Capital Costs', 'Solar Collection Area (m2)', 'Value', 
-				self.area_m2, __name__, print_info = print_info)
+		output_inserter_function(output_dict, self, dcf, 'Photovoltaic_Plugin') 
 
 	def calculate_power_production(self, dcf):
 		'''Using hourly irradiation data and PV array parameters,
 		power production is calculated.
 		'''
 
-		if isinstance(dcf.inp['Irradiation Used']['Data']['Value'], str):
-			data = read_textfile(dcf.inp['Irradiation Used']['Data']['Value'], delimiter = '	')[:,1]
+		if isinstance(self.input_dict_resolved['Irradiation Used']['Data']['Value'], str):
+			data = Quantity(read_textfile(self.input_dict_resolved['Irradiation Used']['Data']['Value'], delimiter = '	')[:,1], 'kW/m2').unit['W/m2']
 		else:
-			data = dcf.inp['Irradiation Used']['Data']['Value']
+			data = self.input_dict_resolved['Irradiation Used']['Data']['Value'].unit['W/m2']
 
 		yearly_data = {}
 		yearly_data_daily_power = {}
 
 		for year in dcf.operation_years:
-			data_loss_corrected = self.calculate_photovoltaic_loss_correction(dcf, data, year)
-			power_generation = data_loss_corrected * dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value']
+			data_loss_corrected = self.calculate_photovoltaic_loss_correction(data, year)
+			power_generation = data_loss_corrected * self.input_dict_resolved['Photovoltaic']['Nominal power']['Value'].unit['W']
 
-			yearly_data[year] = power_generation
-			yearly_data_daily_power[year] = hourly_to_daily_power(power_generation)
+			yearly_data[year] = Quantity(power_generation, 'Wh') # conversion from power to energy into 1-hour slots
+			yearly_data_daily_power[year] = Quantity(hourly_to_daily_power(power_generation), 'Wh')
 
 		self.power_generation_yearly_data = yearly_data
 		self.power_generation_yearly_data_daily_power = yearly_data_daily_power
 
-	def calculate_photovoltaic_loss_correction(self, dcf, data, year):
+	def calculate_photovoltaic_loss_correction(self, data, year):
 		'''Calculation of yearly reduction in electricity production by PV array.
 		'''
 
-		return data * (1. - dcf.inp['Photovoltaic']['Power loss per year']['Value']) ** year
+		return data * (1. - self.input_dict_resolved['Photovoltaic']['Power loss per year']['Value'].unit['-']) ** year
 
 	def calculate_scaling_factors(self, dcf):
 		'''Calculation of PV CAPEX scaling factors.
 		'''
 
-		self.pv_scaling_factor = self.scaling_factor(dcf, dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value'], dcf.inp['Photovoltaic']['CAPEX Reference Power (kW)']['Value'])
+		self.pv_scaling_factor = Quantity(self.scaling_factor(self.input_dict_resolved['Photovoltaic']['Nominal power']['Value'].unit['W'], self.input_dict_resolved['Photovoltaic']['CAPEX reference power']['Value'].unit['W']), '-')
 		
-	def scaling_factor(self, dcf, power, reference):
+	def scaling_factor(self, power, reference):
 		'''Calculation of CAPEX scaling factor based on nominal and reference power.
 		'''
 		
 		number_of_tenfold_increases = np.log10(power/reference)
 
-		return dcf.inp['CAPEX Multiplier']['Multiplier']['Value'] ** number_of_tenfold_increases
+		return self.input_dict_resolved['CAPEX Multiplier']['Multiplier']['Value'].unit['-'] ** number_of_tenfold_increases
 
 	def calculate_area(self, dcf):
 		'''Area requirement calculation assuming 1000 W/m2 peak power.'''
 
-		peak_kW_per_m2 = dcf.inp['Photovoltaic']['Efficiency']['Value'] * 1.
-		self.area_m2 = dcf.inp['Photovoltaic']['Nominal Power (kW)']['Value'] / peak_kW_per_m2
-		self.area_acres = self.area_m2 * 0.000247105
+		peak_kW_per_m2 = self.input_dict_resolved['Photovoltaic']['Efficiency']['Value'].unit['-'] * 1.
+		self.area = Quantity(self.input_dict_resolved['Photovoltaic']['Nominal power']['Value'].unit['kW'] / peak_kW_per_m2, 'm2')

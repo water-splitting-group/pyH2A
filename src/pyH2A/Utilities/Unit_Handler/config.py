@@ -34,7 +34,8 @@ DIMENSIONS = {
             "GWh": 3.6e12,
             "eV": 1.602176634e-19,
             "cal": 4.184,
-            "kcal": 4184.0
+            "kcal": 4184.0, 
+            "toe": 4.1868e10
         }
     },
     "power": {
@@ -44,7 +45,11 @@ DIMENSIONS = {
             "kW": 1e3,
             "MW": 1e6,
             "GW": 1e9,
-            "hp": 745.699872
+            "hp": 745.699872, # imperial horsepower 
+            "cv": 735.49875,  # metric horsepower
+            "kWh_per_day": 1e3/24.,
+            "kWh_per_year": 1e3/(24.*365.), 
+            "MWh_per_year": 1e6/(24.*365.), 
         }
     },
     "length": {
@@ -53,7 +58,9 @@ DIMENSIONS = {
             "m": 1.0,
             "mm": 1e-3,
             "cm": 1e-2,
-            "km": 1e3
+            "km": 1e3, 
+            "ft": 0.3048, 
+            "in": 0.0254
         }
     },
     "area": {
@@ -121,7 +128,10 @@ DIMENSIONS = {
             "mol": 1.0,
             "umol": 1e-6,
             "mmol": 1e-3, 
-            "entity": 1/con.Avogadro
+            "entity": 1/con.Avogadro, 
+            "kmol": 1e3,
+            "Nm3": 44.6150334063, # reference 0°C, 1 atm
+            "Sm3":  42.2925433799 # reference 15°C, 1 atm
         }
     },
     "voltage": {

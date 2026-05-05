@@ -1,5 +1,7 @@
-from pyH2A.Utilities.input_modification import insert, process_table, daily_to_yearly_power
+from pyH2A.Utilities.input_modification import daily_to_yearly_power
 from pyH2A.Plugins.Electrolyzer_Plugin import calculate_electrolyzer_power_demand, calculate_hydrogen_production, calculate_stack_replacement
+from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
+from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import numpy as np
 
 input_dict = {
@@ -70,19 +72,33 @@ input_dict = {
                 "dimension": "time"
             },
             "optional": False,
-            "description": "Operating time in hours before stack replacement of electrolyzer is required."
+            "description": "Operating time before stack replacement of electrolyzer is required."
         },
         "Yearly operation data": {
-            "Value": {
+            "Year_Value": {
                 "type": {np.ndarray},
                 "bounds": (0, None)
             },
-            "Unit": {
-                "dimension": "(dimensionless, mass, dimensionless)"
+            "Year_Unit": {
+                "dimension": "dimensionless"
             },
+            "Production_Value": {
+                "type": {np.ndarray},
+                "bounds": (0, None)
+            },
+            "Production_Unit": {
+                "dimension": "mass"
+            },   
+            "Duration_Value": {
+                "type": {np.ndarray},
+                "bounds": (0, None)
+            },
+            "Duration_Unit": {
+                "dimension": "time"
+            },                     
             "optional": False,
-            "description": "Yearly operation data of electrolyzer in format."
-        },
+            "description": "Yearly operation data of electrolyzer: year, H2 produced and duration of operation"
+        },          
         "H2 production (yearly)": {
             "Value": {
                 "type": {np.ndarray},
@@ -110,6 +126,48 @@ input_dict = {
     },
 }
 
+output_dict = {
+    "Technical Operating Parameters and Specifications": {
+        "Plant design capacity": {
+            "Value": {
+                "inserted_value": "new_h2_production",
+                "type": {float,np.ndarray, },
+                "dimension": "mass / time",
+            }, 
+            "optional": False,
+            "description": "Plant design capacity in mass flowrate of H2 calculated from installed electrolysis power capacity and hourly power generation data."
+        },
+    },
+    "Planned Replacement": {
+        "Electrolyzer stack replacement": {
+            "Frequency": {
+                "inserted_value": "replacement_frequency",
+                "type": {float,},
+                "dimension": "time",
+            },
+            "add_processed": False,
+            "insert_path": False,
+            "optional": False,
+            "description": "Frequency of electrolyzer stack replacements, calculated from replacement time and hourly irradiation data."
+        },
+    },
+    "Power Consumption": {
+        "Stored energy electrolysis (yearly)": {
+            "Value": {
+                "inserted_value": "energy_consumption",
+                "type": {np.ndarray,},
+                "dimension": "energy",
+            },
+            "Type": {
+                "inserted_value": "on_demand",
+                "type": {str,},
+            },
+            "optional": False,
+            "description": "Electricity demand of electrolysis using stored energy per year. Type of power consumer is 'on_demand' (only uses stored power)."
+        },
+    },
+}
+
 class Stored_Power_Electrolysis_Plugin:
     '''Simulation of hydrogen production using electrolysis.
 
@@ -117,93 +175,89 @@ class Stored_Power_Electrolysis_Plugin:
     ----------
     Electrolysis Using Stored Power > Fraction of stored power used for electrolysis > Value : float
         Fraction of stored power used for electrolysis.
-    Electrolyzer > Nominal Power (kW) > Value : float
-        Nominal power of electrolyzer in kW.
+    Electrolyzer > Nominal power > Value : float
+        Nominal power of electrolyzer.
     Electrolyzer > Power requirement increase per year > Value : float
-        Electrolyzer power requirement increase per year due to stack degradation. Percentage 
-        or value > 0. Increase calculated as: (1 + increase per year) ^ year.
+        Electrolyzer power requirement increase per year due to stack degradation. 
+        Dimensionless value > 0. Increase calculated as: (1 + increase per year) ^ year.
     Electrolyzer > Minimum capacity > Value : float
-        Minimum capacity required for electrolyzer operation. Percentage or value between 0 and 1.
-    Electrolyzer > Conversion efficiency (kg H2/kWh) > Value : float
-        Electrical conversion efficiency of electrolyzer in (kg H2)/kWh.
-    Electrolyzer > Replacement time (h) > Value : float
+        Minimum capacity required for electrolyzer operation. Dimensionless value between 0 and 1.
+    Electrolyzer > Hydrogen yield per unit energy > Value : float
+        Electrical conversion efficiency of electrolyzer in (mass H2)/energy.
+    Electrolyzer > Replacement time > Value : float
         Operating time in hours before stack replacement of electrolyzer is required.
-    Electrolyzer > Yearly Operation Data > Value : nd.array
-        Yearly operation data of electrolyzer in (year, H2 produced, electrolyzer capacity) format.
-    Electrolyzer > H2 Production (yearly, kg) > Value : nd.array
-        Yearly hydrogen production in kg.
-    Power Generation > Stored Power (daily, kWh) > Value : dict
-        Power stored in battery daily in kWh (dictionary of years).
+    Electrolyzer > Yearly operation data > Year_Value : nd.array
+        Yearly operation data of electrolyzer : year.
+    Electrolyzer > Yearly operation data > Production_Value : nd.array
+        Yearly operation data of electrolyzer : H2 produced during the year.
+    Electrolyzer > Yearly operation data > Duration_Value : nd.array
+        Yearly operation data of electrolyzer : duration of operation during the year.                
+    Electrolyzer > H2 production (yearly) > Value : nd.array
+        Yearly hydrogen production.
+    Power Generation > Stored energy (daily) > Value : dict
+        Energy stored in battery daily (dictionary of years).
 
     Returns
     -------
-    Technical Operating Parameters and Specifications > Plant Design Capacity (kg of H2/day) > Value : nd.array
-        Plant design capacity in (kg of H2)/day calculated from installed 
+    Technical Operating Parameters and Specifications > Plant design capacity > Value : nd.array
+        Plant design capacity in (mass of H2)/time calculated from installed 
         electrolysis power capacity and hourly power generation data.
-    Planned Replacement > Electrolyzer Stack Replacement > Frequency (years) : float
+    Planned Replacement > Electrolyzer stack replacement > Frequency : float
         Frequency of electrolyzer stack replacements in years, calculated from replacement time and hourly
         irradiation data.
-    Power Consumption > Stored Power Electrolysis (kWh, yearly) > Value : nd.array
-        Electricity demand of electrolysis using stored power in kWh per year.
-    Power Consumption > Stored Power Electrolysis (kWh, yearly) > Type : str
+    Power Consumption > Stored energy electrolysis (yearly) > Value : nd.array
+        Electricity demand of electrolysis using stored energy per year.
+    Power Consumption > Stored energy electrolysis (yearly) > Type : str
         Type of power consumer, type is 'on_demand' (only uses stored power).
     '''
 
     def __init__(self, dcf, print_info):
-        process_table(dcf.inp, 'Electrolysis Using Stored Power', 'Value')
-        process_table(dcf.inp, 'Power Generation', 'Value')
-        process_table(dcf.inp, 'Electrolyzer', 'Value')
+        self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Stored_Power_Electrolysis_Plugin')
 
         self.calculate_H2_production(dcf)
-        self.replacement_frequency = calculate_stack_replacement(self.operation_hours, 
-                                    dcf.inp['Electrolyzer']['Replacement time (h)']['Value'])
-        
-        insert(dcf, 'Power Consumption', 'Stored Power Electrolysis (kWh, yearly)', 'Value',
-                self.power_consumption_kWh, __name__, print_info = print_info)
-        insert(dcf, 'Power Consumption', 'Stored Power Electrolysis (kWh, yearly)', 'Type',
-                'on_demand', __name__, print_info = print_info)
-        
-        insert(dcf, 'Planned Replacement', 'Electrolyzer Stack Replacement', 'Frequency (years)', 
-                self.replacement_frequency, __name__, print_info = print_info, add_processed = False,
-                insert_path = False)
+        self.on_demand = "on_demand"
 
-        insert(dcf, 'Technical Operating Parameters and Specifications', 'Plant Design Capacity (kg of H2/day)', 'Value', 
-                self.new_h2_production_kg/365., __name__, print_info = print_info)
+        self.replacement_frequency = calculate_stack_replacement(self.operation_hours, 
+                                    self.input_dict_resolved['Electrolyzer']['Replacement time']['Value'].unit['h']) # operation hours being for each year, the result is in years between replacement
+
+        output_inserter_function(output_dict, self, dcf, 'Stored_Power_Electrolysis_Plugin') 
 
     def calculate_H2_production(self, dcf):
         '''
         '''
 
-        HOURS_IN_A_YEAR = 8760
+        SECONDS_IN_A_YEAR = 8760*3600
 
-        electrolyzer_yearly_data = dcf.inp['Electrolyzer']['Yearly Operation Data']['Value']
-        remaining_run_time_per_year_in_hours = HOURS_IN_A_YEAR - electrolyzer_yearly_data[:,2]
+        remaining_run_time_per_year_in_seconds = SECONDS_IN_A_YEAR - self.input_dict_resolved['Electrolyzer']['Yearly operation data']['Duration_Value'].unit['s']
         
-        electrolyzer_power_demand, power_increase = calculate_electrolyzer_power_demand(dcf.inp['Electrolyzer']['Power requirement increase per year']['Value'],
-                                                                                        dcf.inp['Electrolyzer']['Nominal Power (kW)']['Value'],
+        electrolyzer_power_demand, power_increase_ratio = calculate_electrolyzer_power_demand(self.input_dict_resolved['Electrolyzer']['Power requirement increase per year']['Value'].unit['-'],
+                                                                                        self.input_dict_resolved['Electrolyzer']['Nominal power']['Value'].unit['W'],
                                                                                         dcf.operation_years)
 
-        maximum_consumable_power_kWh = remaining_run_time_per_year_in_hours * electrolyzer_power_demand
+        maximum_consumable_energy = remaining_run_time_per_year_in_seconds * electrolyzer_power_demand # result in Joules
         
-        stored_power = dcf.inp['Power Generation']['Stored Power (daily, kWh)']['Value']
-        stored_power_yearly = daily_to_yearly_power(stored_power)
+        stored_energy = {}
+        for year in dcf.operation_years:
+            stored_energy[year] = self.input_dict_resolved['Power Generation']['Stored energy (daily)']['Value'][year].unit['J']
+        stored_energy_yearly = daily_to_yearly_power(stored_energy)
 
-        stored_power_yearly_available_for_use = stored_power_yearly * dcf.inp['Electrolysis Using Stored Power']['Fraction of stored power used for electrolysis']['Value']
+        stored_energy_yearly_available_for_use = stored_energy_yearly * self.input_dict_resolved['Electrolysis Using Stored Power']['Fraction of stored power used for electrolysis']['Value'].unit['-']
 
-        self.power_consumption_kWh = np.minimum(maximum_consumable_power_kWh, stored_power_yearly_available_for_use)
+        self.energy_consumption = Quantity(np.minimum(maximum_consumable_energy, stored_energy_yearly_available_for_use), 'J')
 
         # Updating H2 production
 
-        additional_h2_production_kg = calculate_hydrogen_production(self.power_consumption_kWh, 
-                                                         dcf.inp['Electrolyzer']['Conversion efficiency (kg H2/kWh)']['Value'],
-                                                         power_increase)
+        additional_h2_production = calculate_hydrogen_production(self.energy_consumption.unit['J'], 
+                                                         self.input_dict_resolved['Electrolyzer']['Hydrogen yield per unit energy']['Value'].unit['kg/J'],
+                                                         power_increase_ratio)
         
-        old_h2_production_kg = dcf.inp['Electrolyzer']['H2 Production (yearly, kg)']['Value']
+        old_h2_production = self.input_dict_resolved['Electrolyzer']['H2 production (yearly)']['Value'].unit['kg']
 
-        self.new_h2_production_kg = old_h2_production_kg.copy()
-        self.new_h2_production_kg[-len(additional_h2_production_kg):] += additional_h2_production_kg
+        self.new_h2_production = old_h2_production.copy()
+        self.new_h2_production[-len(additional_h2_production):] += additional_h2_production
+        self.new_h2_production = Quantity(self.new_h2_production, 'kg/year')
         
         # Updating operation hours
 
-        additional_operation_hours = self.power_consumption_kWh / electrolyzer_power_demand
-        self.operation_hours = additional_operation_hours + electrolyzer_yearly_data[:,2]
+        additional_operation_hours = self.energy_consumption.unit['Wh'] / electrolyzer_power_demand
+        self.operation_hours = Quantity(additional_operation_hours + self.input_dict_resolved['Electrolyzer']['Yearly operation data']['Duration_Value'].unit['h'], 'h') # calculate_stack_replacement expects a Quantity as an input
