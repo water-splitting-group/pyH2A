@@ -17,7 +17,7 @@ class DummyDCF:
     ):  
         self.inp = {
             "Technical Operating Parameters and Specifications": {
-                "Output per year": {"Value": plant_output_per_year, "Unit":"kg/year"}
+                "Output per year": {"Value": plant_output_per_year, "Unit":"kg"}
             },
             "Utilities": {
                 key: {
