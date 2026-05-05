@@ -17,7 +17,7 @@ class DummyDCF:
     ):
         self.inp = {
             "Financial Input Values": {
-                "construction time": {
+                "Construction time": {
                     "Value": construction_time,
                     "Unit": "year",
                 }

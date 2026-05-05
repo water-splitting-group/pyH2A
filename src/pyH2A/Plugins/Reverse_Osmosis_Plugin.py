@@ -4,7 +4,7 @@ import numpy as np
 
 input_dict = {
     "Financial Input Values": {
-        "construction time": {
+        "Construction time": {
             "Value": {
                 "type": {int,},
                 "bounds": (0, 40*365*86400),
@@ -100,7 +100,7 @@ class Reverse_Osmosis_Plugin:
     
     Parameters
     ----------
-    Financial Input Values > construction time > Value : int
+    Financial Input Values > Construction time > Value : int
         Construction time of hydrogen production plant in years.
 	Technical Operating Parameters and Specifications > Output per year > Value : float
 		Yearly output taking operating capacity factor into account.
@@ -146,7 +146,7 @@ class Reverse_Osmosis_Plugin:
         self.sea_water_demand = Quantity(fresh_water_demand_m3 / self.input_dict_resolved['Reverse Osmosis']['Recovery rate']['Value'].unit['-'], 'm3')
 
         electricity_demand_J = self.sea_water_demand.unit['m3'] * self.input_dict_resolved['Reverse Osmosis']['Power demand']['Value'].unit['J/m3']
-        self.electricity_demand = Quantity(electricity_demand_J[dcf.inp['Financial Input Values']['construction time']['Value']:], 'J')
+        self.electricity_demand = Quantity(electricity_demand_J[dcf.inp['Financial Input Values']['Construction time']['Value']:], 'J')
 
     def calculate_reverse_osmosis_scaling(self):
         '''
