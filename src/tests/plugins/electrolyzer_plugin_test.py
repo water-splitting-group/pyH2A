@@ -21,7 +21,7 @@ class DummyDCF:
 
         self.inp = {
             "Financial Input Values": {
-                "construction time": {"Value": construction_time, "Unit":"year"}
+                "Construction time": {"Value": construction_time, "Unit":"year"}
             },
             "CAPEX Multiplier": {"Multiplier": {"Value": capex_multiplier, "Unit":"-"}},
             "Electrolyzer": {
