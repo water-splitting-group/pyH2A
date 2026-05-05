@@ -15,7 +15,7 @@ class DummyDCF:
     ):
         self.inp = {
             "Technical Operating Parameters and Specifications": {
-                "Design output per day": {
+                "Design output flowrate": {
                     "Value": design_output_per_day,
                     "Unit": "kg/day",
                 }
