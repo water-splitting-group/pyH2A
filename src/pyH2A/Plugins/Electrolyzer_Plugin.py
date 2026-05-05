@@ -5,7 +5,7 @@ import numpy as np
 
 input_dict = {
     "Financial Input Values": {
-        "construction time": {
+        "Construction time": {
             "Value": {
                 "type": {int,},
                 "bounds": (0, 40*365*86400),
@@ -204,7 +204,7 @@ class Electrolyzer_Plugin:
 
     Parameters
     ----------
-    Financial Input Values > construction time > Value : int
+    Financial Input Values > Construction time > Value : int
         Construction time of hydrogen production plant in years.
     CAPEX Multiplier > Multiplier > Value : float
         Multiplier to describe cost reduction of electrolysis CAPEX for every ten-fold
@@ -316,7 +316,7 @@ class Electrolyzer_Plugin:
         self.yearly_data_production = Quantity(np.asarray(yearly_data_production), 'kg')
         self.yearly_data_duration = Quantity(np.asarray(yearly_data_duration), 'h')
 
-        self.h2_production = np.concatenate([np.zeros(dcf.inp['Financial Input Values']['construction time']['Value']), self.yearly_data_production.unit['kg']])
+        self.h2_production = np.concatenate([np.zeros(dcf.inp['Financial Input Values']['Construction time']['Value']), self.yearly_data_production.unit['kg']])
         self.h2_production = Quantity(self.h2_production, 'kg/year') # needs to be expressed as a flowrate, as it ultimately serves as the plant design capacity etc
         
         self.yearly_data_unused_energy = yearly_data_unused_energy
