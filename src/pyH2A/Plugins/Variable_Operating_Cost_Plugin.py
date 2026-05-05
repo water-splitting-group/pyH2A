@@ -41,12 +41,16 @@ input_dict = {
 			"Price_Conversion_Factor_Unit": {
 				"dimension": "dimensionless"
 			},
+			"Cost_Path": {
+				"type": {str},
+				"bounds": None, 
+			},			
 			"Usage_Path": {
 				"type": {str},
 				"bounds": None, 
 			},
 			"optional": True,
-			"description": "Utilities are specified by specifying the cost of a given utility (e.g. $/kWh(electricity) and specifying the usage of the utility per mass of product (e.g. kWh(electricity)/kg(H2). The cost of the utility may be either a float, a ndarray with the same length as `dcf.inflation_correction` or a textfile containing cost values (cost values have to be in second column). For cost the path key is Path and for usage the path key is Usage Path"
+			"description": "Utilities are specified by specifying the cost of a given utility (e.g. USD of each kWh of electricity and specifying the usage of the utility per mass of product (e.g. kWh of electricity consumption /kg (H2). The cost of the utility may be either a float, a ndarray with the same length as `dcf.inflation_correction` or a textfile containing cost values (cost values have to be in second column). For cost the path key is Cost_Path and for usage the path key is Usage_Path"
 		}
 	},
 	"<...> Other Variable Operating Cost <...>": {
@@ -125,8 +129,10 @@ class Variable_Operating_Cost_Plugin:
 	Utilities > [...] > Price_Conversion_Factor : float
 		Conversion factor between cost and usage units. Should be set to 1 if no conversion is
 		required.
-	Utilities > [...] > Usage_Path : str, optional
-		Path for `Usage per kg H2` entry.
+	Utilities > [...] > Cost_Path : str
+		Path for `Cost` entry. If no such path is needed, the Cost_Path column must exist and be left empty.
+	Utilities > [...] > Usage_Path : str
+		Path for `Usage` entry. If no such path is needed, the Usage_Path column must exist and be left empty.
 	[...] Other Variable Operating Operating Cost [...] >> Value : float
 		``sum_all_tables()`` is used.
 
@@ -144,6 +150,7 @@ class Variable_Operating_Cost_Plugin:
 	'''
 
 	def __init__(self, dcf, print_info):
+
 		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Variable_Operating_Cost_Plugin')
 
 		self.calculate_utilities_cost(dcf)
