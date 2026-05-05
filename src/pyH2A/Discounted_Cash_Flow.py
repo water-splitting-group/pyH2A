@@ -331,7 +331,7 @@ class Discounted_Cash_Flow:
 
 		Returns 
 		-------
-		Financial Input Values > construction time > Value : int
+		Financial Input Values > Construction time > Value : int
 			Construction time in years.
 		'''
 
@@ -400,18 +400,18 @@ class Discounted_Cash_Flow:
 		'''Creating time scale information for discounted cash flow analysis.
 		'''
 
-		insert(self, 'Financial Input Values', 'construction time', 'Value', 
+		insert(self, 'Financial Input Values', 'Construction time', 'Value', 
 			   len(self.inp['Construction']), __name__, print_info = self.print_info)
-		insert(self, 'Financial Input Values', 'construction time', 'Unit',
+		insert(self, 'Financial Input Values', 'Construction time', 'Unit',
 		 'year', __name__, print_info = self.print_info)
 
-		construction_start = self.fin['startup year']['Value'] - self.fin['construction time']['Value']
+		construction_start = self.fin['startup year']['Value'] - self.fin['Construction time']['Value']
 		end_of_life = self.fin['startup year']['Value'] + self.fin['plant life']['Value']
 
 		self.years = np.arange(construction_start, end_of_life)
-		self.analysis_years = np.arange(0, self.fin['construction time']['Value'] + 
+		self.analysis_years = np.arange(0, self.fin['Construction time']['Value'] + 
 										   self.fin['plant life']['Value'])
-		self.plant_years = np.arange(-self.fin['construction time']['Value'], 
+		self.plant_years = np.arange(-self.fin['Construction time']['Value'], 
 									  self.fin['plant life']['Value'])
 		self.operation_years = np.arange(0, self.fin['plant life']['Value'])
 
@@ -449,12 +449,12 @@ class Discounted_Cash_Flow:
 		self.chemical_inflator = chemical_price[:,1][chemical_idx[0]]/chemical_price[:,1][chemical_idx[1]]
 
 	def production_scaling(self):
-		'''Get plant outpuer per year at gate.
+		'''Get plant output per year at gate.
 
 		Parameters
 		----------
 		Technical Operating Parameters and Specifications > Output per year at gate > Value : float
-			Output per year at gate in kg.
+			Output per year at gate in mass.
 		'''
 
 		self.output_per_year_at_gate = process_input(self.inp, 
@@ -490,7 +490,7 @@ class Discounted_Cash_Flow:
 		self.initial_depreciable_capital = np.sum(construction_years)
 
 		self.annual_initial_depreciable_capital = np.zeros(len(self.inflation_factor))
-		self.annual_initial_depreciable_capital[:self.fin['construction time']['Value']] = construction_years
+		self.annual_initial_depreciable_capital[:self.fin['Construction time']['Value']] = construction_years
 
 		self.after_tax_nominal_irr = (1 + self.fin['irr']['Value']) * (1 + self.fin['inflation']['Value']) - 1
 
@@ -634,7 +634,7 @@ class Discounted_Cash_Flow:
 		'''Calculate H2 sales.
 		'''
 
-		self.annual_sales = np.ones(len(self.inflation_factor)) * self.output_per_year_at_gate.unit['kg/year']
+		self.annual_sales = np.ones(len(self.inflation_factor)) * self.output_per_year_at_gate.unit['kg']
 		self.annual_sales[:self.start_up_time_idx] = self.annual_sales[:self.start_up_time_idx] * self.fin['startup revenues']['Value']
 		self.annual_sales[:self.start_idx] = 0
 
@@ -652,7 +652,7 @@ class Discounted_Cash_Flow:
 		lcoe_operating_costs = (-self.npv_dict['salvage'] + self.npv_dict['decomissioning'] + self.npv_dict['fixed_operating_costs'] + self.npv_dict['variable_operating_costs'] + self.npv_dict['interest']) * (1. - self.total_tax_rate)
 		lcoe_h2_sales = self.npv_dict['h2_sales'] * (1. - self.total_tax_rate)
 
-		self.h2_cost_nominal = (lcoe_capital_costs + lcoe_depreciation + lcoe_principal_payment + lcoe_operating_costs)/lcoe_h2_sales * (1. + self.fin['inflation']['Value']) ** self.fin['construction time']['Value']
+		self.h2_cost_nominal = (lcoe_capital_costs + lcoe_depreciation + lcoe_principal_payment + lcoe_operating_costs)/lcoe_h2_sales * (1. + self.fin['inflation']['Value']) ** self.fin['Construction time']['Value']
 		self.h2_cost = self.h2_cost_nominal/self.inflation_correction
 
 	def h2_revenue(self):
@@ -716,7 +716,7 @@ class Discounted_Cash_Flow:
 		'''Calculate expenses per kg H2.
 		'''
 
-		return value/self.npv_dict['h2_sales'] * (1. + self.fin['inflation']['Value']) ** self.fin['construction time']['Value'] / self.inflation_correction
+		return value/self.npv_dict['h2_sales'] * (1. + self.fin['inflation']['Value']) ** self.fin['Construction time']['Value'] / self.inflation_correction
 
 	def check_processing(self):
 		'''Check whether all tables in input file were used.
