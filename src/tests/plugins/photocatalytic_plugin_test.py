@@ -33,7 +33,7 @@ class DummyDCF:
 
         self.inp = {
             "Technical Operating Parameters and Specifications": {
-                "Design output per day": {"Value": design_output, "Unit":"kg"},
+                "Design output flowrate": {"Value": design_output, "Unit":"kg/day"},
             },
             "Reactor Baggies": {
                 "Cost material top": {"Value": top_cost, "Unit":"USD/m2"},
