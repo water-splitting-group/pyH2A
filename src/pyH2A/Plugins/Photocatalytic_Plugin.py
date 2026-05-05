@@ -4,13 +4,13 @@ from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
 input_dict = {
 	"Technical Operating Parameters and Specifications": {
-		"Design output per day": {
+		"Design output flowrate": {
 			"Value": {
 				"type": {float,},
 				"bounds": (0, None),
 			},
 			"Unit": {
-				"dimension": "mass",
+				"dimension": "mass/time",
 			},
 			"optional": False,
 			"description": "Design output."
@@ -337,7 +337,7 @@ class Photocatalytic_Plugin:
 
 	Parameters
 	----------
-	Technical Operating Parameters and Specifications > Design output per day > Value : float
+	Technical Operating Parameters and Specifications > Design output flowrate > Value : float
 		Design output flowrate.
 	Reactor Baggies > Cost material top > Value : float
 		Cost of baggie top material.
@@ -506,7 +506,7 @@ class Photocatalytic_Plugin:
 
 		cost_per_baggie = baggie['Markup factor']['Value'].unit['-'] * (material_cost + port_cost + baggie['Other costs per baggie']['Value'].unit['USD'])
 
-		self.baggie_number = Quantity((np.ceil(self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output per day']['Value'].unit['kg'] / self.mass_rate_H2_per_baggie.unit['kg/day'])).astype(int), '-')
+		self.baggie_number = Quantity((np.ceil(self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output flowrate']['Value'].unit['kg/day'] / self.mass_rate_H2_per_baggie.unit['kg/day'])).astype(int), '-')
 		self.baggies_cost = Quantity(self.baggie_number.unit['-'] * cost_per_baggie, 'USD')
 
 	def catalyst_cost(self, dcf):
