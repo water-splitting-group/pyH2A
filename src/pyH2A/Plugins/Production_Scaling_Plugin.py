@@ -25,7 +25,7 @@ input_dict = {
 			"optional": False,
 			"description": "Operating capacity factor value between 0 and 1 or percentage value."
 		},
-		"Maximum output at gate": {
+		"Maximum output flowrate at gate": {
 			"Value": {
 				"type": {float,},
 				"bounds": (0, None),
@@ -34,7 +34,7 @@ input_dict = {
 				"dimension": "mass / time",
 			},
 			"optional": True,
-			"description": "Maximum output at gate. If not specified it defaults to `Plant Design Capacity`."
+			"description": "Maximum output flowrate at gate. If not specified it defaults to `Plant Design Capacity`."
 		},
 		"New plant design capacity": {
 			"Value": {
@@ -85,18 +85,18 @@ input_dict = {
 
 output_dict = {
 	"Technical Operating Parameters and Specifications": {
-		"Design output per day": {
+		"Design output flowrate": {
 			"Value": {
-				"inserted_value": "design_output_per_day",
+				"inserted_value": "scaled_design_output",
 				"type": {float,},
 				"dimension": "mass / time",
 			},
 			"optional": False,
 			"description": "Design output of hydrogen production plant per day."
 		},
-		"Max gate output per day": {
+		"Max gate output flowrate": {
 			"Value": {
-				"inserted_value": "max_gate_output_per_day",
+				"inserted_value": "max_gate_output_flowrate",
 				"type": {float,},
 				"dimension": "mass / time",
     		},
@@ -107,7 +107,7 @@ output_dict = {
 			"Value": {
 				"inserted_value": "output_per_year",
 				"type": {float,},
-				"dimension": "mass / time",
+				"dimension": "mass",
 			},
 			"optional": False,
 			"description": "Yearly output taking operating capacity factor into account."
@@ -116,19 +116,19 @@ output_dict = {
 			"Value": {
 				"inserted_value": "output_per_year_at_gate",
 				"type": {float,},
-				"dimension": "mass / time",
+				"dimension": "mass",
 			},
 			"optional": False,
 			"description": "Actual yearly output at gate."
 		},
-		"Maximum output at gate": {
+		"Maximum output flowrate at gate": {
 			"Value": {
 				"inserted_value": "maximum_output_at_gate",
 				"type": {float,},
 				"dimension": "mass / time",
 			},
 			"optional": False,
-			"description": "Maximum output at gate. If not specified it defaults to `Plant Design Capacity`."
+			"description": "Maximum output flowrate at gate. If not specified it defaults to `Plant Design Capacity`."
 		},
 		"Scaling ratio": {
 			"Value": {
@@ -171,8 +171,8 @@ class Production_Scaling_Plugin:
 		Plant design capacity (mass per time).
 	Technical Operating Parameters and Specifications > Operating capacity factor > Value : float
 		Operating capacity factor.
-	Technical Operating Parameters and Specifications > Maximum output at gate > Value : float, optional
-		Maximum output at gate in (mass of H2)/time. 
+	Technical Operating Parameters and Specifications > Maximum output flowrate at gate > Value : float, optional
+		Maximum output flowrate at gate in (mass of H2)/time. 
 		If this parameter is not specified it defaults to `Plant design capacity`.
 	Technical Operating Parameters and Specifications > New plant design capacity > Value : float, optional
 		New plant design capacity in mass of H2/time to calculate scaling, which overwrites possible Scaling ratio.
@@ -185,15 +185,15 @@ class Production_Scaling_Plugin:
 
 	Returns
 	-------
-	Technical Operating Parameters and Specifications > Design output per day > Value : float
+	Technical Operating Parameters and Specifications > Design output flowrate > Value : float
 		Design output.
-	Technical Operating Parameters and Specifications > Max gate output per day > Value : float
+	Technical Operating Parameters and Specifications > Max gate output flowrate > Value : float
 		Maximum gate ouput.
-	Technical Operating Parameters and Specifications > Output per year > Value : float
+	Technical Operating Parameters and Specifications > Yearly averaged output flowrate > Value : float
 		Yearly output taking operating capacity factor into account.
-	Technical Operating Parameters and Specifications > Output per year at gate > Value	: float
+	Technical Operating Parameters and Specifications > Yearly averaged output flowrate at gate > Value	: float
 		Actual yearly output at gate.
-	Technical Operating Parameters and Specifications > Maximum output at gate > Value	: float
+	Technical Operating Parameters and Specifications > Maximum output flowrate at gate > Value	: float
 		Specified or equal to to `Plant design capacity`.				
 	Technical Operating Parameters and Specifications > Scaling ratio > Value : float or None
 		Returned if New plant design capacity was specified.
@@ -222,8 +222,8 @@ class Production_Scaling_Plugin:
 		`Scaling Ratio` was provided). Otherwise returns regular design output and output at gate per day in (kg H2).
 		'''
 
-		if 'Maximum output at gate' in self.dictionary:
-			self.maximum_output_at_gate = self.dictionary['Maximum output at gate']['Value']
+		if 'Maximum output flowrate at gate' in self.dictionary:
+			self.maximum_output_at_gate = self.dictionary['Maximum output flowrate at gate']['Value']
 		else:
 			self.maximum_output_at_gate = self.dictionary['Plant design capacity']['Value']
 
@@ -234,8 +234,8 @@ class Production_Scaling_Plugin:
 			self.scaling_ratio = Quantity(self.dictionary['New plant design capacity']['Value'].unit['kg/day'] / self.dictionary['Plant design capacity']['Value'].unit['kg/day'], '-')
 
 		if ('Scaling ratio' in self.dictionary) or ('New plant design capacity' in self.dictionary):
-			self.design_output_per_day = Quantity(self.dictionary['Plant design capacity']['Value'].unit['kg/day'] * self.scaling_ratio.unit['-'], 'kg/day')
-			self.max_gate_output_per_day = Quantity(self.maximum_output_at_gate.unit['kg/day'] * self.scaling_ratio.unit['-'], 'kg/day')
+			self.scaled_design_output = Quantity(self.dictionary['Plant design capacity']['Value'].unit['kg/day'] * self.scaling_ratio.unit['-'], 'kg/day')
+			self.max_gate_output_flowrate = Quantity(self.maximum_output_at_gate.unit['kg/day'] * self.scaling_ratio.unit['-'], 'kg/day')
 
 			if 'Capital scaling exponent' in self.dictionary:
 				self.capital_scaling_factor = Quantity(self.scaling_ratio.unit['-'] ** self.dictionary['Capital scaling exponent']['Value'].unit['-'], '-')
@@ -248,13 +248,13 @@ class Production_Scaling_Plugin:
 				self.labor_scaling_factor = Quantity(self.scaling_ratio.unit['-'] ** 0.25, '-')
 
 		else:
-			self.design_output_per_day = self.dictionary['Plant design capacity']['Value']
-			self.max_gate_output_per_day = self.maximum_output_at_gate
+			self.scaled_design_output = self.dictionary['Plant design capacity']['Value']
+			self.max_gate_output_flowrate = self.maximum_output_at_gate
 
 	def calculate_output(self):
 		'''Calculation of yearly output in kg and yearly output at gate in kg.
 		'''
 
-		self.output_per_year = Quantity(self.design_output_per_day.unit['kg/year'] * self.dictionary['Operating capacity factor']['Value'].unit['-'], 'kg/year')
-		self.output_per_year_at_gate = Quantity(self.max_gate_output_per_day.unit['kg/year'] * self.dictionary['Operating capacity factor']['Value'].unit['-'], 'kg/year')
+		self.output_per_year = Quantity(self.scaled_design_output.unit['kg/year'] * self.dictionary['Operating capacity factor']['Value'].unit['-'], 'kg')
+		self.output_per_year_at_gate = Quantity(self.max_gate_output_flowrate.unit['kg/year'] * self.dictionary['Operating capacity factor']['Value'].unit['-'], 'kg')
 		

@@ -19,7 +19,7 @@ class DummyDCF:
             "Technical Operating Parameters and Specifications": {
                 "Plant design capacity": {"Value": plant_capacity, "Unit":"kg/day"},
                 "Operating capacity factor": {"Value": capacity_factor, "Unit":"-"},
-                "Maximum output at gate": {"Value": max_output, "Unit":"kg/day"},
+                "Maximum output flowrate at gate": {"Value": max_output, "Unit":"kg/day"},
                 "New plant design capacity": {"Value": new_plant_capacity, "Unit":"kg/day"},
                 "Scaling ratio": {"Value": scaling_ratio, "Unit":"-"},
                 "Capital scaling exponent": {"Value": capital_exponent, "Unit":"-"},
@@ -42,10 +42,10 @@ class DummyDCF:
                 "labor_exponent": 0.26
             },
             "expected": {
-                "design_output_per_day": Quantity(200.0,"kg/day"),
-                "max_gate_output_per_day": Quantity(2000.0,"kg/day"),
-                "output_per_year": Quantity(65700.0,"kg/year"),
-                "output_per_year_at_gate": Quantity(657000.0,"kg/year")
+                "scaled_design_output": Quantity(200.0,"kg/day"),
+                "max_gate_output_flowrate": Quantity(2000.0,"kg/day"),
+                "output_per_year": Quantity(65700.0,"kg"),
+                "output_per_year_at_gate": Quantity(657000.0,"kg")
             }
         },
     ]
@@ -63,22 +63,22 @@ def test_production_scaling_plugin(case):
     # Tolerance (very small)
     tolerance = 1e-12
     
-    assert plugin.design_output_per_day.unit['kg/s'] == pytest.approx(
-        expected["design_output_per_day"].unit['kg/s'],
+    assert plugin.scaled_design_output.unit['kg/s'] == pytest.approx(
+        expected["scaled_design_output"].unit['kg/s'],
         abs=tolerance
     )
     
-    assert plugin.max_gate_output_per_day.unit['kg/s'] == pytest.approx(
-        expected["max_gate_output_per_day"].unit['kg/s'],
+    assert plugin.max_gate_output_flowrate.unit['kg/s'] == pytest.approx(
+        expected["max_gate_output_flowrate"].unit['kg/s'],
         abs=tolerance
     )
     
-    assert plugin.output_per_year.unit['kg/s'] == pytest.approx(
-        expected["output_per_year"].unit['kg/s'],
+    assert plugin.output_per_year.unit['kg'] == pytest.approx(
+        expected["output_per_year"].unit['kg'],
         abs=tolerance
     )
     
-    assert plugin.output_per_year_at_gate.unit['kg/s'] == pytest.approx(
-        expected["output_per_year_at_gate"].unit['kg/s'],
+    assert plugin.output_per_year_at_gate.unit['kg'] == pytest.approx(
+        expected["output_per_year_at_gate"].unit['kg'],
         abs=tolerance
     )
