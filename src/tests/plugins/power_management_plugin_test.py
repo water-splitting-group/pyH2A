@@ -44,7 +44,7 @@ class DummyDCF:
                 }
             },
             "Financial Input Values": {
-                "construction time": {
+                "Construction time": {
                     "Value": construction_time,
                     "Unit": "year"
                 }
