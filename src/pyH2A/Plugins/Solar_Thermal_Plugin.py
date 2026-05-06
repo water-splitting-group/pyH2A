@@ -9,7 +9,7 @@ input_dict = {
 				"bounds": (0, None),
 			},
 			"Unit": {
-				"dimension": "mass / time",	
+				"dimension": "power",	
 			},
 			"optional": False,
 			"description": "Design output of hydrogen production plant per unit of time."
@@ -107,7 +107,8 @@ class Solar_Thermal_Plugin:
 		self.H2_molecular_weight = Quantity(2, 'g/mol')
 		H2_mol_per_m2 = (self.input_dict_resolved['Solar Input']['Mean solar input']['Value'].unit['W/m2'] * self.input_dict_resolved['Solar-to-Hydrogen Efficiency']['STH']['Value'].unit['-']) / self.H2_molecule_energy.unit['J/mol']
 		H2_kg_per_m2 = H2_mol_per_m2*self.H2_molecular_weight.unit['kg/mol']
+		H2_kW_per_m2 = H2_kg_per_m2*32.*3600. # assuming a LHV of about 32 kWh/kg 
 
-		required_area_m2 = self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output rate']['Value'].unit['kg/s'] / H2_kg_per_m2
+		required_area_m2 = self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output rate']['Value'].unit['kW'] / H2_kW_per_m2
 
 		self.area = Quantity(required_area_m2 * (1. + self.input_dict_resolved['Non-Depreciable Capital Costs']['Additional land area']['Value'].unit['-']), 'm2')

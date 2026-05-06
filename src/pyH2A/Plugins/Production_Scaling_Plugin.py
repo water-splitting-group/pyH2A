@@ -1,13 +1,12 @@
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
-# edit the following two strings according to the system
-FD = "mass" # Dimension of the functional unit. For a battery, would be "energy"
-FU = "kg" # functional unit.
-# derived strings
-FD_dot = FD+"/time" # Dimension of the functional unit per time. For a battery, would be "power" (because Quantities don't simplify energy/time into power)
-FU_dot = FU+"/s" # functional unit per time, SI by default. For batteries, would be W
-FU_per_year = FU+"/year" # needed because we want to integrate FUs over periods of 1 year. For Batteries, would be something like the pre_defined units 'kWh_per_year' or 'MWh_per_year', to be consistent with the "power" dimension
+# edit the following strings according to the system
+FD = "energy" # Dimension of the functional unit. 
+FU = "kWh" # functional unit.
+FD_dot = 'power' # Dimension of the functional unit per time. 
+FU_dot = 'W' # functional unit per time, SI by default. 
+FU_per_year = 'kWh_per_year' # needed because we want to integrate FUs over periods of 1 year. 
 
 input_dict = {
     "Technical Operating Parameters and Specifications": {

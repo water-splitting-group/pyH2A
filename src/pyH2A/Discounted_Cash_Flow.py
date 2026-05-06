@@ -6,7 +6,7 @@ from pyH2A.Utilities.input_modification import convert_input_to_dictionary, proc
 from pyH2A.LCA.LCA import LCA
 import pyH2A.Utilities.find_nearest as fn
 
-FU = "kg" # functional unit
+FU = "kWh" # functional unit
 
 def numpy_npv(rate, values):
 	'''Calculation of net present value.

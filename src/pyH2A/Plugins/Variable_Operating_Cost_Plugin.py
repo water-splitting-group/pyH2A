@@ -4,8 +4,8 @@ from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import pyH2A.Utilities.find_nearest as fn
 import numpy as np
 
-FD = "mass" # dimension of the functional unit
-FU = "kg" # functional unit
+FD = "energy" # dimension of the functional unit
+FU = "kWh" # functional unit
 
 input_dict = {	
 	"Technical Operating Parameters and Specifications": {
