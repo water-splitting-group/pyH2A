@@ -27,7 +27,7 @@ Plant Modules             | 10    | -      | None                               
 
 Name             | Full Name                                      | Value | Unit |
 ---------------- | ---------------------------------------------- | ----- | ---- |
-capital perc 1st | % of Capital Spent in 1st Year of Construction | 100%  | -    |
+capital perc 1st | fraction of Capital Spent in 1st Year of Construction | 100%  | -    |
 
 # Hourly Irradiation
 
@@ -44,7 +44,7 @@ Array Azimuth                 | 0     | degree    | Flat baggies on the ground. 
 Nominal Operating Temperature | 45    | celsius   |
 Mismatch Derating             | 98%   | -         |
 Dirt Derating                 | 98%   | -         | Values taken from Chang 2020, analogues to silicon PV.                 |
-Temperature Coefficient       | 0.0   | %/celsius | No decrease on photocatalyst activity with higher temperature assumed. |
+Temperature Coefficient       | 0.0   | -/delta_degC | No decrease on photocatalyst activity with higher temperature assumed. |
 
 # Solar Input
 
@@ -65,7 +65,7 @@ Cost per unit of mass         | 3,000 | $/kg            | CatCost Model of Urea/
 Concentration                 | 0.533 | g/L             | Kang 2015: 2% STH, 80 mg C3N4/CDot catalyst in 150 ml, 1150 umol H2 after 6h, 9 cm^2 irradiation area (2266 J/h incident irradiation), ca. 2.395 mmol H2/h/g; Tremblay 2020: 3.4% STH (200 W m^-2), 30 mg C3N4 + catalase in 20 ml, 47.49 umol H2/h, ca. 1.583 mmol H<sub>2</sub>/h/g (ca. 5 cm<sup>2</sup> irradiation area gives reported STH); Zhao 2021: 1.16% STH (100 mW/cm^2), 0.64 cm^2 irradiated area, 11.25 umol H2 h^-1, 40 mg catalyst, 0.281 mmol H2/g/h, activity 420 nm irradiation: 65 umol H2/h, 40 mg, 1.625 mmol H2/g/h |
 Lifetime                      | 0.5   | year            | Kang 2015, 45 days continuous irradiation, 200 days with recycling                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 Molar Weight                  | 500   | g/mol           | Assumption for calculation of hypothetical homogeneous water splitting catalyst.                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-Molar Attenuation Coefficient | 8000  | liter/(cm\*mol) | Assumption for calculation of hypothetical homogeneous water splitting catalyst.                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+Molar Attenuation Coefficient | 8000  | liter/(m*mol) | Assumption for calculation of hypothetical homogeneous water splitting catalyst.                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 
 # Reactor Baggies
 
@@ -143,10 +143,10 @@ Control system installation | 30%    | $    | Direct Capital Costs - Control Sys
 
 Name                      | Path                                 | Value | Unit | Comment                                      |
 ------------------------- | ------------------------------------ | ----- | ---- | -------------------------------------------- |
-Engineering and Design    | Direct Capital Costs > Total > Value | 7%    | $    | Indirect capital costs based on Pinaud 2013. |
-Process Contingency       | Direct Capital Costs > Total > Value | 20%   | $    |
-Up-Front Permitting Costs | Direct Capital Costs > Total > Value | 5%    | $    |
-Site Preparation          | Direct Capital Costs > Total > Value | 1%    | $    |
+Engineering and Design (fraction of total direct capital costs)    | Direct Capital Costs > Total > Value | 7%    | $    | Indirect capital costs based on Pinaud 2013. |
+Process Contingency (fraction of total direct capital costs)      | Direct Capital Costs > Total > Value | 20%   | $    |
+Up-Front Permitting Costs (fraction of total direct capital costs) | Direct Capital Costs > Total > Value | 5%    | $    |
+Site Preparation (fraction of total direct capital costs)          | Direct Capital Costs > Total > Value | 1%    | $    |
 
 # Non-Depreciable Capital Costs
 
@@ -174,7 +174,7 @@ fees         | Licensing, Permits and Fees        | None                        
 
 # Utilities
 
-Name                   | Usage per kg H2 | Usage Unit | Cost                                                                                | Cost Unit | Price Conversion Factor | Price Conversion Factor Unit | Comment                                                                                                       |
+Name                   | Usage_Value | Usage_Unit | Cost_Value                                                                                | Cost_Unit | Price_Conversion_Factor | Price_Conversion_Factor_Unit | Comment                                                                                                       |
 ---------------------- | --------------- | ---------- | ----------------------------------------------------------------------------------- | --------- | ----------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------- |
 Industrial Electricity | 3.29            | kWh/kg     | pyH2A.Lookup_Tables.Utility_Cost~Industrial_Electricity_AEO_2017_Reference_Case.csv | GJ        | 0.0036                  | GJ/kWh                       | Electricity usage based on Pinaud 2013.                                                                       |
 Process Water          | 2.637           | gal/kg     | 0.0023749510945008                                                                  | $/gal     | 1.                      | None                         | Seawater reverse osmosis cost ca. 0.6 $/m3 (equal to ca. 0.0023 $/gal), based on Kibria 2021 and Driess 2021. |

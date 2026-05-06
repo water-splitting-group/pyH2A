@@ -156,7 +156,7 @@ PV OPEX (% of CAPEX)           | 2%    | Direct Capital Costs - PV > PV CAPEX ($
 
 # Utilities
 
-Name          | Usage per kg H2 | Usage Unit | Cost   | Cost Unit | Price Conversion Factor | Comment                                                                                                 |
+Name          | Usage_Value | Usage_Unit | Cost_Value   | Cost_Unit | Price_Conversion_Factor | Comment                                                                                                 |
 ------------- | --------------- | ---------- | ------ | --------- | ----------------------- | ------------------------------------------------------------------------------------------------------- |
 Process Water | 10              | L/kg       | 0.0006 | $/L       | 1.                      | Seawater reverse osmosis cost ca. 0.6 $/m3 (equal to 0.0006 $/L), based on Kibria 2021 and Driess 2021. |
 

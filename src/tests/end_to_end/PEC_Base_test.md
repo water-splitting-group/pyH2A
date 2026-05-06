@@ -26,7 +26,7 @@ Plant Modules             | 10    | -      | None | 10 identical modules, only a
 
 Name             | Full Name           | Value | Unit |
 ---------------- | ------------------- | ----- | ---- |
-capital perc 1st | Fraction of Capital | 1.00% | -    |
+capital perc 1st | Fraction of Capital | 100% | -    |
 
 # Hourly Irradiation
 
@@ -43,7 +43,7 @@ Array Azimuth                 | 0     | degree    |
 Nominal Operating Temperature | 45    | celsius   | Temperature is stabilized even under solar concentration through intrinsic water cooling. |
 Mismatch Derating             | 98%   | -         |
 Dirt Derating                 | 98%   | -         | Values taken from Chang 2020, analogues to silicon PV.                                    |
-Temperature Coefficient       | 0     | %/celsius | No assumed efficiency loss with higher temperature.                                       |
+Temperature Coefficient       | 0     | -/delta_degC | No assumed efficiency loss with higher temperature.                                       |
 
 # Solar Input
 
@@ -154,12 +154,12 @@ hourly labor cost | Burdened labor cost, including overhead | 50.0   | $/hour |
 
 # Other Fixed Operating Costs
 
-Name         | Full Name                          | Path                                       | Value  | Unit   | Comment               |
------------- | ---------------------------------- | ------------------------------------------ | ------ | ------ | --------------------- |
-g&a          | G&A rate                           | Fixed Operating Costs > Labor Cost > Value | 20%    | $      | Based on Pinaud 2013. |
-property tax | Property tax and insurance rate    | Total Capital Costs > Inflated > Value     | 2%     | $      |
-repairs      | Production Maintenance and Repairs | Direct Capital Costs > Total > Value       | 0.5%   | $      |
-fees         | Licensing, Permits and Fees        | None                                       | 1000.0 | $/year |
+Name         | Full Name                          | Path                                       | Value  | Unit     | Comment               |
+------------ | ---------------------------------- | ------------------------------------------ | ------ | -------- | --------------------- |
+g&a          | G&A rate                           | Fixed Operating Costs > Labor Cost > Value | 20%    | USD      | Based on Pinaud 2013. |
+property tax | Property tax and insurance rate    | Total Capital Costs > Inflated > Value     | 2%     | USD      |
+repairs      | Production Maintenance and Repairs | Direct Capital Costs > Total > Value       | 0.5%   | USD      |
+fees         | Licensing, Permits and Fees        | None                                       | 1000.0 | USD      |
 
 # Utilities
 
