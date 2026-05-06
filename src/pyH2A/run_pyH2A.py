@@ -8,6 +8,8 @@ from timeit import default_timer as timer
 
 import pprint
 
+FU = 'kg' # functional unit
+
 class pyH2A:
 	'''pyH2A class that performs discounted cash flow analysis and executes analysis modules.
 
@@ -48,7 +50,7 @@ class pyH2A:
 		self.meta_modules = {}
 		self.meta_workflow(self.meta_modules)
 
-		print(f'Levelized cost of hydrogen (base case): {self.base_case.h2_cost} $/kg')
+		print(f'Levelized cost of final product (base case): {self.base_case.final_product_cost} $/',FU)
 
 	def meta_workflow(self, meta_dict):
 		'''Meta modules (analysis modules) are identified and executed

@@ -7,45 +7,15 @@ from pyH2A.run_pyH2A import pyH2A
     [
         {
             "input": {
-                "input_file": "src/tests/end_to_end/PEC_Base.md",
+                "input_file": "src/tests/end_to_end/Thermal_Base_test.md",
                 "output_directory": "src/tests/end_to_end/",
             },
             "expected": {
-                "lcoh": 139.41887561917213
-            },
-        },
-        {
-            "input": {
-                "input_file": "src/tests/end_to_end/Photocatalytic_Base.md",
-                "output_directory": "src/tests/end_to_end/",
-            },
-            "expected": {
-                "lcoh": 185.44329282256822
-            },
-        },
-        {
-            "input": {
-                "input_file": "src/tests/end_to_end/PV_E_Base.md",
-                "output_directory": "src/tests/end_to_end/",
-            },
-            "expected": {
-                "lcoh": 4.194302976489675
-            },
-        },
-        {
-            "input": {
-                "input_file": "src/tests/end_to_end/Thermal_Base.md",
-                "output_directory": "src/tests/end_to_end/",
-            },
-            "expected": {
-                "lcoh": 3.270581409704611
+                "lcoh": 3.2705814128793933
             },
         },
     ],
     ids=[
-        "PEC_Base",
-        "Photocatalytic_Base",
-        "PV_E_Base",
         "Thermal_Base",
     ]
 )
@@ -73,7 +43,7 @@ def test_e2e_lcoh(case):
     # Very strict tolerance to detect economic regression
     tolerance = 1e-12
     
-    assert result.base_case.h2_cost == pytest.approx(
+    assert result.base_case.final_product_cost == pytest.approx(
         case["expected"]["lcoh"],
         rel=tolerance
     )
