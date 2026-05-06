@@ -18,7 +18,7 @@ input_dict = {
 				"dimension": FD
 			},
 			"optional": False,
-			"description": "Yearly output taking operating capacity factor into account, in mass of H2"
+			"description": "Yearly output taking operating capacity factor into account, in amount of functional unit"
 		}
 	},
 	"Utilities": {
@@ -122,7 +122,7 @@ class Variable_Operating_Cost_Plugin:
 	Parameters
 	----------
 	Technical Operating Parameters and Specifications > Output per year > Value : float
-		Yearly output taking operating capacity factor into account, in (kg of H2).
+		Yearly output taking operating capacity factor into account, in amount of functional unit.
 	Utilities > [...] > Cost : float, ndarray or str
 		Cost of utility (e.g. $/kWh for electricity). May be either a float, a ndarray with the
 		same length as `dcf.inflation_correction` or a textfile containing cost values (cost values 
@@ -171,7 +171,7 @@ class Variable_Operating_Cost_Plugin:
 
 		for key in self.input_dict_resolved['Utilities']:
 			utility = Utility(self.input_dict_resolved['Utilities'][key], dcf)
-			self.utilities += utility.cost_per_kg_H2.unit['USD/'+FU]
+			self.utilities += utility.cost_per_functional_unit.unit['USD/'+FU]
 
 		self.utilities = self.utilities * self.input_dict_resolved['Technical Operating Parameters and Specifications']['Output per year']['Value'].unit[FU]
 		self.utilities = Quantity(self.utilities, 'USD')
@@ -190,14 +190,14 @@ class Utility:
 
 	Methods 
 	-------
-	calculate_cost_per_kg_H2:
-		Calculation of utility cost per kg of H2 with inflation correction.
+	calculate_cost_per_functional_unit:
+		Calculation of utility cost per functional unit with inflation correction.
 	'''
 
 	def __init__(self, dictionary, dcf):
-		self.calculate_cost_per_kg_H2(dictionary, dcf)
+		self.calculate_cost_per_functional_unit(dictionary, dcf)
 
-	def calculate_cost_per_kg_H2(self, dictionary, dcf):
+	def calculate_cost_per_functional_unit(self, dictionary, dcf):
 		'''Calculation of utility cost per kg of H2 with inflation correction.
 		'''
 		
@@ -206,8 +206,8 @@ class Utility:
 			years_idx = fn.find_nearest(prices, dcf.years)
 			prices = prices[years_idx]
 
-			self.cost_per_kg_H2 = Quantity(prices[:,1] * dcf.inflation_correction * dictionary['Price_Conversion_Factor_Value'].unit['-'] * dictionary['Usage_Value'].unit['-/'+FU], 'USD/'+FU) 
+			self.cost_per_functional_unit = Quantity(prices[:,1] * dcf.inflation_correction * dictionary['Price_Conversion_Factor_Value'].unit['-'] * dictionary['Usage_Value'].unit['-/'+FU], 'USD/'+FU) 
 
 		else:
-			annual_cost_per_kg_H2 = dcf.inflation_correction * dictionary['Cost_Value'].unit['USD'] * dictionary['Usage_Value'].unit['-/'+FU] * dictionary['Price_Conversion_Factor_Value'].unit['-']
-			self.cost_per_kg_H2 = Quantity(np.ones(len(dcf.inflation_factor)) * annual_cost_per_kg_H2, 'USD/'+FU)
+			annual_cost_per_functional_unit = dcf.inflation_correction * dictionary['Cost_Value'].unit['USD'] * dictionary['Usage_Value'].unit['-/'+FU] * dictionary['Price_Conversion_Factor_Value'].unit['-']
+			self.cost_per_functional_unit = Quantity(np.ones(len(dcf.inflation_factor)) * annual_cost_per_functional_unit, 'USD/'+FU)
