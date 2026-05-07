@@ -7,6 +7,8 @@ from __future__ import annotations
 
 import csv
 import os
+from functools import lru_cache
+from typing import List
 from typing import Iterator, List
 
 import numpy
@@ -129,19 +131,18 @@ class ImpactEntry:
             index.append(ImpactEntry._from_csv(row))
         return index
 
-
+@lru_cache(maxsize=None)
 def matrix_of(file_path: str):
     if file_path.endswith('.npz'):
         return scipy.sparse.load_npz(file_path)
     return numpy.load(file_path)
 
-
+@lru_cache(maxsize=None)
 def _csv_rows_of(f: str) -> Iterator[List[str]]:
     with open(f, 'r', encoding='utf-8') as stream:
         reader = csv.reader(stream)
         next(reader)  # skip header
-        for row in reader:
-            yield row
+        return list(reader)
 
 
 class ExportFolder:
