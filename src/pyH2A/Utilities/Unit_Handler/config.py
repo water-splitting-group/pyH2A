@@ -200,9 +200,11 @@ DIMENSIONS = {
         "base": "C",
         "conversions": {
             "C": 1.0,
+            "F": 9.64853321233100184e4, # Faraday constant
             "mC": 1e-3,
             "Ah": 3600.0,
-            "mAh": 3.6
+            "mAh": 3.6, 
+            "e": 1.602176634e-19
         }
     },
     "resistance": {
