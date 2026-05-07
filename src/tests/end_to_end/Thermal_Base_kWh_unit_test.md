@@ -1,3 +1,9 @@
+# Functional Unit
+
+Name | Value
+--- | ---
+Functional unit | kWh
+
 # Workflow
 
 Name | Type | Description | Position |

@@ -1,13 +1,6 @@
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
-from pyH2A.functional_unit import FD, FU, FD_dot, FU_dot, FU_per_year
-
-# edit the following strings according to the system
-# FD = "energy" # Dimension of the functional unit. 
-# FU = "kWh" # functional unit.
-# FD_dot = 'power' # Dimension of the functional unit per time. 
-# FU_dot = 'W' # functional unit per time, SI by default. 
-# FU_per_year = 'kWh_per_year' # needed because we want to integrate FUs over periods of 1 year. 
+from pyH2A import functional_unit as fu
 
 input_dict = {
     "Technical Operating Parameters and Specifications": {
@@ -17,7 +10,7 @@ input_dict = {
 				"bounds": (0, None),
 			},
 			"Unit": {
-				"dimension": FD_dot,
+				"dimension": fu.FD_dot,
 			},
 			"optional": False,
 			"description": "Plant design capacity in functional units (e.g. mass of H2) / time."
@@ -39,7 +32,7 @@ input_dict = {
 				"bounds": (0, None),
 			},
 			"Unit": {
-				"dimension": FD_dot,
+				"dimension": fu.FD_dot,
 			},
 			"optional": True,
 			"description": "Maximum output rate at gate. If not specified it defaults to `Plant Design Capacity`."
@@ -50,7 +43,7 @@ input_dict = {
 				"bounds": (0, None),
 			},
 			"Unit": {
-				"dimension": FD_dot,
+				"dimension": fu.FD_dot,
 			},
 			"optional": True,
 			"description": "New plant design capacity in mass(product) / time to calculate scaling, which overwrites possible Scaling Ratio."
@@ -97,7 +90,7 @@ output_dict = {
 			"Value": {
 				"inserted_value": "scaled_design_output",
 				"type": {float,},
-				"dimension": FD_dot,
+				"dimension": fu.FD_dot,
 			},
 			"optional": False,
 			"description": "Design output of hydrogen production plant per unit time."
@@ -106,7 +99,7 @@ output_dict = {
 			"Value": {
 				"inserted_value": "max_gate_output_rate",
 				"type": {float,},
-				"dimension": FD_dot,
+				"dimension": fu.FD_dot,
     		},
 			"optional": False,
 			"description": "Maximum gate ouput per unit time."
@@ -115,7 +108,7 @@ output_dict = {
 			"Value": {
 				"inserted_value": "output_per_year",
 				"type": {float,},
-				"dimension": FD,
+				"dimension": fu.FD,
 			},
 			"optional": False,
 			"description": "Yearly output taking operating capacity factor into account."
@@ -124,7 +117,7 @@ output_dict = {
 			"Value": {
 				"inserted_value": "output_per_year_at_gate",
 				"type": {float,},
-				"dimension": FD,
+				"dimension": fu.FD,
 			},
 			"optional": False,
 			"description": "Actual yearly output at gate."
@@ -133,7 +126,7 @@ output_dict = {
 			"Value": {
 				"inserted_value": "maximum_output_at_gate",
 				"type": {float,},
-				"dimension": FD_dot,
+				"dimension": fu.FD_dot,
 			},
 			"optional": False,
 			"description": "Maximum output rate at gate. If not specified it defaults to `Plant Design Capacity`."
@@ -227,7 +220,7 @@ class Production_Scaling_Plugin:
 
 	def calculate_scaling(self):
 		'''Calculation of scaling if scaling is requested (either `New Plant Design Capacity` or
-		`Scaling Ratio` was provided). Otherwise returns regular design output and output at gate per time in FUncitonal units.
+		`Scaling Ratio` was provided). Otherwise returns regular design output and output at gate per time in Funcitonal units.
 		'''
 
 		if 'Maximum output rate at gate' in self.dictionary:
@@ -239,11 +232,11 @@ class Production_Scaling_Plugin:
 			self.scaling_ratio = self.dictionary['Scaling ratio']['Value']
 
 		if 'New plant design capacity' in self.dictionary: # possibility to overwrite the existing scaling ratio
-			self.scaling_ratio = Quantity(self.dictionary['New plant design capacity']['Value'].unit[FU_dot] / self.dictionary['Plant design capacity']['Value'].unit[FU_dot], '-')
+			self.scaling_ratio = Quantity(self.dictionary['New plant design capacity']['Value'].unit[fu.FU_dot] / self.dictionary['Plant design capacity']['Value'].unit[fu.FU_dot], '-')
 
 		if ('Scaling ratio' in self.dictionary) or ('New plant design capacity' in self.dictionary):
-			self.scaled_design_output = Quantity(self.dictionary['Plant design capacity']['Value'].unit[FU_dot] * self.scaling_ratio.unit['-'], FU_dot)
-			self.max_gate_output_rate = Quantity(self.maximum_output_at_gate.unit[FU_dot] * self.scaling_ratio.unit['-'], FU_dot)
+			self.scaled_design_output = Quantity(self.dictionary['Plant design capacity']['Value'].unit[fu.FU_dot] * self.scaling_ratio.unit['-'], fu.FU_dot)
+			self.max_gate_output_rate = Quantity(self.maximum_output_at_gate.unit[fu.FU_dot] * self.scaling_ratio.unit['-'], fu.FU_dot)
 
 			if 'Capital scaling exponent' in self.dictionary:
 				self.capital_scaling_factor = Quantity(self.scaling_ratio.unit['-'] ** self.dictionary['Capital scaling exponent']['Value'].unit['-'], '-')
@@ -263,6 +256,6 @@ class Production_Scaling_Plugin:
 		'''Calculation of yearly output in kg and yearly output at gate in kg.
 		'''
 
-		self.output_per_year = Quantity(self.scaled_design_output.unit[FU_per_year] * self.dictionary['Operating capacity factor']['Value'].unit['-'], FU)
-		self.output_per_year_at_gate = Quantity(self.max_gate_output_rate.unit[FU_per_year] * self.dictionary['Operating capacity factor']['Value'].unit['-'], FU)
+		self.output_per_year = Quantity(self.scaled_design_output.unit[fu.FU_per_year] * self.dictionary['Operating capacity factor']['Value'].unit['-'], fu.FU)
+		self.output_per_year_at_gate = Quantity(self.max_gate_output_rate.unit[fu.FU_per_year] * self.dictionary['Operating capacity factor']['Value'].unit['-'], fu.FU)
 		

@@ -3,8 +3,7 @@ from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import pyH2A.Utilities.find_nearest as fn
 import numpy as np
-from pyH2A.functional_unit import FD, FU
-
+from pyH2A import functional_unit as fu
 
 input_dict = {	
 	"Technical Operating Parameters and Specifications": {
@@ -14,7 +13,7 @@ input_dict = {
 				"bounds": (0, None)
 			},
 			"Unit": {
-				"dimension": FD
+				"dimension": fu.FD
 			},
 			"optional": False,
 			"description": "Yearly output taking operating capacity factor into account, in amount of functional unit"
@@ -34,7 +33,7 @@ input_dict = {
 				"bounds": (0, None)
 			},
 			"Usage_Unit": {
-				"dimension": "dimensionless/"+FD # basis per unit of product
+				"dimension": "dimensionless/"+fu.FD # basis per unit of product
 			},			
 			"Price_Conversion_Factor_Value": {
 				"type": {float},
@@ -170,9 +169,9 @@ class Variable_Operating_Cost_Plugin:
 
 		for key in self.input_dict_resolved['Utilities']:
 			utility = Utility(self.input_dict_resolved['Utilities'][key], dcf)
-			self.utilities += utility.cost_per_functional_unit.unit['USD/'+FU]
+			self.utilities += utility.cost_per_functional_unit.unit['USD/'+fu.FU]
 
-		self.utilities = self.utilities * self.input_dict_resolved['Technical Operating Parameters and Specifications']['Output per year']['Value'].unit[FU]
+		self.utilities = self.utilities * self.input_dict_resolved['Technical Operating Parameters and Specifications']['Output per year']['Value'].unit[fu.FU]
 		self.utilities = Quantity(self.utilities, 'USD')
 
 	def other_variable_costs(self, dcf, print_info):
@@ -205,8 +204,8 @@ class Utility:
 			years_idx = fn.find_nearest(prices, dcf.years)
 			prices = prices[years_idx]
 
-			self.cost_per_functional_unit = Quantity(prices[:,1] * dcf.inflation_correction * dictionary['Price_Conversion_Factor_Value'].unit['-'] * dictionary['Usage_Value'].unit['-/'+FU], 'USD/'+FU) 
+			self.cost_per_functional_unit = Quantity(prices[:,1] * dcf.inflation_correction * dictionary['Price_Conversion_Factor_Value'].unit['-'] * dictionary['Usage_Value'].unit['-/'+fu.FU], 'USD/'+fu.FU) 
 
 		else:
-			annual_cost_per_functional_unit = dcf.inflation_correction * dictionary['Cost_Value'].unit['USD'] * dictionary['Usage_Value'].unit['-/'+FU] * dictionary['Price_Conversion_Factor_Value'].unit['-']
-			self.cost_per_functional_unit = Quantity(np.ones(len(dcf.inflation_factor)) * annual_cost_per_functional_unit, 'USD/'+FU)
+			annual_cost_per_functional_unit = dcf.inflation_correction * dictionary['Cost_Value'].unit['USD'] * dictionary['Usage_Value'].unit['-/'+fu.FU] * dictionary['Price_Conversion_Factor_Value'].unit['-']
+			self.cost_per_functional_unit = Quantity(np.ones(len(dcf.inflation_factor)) * annual_cost_per_functional_unit, 'USD/'+fu.FU)

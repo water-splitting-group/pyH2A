@@ -1,3 +1,9 @@
+# Functional Unit
+
+Name | Value
+--- | ---
+Functional unit | kg
+
 # Workflow
 
 Name | Type | Description | Position |
