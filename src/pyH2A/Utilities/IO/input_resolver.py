@@ -30,6 +30,7 @@ DIMENSION_KEY = 'dimension'
 OPTIONS_KEY = 'options'
 PATH_KEY = 'path'
 
+
 def _identify_bottom_keys(row_dict):
     """
     Identify which bottom-level keys form value/unit pairs versus standalone values.
@@ -38,18 +39,23 @@ def _identify_bottom_keys(row_dict):
     `Quantity` (value + unit) or as a plain value (for categorical strings
     or non-quantity values).
 
-    Parameters
-    ----------
-    row_dict : dict
-        Row specification dictionary. Keys like `Value`/`Unit` or
-        `*_Value`/`*_Unit` define value-unit pairs; any remaining keys are
-        treated as standalone values.
+    For a row_dict like this:
 
-    Returns
-    -------
-    list[list[str]]
-        Grouped keys, where each inner list is either
-        `[value_key, unit_key]` or `[standalone_key]`.
+        {
+            'Usage_Value': 1500,
+            'Usage_Unit': 'kWh/kg',
+            'Cost_Value': 200,
+            'Cost_Unit': 'USD/kWh/day',
+            'Type': 'natural_gas'
+        }
+
+        The function would return:
+
+        [
+            ['Usage_Value', 'Usage_Unit'],
+            ['Cost_Value', 'Cost_Unit'],
+            ['Type']
+        ]  
 
     Examples
     --------
@@ -114,7 +120,7 @@ def _get_specification_and_retrieved_value(top_key,
 
     Returns
     -------
-    tuple
+    result : tuple
         `(specification, retrieved_value)` where `specification` is the
         bottom-level spec from `row_dict` and `retrieved_value` is the
         value stored in `dcf_class.inp`.
@@ -189,7 +195,7 @@ def _create_quantity_and_validate(value_retrieved,
     """
     Recursively build `Quantity` objects and validate them.
 
-    Why this exists
+    Notes
     ---------------
     Inputs can be scalars, arrays, or nested dictionaries. This function
     normalizes numeric values into `Quantity` objects and validates each
@@ -197,7 +203,7 @@ def _create_quantity_and_validate(value_retrieved,
 
     Parameters
     ----------
-    value_retrieved : float | int | np.ndarray | dict | Quantity
+    value_retrieved : float , int , np.ndarray , dict , Quantity
         Value pulled from `dcf_class.inp`.
     unit_retrieved : str | None
         Unit string (if present) from `dcf_class.inp`.
@@ -210,7 +216,7 @@ def _create_quantity_and_validate(value_retrieved,
 
     Returns
     -------
-    Quantity | dict
+    resolved_value : Quantity or dict
         The same structure as `value_retrieved`, with numeric leaves
         converted to `Quantity` instances.
     """
@@ -294,7 +300,7 @@ def value_resolver_function(top_key,
 
     Returns
     -------
-    tuple | Any
+    result : tuple or Any
         `(specification, retrieved_value)` when `return_specification` is
         True, otherwise just the retrieved value.
     """
@@ -371,7 +377,7 @@ def value_with_unit_resolver_function(top_key,
 
     Returns
     -------
-    Quantity | dict | str
+    resolved_value : Quantity, dict, or str
         Resolved quantity (or dict of quantities) or a string value.
     """
 
@@ -452,7 +458,7 @@ def row_resolver_function(top_key, middle_key, row_dict, dcf_class):
 
     Returns
     -------
-    dict | None
+    resolved_row : dict or None
         Resolved row dictionary, or None when the row is optional and
         missing from `dcf_class.inp`.
     """
@@ -519,7 +525,7 @@ def wildcard_row_resolver_function(top_key, row_dict, dcf_class):
 
     Returns
     -------
-    dict
+    resolved_rows : dict
         Mapping of each row key to its resolved row dictionary.
     """
 
@@ -552,7 +558,7 @@ def table_resolver_function(top_key, table_dict, dcf_class):
 
     Returns
     -------
-    dict | None
+    resolved_table : dict or None
         Resolved table dictionary, or None when the table is optional and
         missing from `dcf_class.inp`.
     """
@@ -611,7 +617,7 @@ def table_group_resolver_function(table_group_top_key, table_group_dict, dcf_cla
 
     Returns
     -------
-    dict
+    resolved_table_group : dict
         Mapping of each matched table key to its resolved table data.
     """
 
@@ -656,7 +662,7 @@ def input_resolver_function(input_dict, dcf_class, plugin_name):
 
     Returns
     -------
-    dict
+    input_dict_resolved : dict
         Fully resolved input dictionary with `Quantity` objects where
         appropriate.
     """

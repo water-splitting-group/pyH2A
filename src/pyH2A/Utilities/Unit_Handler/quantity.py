@@ -7,10 +7,36 @@ from pyH2A.Utilities.Unit_Handler.config import FLAT_MULTIPLIERS, FLAT_BASES, FL
 # Filters out spaces and empty strings automatically based on regex logic.
 TOKEN_PATTERN = re.compile(r'([*/()])|\s+')
 
+
 def parse_composite_unit(unit_str):
     """
-    Parses a composite unit string like 'kWh / cm2' or '(kWh * m)/m2'.
-    Returns the conversion multiplier, the resulting composite base unit, and the composite dimension.
+    Parse a composite unit string into multiplier, base unit, and dimension.
+
+    This function expands user-facing units (e.g., `kWh / cm2` or
+    `(kWh * m)/m2`) into:
+    - a numerical multiplier to convert to base units,
+    - a composite base-unit expression, and
+    - a composite dimension expression.
+
+    Parameters
+    ----------
+    unit_str : str
+        Unit expression that may include `*`, `/`, and parentheses.
+
+    Returns
+    -------
+    combined_multiplier : float
+        Multiplier that converts `unit_str` into its composite base unit.
+    combined_base_str : str
+        Composite base unit expression (e.g., `J / m2`).
+    combined_dim_str : str
+        Composite dimension expression in the same operator layout.
+
+    Raises
+    ------
+    ValueError
+        If an unknown unit token is encountered or the expression cannot
+        be evaluated.
     """
     tokens = TOKEN_PATTERN.split(unit_str)
     # Remove empty/whitespace tokens
@@ -19,7 +45,7 @@ def parse_composite_unit(unit_str):
     multiplier_expr = []
     base_expr = []
     dim_expr = []
-    
+
     for tok in tokens:
         if tok in ('*', '/', '(', ')'):
             multiplier_expr.append(tok)
@@ -32,67 +58,105 @@ def parse_composite_unit(unit_str):
             dim_expr.append(tok)
         else:
             if tok not in FLAT_MULTIPLIERS:
-                raise ValueError(f"Unknown unit encountered during parsing: '{tok}'")
-            
+                raise ValueError(
+                    f"Unknown unit encountered during parsing: '{tok}'")
+
             val = FLAT_MULTIPLIERS[tok]
             base = FLAT_BASES[tok]
             dim = FLAT_DIMENSIONS[tok]
             multiplier_expr.append(str(val))
             base_expr.append(base)
             dim_expr.append(dim)
-            
+
     # Evaluate the multiplier using safe eval (restricting globals over a math string)
     multiplier_str = "".join(multiplier_expr)
     try:
         combined_multiplier = eval(multiplier_str, {"__builtins__": {}})
     except Exception as e:
-        raise ValueError(f"Could not compute composite factor for '{unit_str}': {str(e)}")
-        
+        raise ValueError(
+            f"Could not compute composite factor for '{unit_str}': {str(e)}")
+
     # Join with spaces to generate clean standard form (e.g. 'J / m2')
     combined_base_str = " ".join(base_expr)
     combined_dim_str = " ".join(dim_expr)
-    
+
     return combined_multiplier, combined_base_str, combined_dim_str
 
 
 class UnitDictionary(dict):
     """
-    A custom dictionary class designed for lazy runtime unit evaluations.
-    Takes memory and performance into consideration by not calculating all unit conversions upfront.
-    Guarantees that the 'base_unit' and 'supplied_unit' values are immediately present.
+    Lazy unit lookup dictionary for a `Quantity` instance.
+
+    This mapping computes values for requested units on demand via
+    `__missing__`, avoiding up-front conversion cost. The supplied unit and
+    base unit are always populated at initialization.
     """
+
     def __init__(self, quantity):
+        """
+        Create a lazy unit dictionary for a given `Quantity`.
+
+        Parameters
+        ----------
+        quantity : Quantity
+            Quantity instance providing base/supplied values and dimension.
+
+        Returns
+        -------
+        None : None
+            This initializer populates the dictionary in-place.
+        """
         super().__init__()
         self._quantity = quantity
-        
+
         # Populate guaranteed keys on init
         self[quantity.supplied_unit] = quantity.supplied_value
         self[quantity.base_unit] = quantity.base_value
-        
+
     def __missing__(self, target_unit):
         """
-        Calculates requested unit value lazily when dict[target_unit] is called.
+        Lazily compute a unit value when `target_unit` is accessed.
+
+        Parameters
+        ----------
+        target_unit : str
+            Unit expression requested by the caller.
+
+        Returns
+        -------
+        value : float or np.ndarray
+            Value expressed in `target_unit`, cached in the dictionary.
+
+        Raises
+        ------
+        KeyError
+            If an absolute temperature conversion is requested for an
+            unsupported unit.
+        ValueError
+            If the requested unit has a mismatched dimension.
         """
         # 1. Absolute Temperature Handling Path
         if self._quantity.is_absolute_temp:
             if target_unit not in ABSOLUTE_TEMPERATURE["supported_units"]:
-                raise KeyError(f"Unsupported absolute temperature unit: {target_unit}")
-                
+                raise KeyError(
+                    f"Unsupported absolute temperature unit: {target_unit}")
+
             from_base_func = ABSOLUTE_TEMPERATURE["from_base"][target_unit]
             val = from_base_func(self._quantity.base_value)
             self[target_unit] = val
             return val
-            
+
         # 2. Standard / Composite Units Handling Path
-        target_multiplier, target_base, target_dim = parse_composite_unit(target_unit)
-        
+        target_multiplier, target_base, target_dim = parse_composite_unit(
+            target_unit)
+
         # Verify dimension logic (light validation by stripping spaces)
         if target_dim.replace(" ", "") != self._quantity.dimension.replace(" ", ""):
             raise ValueError(
                 f"Dimension mismatch: original dimension '{self._quantity.dimension}', "
                 f"but requested dimension '{target_dim}' when mapping '{target_unit}'"
             )
-        
+
         # Compute final target value seamlessly using numpy (if given) or scalar types
         val = self._quantity.base_value / target_multiplier
         self[target_unit] = val
@@ -102,15 +166,34 @@ class UnitDictionary(dict):
 class Quantity:
     """
     Lightweight computational replacement for Pint in pyH2A.
-    Immediate parsing and instantiation with lazy unit value retrieval.
+
+    The constructor parses the supplied unit into base units and a
+    dimension string. Unit conversion is provided lazily through a
+    `UnitDictionary` stored on `self.unit`.
     """
-    __slots__ = ['supplied_value', 'supplied_unit', 'base_value', 'base_unit', 'dimension', 'unit', 'is_absolute_temp']
-    
+    __slots__ = ['supplied_value', 'supplied_unit', 'base_value',
+                 'base_unit', 'dimension', 'unit', 'is_absolute_temp']
+
     def __init__(self, value, unit_str):
+        """
+        Create a `Quantity` from a numeric value and unit expression.
+
+        Parameters
+        ----------
+        value : float, int, or np.ndarray
+            Supplied numeric value.
+        unit_str : str
+            Unit expression compatible with the unit handler configuration.
+
+        Returns
+        -------
+        None : None
+            The instance is initialized in-place.
+        """
         self.supplied_value = value
         self.supplied_unit = unit_str.strip()
         self.is_absolute_temp = False
-        
+
         # Detect hardcoded offset pathway
         if self.supplied_unit in ABSOLUTE_TEMPERATURE["supported_units"]:
             self.is_absolute_temp = True
@@ -120,29 +203,44 @@ class Quantity:
             self.dimension = "absolute_temperature"
         else:
             # Handle multi-unit combinations (e.g. 'kWh/day' or '(J*m)/cm2')
-            supplied_multiplier, base_unit_str, dim_str = parse_composite_unit(self.supplied_unit)
+            supplied_multiplier, base_unit_str, dim_str = parse_composite_unit(
+                self.supplied_unit)
             self.base_value = self.supplied_value * supplied_multiplier
             self.base_unit = base_unit_str
             self.dimension = dim_str
-            
+
         # Provide the required dictionary attribute for lazy multi-unit access
         self.unit = UnitDictionary(self)
-        
+
     def __repr__(self):
+        """
+        Provide a compact representation using base units.
+
+        Returns
+        -------
+        representation : str
+            String form `Quantity(<base_value>, '<base_unit>')`.
+        """
         return f"Quantity({self.base_value}, '{self.base_unit}')"
 
 
-
 def test_quantity():
+    """
+    Run a simple, manual sanity check of quantity parsing and conversion.
+
+    Returns
+    -------
+    None : None
+        Prints example outputs to stdout.
+    """
 
     array_test = np.array([[1.0, 2.0, 3.0],
                            [4.0, 5.0, 6.0]])
-    #array_test = 10
-    
+    # array_test = 10
+
     test_energy = Quantity(array_test, 'kWh / m2 / day')
     print(test_energy)  # Should show the original value and unit
     print(test_energy.dimension)
-
 
     # test_frequency = Quantity(1, '1 / day')
     # print(test_frequency)  # Should show the original value and unit
@@ -152,8 +250,6 @@ def test_quantity():
 
     test_dimensionless = Quantity(0.99, '-')
     print(test_dimensionless.dimension)
-
-
 
    # print(test_energy.unit['J / m2 / s'])  # Should convert to Joules
 

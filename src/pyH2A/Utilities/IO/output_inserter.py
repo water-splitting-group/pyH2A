@@ -39,7 +39,7 @@ def _retrieve_value_to_be_inserted(inserted_value,
 
     Parameters
     ----------
-    inserted_value : Quantity | str
+    inserted_value : Quantity or str
         Either a `Quantity` value or the name of a plugin attribute.
     plugin_class : object
         Plugin instance that holds computed output attributes.
@@ -52,7 +52,7 @@ def _retrieve_value_to_be_inserted(inserted_value,
 
     Returns
     -------
-    Quantity | Any | None
+    value_to_be_inserted : Quantity, Any, or None
         The value to insert, or None when optional and missing.
     """
 
