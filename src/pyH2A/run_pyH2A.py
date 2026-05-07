@@ -8,7 +8,7 @@ from timeit import default_timer as timer
 
 import pprint
 
-FU = 'kWh' # functional unit
+from pyH2A.functional_unit import FU
 
 class pyH2A:
 	'''pyH2A class that performs discounted cash flow analysis and executes analysis modules.

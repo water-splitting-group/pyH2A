@@ -32,6 +32,7 @@ DIMENSIONS = {
             "kWh": 3.6e6,
             "MWh": 3.6e9,
             "GWh": 3.6e12,
+            "TWh": 3.6e15,
             "eV": 1.602176634e-19,
             "cal": 4.184,
             "kcal": 4184.0, 
@@ -48,8 +49,12 @@ DIMENSIONS = {
             "hp": 745.699872, # imperial horsepower 
             "cv": 735.49875,  # metric horsepower
             "kWh_per_day": 1e3/24.,
+            "MWh_per_day": 1e6/24.,            
+            "GWh_per_day": 1e9/24.,                        
             "kWh_per_year": 1e3/(24.*365.), 
             "MWh_per_year": 1e6/(24.*365.), 
+            "GWh_per_year": 1e9/(24.*365.),             
+            "TWh_per_year": 1e12/(24.*365.),             
         }
     },
     "length": {

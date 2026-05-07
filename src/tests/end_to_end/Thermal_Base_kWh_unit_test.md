@@ -2,7 +2,7 @@
 
 Name | Type | Description | Position |
 --- | --- | --- | --- |
-Solar_Thermal_Plugin | plugin | Computes land area required for thermal process | 1 |
+Solar_Thermal_kWh_unit_Plugin | plugin | Computes land area required for thermal process | 1 |
 
 # Display Parameters
 
@@ -13,10 +13,10 @@ Color | darkred
 
 # Technical Operating Parameters and Specifications
 
-Name | Value | Unit |
---- | --- | --- |
+Name | Value | Unit | Comments
+--- | --- | --- | ---
 Operating capacity factor | 90% | - |
-Plant design capacity | 1,000. | kg/day |
+Plant design capacity | 32,000. | kWh_per_day | 1 kg Hydrogen equals about 32 kWh thermal energy
 
 # Construction
 
@@ -75,5 +75,5 @@ Hourly labor cost | Burdened labor cost, including overhead | 50.0  | USD/h |
 
 Name | Usage_Value | Usage_Path | Usage_Unit | Cost_Value | Cost_Path | Cost_Unit | Price_Conversion_Factor_Value | Price_Conversion_Factor_Unit | Comment |
 --- | --- | --- | --- | --- | --- | --- | --- | --- |
-Industrial Electricity | 0.16 | | -/kg | pyH2A.Lookup_Tables.Utility_Cost~Industrial_Electricity_AEO_2017_Reference_Case.csv | | USD | 0.0036 | - | Electricity usage based on Pinaud 2013. |
-Process Water | 2.369 | | -/kg | 0.0023749510945008 | | USD | 1. | - | Seawater reverse osmosis: 2.369 gal/kg H2, at a cost of ca. 0.6 USD/m3 (equal to ca. 0.0023 USD/gal), based on Kibria 2021 and Driess 2021. |
+Industrial Electricity | 0.005 | | -/kWh | pyH2A.Lookup_Tables.Utility_Cost~Industrial_Electricity_AEO_2017_Reference_Case.csv | | USD | 0.0036 | - | Electricity usage based on Pinaud 2013. |
+Process Water | 0.07403125 | | -/kWh | 0.0023749510945008 | | USD | 1. | - | Seawater reverse osmosis: 2.369 gal/kg H2, at a cost of ca. 0.6 USD/m3 (equal to ca. 0.0023 USD/gal), based on Kibria 2021 and Driess 2021. |

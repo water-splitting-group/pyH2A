@@ -1,12 +1,13 @@
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+from pyH2A.functional_unit import FD, FU, FD_dot, FU_dot, FU_per_year
 
 # edit the following strings according to the system
-FD = "energy" # Dimension of the functional unit. 
-FU = "kWh" # functional unit.
-FD_dot = 'power' # Dimension of the functional unit per time. 
-FU_dot = 'W' # functional unit per time, SI by default. 
-FU_per_year = 'kWh_per_year' # needed because we want to integrate FUs over periods of 1 year. 
+# FD = "energy" # Dimension of the functional unit. 
+# FU = "kWh" # functional unit.
+# FD_dot = 'power' # Dimension of the functional unit per time. 
+# FU_dot = 'W' # functional unit per time, SI by default. 
+# FU_per_year = 'kWh_per_year' # needed because we want to integrate FUs over periods of 1 year. 
 
 input_dict = {
     "Technical Operating Parameters and Specifications": {
