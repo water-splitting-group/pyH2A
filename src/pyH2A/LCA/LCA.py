@@ -13,12 +13,16 @@ and iterative solvers from the SciPy package:
 """
 
 import numpy as np
+import scipy.sparse
 from pyH2A import Discounted_Cash_Flow
-from pyH2A.LCA.LCA_lib import ExportFolder, Matrix, solve 
+from pyH2A.LCA.LCA_lib import ExportFolder, Matrix, solve, factorize
 from pyH2A.Utilities.input_modification import process_table
 import pprint as pp
 
 class LCA:
+    _SM_TOL = 1e-12
+    _base_solver_cache = {}  # {matrix_folder: (_A_factor, _base_response, _A_col0)}
+
     """
         Wrapper class for performing Life Cycle Assessment (LCA) calculations
         using openLCA matrix exports within the pyH2A framework.
@@ -80,9 +84,10 @@ class LCA:
         self.folder = self.import_folder(matrix_folder)
         self.tech_index_dict = self.folder.tech_index()
         self.A, self.B, self.C, self.f = self.load_matrices()
+        self._prepare_base_solver_data(matrix_folder)
         self.A_modified = None  # Will be set by update_A_matrix_with_lca_components
         self.update_A_matrix_with_lca_components(dcf)
-        self.build_scaling_vector(dcf)
+        self.build_scaling_vector()
 
         self.perform_LCA()
         
@@ -116,6 +121,26 @@ class LCA:
         else:
             return export_folder
 
+    def _prepare_base_solver_data(self, matrix_folder: str):
+        """Prepare base solver data, factorizing A only once per matrix_folder."""
+
+        cached = LCA._base_solver_cache.get(matrix_folder)
+        if cached is not None:
+            self._A_factor, self._base_response, self._A_col0 = cached
+            return
+
+        self._A_factor = factorize(self.A)
+        f_vector = np.asarray(self.f).reshape(-1)
+        self._base_response = self._A_factor.solve(f_vector)
+
+        if scipy.sparse.issparse(self.A):
+            A_col0 = np.asarray(self.A[:, 0].toarray()).reshape(-1)
+        else:
+            A_col0 = np.asarray(self.A[:, 0]).reshape(-1)
+
+        self._A_col0 = A_col0
+        LCA._base_solver_cache[matrix_folder] = (self._A_factor, self._base_response, self._A_col0)
+
     def load_matrices(self):
         """
             Loads the technosphere, intervention, characterization,
@@ -148,34 +173,114 @@ class LCA:
             if table_name.lower().startswith('lca')
         ]
     
-    def build_scaling_vector(self, dcf):
+    def build_scaling_vector(self):
         """
             Builds the scaling vector used for the LCA calculation.
 
-            The scaling vector is populated using pyH2A input tables
-            associated with LCA processes. Unit consistency is enforced
-            during population.
+            The scaling vector is computed from the modified technosphere
+            matrix using a Sherman-Morrison rank-1 update. This is possible
+            because only the first column of A is changed in
+            `update_A_matrix_with_lca_components()`.
 
             Parameters
             ----------
             dcf : pyH2A.Discounted_Cash_Flow
-                pyH2A Discounted_Cash_Flow object containing LCA-related
-                input tables and production values.
-
-            Raises
-            ------
-            ValueError
-                If any entries in the scaling vector remain zero after
-                processing all LCA input tables.
+                pyH2A Discounted_Cash_Flow object used upstream to build
+                the modified matrix A.
 
             Notes
             -----
-            The scaling vector must be fully populated to ensure
-            correct LCA results. Missing values indicate incomplete
-            or inconsistent pyH2A input definitions.
+            Let A be the base matrix, A' be the modified matrix, and f be
+            the demand vector. This method computes x' solving A' x' = f via
+            Sherman-Morrison using:
+
+            - base response y = A^{-1} f
+            - column update u = A'[:,0] - A[:,0]
+            - correction z = A^{-1} u
+
+            with x' = y - z * (y[0] / (1 + z[0])).
+
+            If |1 + z[0]| <= self._SM_TOL, a direct solve of A' x' = f is
+            used as a numerical-stability fallback.
+
         """
 
-        self.scaling_vector = np.asarray(solve(self.A_modified, self.f)).reshape(-1)
+        # Only the first column of A changes per scenario, so apply a rank-1
+        # Sherman-Morrison update around the fixed base system when stable.
+        if scipy.sparse.issparse(self.A_modified):
+            updated_col0 = np.asarray(self.A_modified[:, 0].toarray()).reshape(-1)
+        else:
+            updated_col0 = np.asarray(self.A_modified[:, 0]).reshape(-1)
+
+        delta_col0 = updated_col0 - self._A_col0
+        correction = self._A_factor.solve(delta_col0)
+
+        numerator = self._base_response[0]
+        denominator = 1.0 + correction[0]
+
+        if abs(denominator) <= self._SM_TOL:
+            # Fallback when the rank-1 denominator is near-singular.
+            self.scaling_vector = np.asarray(solve(self.A_modified, self.f)).reshape(-1)
+        else:
+            self.scaling_vector = self._base_response - correction * (numerator / denominator)
+
+    @classmethod
+    def build_scaling_vectors_batch(cls, lca_instances):
+        """Compute scaling vectors for multiple LCA instances in one batched solve.
+
+        Instead of N separate ``A^{-1} u_i`` solves (one per Monte Carlo sample),
+        this method stacks all ``delta_col0`` vectors into a matrix U and calls
+        the solver once to obtain Z = A^{-1} U, then applies the Sherman-Morrison
+        formula to each column.  Samples that hit the near-singular fallback are
+        solved individually afterward.
+
+        Parameters
+        ----------
+        lca_instances : list of LCA
+            LCA instances that already have ``A_modified`` set (i.e.
+            ``update_A_matrix_with_lca_components`` has been called).
+            All instances must share the same matrix folder (same cache entry).
+
+        Notes
+        -----
+        This is called automatically from ``perform_response_calculation`` in
+        ``Monte_Carlo_Analysis`` when multiple samples are processed together.
+        """
+        if not lca_instances:
+            return
+
+        # All instances share the same base solver data (same matrix folder)
+        first = lca_instances[0]
+        A_factor = first._A_factor
+        base_response = first._base_response  # shape (n,)
+        A_col0 = first._A_col0               # shape (n,)
+
+        # Build delta matrix: each column is delta_col0 for one sample
+        def _get_delta(inst):
+            if scipy.sparse.issparse(inst.A_modified):
+                col = np.asarray(inst.A_modified[:, 0].toarray()).reshape(-1)
+            else:
+                col = np.asarray(inst.A_modified[:, 0]).reshape(-1)
+            return col - A_col0
+
+        U = np.column_stack([_get_delta(inst) for inst in lca_instances])  # (n, N)
+
+        # One batched solve: A Z = U  →  Z shape (n, N)
+        Z = np.asarray(A_factor.solve(U))
+        if Z.ndim == 1:
+            Z = Z.reshape(-1, 1)
+
+        y0 = base_response[0]
+
+        for i, inst in enumerate(lca_instances):
+            z = Z[:, i]
+            denominator = 1.0 + z[0]
+            if abs(denominator) <= cls._SM_TOL:
+                inst.scaling_vector = np.asarray(
+                    solve(inst.A_modified, inst.f)
+                ).reshape(-1)
+            else:
+                inst.scaling_vector = base_response - z * (y0 / denominator)
 
     def update_A_matrix_with_lca_components(self, dcf):
         """
