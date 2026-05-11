@@ -4,135 +4,218 @@ Capital_Cost_Plugin
 This plugin computes the different components of capital costs based on grouped cost entries and applies inflation factors.
 
 Equations
-~~~~~~~~~
+---------
 
-Direct capital costs:
+Direct capital costs
+~~~~~~~~~~~~~~~~~~~~
 
-.. math::
-
-   C_{\text{direct}} = \sum_i C_{\text{direct},i}
-
-.. math::
-
-   C_{\text{direct}}^{\text{infl}} = C_{\text{direct}} \cdot f_{\text{infl,combined}}
-
-
-Indirect capital costs:
+The total direct capital cost is obtained by summing all entries belonging to the ``Direct Capital Cost`` table group:
 
 .. math::
 
-   C_{\text{indirect}} = \sum_j C_{\text{indirect},j}
+   C_{\mathrm{direct}} = \sum_i C_{\mathrm{direct},i}
+
+The inflated direct capital cost is then:
 
 .. math::
 
-   C_{\text{indirect}}^{\text{infl}} = C_{\text{indirect}} \cdot f_{\text{infl,combined}}
+   C_{\mathrm{direct}}^{\mathrm{inflated}}
+   =
+   C_{\mathrm{direct}} \times f_{\mathrm{combined}}
 
+Indirect capital costs
+~~~~~~~~~~~~~~~~~~~~~~
 
-Depreciable capital costs:
-
-.. math::
-
-   C_{\text{depr}} = C_{\text{direct}} + C_{\text{indirect}}
-
-.. math::
-
-   C_{\text{depr}}^{\text{infl}} = C_{\text{direct}}^{\text{infl}} + C_{\text{indirect}}^{\text{infl}}
-
-
-Non-depreciable capital costs:
+The total indirect capital cost is obtained by summing all entries belonging to the ``Indirect Capital Cost`` table group:
 
 .. math::
 
-   C_{\text{land}} = c_{\text{land}} \cdot A_{\text{land}}
+   C_{\mathrm{indirect}} = \sum_i C_{\mathrm{indirect},i}
+
+The inflated indirect capital cost is:
 
 .. math::
 
-   C_{\text{non-depr}} = C_{\text{land}} + \sum_k C_{\text{other non-depr},k}
+   C_{\mathrm{indirect}}^{\mathrm{inflated}}
+   =
+   C_{\mathrm{indirect}} \times f_{\mathrm{combined}}
+
+Non-depreciable capital costs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The land cost contribution is calculated as:
 
 .. math::
 
-   C_{\text{non-depr}}^{\text{infl}} = C_{\text{non-depr}} \cdot f_{\text{infl,CI}}
+   C_{\mathrm{land}}
+   =
+   c_{\mathrm{land}}
+   \times
+   A_{\mathrm{land}}
 
+where:
 
-Total capital costs:
+- :math:`c_{\mathrm{land}}` is the land cost per unit area
+- :math:`A_{\mathrm{land}}` is the required land area
+
+Additional non-depreciable contributions are summed from the ``Other Non-Depreciable Capital Cost`` table group:
 
 .. math::
 
-   C_{\text{total}} = C_{\text{depr}} + C_{\text{non-depr}}
+   C_{\mathrm{other\_nondep}}
+   =
+   \sum_i C_{\mathrm{other\_nondep},i}
+
+The total non-depreciable capital cost is therefore:
 
 .. math::
 
-   C_{\text{total}}^{\text{infl}} = C_{\text{depr}}^{\text{infl}} + C_{\text{non-depr}}^{\text{infl}}
+   C_{\mathrm{nondep}}
+   =
+   C_{\mathrm{land}}
+   +
+   C_{\mathrm{other\_nondep}}
+
+The inflated non-depreciable capital cost is:
+
+.. math::
+
+   C_{\mathrm{nondep}}^{\mathrm{inflated}}
+   =
+   C_{\mathrm{nondep}}
+   \times
+   f_{\mathrm{CI}}
+
+Depreciable and total capital costs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The depreciable capital cost is defined as:
+
+.. math::
+
+   C_{\mathrm{depreciable}}
+   =
+   C_{\mathrm{direct}}
+   +
+   C_{\mathrm{indirect}}
+
+The inflated depreciable capital cost is:
+
+.. math::
+
+   C_{\mathrm{depreciable}}^{\mathrm{inflated}}
+   =
+   C_{\mathrm{direct}}^{\mathrm{inflated}}
+   +
+   C_{\mathrm{indirect}}^{\mathrm{inflated}}
+
+The total capital cost is:
+
+.. math::
+
+   C_{\mathrm{total}}
+   =
+   C_{\mathrm{depreciable}}
+   +
+   C_{\mathrm{nondep}}
+
+The inflated total capital cost is:
+
+.. math::
+
+   C_{\mathrm{total}}^{\mathrm{inflated}}
+   =
+   C_{\mathrm{depreciable}}^{\mathrm{inflated}}
+   +
+   C_{\mathrm{nondep}}^{\mathrm{inflated}}
 
 
 Notation
 ~~~~~~~~
 
 .. list-table::
+   :widths: 30 50 20
    :header-rows: 1
 
    * - Symbol
      - Description
      - Dimension
 
-   * - :math:`C_{\text{direct}}`
+   * - :math:`C_{\mathrm{direct}}`
      - Total direct capital costs
-     - Currency
+     - currency
 
-   * - :math:`C_{\text{direct},i}`
-     - Individual direct capital cost entries (from "Direct Capital Cost" tables)
-     - Currency
+   * - :math:`C_{\mathrm{direct},i}`
+     - Individual direct capital cost contribution
+     - currency
 
-   * - :math:`C_{\text{indirect}}`
+   * - :math:`C_{\mathrm{direct}}^{\mathrm{inflated}}`
+     - Inflated direct capital costs
+     - currency
+
+   * - :math:`C_{\mathrm{indirect}}`
      - Total indirect capital costs
-     - Currency
+     - currency
 
-   * - :math:`C_{\text{indirect},j}`
-     - Individual indirect capital cost entries (from "Indirect Capital Cost" tables)
-     - Currency
+   * - :math:`C_{\mathrm{indirect},i}`
+     - Individual indirect capital cost contribution
+     - currency
 
-   * - :math:`C_{\text{depr}}`
-     - Total depreciable capital costs (direct + indirect)
-     - Currency
+   * - :math:`C_{\mathrm{indirect}}^{\mathrm{inflated}}`
+     - Inflated indirect capital costs
+     - currency
 
-   * - :math:`C_{\text{non-depr}}`
-     - Total non-depreciable capital costs
-     - Currency
+   * - :math:`c_{\mathrm{land}}`
+     - Cost of land
+     - currency / area
 
-   * - :math:`C_{\text{other non-depr},k}`
-     - Individual non-depreciable cost entries (excluding land)
-     - Currency
+   * - :math:`A_{\mathrm{land}}`
+     - Land required
+     - area
 
-   * - :math:`C_{\text{land}}`
+   * - :math:`C_{\mathrm{land}}`
      - Total land cost
-     - Currency
+     - currency
 
-   * - :math:`c_{\text{land}}`
-     - Cost of land per area  
-       (``Non-Depreciable Capital Costs > Cost of land ($ per acre) > Value``)
-     - Currency / area
+   * - :math:`C_{\mathrm{other\_nondep}}`
+     - Sum of other non-depreciable capital cost contributions
+     - currency
 
-   * - :math:`A_{\text{land}}`
-     - Land required  
-       (``Non-Depreciable Capital Costs > Land required (acres) > Value``)
-     - Area
+   * - :math:`C_{\mathrm{other\_nondep},i}`
+     - Individual other non-depreciable capital cost contribution
+     - currency
 
-   * - :math:`C_{\text{total}}`
+   * - :math:`C_{\mathrm{nondep}}`
+     - Total non-depreciable capital costs
+     - currency
+
+   * - :math:`C_{\mathrm{nondep}}^{\mathrm{inflated}}`
+     - Inflated non-depreciable capital costs
+     - currency
+
+   * - :math:`C_{\mathrm{depreciable}}`
+     - Total depreciable capital costs
+     - currency
+
+   * - :math:`C_{\mathrm{depreciable}}^{\mathrm{inflated}}`
+     - Inflated depreciable capital costs
+     - currency
+
+   * - :math:`C_{\mathrm{total}}`
      - Total capital costs
-     - Currency
+     - currency
 
-   * - :math:`f_{\text{infl,combined}}`
-     - Combined inflation factor (``dcf.combined_inflator``)
-     - Dimensionless
+   * - :math:`C_{\mathrm{total}}^{\mathrm{inflated}}`
+     - Inflated total capital costs
+     - currency
 
-   * - :math:`f_{\text{infl,CI}}`
-     - Capital investment inflation factor (``dcf.ci_inflator``)
-     - Dimensionless
+   * - :math:`f_{\mathrm{combined}}`
+     - Combined inflator
+     - dimensionless
 
-   * - Superscript :math:`\text{infl}`
-     - Indicates inflated value
-     - 
-
+   * - :math:`f_{\mathrm{CI}}`
+     - Capital inflator
+     - dimensionless
 
 Implementation
 --------------

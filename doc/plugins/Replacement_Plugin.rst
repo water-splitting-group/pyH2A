@@ -4,136 +4,164 @@ Replacement_Plugin
 This plugin computes yearly replacement costs over the project lifetime, combining planned periodic replacements and unplanned replacement costs.
 
 Equations
-~~~~~~~~~
+---------
 
-Planned replacement (per component):
+Planned replacement costs
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For each component :math:`i`, with replacement frequency:
-
-.. math::
-
-   f_{\text{rep},i} = \left\lceil f_{\text{input},i} \right\rceil
-
-Non-integer frequency correction:
+For each entry :math:`i` in the ``Planned Replacement`` table, the replacement frequency is converted into an integer number of years:
 
 .. math::
 
-   \kappa_i = \frac{f_{\text{rep},i}}{f_{\text{input},i}}
+   N_{\mathrm{rep},i}
+   =
+   \left\lceil
+   t_{\mathrm{rep},i}
+   \right\rceil
 
-Cost per replacement event:
+where:
 
-.. math::
+- :math:`t_{\mathrm{rep},i}` is the specified replacement frequency
+- :math:`\lceil \cdot \rceil` denotes the ceiling function
 
-   C_{\text{rep},i} = C_{\text{raw},i} \cdot \kappa_i \cdot f_{\text{infl,combined}}
-
-Replacement events occur at discrete years:
-
-.. math::
-
-   t \in \{f_{\text{rep},i},\; 2 f_{\text{rep},i},\; 3 f_{\text{rep},i},\; \dots\}
-
-Yearly planned replacement cost:
+Because replacement costs are billed annually, a correction factor is applied when the specified replacement interval is non-integer:
 
 .. math::
 
-   C_{\text{planned}}(t) = \sum_i C_{\text{rep},i} \cdot \mathbf{1}_{t \in \text{schedule}_i}
+   f_{\mathrm{noninteger},i}
+   =
+   \frac{
+   N_{\mathrm{rep},i}
+   }{
+   t_{\mathrm{rep},i}
+   }
 
-
-Unplanned replacement:
-
-.. math::
-
-   C_{\text{unplanned}} = \sum_j C_{\text{unplanned},j}
-
-This value is applied uniformly to all years:
-
-.. math::
-
-   C_{\text{unplanned}}(t) = C_{\text{unplanned}}
-
-
-Total yearly replacement cost (before final inflation factors):
+The replacement cost applied at each replacement event is then:
 
 .. math::
 
-   C_{\text{yearly}}(t) = C_{\text{planned}}(t) + C_{\text{unplanned}}(t)
+   C_{\mathrm{planned},i}
+   =
+   C_{\mathrm{raw},i}
+   \times
+   f_{\mathrm{noninteger},i}
+   \times
+   f_{\mathrm{combined}}
 
+where:
 
-Final inflated replacement cost:
+- :math:`C_{\mathrm{raw},i}` is the one-time replacement cost
+- :math:`f_{\mathrm{combined}}` is the combined inflator
+
+The yearly planned replacement cost is obtained by adding the contributions of all replacement events occurring during each project year.
+
+Unplanned replacement costs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Unplanned replacement costs are obtained by summing all entries belonging to the ``Unplanned Replacement`` table group:
 
 .. math::
 
-   C_{\text{replacement}}(t) = C_{\text{yearly}}(t) \cdot f_{\text{infl,correction}}(t) \cdot f_{\text{infl}}(t)
+   C_{\mathrm{unplanned}}
+   =
+   \sum_i C_{\mathrm{unplanned},i}
+
+This value is added uniformly to each year of operation.
+
+Total yearly replacement costs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The total yearly replacement cost before inflation correction is:
+
+.. math::
+
+   C_{\mathrm{replacement}}(y)
+   =
+   C_{\mathrm{planned}}(y)
+   +
+   C_{\mathrm{unplanned}}
+
+where:
+
+- :math:`C_{\mathrm{planned}}(y)` is the total planned replacement cost during year :math:`y`
+
+The final inflated yearly replacement cost is:
+
+.. math::
+
+   C_{\mathrm{replacement}}^{\mathrm{inflated}}(y)
+   =
+   C_{\mathrm{replacement}}(y)
+   \times
+   f_{\mathrm{inflation\ correction}}(y)
+   \times
+   f_{\mathrm{inflation}}(y)
+
+The resulting quantity is stored as an array covering the entire plant lifetime.
 
 
 Notation
 ~~~~~~~~
 
 .. list-table::
+   :widths: 30 50 20
    :header-rows: 1
 
    * - Symbol
      - Description
      - Dimension
 
-   * - :math:`C_{\text{raw},i}`
-     - One-time replacement cost for component :math:`i`  
-       (``Planned Replacement > [...] > Cost``)
-     - Currency
+   * - :math:`t_{\mathrm{rep},i}`
+     - Replacement frequency for planned replacement entry :math:`i`
+     - time
 
-   * - :math:`f_{\text{input},i}`
-     - Replacement frequency for component :math:`i`   
-       (``Frequency``)
-     - Time
+   * - :math:`N_{\mathrm{rep},i}`
+     - Integer replacement interval used in the calculation
+     - time
 
-   * - :math:`f_{\text{rep},i}`
-     - Effective replacement interval (rounded to integer years)
-     - Time
+   * - :math:`f_{\mathrm{noninteger},i}`
+     - Non-integer replacement correction factor
+     - dimensionless
 
-   * - :math:`\kappa_i`
-     - Non-integer frequency correction factor
-     - Dimensionless
+   * - :math:`C_{\mathrm{raw},i}`
+     - One-time replacement cost for planned replacement entry :math:`i`
+     - currency
 
-   * - :math:`C_{\text{rep},i}`
-     - Cost per replacement event (inflated and corrected)
-     - Currency
+   * - :math:`C_{\mathrm{planned},i}`
+     - Inflated replacement cost applied at each replacement event
+     - currency
 
-   * - :math:`C_{\text{planned}}(t)`
-     - Planned replacement cost in year :math:`t`
-     - Currency
+   * - :math:`C_{\mathrm{planned}}(y)`
+     - Total planned replacement cost during year :math:`y`
+     - currency
 
-   * - :math:`C_{\text{unplanned},j}`
-     - Individual unplanned replacement cost entries  
-       (from "Unplanned Replacement" tables)
-     - Currency
+   * - :math:`C_{\mathrm{unplanned},i}`
+     - Individual unplanned replacement contribution
+     - currency
 
-   * - :math:`C_{\text{unplanned}}`
-     - Total unplanned replacement cost per year
-     - Currency / time
+   * - :math:`C_{\mathrm{unplanned}}`
+     - Total unplanned replacement cost
+     - currency
 
-   * - :math:`C_{\text{yearly}}(t)`
-     - Total replacement cost before final inflation factors
-     - Currency
+   * - :math:`C_{\mathrm{replacement}}(y)`
+     - Total yearly replacement cost before inflation correction
+     - currency
 
-   * - :math:`C_{\text{replacement}}(t)`
-     - Final yearly replacement cost (after inflation adjustments)
-     - Currency / time
+   * - :math:`C_{\mathrm{replacement}}^{\mathrm{inflated}}(y)`
+     - Total yearly inflated replacement cost
+     - currency
 
-   * - :math:`f_{\text{infl,combined}}`
-     - Combined inflation factor (``dcf.combined_inflator``)
-     - Dimensionless
+   * - :math:`f_{\mathrm{combined}}`
+     - Combined inflator
+     - dimensionless
 
-   * - :math:`f_{\text{infl,correction}}(t)`
-     - Inflation correction factor over time (``dcf.inflation_correction``)
-     - Dimensionless
+   * - :math:`f_{\mathrm{inflation\ correction}}(y)`
+     - Inflation correction factor for year :math:`y`
+     - dimensionless
 
-   * - :math:`f_{\text{infl}}(t)`
-     - Time-dependent inflation factor (``dcf.inflation_factor``)
-     - Dimensionless
-
-   * - :math:`\mathbf{1}_{t \in \text{schedule}_i}`
-     - Indicator function (equals 1 when a replacement occurs at year :math:`t`, 0 otherwise)
-     - Dimensionless
+   * - :math:`f_{\mathrm{inflation}}(y)`
+     - Inflation factor for year :math:`y`
+     - dimensionless
 
 
 .. automodule:: pyH2A.Plugins.Replacement_Plugin

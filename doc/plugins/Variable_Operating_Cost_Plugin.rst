@@ -5,110 +5,129 @@ This plugin computes variable operating costs, including utility costs (time-dep
 The result is expressed as a time-dependent quantity (array over plant lifetime).
 
 Equations
-~~~~~~~~~
+---------
 
-Utility cost per kg of hydrogen (for each utility :math:`u`):
+Utility costs
+~~~~~~~~~~~~~
 
-.. math::
-
-   c_{\text{util},u}(t) = p_u(t) \cdot f_{\text{infl}}(t) \cdot f_{\text{conv},u} \cdot \gamma_u
-
-Total utility cost per kg of hydrogen:
+For each utility :math:`i`, the cost per functional unit is calculated as:
 
 .. math::
 
-   c_{\text{util,total}}(t) = \sum_u c_{\text{util},u}(t)
+   C_{\mathrm{util},i}^{\mathrm{FU}}
+   =
+   P_i
+   \times
+   U_i
+   \times
+   F_{\mathrm{conv},i}
+   \times
+   f_{\mathrm{inflation}}
 
+where the utility price may be either:
 
-Total utility cost per year:
+- A scalar value,
+- A yearly array,
+- Or a time-dependent value read from an external text file.
+
+The total utility operating cost is then:
 
 .. math::
 
-   C_{\text{util}}(t) = c_{\text{util,total}}(t) \cdot Q_{\text{year}}
+   C_{\mathrm{utilities}}
+   =
+   Q_{\mathrm{year}}
+   \times
+   \sum_i
+   C_{\mathrm{util},i}^{\mathrm{FU}}
 
+Other variable operating costs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Other variable operating costs:
+Other variable operating cost contributions are summed across all tables belonging to the
+``Other Variable Operating Cost`` group:
 
 .. math::
 
-   C_{\text{var,other}} = \left( \sum_i C_{\text{var,other},i} \right) \cdot f_{\text{infl,chem}}
+   C_{\mathrm{other}}
+   =
+   f_{\mathrm{chem}}
+   \times
+   \sum_j
+   C_{\mathrm{other},j}
 
+Total variable operating costs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Total variable operating costs:
+The total variable operating cost is:
 
 .. math::
 
-   C_{\text{var,total}}(t) = C_{\text{util}}(t) + C_{\text{var,other}}
-
+   C_{\mathrm{var,total}}
+   =
+   C_{\mathrm{utilities}}
+   +
+   C_{\mathrm{other}}
 
 Notation
 ~~~~~~~~
 
 .. list-table::
    :header-rows: 1
+   :widths: 30 50 20
 
    * - Symbol
      - Description
      - Dimension
 
-   * - :math:`p_u(t)`
-     - Cost of utility :math:`u` (possibly time-dependent, from file or scalar)  
-       (``Utilities > [...] > Cost``)
-     - Currency / utility amount
-
-   * - :math:`\gamma_u`
-     - Utility usage per kg of hydrogen  
-       (``Utilities > [...] > Usage per kg H2``)
-     - Utility amount / mass
-
-   * - :math:`f_{\text{conv},u}`
-     - Price conversion factor  
-       (``Utilities > [...] > Price Conversion Factor``)
-     - Dimensionless
-
-   * - :math:`f_{\text{infl}}(t)`
-     - Inflation correction factor over time (``dcf.inflation_correction``)
-     - Dimensionless
-
-   * - :math:`c_{\text{util},u}(t)`
-     - Cost contribution of utility :math:`u` per kg of hydrogen
-     - Currency / mass
-
-   * - :math:`c_{\text{util,total}}(t)`
-     - Total utility cost per kg of hydrogen
-     - Currency / mass
-
-   * - :math:`Q_{\text{year}}`
-     - Yearly hydrogen production  
-       (``Output per Year``)
-     - Mass
-
-   * - :math:`C_{\text{util}}(t)`
-     - Total utility cost per year (time-dependent)
-     - Currency / time
-
-   * - :math:`C_{\text{var,other},i}`
-     - Individual other variable operating cost entries  
-       (from "Other Variable Operating Cost" tables)
+   * - :math:`P_i`
+     - Utility cost for utility :math:`i`
      - Currency
 
-   * - :math:`C_{\text{var,other}}`
-     - Total other variable operating costs (after inflation)
-     - Currency
+   * - :math:`U_i`
+     - Utility usage per functional unit for utility :math:`i`
+     - 1 / Functional unit dimension
 
-   * - :math:`f_{\text{infl,chem}}`
-     - Chemical inflation factor (``dcf.chemical_inflator``)
+   * - :math:`F_{\mathrm{conv},i}`
+     - Price conversion factor for utility :math:`i`
      - Dimensionless
 
-   * - :math:`C_{\text{var,total}}(t)`
-     - Total variable operating costs (time-dependent)
+   * - :math:`f_{\mathrm{inflation}}`
+     - Inflation correction factor
+     - Dimensionless
+
+   * - :math:`C_{\mathrm{util},i}^{\mathrm{FU}}`
+     - Inflation-corrected utility cost per functional unit
+     - currency / Functional unit dimension
+
+   * - :math:`Q_{\mathrm{year}}`
+     - Output per year
+     - Functional unit dimension
+
+   * - :math:`C_{\mathrm{utilities}}`
+     - Total utility operating costs
      - Currency
 
+   * - :math:`C_{\mathrm{other},j}`
+     - Individual other variable operating cost contribution
+     - Currency
+
+   * - :math:`f_{\mathrm{chem}}`
+     - Chemical inflator
+     - Dimensionless
+
+   * - :math:`C_{\mathrm{other}}`
+     - Total other variable operating costs
+     - Currency
+
+   * - :math:`C_{\mathrm{var,total}}`
+     - Total variable operating costs
+     - Currency
 
 Notes
 -----
 
-- Utility costs are evaluated **per kg of hydrogen**, then scaled by annual production.
+- Utility costs are evaluated **per functional unit**, then scaled by annual delivered units.
 - Costs can be:
   - constant (scalar),
   - time-dependent (array),

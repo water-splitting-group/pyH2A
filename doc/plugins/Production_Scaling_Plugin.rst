@@ -1,157 +1,145 @@
-Production_Scaling_Plugin
-=========================
+Production_Scaling_Plugin Equations
+-----------------------------------
 
-This plugin computes plant output and optional scaling factors affecting subsequent capital and labor calculations.
+This plugin computes the delivered output and applies optional scaling relationships for plant capacity, capital costs, and labor costs.
 
 Equations
-~~~~~~~~~
+---------
 
-Default definitions:
+Plant scaling
+~~~~~~~~~~~~~
 
-If not specified, the maximum output at gate is set equal to the plant design capacity:
-
-.. math::
-
-   Q_{\text{max,gate}} = Q_{\text{design}}
-
-
-Scaling ratio:
-
-If a new plant design capacity is provided:
+If a new plant size is specified, the scaling ratio is:
 
 .. math::
 
-   R_{\text{scale}} = \frac{Q_{\text{design,new}}}{Q_{\text{design}}}
+   R_{\mathrm{scale}} =
+   \frac{\dot{Q}_{\mathrm{design,new}}}
+   {\dot{Q}_{\mathrm{design}}}
 
+Alternatively, the scaling ratio can be provided directly as an input.
 
-Scaled daily outputs (if scaling is active):
-
-.. math::
-
-   Q_{\text{design,scaled}} = Q_{\text{design}} \cdot R_{\text{scale}}
-
-.. math::
-
-   Q_{\text{max,gate,scaled}} = Q_{\text{max,gate}} \cdot R_{\text{scale}}
-
-
-If no scaling is applied:
+The scaled design output is then:
 
 .. math::
 
-   Q_{\text{design,scaled}} = Q_{\text{design}}
+   \dot{Q}_{\mathrm{design,scaled}}
+   =
+   \dot{Q}_{\mathrm{design}}
+   \times
+   R_{\mathrm{scale}}
+
+Similarly, the maximum gate output rate becomes:
 
 .. math::
 
-   Q_{\text{max,gate,scaled}} = Q_{\text{max,gate}}
+   \dot{Q}_{\mathrm{gate,max}}
+   =
+   \dot{Q}_{\mathrm{gate,max,0}}
+   \times
+   R_{\mathrm{scale}}
 
-
-Scaling factors (if scaling is active):
-
-.. math::
-
-   f_{\text{scale,cap}} = R_{\text{scale}}^{\alpha_{\text{cap}}}
-
-.. math::
-
-   f_{\text{scale,lab}} = R_{\text{scale}}^{\alpha_{\text{lab}}}
-
-If exponents are not specified:
+Capital and labor scaling factors are calculated using power-law scaling:
 
 .. math::
 
-   \alpha_{\text{cap}} = 0.78
+   F_{\mathrm{cap}}
+   =
+   R_{\mathrm{scale}}^{n_{\mathrm{cap}}}
 
 .. math::
 
-   \alpha_{\text{lab}} = 0.25
+   F_{\mathrm{labor}}
+   =
+   R_{\mathrm{scale}}^{n_{\mathrm{labor}}}
 
+If no scaling is requested, the scaled quantities are equal to the original values.
 
-Yearly outputs:
+Yearly output
+~~~~~~~~~~~~~
+
+The yearly production output is calculated from the scaled design output and the operating capacity factor:
 
 .. math::
 
-   Q_{\text{year}} = Q_{\text{design,scaled}} \cdot 365 \cdot f_{\text{op}}
+   Q_{\mathrm{year}}
+   =
+   \dot{Q}_{\mathrm{design,scaled}}
+   \times
+   f_{\mathrm{op}}
+
+The yearly output at gate is:
 
 .. math::
 
-   Q_{\text{year,gate}} = Q_{\text{max,gate,scaled}} \cdot 365 \cdot f_{\text{op}}
-
+   Q_{\mathrm{year,gate}}
+   =
+   \dot{Q}_{\mathrm{gate,max}}
+   \times
+   f_{\mathrm{op}}
 
 Notation
 ~~~~~~~~
 
 .. list-table::
    :header-rows: 1
+   :widths: 30 50 20
 
    * - Symbol
      - Description
      - Dimension
 
-   * - :math:`Q_{\text{design}}`
-     - Plant design capacity  
-       (``Plant Design Capacity``)
-     - Mass / time
+   * - :math:`\dot{Q}_{\mathrm{design}}`
+     - Plant design capacity
+     - Functional unit dimension / time
 
-   * - :math:`Q_{\text{design,new}}`
-     - New plant design capacity (for scaling)  
-       (``New Plant Design Capacity``)
-     - Mass / time
+   * - :math:`\dot{Q}_{\mathrm{design,new}}`
+     - New plant design capacity
+     - Functional unit dimension / time
 
-   * - :math:`Q_{\text{max,gate}}`
-     - Maximum output at gate  
-       (``Maximum Output at Gate``)
-     - Mass / time
-
-   * - :math:`Q_{\text{design,scaled}}`
-     - Scaled design output per day  
-       (``Design Output per Day``)
-     - Mass / time
-
-   * - :math:`Q_{\text{max,gate,scaled}}`
-     - Scaled maximum gate output per day  
-       (``Max Gate Output per Day``)
-     - Mass / time
-
-   * - :math:`Q_{\text{year}}`
-     - Yearly hydrogen output  
-       (``Output per Year``)
-     - Mass
-
-   * - :math:`Q_{\text{year,gate}}`
-     - Yearly hydrogen output at gate  
-       (``Output per Year at Gate``)
-     - Mass
-
-   * - :math:`f_{\text{op}}`
-     - Operating capacity factor (fraction)  
-       (``Operating Capacity Factor (%)``)
+   * - :math:`R_{\mathrm{scale}}`
+     - Scaling ratio
      - Dimensionless
 
-   * - :math:`R_{\text{scale}}`
-     - Scaling ratio  
-       (``Scaling Ratio``)
+   * - :math:`\dot{Q}_{\mathrm{design,scaled}}`
+     - Scaled design output rate
+     - Functional unit dimension / time
+
+   * - :math:`\dot{Q}_{\mathrm{gate,max,0}}`
+     - Initial maximum output rate at gate
+     - Functional unit dimension / time
+
+   * - :math:`\dot{Q}_{\mathrm{gate,max}}`
+     - Scaled maximum output rate at gate
+     - Functional unit dimension / time
+
+   * - :math:`n_{\mathrm{cap}}`
+     - Capital scaling exponent
      - Dimensionless
 
-   * - :math:`f_{\text{scale,cap}}`
-     - Capital scaling factor  
-       (``Scaling > Capital Scaling Factor``)
+   * - :math:`n_{\mathrm{labor}}`
+     - Labor scaling exponent
      - Dimensionless
 
-   * - :math:`f_{\text{scale,lab}}`
-     - Labor scaling factor  
-       (``Scaling > Labor Scaling Factor``)
+   * - :math:`F_{\mathrm{cap}}`
+     - Capital scaling factor
      - Dimensionless
 
-   * - :math:`\alpha_{\text{cap}}`
-     - Capital scaling exponent  
-       (``Capital Scaling Exponent``; default = 0.78)
+   * - :math:`F_{\mathrm{labor}}`
+     - Labor scaling factor
      - Dimensionless
 
-   * - :math:`\alpha_{\text{lab}}`
-     - Labor scaling exponent  
-       (``Labor Scaling Exponent``; default = 0.25)
+   * - :math:`f_{\mathrm{op}}`
+     - Operating capacity factor
      - Dimensionless
+
+   * - :math:`Q_{\mathrm{year}}`
+     - Output per year
+     - Functional unit dimension
+
+   * - :math:`Q_{\mathrm{year,gate}}`
+     - Output per year at gate
+     - Functional unit dimension
 
 .. automodule:: pyH2A.Plugins.Production_Scaling_Plugin
     :members:
