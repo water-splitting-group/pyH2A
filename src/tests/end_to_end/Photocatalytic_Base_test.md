@@ -20,7 +20,7 @@ Name                      | Value | Unit   | Path                               
 ------------------------- | ----- | ------ | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
 Operating Capacity Factor | 90%   | -      |                                                                                   |
 Plant Design Capacity     | 1,111 | kg/day |                                                                                   |
-Maximum Output at Gate    | 90%   | kg/day | Technical Operating Parameters and Specifications > Plant Design Capacity > Value | % of plant design capacity, reduction due to loss in H2/O2 separation. |
+Maximum Output at Gate    | 90%   | kg/day | Technical Operating Parameters and Specifications > Plant design capacity > Value | % of plant design capacity, reduction due to loss in H2/O2 separation. |
 Plant Modules             | 10    | -      | None                                                                              | 10 identical modules, only affects labor requirement calculation.      |
 
 # Construction
@@ -50,8 +50,8 @@ Temperature Coefficient       | 0.0   | -/delta_degC | No decrease on photocatal
 
 Name             | Value                                                     | Unit       | Comment                                                        |
 ---------------- | --------------------------------------------------------- | ---------- | -------------------------------------------------------------- |
-Mean solar input | Hourly Irradiation > Mean solar input no tracking > Value | kWh/m2/day | Solar irradiation for baggies on flat ground without tracking. |
-Hourly           | Hourly Irradiation > No Tracking> Value                   | kWh/m2     
+Mean solar input | Hourly Irradiation > Mean solar input no tracking > Value | kWh_per_day/m2 | Solar irradiation for baggies on flat ground without tracking. |
+Hourly           | Hourly Irradiation > No tracking> Value                   | kWh/m2     
 Solar-to-Hydrogen Efficienc
 Name | Value | Unit | Comment                                |
 ---- | ----- | ---- | -------------------------------------- |
@@ -61,11 +61,11 @@ STH  | 2%    | -    | Kang 2015, C3N4/CDot catalyst, 2% STH. |
 
 Name                          | Value | Unit            | Comment                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 ----------------------------- | ----- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-Cost per unit of mass         | 3,000 | $/kg            | CatCost Model of Urea/Melamine derived catalyst, 5% mass yield, 0.5% wt% Ruthenium as cost placeholder for CDots (Kang 2015 uses 0.48% wt% CDots on C3N4), 60 kWh electricity per kg(catalyst) due to electrochemical CDot synthesis, process template "Metal on Metal Oxide - Strong Electrostatic Adsorption" used in CatCost Model, 5 t/a production scale, estimated cost: 890 $/kg, increased to 3,000 $/kg.                                                                                                                           |
+Cost per unit of mass         | 3,000 | USD/kg            | CatCost Model of Urea/Melamine derived catalyst, 5% mass yield, 0.5% wt% Ruthenium as cost placeholder for CDots (Kang 2015 uses 0.48% wt% CDots on C3N4), 60 kWh electricity per kg(catalyst) due to electrochemical CDot synthesis, process template "Metal on Metal Oxide - Strong Electrostatic Adsorption" used in CatCost Model, 5 t/a production scale, estimated cost: 890 USD/kg, increased to 3,000 USD/kg.                                                                                                                           |
 Concentration                 | 0.533 | g/L             | Kang 2015: 2% STH, 80 mg C3N4/CDot catalyst in 150 ml, 1150 umol H2 after 6h, 9 cm^2 irradiation area (2266 J/h incident irradiation), ca. 2.395 mmol H2/h/g; Tremblay 2020: 3.4% STH (200 W m^-2), 30 mg C3N4 + catalase in 20 ml, 47.49 umol H2/h, ca. 1.583 mmol H<sub>2</sub>/h/g (ca. 5 cm<sup>2</sup> irradiation area gives reported STH); Zhao 2021: 1.16% STH (100 mW/cm^2), 0.64 cm^2 irradiated area, 11.25 umol H2 h^-1, 40 mg catalyst, 0.281 mmol H2/g/h, activity 420 nm irradiation: 65 umol H2/h, 40 mg, 1.625 mmol H2/g/h |
 Lifetime                      | 0.5   | year            | Kang 2015, 45 days continuous irradiation, 200 days with recycling                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 Molar Weight                  | 500   | g/mol           | Assumption for calculation of hypothetical homogeneous water splitting catalyst.                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-Molar Attenuation Coefficient | 8000  | liter/(m*mol) | Assumption for calculation of hypothetical homogeneous water splitting catalyst.                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+Molar Attenuation Coefficient | 8000  | liter/(cm*mol) | Assumption for calculation of hypothetical homogeneous water splitting catalyst.                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 
 # Reactor Baggies
 
@@ -74,11 +74,11 @@ Name                 | Value | Unit | Comment                                   
 Height               | 0.05  | m    | Optimal height depends on absorption coefficient of material/complex and catalytic activity (TOF or mol H2/h/g). Height of 5 cm based on experimental set-up used in Kang 2015 (shown in Kang 2015 SI). |
 Length               | 323.0 | m    | Baggie parameters based on Pinaud 2013.                                                                                                                                                                 |
 Width                | 12.2  | m    |
-Cost Material Top    | 0.54  | $/m2 |
-Cost Material Bottom | 0.47  | $/m2 |
+Cost Material Top    | 0.54  | USD/m2 |
+Cost Material Bottom | 0.47  | USD/m2 |
 Number of ports      | 12    | -    | Number of ports per baggie.                                                                                                                                                                             |
-Cost of port         | 30    | $    | Cost per port.                                                                                                                                                                                          |
-Other Costs          | 610.7 | $    | Other costs per baggie.                                                                                                                                                                                 |
+Cost of port         | 30    | USD    | Cost per port.                                                                                                                                                                                          |
+Other Costs          | 610.7 | USD    | Other costs per baggie.                                                                                                                                                                                 |
 Markup factor        | 1.5   | -    | Markup factor of baggies.                                                                                                                                                                               |
 Additional land area | 30%   | -    | Land area required in addition to area occupied by baggies.                                                                                                                                             |
 Lifetime             | 5     | year | Lifetime of reactor baggies.                                                                                                                                                                            |
@@ -87,72 +87,72 @@ Lifetime             | 5     | year | Lifetime of reactor baggies.              
 
 Name            | Value | Unit | Comment                                                                                                                       |
 --------------- | ----- | ---- | ----------------------------------------------------------------------------------------------------------------------------- |
-Filtration cost | 0.24  | $/m3 | Cost of nanofiltration per m3 of water based on Costa 2006. Nanofiltration as a proxy for cost of actual catalyst separation. |
+Filtration cost | 0.24  | USD/m3 | Cost of nanofiltration per m3 of water based on Costa 2006. Nanofiltration as a proxy for cost of actual catalyst separation. |
 
 # Direct Capital Costs - Equipment
 
 Name               | Value    | Unit | Path                             | Comment                               |
 ------------------ | -------- | ---- | -------------------------------- | ------------------------------------- |
-Baggie roll system | 37,000.0 | $    | None                             | Equipment costs based on Pinaud 2013. |
-Forklift           | 18,571.0 | $    |                                  |
-Water pump         | 213.0    | $    |                                  |
-Water pipes        | 39.9     | $    | Reactor Baggies > Number > Value |
+Baggie roll system | 37,000.0 | USD    | None                             | Equipment costs based on Pinaud 2013. |
+Forklift           | 18,571.0 | USD    |                                  |
+Water pump         | 213.0    | USD    |                                  |
+Water pipes        | 39.9     | USD    | Reactor Baggies > Number > Value |
 
 # Direct Capital Costs - Gas Processing
 
 Name                      | Value     | Unit | Path                             | Comment                                                                                              |
 ------------------------- | --------- | ---- | -------------------------------- | ---------------------------------------------------------------------------------------------------- |
-Compressor                | 526,302.0 | $    | None                             | Cost estimate based on Pinaud 2013. Fixed cost of compressor for plant design output (1 ton H2/day). |
-Condenser                 | 13,765.0  | $    |                                  |
-Intercooler-1             | 15,103.0  | $    |                                  |
-Intercooler-2             | 15,552.0  | $    |                                  |
-Pressure Swing Adsorption | 107,147.0 | $    |                                  |
-Reactor Outlet Pipe       | 3.17      | $    | Reactor Baggies > Number > Value |
-Main Collection Pipe      | 329.6     | $    | Reactor Baggies > Number > Value |
-Final Collection Pipe     | 23.7      | $    | Reactor Baggies > Number > Value |
+Compressor                | 526,302.0 | USD    | None                             | Cost estimate based on Pinaud 2013. Fixed cost of compressor for plant design output (1 ton H2/day). |
+Condenser                 | 13,765.0  | USD    |                                  |
+Intercooler-1             | 15,103.0  | USD    |                                  |
+Intercooler-2             | 15,552.0  | USD    |                                  |
+Pressure Swing Adsorption | 107,147.0 | USD    |                                  |
+Reactor Outlet Pipe       | 3.17      | USD    | Reactor Baggies > Number > Value |
+Main Collection Pipe      | 329.6     | USD    | Reactor Baggies > Number > Value |
+Final Collection Pipe     | 23.7      | USD    | Reactor Baggies > Number > Value |
 
 # Direct Capital Costs - Control System
 
 Name                      | Value   | Unit | Path                             | Comment                                  |
 ------------------------- | ------- | ---- | -------------------------------- | ---------------------------------------- |
-PLC                       | 2,000.0 | $    | None                             | Control system cost based on Pinaud 2013 |
-Control Room Building     | 8,000.0 | $    | None                             |
-Control Room Wiring Panel | 3,000.0 | $    | None                             |
-Bed Wiring Panel          | 146.0   | $    | Reactor Baggies > Number > Value |
-Computer and Monitor      | 1,500.0 | $    | None                             |
-Labview Software          | 4,299.0 | $    | None                             |
-Water Level Controllers   | 50.0    | $    | Reactor Baggies > Number > Value |
-Pressure Sensors          | 345.0   | $    | Reactor Baggies > Number > Value |
-Hydrogen Area Sensors     | 7,600.0 | $    | Reactor Baggies > Number > Value |
-Gas Flow Meter            | 5,500.0 | $    | None                             |
-Instrument Wiring         | 22.7    | $    | Reactor Baggies > Number > Value |
-Power Wiring              | 7.6     | $    | Reactor Baggies > Number > Value |
-Conduit                   | 142.4   | $    | Reactor Baggies > Number > Value |
+PLC                       | 2,000.0 | USD    | None                             | Control system cost based on Pinaud 2013 |
+Control Room Building     | 8,000.0 | USD    | None                             |
+Control Room Wiring Panel | 3,000.0 | USD    | None                             |
+Bed Wiring Panel          | 146.0   | USD    | Reactor Baggies > Number > Value |
+Computer and Monitor      | 1,500.0 | USD    | None                             |
+Labview Software          | 4,299.0 | USD    | None                             |
+Water Level Controllers   | 50.0    | USD    | Reactor Baggies > Number > Value |
+Pressure Sensors          | 345.0   | USD    | Reactor Baggies > Number > Value |
+Hydrogen Area Sensors     | 7,600.0 | USD    | Reactor Baggies > Number > Value |
+Gas Flow Meter            | 5,500.0 | USD    | None                             |
+Instrument Wiring         | 22.7    | USD    | Reactor Baggies > Number > Value |
+Power Wiring              | 7.6     | USD    | Reactor Baggies > Number > Value |
+Conduit                   | 142.4   | USD    | Reactor Baggies > Number > Value |
 
 # Direct Capital Costs - Installation Costs
 
 Name                        | Value  | Unit | Path                                                             | Comment                                  |
 --------------------------- | ------ | ---- | ---------------------------------------------------------------- | ---------------------------------------- |
-Excavation                  | 2570.0 | $    | Reactor Baggies > Number > Value                                 | Installation costs based on Pinaud 2013. |
-Baggie Reactor Startup      | 5%     | $    | Direct Capital Costs - Reactor Baggies > Baggie Cost ($) > Value |
-Baggies installation        | 800.0  | $    | Reactor Baggies > Number > Value                                 |
-Gas processing installation | 30%    | $    | Direct Capital Costs - Gas Processing > Summed Total > Value     |
-Control system installation | 30%    | $    | Direct Capital Costs - Control System > Summed Total > Value     |
+Excavation                  | 2570.0 | USD    | Reactor Baggies > Number > Value                                 | Installation costs based on Pinaud 2013. |
+Baggie Reactor Startup      | 5%     | USD    | Direct Capital Costs - Reactor Baggies > Baggie cost (USD) > Value |
+Baggies installation        | 800.0  | USD    | Reactor Baggies > Number > Value                                 |
+Gas processing installation | 30%    | USD    | Direct Capital Costs - Gas Processing > Summed total > Value     |
+Control system installation | 30%    | USD    | Direct Capital Costs - Control System > Summed total > Value     |
 
 # Indirect Capital Costs
 
 Name                      | Path                                 | Value | Unit | Comment                                      |
 ------------------------- | ------------------------------------ | ----- | ---- | -------------------------------------------- |
-Engineering and Design (fraction of total direct capital costs)    | Direct Capital Costs > Total > Value | 7%    | $    | Indirect capital costs based on Pinaud 2013. |
-Process Contingency (fraction of total direct capital costs)      | Direct Capital Costs > Total > Value | 20%   | $    |
-Up-Front Permitting Costs (fraction of total direct capital costs) | Direct Capital Costs > Total > Value | 5%    | $    |
-Site Preparation (fraction of total direct capital costs)          | Direct Capital Costs > Total > Value | 1%    | $    |
+Engineering and Design (fraction of total direct capital costs)    | Direct Capital Costs > Total > Value | 7%    | USD    | Indirect capital costs based on Pinaud 2013. |
+Process Contingency (fraction of total direct capital costs)      | Direct Capital Costs > Total > Value | 20%   | USD    |
+Up-Front Permitting Costs (fraction of total direct capital costs) | Direct Capital Costs > Total > Value | 5%    | USD    |
+Site Preparation (fraction of total direct capital costs)          | Direct Capital Costs > Total > Value | 1%    | USD    |
 
 # Non-Depreciable Capital Costs
 
 Name         | Value | Unit   | Comment                         |
 ------------ | ----- | ------ | ------------------------------- |
-Cost of land | 500.0 | $/acre | Land cost based on Pinaud 2013. |
+Cost of land | 500.0 | USD/acre | Land cost based on Pinaud 2013. |
 
 # Fixed Operating Costs
 
@@ -161,23 +161,23 @@ Name              | Full Name                               | Value   | Unit   |
 area              | Area per staff                          | 405,000 | m2     | Labor cost based on Pinaud 2013, solar collection area that can be overseen by one staff member. |
 supervisor        | Shift supervisor                        | 1       | -      | Number of shift supervisors.                                                                     |
 shifts            | Shifts                                  | 3       | -      | Number of shifts per day.                                                                        |
-hourly labor cost | Burdened labor cost, including overhead | 50.0    | $/hour |
+hourly labor cost | Burdened labor cost, including overhead | 50.0    | USD/hour |
 
 # Other Fixed Operating Costs
 
 Name         | Full Name                          | Path                                       | Value  | Unit | Comment                                           |
 ------------ | ---------------------------------- | ------------------------------------------ | ------ | ---- | ------------------------------------------------- |
-g&a          | G&A rate                           | Fixed Operating Costs > Labor Cost > Value | 20%    | $    | Other fixed operating costs based on Pinaud 2013. |
-property tax | Property tax and insurance rate    | Total Capital Costs > Inflated > Value     | 2%     | $    |
-repairs      | Production Maintenance and Repairs | Direct Capital Costs > Total > Value       | 0.5%   | $    |
-fees         | Licensing, Permits and Fees        | None                                       | 1000.0 | $    |
+g&a          | G&A rate                           | Fixed Operating Costs > Labor cost > Value | 20%    | USD    | Other fixed operating costs based on Pinaud 2013. |
+property tax | Property tax and insurance rate    | Total Capital Costs > Inflated > Value     | 2%     | USD    |
+repairs      | Production Maintenance and Repairs | Direct Capital Costs > Total > Value       | 0.5%   | USD    |
+fees         | Licensing, Permits and Fees        | None                                       | 1000.0 | USD    |
 
 # Utilities
 
 Name                   | Usage_Value | Usage_Unit | Cost_Value                                                                                | Cost_Unit | Price_Conversion_Factor | Price_Conversion_Factor_Unit | Comment                                                                                                       |
 ---------------------- | --------------- | ---------- | ----------------------------------------------------------------------------------- | --------- | ----------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------- |
 Industrial Electricity | 3.29            | kWh/kg     | pyH2A.Lookup_Tables.Utility_Cost~Industrial_Electricity_AEO_2017_Reference_Case.csv | GJ        | 0.0036                  | GJ/kWh                       | Electricity usage based on Pinaud 2013.                                                                       |
-Process Water          | 2.637           | gal/kg     | 0.0023749510945008                                                                  | $/gal     | 1.                      | None                         | Seawater reverse osmosis cost ca. 0.6 $/m3 (equal to ca. 0.0023 $/gal), based on Kibria 2021 and Driess 2021. |
+Process Water          | 2.637           | gal/kg     | 0.0023749510945008                                                                  | USD/gal     | 1.                      | None                         | Seawater reverse osmosis cost ca. 0.6 USD/m3 (equal to ca. 0.0023 USD/gal), based on Kibria 2021 and Driess 2021. |
 
 # Unplanned Replacement
 
