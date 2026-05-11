@@ -1,4 +1,5 @@
 import multiprocessing
+import concurrent.futures
 import copy
 from pathlib import Path
 from timeit import default_timer as timer
@@ -14,6 +15,36 @@ import pyH2A.Utilities.find_nearest as fn
 from pyH2A.Utilities.input_modification import convert_input_to_dictionary,parse_parameter, parse_parameter_to_array, get_by_path, set_by_path, read_textfile, file_import, reverse_parameter_to_string
 from pyH2A.Discounted_Cash_Flow import Discounted_Cash_Flow
 from pyH2A.Utilities.output_utilities import make_bold, format_scientific, dynamic_value_formatting, insert_image, Figure_Lean
+
+
+def _mc_response_worker(value_batch, inp, parameters, dependent_variable, dependent_variable_key):
+	"""Module-level worker for parallel Monte Carlo execution.
+
+	Runs a batch of parameter sets through Discounted_Cash_Flow and returns
+	the target response value for each set.  Being a module-level function
+	(not a bound method) makes it safely picklable for ProcessPoolExecutor.
+
+	Within each worker process the LCA class-level cache ensures A is
+	factorized only once; all remaining samples in the batch reuse the
+	stored factors via Sherman-Morrison.
+	"""
+	response_values = []
+	units = None
+	for value_set in value_batch:
+		input_dict = copy.deepcopy(inp)
+		for key, parameter in parameters.items():
+			set_by_path(input_dict, parameter['Parameter'], value_set[parameter['Index']],
+						value_type=parameter['Type'])
+		dcf = Discounted_Cash_Flow(input_dict, print_info=False)
+		if dependent_variable == 'h2_cost':
+			response_values.append(dcf.h2_cost)
+		else:
+			lca_entry = dcf.lca.lca_results[dependent_variable_key]
+			response_values.append(lca_entry['value'])
+			if units is None:
+				units = lca_entry['unit']
+	return response_values, units
+
 
 def select_non_reference_value(reference, values):
 	'''Select value from values which is not the reference one.
@@ -384,15 +415,35 @@ class Monte_Carlo_Analysis:
 			1D array containing response values.
 		'''
 
-		# num_cpus = multiprocessing.cpu_count()
-		# pool = multiprocessing.Pool(num_cpus)
+		num_cpus = multiprocessing.cpu_count()
+		value_batches = divide_into_batches(values, int(np.ceil(len(values) / num_cpus)))
 
-		# value_batches = divide_into_batches(values, np.ceil(len(values)/num_cpus))
-		
-		# response_values = pool.map(self.perform_response_calculation, value_batches)
-		# response_values = np.concatenate(response_values)
+		dep_key = getattr(self, 'dependent_variable_key', None)
 
-		response_values = self.perform_response_calculation(values)
+		with concurrent.futures.ProcessPoolExecutor(max_workers=num_cpus) as executor:
+			futures = [
+				executor.submit(
+					_mc_response_worker,
+					batch,
+					self.inp,
+					self.parameters,
+					self.dependent_variable,
+					dep_key,
+				)
+				for batch in value_batches
+			]
+			results = [f.result() for f in futures]
+
+		response_values = np.concatenate([r[0] for r in results])
+
+		# Restore unit-dependent label/unit that get_dependent_variable_value used to set.
+		if self.dependent_variable == 'lca_result':
+			unit = next((r[1] for r in results if r[1] is not None), None)
+			if unit is not None:
+				self.dependent_variable_label = (
+					f"LCA Result ({self.dependent_variable_key}, {unit})"
+				)
+				self.dependent_variable_unit = unit + r' / kg $H_{2}$'
 
 		if return_full_array is True:
 			return np.c_[self.values, response_values]
