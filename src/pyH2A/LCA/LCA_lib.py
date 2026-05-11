@@ -8,10 +8,11 @@ from __future__ import annotations
 import csv
 import importlib
 import os
-from typing import Iterator, List
-
+from functools import lru_cache
+from typing import List
 import numpy
 import numpy.linalg
+import scipy.linalg
 import scipy.sparse
 import scipy.sparse.linalg
 
@@ -145,6 +146,7 @@ class ImpactEntry:
         return index
 
 
+@lru_cache(maxsize=None)
 def matrix_of(file_path: str):
     if file_path.endswith('.npz'):
         return scipy.sparse.load_npz(file_path)
@@ -152,12 +154,12 @@ def matrix_of(file_path: str):
         return numpy.load(file_path)
 
 
-def _csv_rows_of(f: str) -> Iterator[List[str]]:
+@lru_cache(maxsize=None)
+def _csv_rows_of(f: str) -> List[List[str]]:
     with open(f, 'r', encoding='utf-8') as stream:
         reader = csv.reader(stream)
         next(reader)  # skip header
-        for row in reader:
-            yield row
+        return list(reader)
 
 
 class ExportFolder:
@@ -257,3 +259,68 @@ def solve(matrix, f):
 
 def invert(matrix):
     return numpy.linalg.inv(_as_dense(matrix))
+
+
+class _FactorizedSolver:
+    """Holds a pre-factorized matrix for repeated right-hand-side solves."""
+
+    def __init__(self, _solve_fn):
+        self._solve_fn = _solve_fn
+
+    def solve(self, rhs):
+        """Solve for one or many right-hand sides.
+
+        Parameters
+        ----------
+        rhs : array-like, shape (n,) or (n, k)
+            A single RHS vector or a matrix of k RHS column vectors.
+
+        Returns
+        -------
+        ndarray, shape (n,) or (n, k)
+            Solution vector(s). Shape matches input.
+        """
+        rhs = numpy.asarray(rhs)
+        if rhs.ndim == 1:
+            return self._solve_fn(rhs)
+        # 2-D: solve each column; underlying solvers (splu, pypardiso) accept 2-D directly
+        return self._solve_fn(rhs)
+
+
+def factorize(matrix):
+    """
+    Factorize a matrix once and return a solver for repeated solves.
+
+    Unlike :func:`solve`, this function performs the (potentially expensive)
+    matrix factorization once and stores the sparse factors so that subsequent
+    right-hand-side solves only require triangular back-substitution — no
+    re-factorization. This is significantly faster when the same matrix must
+    be solved against multiple right-hand sides.
+
+    Note: this stores the sparse LU factors (L and U), not the dense inverse.
+    The inverse of a sparse matrix is generally dense and should never be
+    formed explicitly.
+
+    Parameters
+    ----------
+    matrix : ndarray or scipy.sparse matrix
+        The coefficient matrix to factorize.
+
+    Returns
+    -------
+    _FactorizedSolver
+        Object with a `.solve(rhs)` method that reuses the stored factors.
+    """
+    if scipy.sparse.issparse(matrix):
+        # pypardiso: spsolve handles factorization internally and is the fastest option
+        if pypardiso is not None:
+            return _FactorizedSolver(lambda rhs: pypardiso.spsolve(matrix, rhs))
+
+        # splu: factorize once, reuse sparse LU factors for each rhs
+        csc = matrix.tocsc() if not scipy.sparse.isspmatrix_csc(matrix) else matrix
+        lu = scipy.sparse.linalg.splu(csc)
+        return _FactorizedSolver(lu.solve)
+
+    # Dense matrix: LU factorization with partial pivoting
+    lu, piv = scipy.linalg.lu_factor(matrix)
+    return _FactorizedSolver(lambda rhs: scipy.linalg.lu_solve((lu, piv), rhs))
