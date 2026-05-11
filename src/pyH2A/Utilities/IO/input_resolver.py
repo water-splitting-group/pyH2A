@@ -159,8 +159,12 @@ def _perform_checks_on_quantity(quantity,
         Value specification containing optional bounds.
     unit_specification : dict
         Unit specification containing required dimension metadata.
-    top_key, middle_key, bottom_key : str
-        Location identifiers used in error messages.
+    top_key : str
+        Table name in `dcf_class.inp`.
+    middle_key : str
+        Row name in `dcf_class.inp[top_key]`.
+    bottom_key : str
+        Column key in `dcf_class.inp[top_key][middle_key]`.
 
     Returns
     -------
@@ -211,8 +215,12 @@ def _create_quantity_and_validate(value_retrieved,
         Specifications that include type and optional bounds.
     unit_specification : dict
         Specifications that include required dimension metadata.
-    top_key, middle_key, bottom_key : str
-        Location identifiers used in error messages.
+    top_key : str
+        Table name in `dcf_class.inp`.
+    middle_key : str
+        Row name in `dcf_class.inp[top_key]`.
+    bottom_key : str
+        Column key in `dcf_class.inp[top_key][middle_key]`.
 
     Returns
     -------
@@ -289,8 +297,12 @@ def value_resolver_function(top_key,
 
     Parameters
     ----------
-    top_key, middle_key, bottom_key : str
-        Location identifiers in `dcf_class.inp`.
+    top_key : str
+        Table name in `dcf_class.inp`.
+    middle_key : str
+        Row name in `dcf_class.inp[top_key]`.
+    bottom_key : str
+        Column key in `dcf_class.inp[top_key][middle_key]`.
     row_dict : dict
         Row specification containing the bottom-level spec.
     dcf_class : object
@@ -366,8 +378,10 @@ def value_with_unit_resolver_function(top_key,
 
     Parameters
     ----------
-    top_key, middle_key : str
-        Location identifiers in `dcf_class.inp`.
+    top_key : str
+        Table name in `dcf_class.inp`.
+    middle_key : str
+        Row name in `dcf_class.inp[top_key]`.
     bottom_key_group : list[str]
         A two-element list: `[value_key, unit_key]`.
     row_dict : dict

@@ -45,8 +45,12 @@ def _retrieve_value_to_be_inserted(inserted_value,
         Plugin instance that holds computed output attributes.
     plugin_name : str
         Name of the plugin used in error messages.
-    top_key, middle_key, bottom_key : str
-        Location identifiers used for error context.
+    top_key : str
+        Table name in `dcf_class.inp`.
+    middle_key : str
+        Row name in `dcf_class.inp[top_key]`.
+    bottom_key : str
+        Column key in `dcf_class.inp[top_key][middle_key]`.
     optional : bool
         Whether the row is optional; missing attributes are ignored if True.
 
@@ -99,8 +103,12 @@ def _perform_checks_on_value_to_be_inserted(value_to_be_inserted,
         Resolved value to insert.
     value_dict : dict
         Output specification for the bottom-level key.
-    top_key, middle_key, bottom_key : str
-        Location identifiers used in error messages.
+    top_key : str
+        Table name in `dcf_class.inp`.
+    middle_key : str
+        Row name in `dcf_class.inp[top_key]`.
+    bottom_key : str
+        Column key in `dcf_class.inp[top_key][middle_key]`.
     check_type_setting : bool, default True
         Control for top-level type checks when recursing into dict values.
 
@@ -186,8 +194,12 @@ def insert_value(top_key: str,
 
     Parameters
     ----------
-    top_key, middle_key, bottom_key : str
-        Location identifiers for the insertion target.
+    top_key : str
+        Table name in `dcf_class.inp`.
+    middle_key : str
+        Row name in `dcf_class.inp[top_key]`.
+    bottom_key : str
+        Column key in `dcf_class.inp[top_key][middle_key]`.
     value_dict : dict
         Bottom-level output specification (includes `inserted_value`).
     row_dict : dict
