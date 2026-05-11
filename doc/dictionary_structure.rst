@@ -133,7 +133,7 @@ For example, in ``Hourly_Irradiation_Plugin``, the ``input_dict`` contains, amon
 				"bounds": (250, 500),
 			},
 			"Unit": {
-				"dimension": "temperature",
+				"dimension": "absolute_temperature",
 			},
 			"optional": False,
 			"description": "Nominal operating temperature of irradiated module."
@@ -155,7 +155,7 @@ This call retrieves the items corresponding to the dictionary positions found in
 In our example: 
  1. ``dcf.inp['Irradiance Area Parameters']['Nominal operating temperature']['Value']`` is retrieved. 
  2. A Quantity object is created from the Value and the related Unit (``dcf.inp['Irradiance Area Parameters']['Nominal operating temperature']['Unit']``). This step is bypassed if the Value is already a Quantity object.
- 3. The input resolver checks if the unit of measurement is consistent with the expected dimension as per the input_dict (in the present case: temperature). If this is not the case, an error message is thrown.
+ 3. The input resolver checks if the unit of measurement is consistent with the expected dimension as per the input_dict (in the present case: absolute_temperature). If this is not the case, an error message is thrown.
  4. The input resolver checks if the value expressed in the Base unit (generally: SI unit) respects the ``bounds`` specified in input_dict. An operating temperature below 250 K or above 500 K would be unrealistic, and would therefore lead to an error message.
  5. The Quantity object is added to the local ``self.input_dict_resolved`` dictionary. The quantities present in this dictionary are the ones used within the plugin for all the calculations.
  
@@ -167,24 +167,16 @@ For example, in ``PV_E_Base.md`` :
 
 ::
 
-	# Irradiance Area Parameters
+   # Irradiation Used
 
-	Name | Value | Unit | Comment
-	--- | --- | ---
-	Module Tilt | Hourly Irradiation > Latitude > Value | deg | Module tilt equal to latitude of location.
+   Name | Value | Comment
+   --- | --- | --- 
+   Data | Hourly Irradiation > Horizontal Single Axis Tracking > Value | Single axis tracking based on Chang 2020.
 
 Here the entry points to another variable in the dictionary.
 
-When Hourly_Irradiation_Plugin executes ``input_resolver_function``, the ``dcf.inp['Irradiance Area Parameters']['Module Tilt']['Value']`` entry ultimately receives the value stored at: 
-
-.. code-block:: python
-
-   dcf.inp[Hourly Irradiation']['Latitude']['Value']
+When Hourly_Irradiation_Plugin executes ``input_resolver_function``, the ``dcf.inp['Irradiation Used']['Data']['Value']`` entry ultimately receives the value stored at ``dcf.inp['Hourly Irradiation']['Horizontal Single Axis Tracking']['Value']``. 
    
-In the present example, it means that the value of the module tilt is simply made equal to the latitude.
-
-
-
 
 6. Value Processing and Path-Based Multiplication
 -------------------------------------------------
@@ -203,7 +195,7 @@ For example, in ``PEC_Base.md``:
    Name | Value | Path | Unit | Comment
    --- | --- | --- | ---
    Water pump | 213.0 | None | USD | Based on Pinaud 2013.
-   Water Manifold Piping | 11.58 | USD | PEC Cells > Number > Value |
+   Water Manifold Piping | 11.58 | PEC Cells > Number > Value | USD |
 
 The entry indicates that the cost of water manifold piping is **11.58 $ per cell**.  
 The total cost therefore depends on the number of PEC cells defined elsewhere in the model.
@@ -220,7 +212,7 @@ and multiplies it by the base value specified in the table:
 
    total_cost = 11.58 * dcf.inp['PEC Cells']['Number']['Value']
 
-This multiplication is performed automatically when the table entry is processed.
+This multiplication is performed automatically when the table entry is processed. Note that the ``Unit`` (USD in this example) applies to the ``Value * Path``.
 
   .. admonition:: Code implementation
 
@@ -239,13 +231,12 @@ Flexible rows
 In some tables, the specific row names do not affect the calculation.  
 The rows are simply used to list multiple contributions that will later be combined.
 
-For example, in the ``Variable_Operating_Cost_Plugin`` the method ``other_variable_costs`` computes the sum of all entries in the table ``Other Variable Operating Cost``:
+For example, in the ``Variable_Operating_Cost_Plugin`` the ``other_variable_costs`` method computes the sum of all entries in the table ``Other Variable Operating Cost``:
 
 .. code-block:: python
 
-   self.other = dcf.chemical_inflator * sum_all_tables(dcf.inp,'Other Variable Operating Cost','Value',
-       insert_total = True, class_object = dcf, print_info = print_info, unit = 'USD'
-   )
+   self.other = dcf.chemical_inflator * sum_all_tables(self.input_dict_resolved,'Other Variable Operating Cost','Value',
+       insert_total = True, class_object = dcf, print_info = print_info).unit['USD']
 
 In this case, the individual row names inside the table do not influence the calculation.  
 The user may therefore define any number of rows describing different cost components. Their values are simply summed when the plugin processes the table.
@@ -262,17 +253,15 @@ For example, in ``Fixed_Operating_Cost_Plugin`` the method ``other_cost`` perfor
 
 .. code-block:: python
 
-   self.other = sum_all_tables(dcf.inp, 'Other Fixed Operating Cost', 'Value',
-       insert_total = True, class_object = dcf, print_info = print_info, unit = 'USD'
-   ) * dcf.combined_inflator
+   self.other = sum_all_tables(self.input_dict_resolved, 'Other Fixed Operating Cost', 'Value',
+       insert_total = True, class_object = dcf, print_info = print_info).unit['USD'] * dcf.combined_inflator
 
 Here, every table whose name contains the string ``Other Fixed Operating Cost`` is included in the calculation.
 
 This allows users to define several tables such as:
 
 - ``Plant A Other Fixed Operating Cost``
-- ``Water Treatment Other Fixed Operating Cost``
-- ``Utilities Other Fixed Operating Cost``
+- ``Water Treatment Other Fixed Operating Cost downstream``
 
 Each table can contain its own entries, but all their values are combined when the plugin computes the total cost.
 
@@ -375,40 +364,40 @@ The data flow can be represented schematically as:
 
 .. code-block:: text
 
-        Input tables (.md)
-                │
-                ▼
-        convert_input_to_dictionary
-                │
-                ▼
-            dcf.inp
-      (shared calculation dictionary)
-                │
-                ▼
+               Input tables (.md)
+                       │
+                       ▼
+          convert_input_to_dictionary
+                       │
+                       ▼
+                    dcf.inp
+        (shared calculation dictionary)
+                       │
+                       ▼                    
         ┌────────────────────────────┐
         │         Plugin 1           │
         │ - input_resolver_function  │
         │ - calculations             │
-        │ - output_resolver          │
+        │ - output_inserter_function │
         └────────────────────────────┘
-                │
-                ▼
-            dcf.inp
-       (with newly inserted variables)
-                │
-                ▼
+                       │
+                       ▼
+                   dcf.inp
+        (with newly inserted variables)
+                       │
+                       ▼
         ┌────────────────────────────┐
         │         Plugin 2           │
         │ - input_resolver_function  │
         │ - calculations             │
-        │ - output_resolver          │
+        │ - output_inserter_function │
         └────────────────────────────┘
-                │
-                ▼
-            dcf.inp
-                │
-                ▼
-               ...
-                │
-                ▼
-        Final financial evaluation
+                       │
+                       ▼
+                   dcf.inp
+                       │
+                       ▼
+                      ...
+                       │
+                       ▼
+          Final financial evaluation

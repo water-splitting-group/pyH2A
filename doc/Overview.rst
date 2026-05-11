@@ -81,7 +81,7 @@ The structure below can be read as a map indicating where each of these elements
    │   │   └── quantity.py    
    │   │   │   - Modules for creating ``quantity`` objects, which associate a value to a unit
    │   │   └── config.py       
-   │   │       - Contains the conversion factors between the base units (considered as the reference) and the units thta are supported in the input file
+   │   │       - Contains the conversion factors between the base units (considered as the reference) and the units that are supported in the input file
    │   │   
    │   └── check_functions.py 
    │   │    - Functions performing sanity checks, called by the input resolver and by the output inserter
@@ -102,9 +102,9 @@ The structure below can be read as a map indicating where each of these elements
    │
    ├── Analysis/
    │   Advanced analysis modules (not used in the base case calculation):
-   │   - Monte Carlo analysis, Comparative Monte Carlo analysis
+   │   - Monte_Carlo analysis, Comparative_MC_analysis
    │   - Cost_Contributions_Analysis
-   │   - Sensitivity analysis 
+   │   - Sensitivity_Analysis 
    │   - Optimization_Analysis
    │   - Development_Distance_Time_Analysis
    │   - Waterfall_Analysis
@@ -121,10 +121,13 @@ Files are available to test pyH2A execution.
 
 ::
 
-   pyH2A/src/
+   pyH2A/
    │
+   ├── e2e_lcoh/
+   │   Executable test file for various complete hydrogen production pathways, checking if the calcualted levelized cost of hydrogen corresponds to the expected value
+   |
    ├── end_to_end/
-   │   Input (.md) files for various complete hydrogen production pathways
+   │   Input (.md) files for the e2e_lcoh/lcoh_test.py test 
    │
    ├── plugins/
    │   Tests for individual plugin robustness
@@ -137,7 +140,7 @@ Files are available to test pyH2A execution.
 1. General Principle of pyH2A
 -----------------------------
 
-pyH2A performs a techno-economic analysis based on discounted cash flow methodology. Its purpose is to compute financial metrics such as annual cash flows and the levelized cost of hydrogen from a combination of technical assumptions and economic parameters.
+pyH2A performs a techno-economic analysis based on discounted cash flow methodology. Its purpose is to compute financial metrics such as annual cash flows and the levelized cost of a deliverable (e.g. hydrogen) from a combination of technical assumptions and economic parameters.
 
 The model is not evaluated in a single global calculation. Instead, it is constructed progressively through a structured series of calculation stages. Each stage contributes technical, cost, or financial quantities that are required for the final discounted cash flow analysis.
 
@@ -212,7 +215,7 @@ The execution order therefore defines the logical dependency structure of the mo
 2.3. Final financial evaluation
 -------------------------------
 
-The final financial quantities of interest (e.g. levelized cost of hydrogen) are calculated.
+The final financial quantities of interest (e.g. levelized cost of product) are calculated.
 
 .. admonition:: Code implementation
 
@@ -226,10 +229,10 @@ The final financial quantities of interest (e.g. levelized cost of hydrogen) are
 The calculation sequence used in pyH2A is based on two categories of plugins:
 
 1. Default plugins, which define the common financial structure of the model.
-2. Scenario-specific plugins, which introduce calculations particular to a given hydrogen production pathway or study.
+2. Scenario-specific plugins, which introduce calculations particular to a given production pathway or study.
 
 The default plugins are specified in the ``Defaults.md`` file. They are always included in a calculation and provide the general discounted cash flow framework. 
-This includes the construction of capital costs, operating costs, replacement costs, and the financial evaluation that leads to metrics such as annual cash flows and the levelized cost of hydrogen. 
+This includes the construction of capital costs, operating costs, replacement costs, and the financial evaluation that leads to metrics such as annual cash flows and the levelized cost of the delivered product. 
 Note that the default Workflow (as defined in the ``Defaults.md`` file) also calls functions after each default plugin execution. These functions can be found as methods of the Discounted_Cash_Flow class.
 
 Scenario-specific plugins are specified in the user-defined input (.md) file. They typically introduce technical calculations (e.g., production performance, equipment sizing, technology-dependent costs) whose results enter the financial structure defined by the defaults.
@@ -245,7 +248,7 @@ Detailed guidance on plugin ordering is provided separately.
 
 The default financial structure follows a defined economic progression:
 
-- Production definition: The hydrogen production level is established or scaled to the target output, providing the reference for subsequent cost calculations.
+- Production definition: The production level is established or scaled to the target output, providing the reference for subsequent cost calculations.
 
   .. admonition:: Code implementation
 
@@ -263,13 +266,13 @@ The default financial structure follows a defined economic progression:
 
      this is handled by the ``Replacement_Plugin``.
 
-- Operating costs: Costs are separated into fixed and variable components. Fixed costs are independent of production level, while variable costs depend on hydrogen production.
+- Operating costs: Costs are separated into fixed and variable components. Fixed costs are independent of production level, while variable costs depend on the delivered production.
 
   .. admonition:: Code implementation
 
      this is handled by the ``Fixed_Operating_Cost_Plugin`` and ``Variable_Operating_Cost_Plugin``.
 
 After these quantities have been established (production, capital costs, replacement costs, and operating costs) the discounted cash flow calculation is performed. 
-Financial parameters such as discount rate, depreciation treatment, and taxation are applied to compute annual cash flows over the project lifetime. From these, net present value–based indicators, including the levelized cost of hydrogen, are derived.
+Financial parameters such as discount rate, depreciation treatment, and taxation are applied to compute annual cash flows over the project lifetime. From these, net present value–based indicators, including the levelized cost of product, are derived.
 
 The economic results therefore arise from a clearly structured sequence: production definition, cost construction, and financial evaluation, implemented through the default plugin sequence.
