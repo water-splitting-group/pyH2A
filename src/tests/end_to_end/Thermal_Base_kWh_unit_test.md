@@ -1,8 +1,8 @@
 # Functional Unit
 
-Name | Value
+Name | Unit of measurement | Reference
 --- | ---
-Functional unit | kWh
+Functional unit | kWh | heating capacity
 
 # Workflow
 

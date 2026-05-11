@@ -45,13 +45,13 @@ class pyH2A:
 		self.file_name = os.path.basename(input_file).split('.')[0]
 		self.output_directory = output_directory
 		self.inp = convert_input_to_dictionary(self.input_file)
-		fu.set_FU(self.inp['Functional Unit']['Functional unit']['Value'])
+		fu.set_FU(self.inp['Functional Unit']['Functional unit'])
 		self.base_case = Discounted_Cash_Flow(self.input_file, print_info = print_info)
 
 		self.meta_modules = {}
 		self.meta_workflow(self.meta_modules)
 
-		print(f'Levelized cost of final product (base case): {self.base_case.final_product_cost} $ /',fu.FU)
+		print(f'Levelized cost of final product (base case): {self.base_case.final_product_cost} $ /',fu.FU, fu.Ref)
 
 	def meta_workflow(self, meta_dict):
 		'''Meta modules (analysis modules) are identified and executed

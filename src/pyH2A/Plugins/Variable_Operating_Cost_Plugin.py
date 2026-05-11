@@ -33,7 +33,7 @@ input_dict = {
 				"bounds": (0, None)
 			},
 			"Usage_Unit": {
-				"dimension": "dimensionless/"+fu.FD # basis per unit of product
+				"dimension": "dimensionless/"+fu.FD # basis per functional unit
 			},			
 			"Price_Conversion_Factor_Value": {
 				"type": {float},

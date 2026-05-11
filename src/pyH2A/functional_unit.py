@@ -22,8 +22,9 @@ def _derived_units():
 
 def set_FU(value):
     """Set the functional unit and compute all derived units and dimensions."""
-    global FU
-    FU = value
+    global FU, Ref
+    FU = value['Unit of measurement']
+    Ref = value['Reference']
     _derived_units()
 
 

@@ -1,5 +1,6 @@
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+from pyH2A import functional_unit as fu
 
 input_dict = {
 	"Technical Operating Parameters and Specifications": {
@@ -107,7 +108,13 @@ class Solar_Thermal_Plugin:
 		self.H2_molecular_weight = Quantity(2, 'g/mol')
 		H2_mol_per_m2 = (self.input_dict_resolved['Solar Input']['Mean solar input']['Value'].unit['W/m2'] * self.input_dict_resolved['Solar-to-Hydrogen Efficiency']['STH']['Value'].unit['-']) / self.H2_molecule_energy.unit['J/mol']
 		H2_kg_per_m2 = H2_mol_per_m2*self.H2_molecular_weight.unit['kg/mol']
+		H2O2_kg_per_m2 = H2_kg_per_m2*17.
 
-		required_area_m2 = self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output rate']['Value'].unit['kg/s'] / H2_kg_per_m2
-
+		if fu.Ref == 'H2 at gate':
+			required_area_m2 = self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output rate']['Value'].unit['kg/s'] / H2_kg_per_m2
+		elif fu.Ref == 'H2O2 at gate':
+			required_area_m2 = self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output rate']['Value'].unit['kg/s'] / H2O2_kg_per_m2
+		else:
+			raise TypeError(f"Unsupported functional unit '{fu.Ref}' when trying to calculate required surface area."
+        )
 		self.area = Quantity(required_area_m2 * (1. + self.input_dict_resolved['Non-Depreciable Capital Costs']['Additional land area']['Value'].unit['-']), 'm2')

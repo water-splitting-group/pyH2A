@@ -1,8 +1,8 @@
 # Functional Unit
 
-Name | Value
---- | ---
-Functional unit | kg
+Name | Unit of measurement | Reference
+--- | --- |
+Functional unit | kg | H2 at gate
 
 # Workflow
 
