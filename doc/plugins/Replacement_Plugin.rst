@@ -104,7 +104,7 @@ Notation
 ~~~~~~~~
 
 .. list-table::
-   :widths: 30 50 20
+   :widths: 30 50 40
    :header-rows: 1
 
    * - Symbol
@@ -163,6 +163,8 @@ Notation
      - Inflation factor for year :math:`y`
      - dimensionless
 
+Implementation
+--------------
 
 .. automodule:: pyH2A.Plugins.Replacement_Plugin
     :members:

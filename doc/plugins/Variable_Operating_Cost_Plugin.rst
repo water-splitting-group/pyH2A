@@ -74,7 +74,7 @@ Notation
 
 .. list-table::
    :header-rows: 1
-   :widths: 30 50 20
+   :widths: 30 50 50
 
    * - Symbol
      - Description
@@ -134,6 +134,9 @@ Notes
   - or read from external files.
 - Inflation correction is applied at the **unit cost level**.
 - Other variable operating costs are aggregated using ``sum_all_tables()`` and scaled by the chemical inflator.
+
+Implementation
+--------------
 
 .. automodule:: pyH2A.Plugins.Variable_Operating_Cost_Plugin
     :members:

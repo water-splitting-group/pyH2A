@@ -125,19 +125,20 @@ Each plugin file includes an ``input_dict`` dictionary containing the entry keys
 For example, in ``Hourly_Irradiation_Plugin``, the ``input_dict`` contains, among other items:
 
 .. code-block:: python
-	"Irradiance Area Parameters": {	
+
+   "Irradiance Area Parameters": {	
       <...>,   
-		"Nominal operating temperature": {
-			"Value": {
-				"type": {float,},
-				"bounds": (250, 500),
-			},
-			"Unit": {
-				"dimension": "absolute_temperature",
-			},
-			"optional": False,
-			"description": "Nominal operating temperature of irradiated module."
-		},   
+      "Nominal operating temperature": {
+         "Value": {
+            "type": {float,},
+            "bounds": (250, 500),
+         },
+         "Unit": {
+            "dimension": "absolute_temperature",
+         },
+         "optional": False,
+         "description": "Nominal operating temperature of irradiated module."
+      },   
       <...>,    
    }
 
@@ -290,7 +291,9 @@ The variable to be inserted at a given dictionary location is defined in the out
 Example: in ``Solar_Concentrator_Plugin``
 
 - The output_dict structure contains 
+
 .. code-block:: python
+
    "Non-Depreciable Capital Costs": {
       "Land required": {
          "Value": {

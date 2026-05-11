@@ -126,5 +126,8 @@ Notation
      - Combined inflation factor
      - dimensionless
 
+Implementation
+--------------
+
 .. automodule:: pyH2A.Plugins.Fixed_Operating_Cost_Plugin
     :members:

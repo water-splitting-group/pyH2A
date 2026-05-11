@@ -83,7 +83,7 @@ Notation
 
 .. list-table::
    :header-rows: 1
-   :widths: 30 50 20
+   :widths: 30 50 50
 
    * - Symbol
      - Description
@@ -140,6 +140,9 @@ Notation
    * - :math:`Q_{\mathrm{year,gate}}`
      - Output per year at gate
      - Functional unit dimension
+
+Implementation
+--------------     
 
 .. automodule:: pyH2A.Plugins.Production_Scaling_Plugin
     :members:
