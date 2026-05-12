@@ -28,12 +28,12 @@ File | pyH2A.Lookup*Tables.Hourly_Irradiation_Data~tmy_34.859*-116.889_2006_2015
 
 Name                          | Value                                 | Unit    | Comment                                    |
 ----------------------------- | ------------------------------------- | ------- | ------------------------------------------ |
-Module Tilt                   | Hourly Irradiation > Latitude > Value | degree  | Module tilt equal to latitude of location. |
-Array Azimuth                 | 180                                   | degree  |
-Nominal Operating Temperature | 45                                    | celsius |
+Module Tilt                   | Hourly Irradiation > Latitude > Value | deg  | Module tilt equal to latitude of location. |
+Array Azimuth                 | 180                                   | deg  |
+Nominal Operating Temperature | 45                                    | degC |
 Mismatch Derating             | 0.98                                  | -       | Based on Chang 2020.                       |
 Dirt Derating                 | 0.98                                  | -       | Based on Chang 2020.                       |
-Temperature Coefficient       | -0.4%                                 | -/celsius       | Based on Chang 2020.                       |
+Temperature Coefficient       | -0.4%                                 | -/degC       | Based on Chang 2020.                       |
 
 # Irradiation Used
 

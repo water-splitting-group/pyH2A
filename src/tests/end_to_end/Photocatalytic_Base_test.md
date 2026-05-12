@@ -39,9 +39,9 @@ File | pyH2A.Lookup*Tables.Hourly_Irradiation_Data~tmy_34.859*-116.889_2006_2015
 
 Name                          | Value | Unit      | Comment                                                                |
 ----------------------------- | ----- | --------- | ---------------------------------------------------------------------- |
-Module Tilt                   | 0     | degree    | Flat baggies on the ground.                                            |
-Array Azimuth                 | 0     | degree    | Flat baggies on the ground.                                            |
-Nominal Operating Temperature | 45    | celsius   |
+Module Tilt                   | 0     | deg    | Flat baggies on the ground.                                            |
+Array Azimuth                 | 0     | deg    | Flat baggies on the ground.                                            |
+Nominal Operating Temperature | 45    | degC   |
 Mismatch Derating             | 98%   | -         |
 Dirt Derating                 | 98%   | -         | Values taken from Chang 2020, analogues to silicon PV.                 |
 Temperature Coefficient       | 0.0   | -/delta_degC | No decrease on photocatalyst activity with higher temperature assumed. |
