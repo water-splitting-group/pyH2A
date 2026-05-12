@@ -1,5 +1,5 @@
-Production_Scaling_Plugin Equations
------------------------------------
+Production_Scaling_Plugin
+-------------------------
 
 This plugin computes the delivered output and applies optional scaling relationships for plant capacity, capital costs, and labor costs.
 
