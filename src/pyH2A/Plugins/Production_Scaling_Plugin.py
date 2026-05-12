@@ -253,7 +253,7 @@ class Production_Scaling_Plugin:
 			self.max_gate_output_rate = self.maximum_output_at_gate
 
 	def calculate_output(self):
-		'''Calculation of yearly output in kg and yearly output at gate in kg.
+		'''Calculation of yearly output and yearly output at gate.
 		'''
 
 		self.output_per_year = Quantity(self.scaled_design_output.unit[fu.FU_per_year] * self.dictionary['Operating capacity factor']['Value'].unit['-'], fu.FU)
