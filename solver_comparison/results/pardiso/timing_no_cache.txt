@@ -1,0 +1,4 @@
+100 samples — PARDISO sparse solver, no lru_cache
+Total time: ~60s
+Per sample: ~0.60s
+Bottlenecks: PARDISO solve 36s (60%), CSV reading 14s (23%)

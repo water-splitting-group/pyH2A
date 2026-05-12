@@ -1,0 +1,3 @@
+100 samples — PARDISO + Sherman-Morrison + multiprocessing
+Total time: 33.53s
+Per sample: ~0.33s

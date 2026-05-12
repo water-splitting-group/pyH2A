@@ -1,0 +1,5 @@
+100 samples — PARDISO sparse solver, with lru_cache
+Total time: ~47s
+Per sample: ~0.47s
+Speedup: 26% vs no cache
+lru_cache applied to: _csv_rows_of() and matrix_of()

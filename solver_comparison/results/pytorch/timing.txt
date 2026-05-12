@@ -1,0 +1,5 @@
+Single sample — PyTorch dense solver
+Run 1 (cold start): 47.846s
+Run 2 (warm cache): 60.705s
+Note: Dense conversion of 17234x17234 sparse matrix (~2.4GB)
+makes PyTorch unsuitable for this use case.

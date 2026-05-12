@@ -1,0 +1,5 @@
+Single sample — JAX dense solver
+Run 1 (cold start): 54.313s
+Run 2 (warm cache): 54.596s
+Note: Dense conversion of 17234x17234 sparse matrix (~2.4GB)
+makes JAX unsuitable for this use case.

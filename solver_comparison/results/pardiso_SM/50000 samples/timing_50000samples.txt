@@ -1,0 +1,4 @@
+50,000 samples — PARDISO + Sherman-Morrison + multiprocessing
+Total time: 2231s (~37 min)
+Per sample: ~0.045s
+Machine: Intel Core Ultra 5 235U, 12 physical cores, 15.5GB RAM
