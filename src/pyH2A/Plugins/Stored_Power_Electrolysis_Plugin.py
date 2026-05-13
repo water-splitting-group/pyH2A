@@ -140,7 +140,7 @@ output_dict = {
     },
     "Planned Replacement": {
         "Electrolyzer stack replacement": {
-            "Frequency": {
+            "Frequency_Value": {
                 "inserted_value": "replacement_frequency",
                 "type": {float,},
                 "dimension": "time",
