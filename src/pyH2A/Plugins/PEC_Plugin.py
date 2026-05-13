@@ -110,6 +110,19 @@ input_dict = {
 			"description": "Solar-to-hydrogen efficiency in percentage or as a value between 0 and 1."
 		}
 	},
+	"Solar Concentrator": {
+		"Concentration factor": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "dimensionless",
+			},
+			"optional": True,
+			"description": "Concentration factor created by solar concentration module."
+		},
+	},
 	"Solar Input": {
 		"Mean solar input": {
 			"Value": {
@@ -148,12 +161,12 @@ output_dict = {
 	},
 	"Planned Replacement": {
 		"Planned replacement PEC cells": {
-			"Cost": {
+			"Cost_Value": {
 				"inserted_value": "cell_cost",
 				"type": {float,},
 				"dimension":"currency",
 			},
-			"Frequency": {
+			"Frequency_Value": {
 				"inserted_value": "cell_lifetime",
 				"type": {float,}, 
 				"dimension":"time",
@@ -162,7 +175,7 @@ output_dict = {
 			"optional": False,		
 		}
 	},
- 	"Direct capital costs - PEC Cells": {
+ 	"Direct Capital Costs - PEC Cells": {
 		"PEC cell cost": {
 			"Value": {
 				"inserted_value": "cell_cost",
@@ -211,6 +224,9 @@ class PEC_Plugin:
 		Solar-to-hydrogen efficiency in percentage or as a value between 0 and 1.
 	Solar Input > Mean solar input > Value : float
 		Mean solar power per surface.
+	Solar Concentrator > Concentration Factor > Value : float, optional
+		Concentration factor created by solar concentration module, which is used in combination
+		with PEC cells. If "Solar Concentrator" is in dcf.inp, ``process_table()`` is used.		
 
 	Returns
 	-------
@@ -218,9 +234,9 @@ class PEC_Plugin:
 		Total land area required.
 	Non-Depreciable Capital Costs > Solar collection area > Value : float
 		Solar collection area.
-	Planned Replacement > Planned replacement PEC Cells > Cost : float
+	Planned Replacement > Planned replacement PEC Cells > Cost_Value : float
 		Total cost of replacing all PEC cells once.
-	Planned Replacement > Planned replacement PEC Cells > Frequency : float
+	Planned Replacement > Planned replacement PEC Cells > Frequency_Value : float
 		Replacement frequency of PEC cells in years, identical to PEC cell lifetime.
 	Direct Capital Costs - PEC Cells > PEC cell cost > Value : float
 		Total cost of all PEC cells.
