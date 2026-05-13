@@ -258,12 +258,12 @@ output_dict = {
 	},
 	"Planned Replacement": {
 		"Planned replacement catalyst": {
-			"Cost": {
+			"Cost_Value": {
 				"inserted_value": "catalyst_cost",
 				"type": {float,},
 				"dimension": "currency",
 			},
-			"Frequency": {
+			"Frequency_Value": {
 				"inserted_value": "catalyst_lifetime",
 				"type": {float,},
 				"dimension": "time",
@@ -272,12 +272,12 @@ output_dict = {
 			"description": "Total cost of completely replacing the catalyst once and replacement frequency in years, identical to catalyst lifetime."
 		},
 		"Planned Replacement Baggie": {
-			"Cost": {
+			"Cost_Value": {
 				"inserted_value": "baggies_cost",
 				"type": {float,},
 				"dimension": "currency",
 			},
-			"Frequency": {
+			"Frequency_Value": {
 				"inserted_value": "baggie_lifetime",
 				"type": {float,},
 				"dimension": "time",
