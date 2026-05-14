@@ -124,9 +124,9 @@ Name                        | Value | Path                                      
 --------------------------- | ----- | ------------------------------------------------------------- | ---- | --------------------- |
 Piping installation         | 5.65  | PEC Cells > Number > Value                                    | USD    | Based on Pinaud 2013. |
 Reactor installation        | 22.0  | Non-Depreciable Capital Costs > Solar collection area > Value | USD    |
-Pump installation           | 30%   | Direct Capital Costs - Water management > Water pump > Value  | USD    |
-Gas processing installation | 30%   | Direct Capital Costs - Gas processing > Summed total > Value  | USD    |
-Control system installation | 30%   | Direct Capital Costs - Control system > Summed total > Value  | USD    |
+Pump installation           | 30%   | Direct Capital Costs - Water Management > Water pump > Value  | USD    |
+Gas processing installation | 30%   | Direct Capital Costs - Gas Processing > Summed total > Value  | USD    |
+Control system installation | 30%   | Direct Capital Costs - Control System > Summed total > Value  | USD    |
 
 # Indirect Capital Costs
 
@@ -172,4 +172,4 @@ Process water          | 2.369      | | -/kg     | 0.0023749510945008           
 
 Name                  | Full Name                                                                                         | Value | Path                                         | Unit | Comment               |
 --------------------- | ------------------------------------------------------------------------------------------------- | ----- | -------------------------------------------- | ---- | --------------------- |
-Unplanned replacement | Total unplanned replacement capital cost factor (fraction of total direct depreciable costs/year) | 0.5%  | Depreciable capital costs > Inflated > Value | USD    | Based on Pinaud 2013. |
+Unplanned replacement | Total unplanned replacement capital cost factor (fraction of total direct depreciable costs/year) | 0.5%  | Depreciable Capital Costs > Inflated > Value | USD    | Based on Pinaud 2013. |

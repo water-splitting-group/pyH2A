@@ -16,12 +16,12 @@ Color | darkgreen |
 
 # Technical Operating Parameters and Specifications
 
-Name                      | Value | Unit   | Path                                                                              | Full Name                                                              |
-------------------------- | ----- | ------ | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-Operating Capacity Factor | 90%   | -      |                                                                                   |
-Plant Design Capacity     | 1,111 | kg/day |                                                                                   |
-Maximum Output at Gate    | 90%   | kg/day | Technical Operating Parameters and Specifications > Plant design capacity > Value | % of plant design capacity, reduction due to loss in H2/O2 separation. |
-Plant Modules             | 10    | -      | None                                                                              | 10 identical modules, only affects labor requirement calculation.      |
+Name                      | Value | Path                                                                              | Unit   | Full Name                                                              |
+------------------------- | ----- | --------------------------------------------------------------------------------- | ------ | ---------------------------------------------------------------------- |
+Operating Capacity Factor | 90%   | None                                                                              | -      |
+Plant Design Capacity     | 1,111 | None                                                                              | kg/day |
+Maximum Output at Gate    | 90%   | Technical Operating Parameters and Specifications > Plant design capacity > Value | kg/day | % of plant design capacity, reduction due to loss in H2/O2 separation. |
+Plant Modules             | 10    | None                                                                              | -      | 10 identical modules, only affects labor requirement calculation.      |
 
 # Construction
 
@@ -33,7 +33,7 @@ capital perc 1st | fraction of Capital Spent in 1st Year of Construction | 100% 
 
 Name | Value                                                                         | Comment                   |
 ---- | ----------------------------------------------------------------------------- | ------------------------- |
-File | pyH2A.Lookup*Tables.Hourly_Irradiation_Data~tmy_34.859*-116.889_2006_2015.csv | Location: Dagget, CA, USA |
+File | pyH2A.Lookup_Tables.Hourly_Irradiation_Data~tmy_34.859_-116.889_2006_2015.csv | Location: Dagget, CA, USA |
 
 # Irradiance Area Parameters
 
@@ -91,62 +91,62 @@ Filtration cost | 0.24  | USD/m3 | Cost of nanofiltration per m3 of water based 
 
 # Direct Capital Costs - Equipment
 
-Name               | Value    | Unit | Path                             | Comment                               |
------------------- | -------- | ---- | -------------------------------- | ------------------------------------- |
-Baggie roll system | 37,000.0 | USD    | None                             | Equipment costs based on Pinaud 2013. |
-Forklift           | 18,571.0 | USD    |                                  |
-Water pump         | 213.0    | USD    |                                  |
-Water pipes        | 39.9     | USD    | Reactor Baggies > Number > Value |
+Name               | Value    | Path                             | Unit | Comment                               |
+------------------ | -------- | -------------------------------- | ---- | ------------------------------------- |
+Baggie roll system | 37,000.0 | None                             | USD    | Equipment costs based on Pinaud 2013. |
+Forklift           | 18,571.0 | None                             | USD    |
+Water pump         | 213.0    | None                             | USD    |
+Water pipes        | 39.9     | Reactor Baggies > Number > Value | USD    |
 
 # Direct Capital Costs - Gas Processing
 
-Name                      | Value     | Unit | Path                             | Comment                                                                                              |
-------------------------- | --------- | ---- | -------------------------------- | ---------------------------------------------------------------------------------------------------- |
-Compressor                | 526,302.0 | USD    | None                             | Cost estimate based on Pinaud 2013. Fixed cost of compressor for plant design output (1 ton H2/day). |
-Condenser                 | 13,765.0  | USD    |                                  |
-Intercooler-1             | 15,103.0  | USD    |                                  |
-Intercooler-2             | 15,552.0  | USD    |                                  |
-Pressure Swing Adsorption | 107,147.0 | USD    |                                  |
-Reactor Outlet Pipe       | 3.17      | USD    | Reactor Baggies > Number > Value |
-Main Collection Pipe      | 329.6     | USD    | Reactor Baggies > Number > Value |
-Final Collection Pipe     | 23.7      | USD    | Reactor Baggies > Number > Value |
+Name                      | Value     | Path                             | Unit | Comment                                                                                              |
+------------------------- | --------- | -------------------------------- | ---- | ---------------------------------------------------------------------------------------------------- |
+Compressor                | 526,302.0 | None                             | USD    | Cost estimate based on Pinaud 2013. Fixed cost of compressor for plant design output (1 ton H2/day). |
+Condenser                 | 13,765.0  | None                             | USD    |
+Intercooler-1             | 15,103.0  | None                             | USD    |
+Intercooler-2             | 15,552.0  | None                             | USD    |
+Pressure Swing Adsorption | 107,147.0 | None                             | USD    |
+Reactor Outlet Pipe       | 3.17      | Reactor Baggies > Number > Value | USD    |
+Main Collection Pipe      | 329.6     | Reactor Baggies > Number > Value | USD    |
+Final Collection Pipe     | 23.7      | Reactor Baggies > Number > Value | USD    |
 
 # Direct Capital Costs - Control System
 
-Name                      | Value   | Unit | Path                             | Comment                                  |
-------------------------- | ------- | ---- | -------------------------------- | ---------------------------------------- |
-PLC                       | 2,000.0 | USD    | None                             | Control system cost based on Pinaud 2013 |
-Control Room Building     | 8,000.0 | USD    | None                             |
-Control Room Wiring Panel | 3,000.0 | USD    | None                             |
-Bed Wiring Panel          | 146.0   | USD    | Reactor Baggies > Number > Value |
-Computer and Monitor      | 1,500.0 | USD    | None                             |
-Labview Software          | 4,299.0 | USD    | None                             |
-Water Level Controllers   | 50.0    | USD    | Reactor Baggies > Number > Value |
-Pressure Sensors          | 345.0   | USD    | Reactor Baggies > Number > Value |
-Hydrogen Area Sensors     | 7,600.0 | USD    | Reactor Baggies > Number > Value |
-Gas Flow Meter            | 5,500.0 | USD    | None                             |
-Instrument Wiring         | 22.7    | USD    | Reactor Baggies > Number > Value |
-Power Wiring              | 7.6     | USD    | Reactor Baggies > Number > Value |
-Conduit                   | 142.4   | USD    | Reactor Baggies > Number > Value |
+Name                      | Value   | Path                             | Unit | Comment                                  |
+------------------------- | ------- | -------------------------------- | ---- | ---------------------------------------- |
+PLC                       | 2,000.0 | None                             | USD    | Control system cost based on Pinaud 2013 |
+Control Room Building     | 8,000.0 | None                             | USD    |
+Control Room Wiring Panel | 3,000.0 | None                             | USD    |
+Bed Wiring Panel          | 146.0   | Reactor Baggies > Number > Value | USD    |
+Computer and Monitor      | 1,500.0 | None                             | USD    |
+Labview Software          | 4,299.0 | None                             | USD    |
+Water Level Controllers   | 50.0    | Reactor Baggies > Number > Value | USD    |
+Pressure Sensors          | 345.0   | Reactor Baggies > Number > Value | USD    |
+Hydrogen Area Sensors     | 7,600.0 | Reactor Baggies > Number > Value | USD    |
+Gas Flow Meter            | 5,500.0 | None                             | USD    |
+Instrument Wiring         | 22.7    | Reactor Baggies > Number > Value | USD    |
+Power Wiring              | 7.6     | Reactor Baggies > Number > Value | USD    |
+Conduit                   | 142.4   | Reactor Baggies > Number > Value | USD    |
 
 # Direct Capital Costs - Installation Costs
 
-Name                        | Value  | Unit | Path                                                             | Comment                                  |
---------------------------- | ------ | ---- | ---------------------------------------------------------------- | ---------------------------------------- |
-Excavation                  | 2570.0 | USD    | Reactor Baggies > Number > Value                                 | Installation costs based on Pinaud 2013. |
-Baggie Reactor Startup      | 5%     | USD    | Direct Capital Costs - Reactor Baggies > Baggie cost (USD) > Value |
-Baggies installation        | 800.0  | USD    | Reactor Baggies > Number > Value                                 |
-Gas processing installation | 30%    | USD    | Direct Capital Costs - Gas Processing > Summed total > Value     |
-Control system installation | 30%    | USD    | Direct Capital Costs - Control System > Summed total > Value     |
+Name                        | Value  | Path                                                             | Unit | Comment                                  |
+--------------------------- | ------ | ---------------------------------------------------------------- | ---- | ---------------------------------------- |
+Excavation                  | 2570.0 | Reactor Baggies > Number > Value                                 | USD    | Installation costs based on Pinaud 2013. |
+Baggie Reactor Startup      | 5%     | Direct Capital Costs - Reactor Baggies > Baggie cost (USD) > Value | USD    |
+Baggies installation        | 800.0  | Reactor Baggies > Number > Value                                 | USD    |
+Gas processing installation | 30%    | Direct Capital Costs - Gas Processing > Summed total > Value     | USD    |
+Control system installation | 30%    | Direct Capital Costs - Control System > Summed total > Value     | USD    |
 
 # Indirect Capital Costs
 
-Name                      | Path                                 | Value | Unit | Comment                                      |
-------------------------- | ------------------------------------ | ----- | ---- | -------------------------------------------- |
-Engineering and Design (fraction of total direct capital costs)    | Direct Capital Costs > Total > Value | 7%    | USD    | Indirect capital costs based on Pinaud 2013. |
-Process Contingency (fraction of total direct capital costs)      | Direct Capital Costs > Total > Value | 20%   | USD    |
-Up-Front Permitting Costs (fraction of total direct capital costs) | Direct Capital Costs > Total > Value | 5%    | USD    |
-Site Preparation (fraction of total direct capital costs)          | Direct Capital Costs > Total > Value | 1%    | USD    |
+Name                      | Value | Path                                 | Unit | Comment                                      |
+------------------------- | ----- | ------------------------------------ | ---- | -------------------------------------------- |
+Engineering and Design (fraction of total direct capital costs)    | 7%    | Direct Capital Costs > Total > Value | USD    | Indirect capital costs based on Pinaud 2013. |
+Process Contingency (fraction of total direct capital costs)      | 20%   | Direct Capital Costs > Total > Value | USD    |
+Up-Front Permitting Costs (fraction of total direct capital costs) | 5%    | Direct Capital Costs > Total > Value | USD    |
+Site Preparation (fraction of total direct capital costs)          | 1%    | Direct Capital Costs > Total > Value | USD    |
 
 # Non-Depreciable Capital Costs
 
@@ -161,26 +161,26 @@ Name              | Full Name                               | Value   | Unit   |
 area              | Area per staff                          | 405,000 | m2     | Labor cost based on Pinaud 2013, solar collection area that can be overseen by one staff member. |
 supervisor        | Shift supervisor                        | 1       | -      | Number of shift supervisors.                                                                     |
 shifts            | Shifts                                  | 3       | -      | Number of shifts per day.                                                                        |
-hourly labor cost | Burdened labor cost, including overhead | 50.0    | USD/hour |
+hourly labor cost | Burdened labor cost, including overhead | 50.0    | USD/h |
 
 # Other Fixed Operating Costs
 
-Name         | Full Name                          | Path                                       | Value  | Unit | Comment                                           |
------------- | ---------------------------------- | ------------------------------------------ | ------ | ---- | ------------------------------------------------- |
-g&a          | G&A rate                           | Fixed Operating Costs > Labor cost > Value | 20%    | USD    | Other fixed operating costs based on Pinaud 2013. |
-property tax | Property tax and insurance rate    | Total Capital Costs > Inflated > Value     | 2%     | USD    |
-repairs      | Production Maintenance and Repairs | Direct Capital Costs > Total > Value       | 0.5%   | USD    |
-fees         | Licensing, Permits and Fees        | None                                       | 1000.0 | USD    |
+Name         | Full Name                          | Value  | Path                                       | Unit | Comment                                           |
+------------ | ---------------------------------- | ------ | ------------------------------------------ | ---- | ------------------------------------------------- |
+g&a          | G&A rate                           | 20%    | Fixed Operating Costs > Labor cost > Value | USD    | Other fixed operating costs based on Pinaud 2013. |
+property tax | Property tax and insurance rate    | 2%     | Total Capital Costs > Inflated > Value     | USD    |
+repairs      | Production Maintenance and Repairs | 0.5%   | Direct Capital Costs > Total > Value       | USD    |
+fees         | Licensing, Permits and Fees        | 1000.0 | None                                       | USD    |
 
 # Utilities
 
-Name                   | Usage_Value | Usage_Unit | Cost_Value                                                                                | Cost_Unit | Price_Conversion_Factor | Price_Conversion_Factor_Unit | Comment                                                                                                       |
----------------------- | --------------- | ---------- | ----------------------------------------------------------------------------------- | --------- | ----------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------- |
-Industrial Electricity | 3.29            | kWh/kg     | pyH2A.Lookup_Tables.Utility_Cost~Industrial_Electricity_AEO_2017_Reference_Case.csv | GJ        | 0.0036                  | GJ/kWh                       | Electricity usage based on Pinaud 2013.                                                                       |
-Process Water          | 2.637           | gal/kg     | 0.0023749510945008                                                                  | USD/gal     | 1.                      | None                         | Seawater reverse osmosis cost ca. 0.6 USD/m3 (equal to ca. 0.0023 USD/gal), based on Kibria 2021 and Driess 2021. |
+Name                   | Usage_Value | Usage_Path | Usage_Unit | Cost_Value                                                                                | Cost_Path | Cost_Unit | Price_Conversion_Factor_Value | Price_Conversion_Factor_Unit | Comment                                                                                                       |
+---------------------- | ----------- | ---------- | ---------- | ---------------------------------------------------------------------------------------- | --------- | --------- | ----------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------- |
+Industrial Electricity | 3.29        |        | kWh/kg     | pyH2A.Lookup_Tables.Utility_Cost~Industrial_Electricity_AEO_2017_Reference_Case.csv      |       | GJ        | 0.0036                        | GJ/kWh                       | Electricity usage based on Pinaud 2013.                                                                       |
+Process Water          | 2.637       |        | gal/kg     | 0.0023749510945008                                                                       |       | USD/gal   | 1.                            |                          | Seawater reverse osmosis cost ca. 0.6 USD/m3 (equal to ca. 0.0023 USD/gal), based on Kibria 2021 and Driess 2021. |
 
 # Unplanned Replacement
 
-Name                  | Full Name                                                                                         | Path                                         | Value | Unit | Comment               |
---------------------- | ------------------------------------------------------------------------------------------------- | -------------------------------------------- | ----- | ---- | --------------------- |
-unplanned replacement | Total Unplanned Replacement Capital Cost Factor (fraction of total direct depreciable costs/year) | Depreciable Capital Costs > Inflated > Value | 0.5%  | -    | Based on Pinaud 2013. |
+Name                  | Full Name                                                                                         | Value | Path                                         | Unit | Comment               |
+--------------------- | ------------------------------------------------------------------------------------------------- | ----- | -------------------------------------------- | ---- | --------------------- |
+unplanned replacement | Total Unplanned Replacement Capital Cost Factor (fraction of total direct depreciable costs/year) | 0.5%  | Depreciable Capital Costs > Inflated > Value | -    | Based on Pinaud 2013. |

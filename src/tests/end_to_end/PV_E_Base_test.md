@@ -22,7 +22,7 @@ Color | darkblue |
 
 Name | Value                                                                         | Unit | Comment                   |
 ---- | ----------------------------------------------------------------------------- | ---- | ------------------------- |
-File | pyH2A.Lookup*Tables.Hourly_Irradiation_Data~tmy_34.859*-116.889_2006_2015.csv |      | Location: Dagget, CA, USA |
+File | pyH2A.Lookup_Tables.Hourly_Irradiation_Data~tmy_34.859_-116.889_2006_2015.csv |      | Location: Dagget, CA, USA |
 
 # Irradiance Area Parameters
 
@@ -32,7 +32,7 @@ Module Tilt                   | Hourly Irradiation > Latitude > Value | deg  | M
 Array Azimuth                 | 180                                   | deg  |
 Nominal Operating Temperature | 45                                    | degC |
 Mismatch Derating             | 0.98                                  | -       | Based on Chang 2020.                       |
-Dirt Derating                 | 0.98                                  | -       | Based on Chang 2020.                       |
+Dirt Derating                 | 0.98                                  | -       | Based on Chang  2020.                       |
 Temperature Coefficient       | -0.4%                                 | -/degC       | Based on Chang 2020.                       |
 
 # Irradiation Used
@@ -78,12 +78,12 @@ Fraction of stored power used for electrolysis | 0.95  | -    | Additional elect
 
 # Photovoltaic
 
-Name                  | Value   | Unit | Path                            | Comment                                       |
---------------------- | ------- | ---- | ------------------------------- | --------------------------------------------- |
-Nominal Power         | 1.5     | kW   | Electrolyzer > Capacity > Value | Optimal PV oversize ratio, same as Chang 2020 |
-CAPEX Reference Power | 1,000.0 | kW   |                                 |
-Power loss per year   | 0.5%    | -    | None                            | Based on Chang 2020                           |
-Efficiency            | 22%     | -    | None                            | Only used for area calculation.               |
+Name                  | Value   | Path                            | Unit | Comment                                       |
+--------------------- | ------- | ------------------------------- | ---- | --------------------------------------------- |
+Nominal Power         | 1.5     | Electrolyzer > Capacity > Value | kW   | Optimal PV oversize ratio, same as Chang 2020 |
+CAPEX Reference Power | 1,000.0 | None                            | kW   |
+Power loss per year   | 0.5%    | None                            | -    | Based on Chang 2020                           |
+Efficiency            | 22%     | None                            | -    | Only used for area calculation.               |
 
 # Battery
 
@@ -110,27 +110,27 @@ Test Consumer | 0     | kWh  | on_demand |
 
 # Direct Capital Costs - Reverse Osmosis
 
-Name                  | Value | Unit | Path                               | Comment                                                                                                                              |
---------------------- | ----- | ---- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-Reverse Osmosis CAPEX | 6000  | USD    | Reverse Osmosis > Capacity > Value | Based on https://samcotech.com/much-reverse-osmosis-nanofiltration-membrane-systems-cost/, Conversion factor of 4.5 from GPM to m3/h |
+Name                  | Value | Path                               | Unit | Comment                                                                                                                              |
+--------------------- | ----- | ---------------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------ |
+Reverse Osmosis CAPEX | 6000  | Reverse Osmosis > Capacity > Value | USD  | Based on https://samcotech.com/much-reverse-osmosis-nanofiltration-membrane-systems-cost/, Conversion factor of 4.5 from GPM to m3/h |
 
 # Direct Capital Costs - Battery
 
-Name          | Value | Unit | Path                              |
-------------- | ----- | ---- | --------------------------------- |
-Battery CAPEX | 0     | USD    | Battery > Design capacity > Value |
+Name          | Value | Path                              | Unit |
+------------- | ----- | --------------------------------- | ---- |
+Battery CAPEX | 0     | Battery > Design capacity > Value | USD  |
 
 # Direct Capital Costs - PV
 
-Name     | Value | Unit | Path                                                                         | Comment                                                                       |
--------- | ----- | ---- | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-PV CAPEX | 818.0 | USD    | Photovoltaic > Nominal power > Value ; Photovoltaic > Scaling factor > Value | Based on Chang 2020, Chiesa 2021 Middle East PV installation cost, Shah 2021. |
+Name     | Value | Path                                                                         | Unit | Comment                                                                       |
+-------- | ----- | ---------------------------------------------------------------------------- | ---- | ----------------------------------------------------------------------------- |
+PV CAPEX | 818.0 | Photovoltaic > Nominal power > Value ; Photovoltaic > Scaling factor > Value | USD  | Based on Chang 2020, Chiesa 2021 Middle East PV installation cost, Shah 2021. |
 
 # Direct Capital Costs - Electrolyzer
 
-Name               | Value | Unit | Path                                                                         | Comment                                                                                       |
------------------- | ----- | ---- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-Electrolyzer CAPEX | 784.0 | USD    | Electrolyzer > Nominal power > Value ; Electrolyzer > Scaling factor > Value | Based on Chang 2020, IRENA 2020 Green Hydrogen (PEM System CAPEX 700 - 1400 USD/kg), Shah 2021. |
+Name               | Value | Path                                                                         | Unit | Comment                                                                                       |
+------------------ | ----- | ---------------------------------------------------------------------------- | ---- | --------------------------------------------------------------------------------------------- |
+Electrolyzer CAPEX | 784.0 | Electrolyzer > Nominal power > Value ; Electrolyzer > Scaling factor > Value | USD  | Based on Chang 2020, IRENA 2020 Green Hydrogen (PEM System CAPEX 700 - 1400 USD/kg), Shah 2021. |
 
 # Non-Depreciable Capital Costs
 
@@ -145,7 +145,7 @@ Name              | Full Name                                              | Val
 area              | Area per staff                                         | 405,000 | m2     | Same as photocatalytic model, solar collection area that can be overseen by one staff member. |
 supervisor        | Shift supervisor                                       | 1       | -      | Same as PEC and photocatalytic model, number of shift supervisors.                            |
 shifts            | Shifts                                                 | 3       | -      | Same as PEC and photocatalytic model, number of shifts per day.                               |
-hourly labor cost | Burdened labor cost, including overhead (USD per man-hr) | 50.0    | USD/hour | Same as PEC and photocatalytic model.                                                         |
+hourly labor cost | Burdened labor cost, including overhead (USD per man-hr) | 50.0  | USD/h  | Same as PEC and photocatalytic model.                                                         |
 
 # Other Fixed Operating Costs
 
@@ -156,9 +156,9 @@ PV OPEX (fraction of CAPEX)           | 2%    | Direct Capital Costs - PV > PV c
 
 # Utilities
 
-Name          | Usage_Value | Usage_Unit | Cost_Value   | Cost_Unit | Price_Conversion_Factor | Comment                                                                                                 |
-------------- | --------------- | ---------- | ------ | --------- | ----------------------- | ------------------------------------------------------------------------------------------------------- |
-Process Water | 10              | L/kg       | 0.0006 | USD/L       | 1.                      | Seawater reverse osmosis cost ca. 0.6 USD/m3 (equal to 0.0006 USD/L), based on Kibria 2021 and Driess 2021. |
+Name          | Usage_Value | Usage_Path | Usage_Unit | Cost_Value | Cost_Path | Cost_Unit | Price_Conversion_Factor_Value | Price_Conversion_Factor_Unit | Comment                                                                                                 |
+------------- | ----------- | ---------- | ---------- | ---------- | --------- | --------- | ----------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------- |
+Process Water | 10          |        | L/kg       | 0.0006     |       | USD/L     | 1                            |                          | Seawater reverse osmosis cost ca. 0.6 USD/m3 (equal to 0.0006 USD/L), based on Kibria 2021 and Driess 2021. |
 
 # Grid Electricity
 
@@ -168,6 +168,6 @@ Cost | 10000.12 | USD/kWh |
 
 # Planned Replacement
 
-Name                           | Cost_Value | Cost_Unit | Path                                                                    | Comment             |
------------------------------- | ---------- | --------- | ----------------------------------------------------------------------- | ------------------- |
-Electrolyzer Stack Replacement | 4%         | USD         | Direct Capital Costs - Electrolyzer > Electrolyzer capex (USD/kW) > Value | Based on Chang 2020 |
+Name                           | Cost_Value | Path                                                                    | Cost_Unit | Comment             |
+------------------------------ | ---------- | ----------------------------------------------------------------------- | --------- | ------------------- |
+Electrolyzer Stack Replacement | 4%         | Direct Capital Costs - Electrolyzer > Electrolyzer capex (USD/kW) > Value | USD         | Based on Chang 2020 |

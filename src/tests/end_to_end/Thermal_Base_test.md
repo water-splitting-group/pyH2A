@@ -26,7 +26,7 @@ capital perc 1st | Capital Spent in 1st Year of Construction | 100%  | - |
 
 # Solar Input
 
-Name             | Value | Unit          | Comment                                                  |
+Name | Value | Unit | Comment  |
 --- | --- | --- | --- |
 Mean solar input | 6.8 | kWh_per_day/m2 | Typical value in Dagget, CA, USA, with two axis tracking |
 
