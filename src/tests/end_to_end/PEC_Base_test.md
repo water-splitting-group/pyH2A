@@ -49,7 +49,7 @@ Temperature coefficient       | 0.     | -/delta_degC | No assumed efficiency lo
 
 Name             | Value                                                           | Path                                              | Unit         | Comment                                                                                                                                   |
 ---------------- | --------------------------------------------------------------- | ------------------------------------------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
-Mean solar input | Hourly Irradiation > Mean solar input two axis tracking > Value | Solar Concentrator > Concentration factor > Value | kWh_per_day/m2 | Two axis tracking irradiation from hourly irradiation multiplied by solar concentration factor to give solar input incident on PEC cells. |
+Mean solar input | Hourly Irradiation > Mean solar input two axis tracking > Value | Solar Concentrator > Concentration factor > Value | W/m2 | Two axis tracking irradiation from hourly irradiation multiplied by solar concentration factor to give solar input incident on PEC cells. |
 
 # Solar-to-Hydrogen Efficiency
 
