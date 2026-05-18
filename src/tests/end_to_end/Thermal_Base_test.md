@@ -22,7 +22,7 @@ New plant design capacity | 1,000.0 | kg/day |
 
 Name | Full Name | Value | Unit |
 --- | --- | --- | --- |
-Capital perc 1st | Capital Spent in 1st Year of Construction | 100%  | - |
+Capital perc 1st | Capital Spent in 1st Year of Construction | 100% | - |
 
 # Solar Input
 
@@ -53,10 +53,10 @@ Intercooler-2 | 15,552.0  | USD |
 
 # Non-Depreciable Capital Costs
 
-Name | Value | Unit   | Comment                         |
+Name | Value | Unit | Comment                         |
 --- | --- | --- | --- |
 Cost of land | 500.0 | USD/acre | Land cost based on Pinaud 2013. |
-Additional land area | 30%   | - | Additional land area required. |
+Additional land area | 30% | - | Additional land area required. |
 
 # Planned Replacement
 
@@ -69,7 +69,7 @@ Reaction material | 1.0 | year | 89,000.0 | USD | Based on DOE Technical targets
 Name | Full Name | Value | Unit |
 --- | --- | --- | --- |
 Staff | Number of staff | 7.0 | - |
-Hourly labor cost | Burdened labor cost, including overhead | 50.0  | USD/h |
+Hourly labor cost | Burdened labor cost, including overhead | 50.0 | USD/h |
 
 # Utilities
 
