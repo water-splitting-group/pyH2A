@@ -141,15 +141,13 @@ class Battery_Plugin:
         '''Using hourly energy generation data and electrolyzer parameters,
         H2 production is calculated.
         '''
-        available_energy_yearly = {}
-        for year, energy in self.input_dict_resolved['Power Generation']['Available energy (daily)']['Value'].items():
-            available_energy_yearly[year] = energy.unit['J'] 
+        available_energy_yearly = self.input_dict_resolved['Power Generation']['Available energy (daily)']['Value']
 
         self.yearly_recovered_energy = {}
         self.yearly_unstored_energy = {}
 
         for year in dcf.operation_years:
-            daily_available_energy = available_energy_yearly[year] # array of floats
+            daily_available_energy = available_energy_yearly[year].unit['J'] # array of floats
 
             capacity, capacity_decrease = self.calculate_battery_capacity(year) # floats
 
