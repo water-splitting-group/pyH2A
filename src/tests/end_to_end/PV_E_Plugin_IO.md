@@ -19,6 +19,39 @@ Name | Value | Path | Unit
 --- | --- | --- | ---
 Power | 10 | Photovoltaic > Nominal Power (kW) > Value | kW
 
+# Input X - Sum Testing
+
+Name | Value | Sum Path | Unit
+--- | --- | --- | ---
+Compressor | 100 | None | USD
+Adsorber | 500 | None | EUR
+
+# Input Y - Sum Testing
+
+Name | Value | Sum Path | Unit
+--- | --- | --- | ---
+Reactor | 20% | Input X - Sum Testing > Summed Total > Value | USD
+Pumps | 30% | Input X - Sum Testing > Compressor > Value | USD
+
+# Sum Testing
+
+Name | Value | Sum Path | Unit
+--- | --- | --- | ---
+Other | 100 | None | USD
+
+# Input Z - Indirect Testing
+
+Name | Value | Path | Unit
+--- | --- | --- | ---
+Design | 10% | Sum Testing > Summed Group Total > Value | USD
+
+# Individual Table Sum
+
+Name | Value | Path | Unit
+--- | --- | --- | ---
+Entry A | 1 | None | USD
+Entry B | 2 | None | USD
+
 # Plugin B Input
 
 Name | Value | Path | Unit | Comment
