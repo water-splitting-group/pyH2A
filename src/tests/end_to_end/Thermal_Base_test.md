@@ -53,7 +53,7 @@ Intercooler-2 | 15,552.0  | USD |
 
 # Non-Depreciable Capital Costs
 
-Name | Value | Unit | Comment                         |
+Name | Value | Unit | Comment |
 --- | --- | --- | --- |
 Cost of land | 500.0 | USD/acre | Land cost based on Pinaud 2013. |
 Additional land area | 30% | - | Additional land area required. |
