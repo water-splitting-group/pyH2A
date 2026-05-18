@@ -409,15 +409,16 @@ class Photocatalytic_Plugin:
 
 	def __init__(self, dcf, print_info):
 		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Photocatalytic_Plugin')
+		
 		self.H2_molecule_energy = Quantity(2*1.229, 'eV/entity')
 		self.H2_molecular_weight = Quantity(2, 'g/mol')
+		
 		self.hydrogen_production(dcf)
-
 		self.baggie_cost(dcf)
-
 		self.catalyst_cost(dcf)
 		self.land_area(dcf)
 		self.catalyst_activity(dcf)
+		
 		self.catalyst_lifetime = self.input_dict_resolved['Catalyst']['Lifetime']['Value']
 		self.baggie_lifetime = self.input_dict_resolved['Reactor Baggies']['Lifetime']['Value']
 
@@ -430,6 +431,7 @@ class Photocatalytic_Plugin:
 		baggie = self.input_dict_resolved['Reactor Baggies']
 
 		self.baggie_area = Quantity(baggie['Length']['Value'].unit['m'] * baggie['Width']['Value'].unit['m'], 'm2')
+		
 		baggie_insolation = self.baggie_area.unit['m2'] * self.input_dict_resolved['Solar Input']['Mean solar input']['Value'].unit['W/m2']
 		mol_H2_per_baggie_per_second = baggie_insolation * self.input_dict_resolved['Solar-to-Hydrogen Efficiency']['STH']['Value'].unit['-'] / self.H2_molecule_energy.unit['J/mol']
 
