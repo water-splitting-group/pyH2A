@@ -16,17 +16,17 @@ Color | darkred
 Name | Value | Unit |
 --- | --- | --- |
 Operating capacity factor | 90% | - |
-Plant design capacity | 1,000. | kg/day |
+New plant design capacity | 1,000.0 | kg/day |
 
 # Construction
 
 Name | Full Name | Value | Unit |
 --- | --- | --- | --- |
-capital perc 1st | Capital Spent in 1st Year of Construction | 100%  | - |
+Capital perc 1st | Capital Spent in 1st Year of Construction | 100%  | - |
 
 # Solar Input
 
-Name | Value | Unit | Comment  |
+Name | Value | Unit | Comment |
 --- | --- | --- | --- |
 Mean solar input | 6.8 | kWh_per_day/m2 | Typical value in Dagget, CA, USA, with two axis tracking |
 
@@ -40,7 +40,7 @@ STH | 20% | - | Based on DOE Technical Targets for Hydrogen Production from Ther
 
 Name | Value | Unit | Comment |
 --- | --- | --- | --- |
-Chemical tower | 2,300,000. | USD | Equipment costs based on DOE Technical Targets for Hydrogen Production from Thermochemical Water Splitting - 2020 Target |
+Chemical tower | 2,300,000.0 | USD | Equipment costs based on DOE Technical Targets for Hydrogen Production from Thermochemical Water Splitting - 2020 Target |
 
 # Direct Capital Costs - Gas Processing
 
@@ -56,24 +56,24 @@ Intercooler-2 | 15,552.0  | USD |
 Name | Value | Unit   | Comment                         |
 --- | --- | --- | --- |
 Cost of land | 500.0 | USD/acre | Land cost based on Pinaud 2013. |
-Additional land area | 30%   | - | Additional land area required.  |
+Additional land area | 30%   | - | Additional land area required. |
 
 # Planned Replacement
 
 Name | Frequency_Value | Frequency_Unit | Cost_Value | Cost_Unit | Comment |
 --- | --- | --- | --- | --- | --- |
-Reaction material | 1. | year | 89,000. | USD | Based on DOE Technical targets for Hydrogen Production from Thermochemical Water Splitting - 2020 Target |
+Reaction material | 1.0 | year | 89,000.0 | USD | Based on DOE Technical targets for Hydrogen Production from Thermochemical Water Splitting - 2020 Target |
 
 # Fixed Operating Costs
 
 Name | Full Name | Value | Unit |
 --- | --- | --- | --- |
-Staff | Number of staff | 7. | - |
+Staff | Number of staff | 7.0 | - |
 Hourly labor cost | Burdened labor cost, including overhead | 50.0  | USD/h |
 
 # Utilities
 
 Name | Usage_Value | Usage_Path | Usage_Unit | Cost_Value | Cost_Path | Cost_Unit | Price_Conversion_Factor_Value | Price_Conversion_Factor_Unit | Comment |
 --- | --- | --- | --- | --- | --- | --- | --- | --- |
-Industrial Electricity | 0.16 | | -/kg | pyH2A.Lookup_Tables.Utility_Cost~Industrial_Electricity_AEO_2017_Reference_Case.csv | | USD | 0.0036 | - | Electricity usage based on Pinaud 2013. |
-Process Water | 2.369 | | -/kg | 0.0023749510945008 | | USD | 1. | - | Seawater reverse osmosis: 2.369 gal/kg H2, at a cost of ca. 0.6 USD/m3 (equal to ca. 0.0023 USD/gal), based on Kibria 2021 and Driess 2021. |
+Industrial electricity | 0.16 | None | -/kg | pyH2A.Lookup_Tables.Utility_Cost~Industrial_Electricity_AEO_2017_Reference_Case.csv | None | USD | 0.0036 | - | Electricity usage based on Pinaud 2013. |
+Process water | 2.369 | None | -/kg | 0.0023749510945008 | None | USD | 1.0 | - | Seawater reverse osmosis: 2.369 gal/kg H2, at a cost of ca. 0.6 USD/m3 (equal to ca. 0.0023 USD/gal), based on Kibria 2021 and Driess 2021. |
