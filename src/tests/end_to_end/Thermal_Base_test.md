@@ -16,7 +16,7 @@ Color | darkred
 Name | Value | Unit |
 --- | --- | --- |
 Operating capacity factor | 90% | - |
-New plant design capacity | 1,000.0 | kg/day |
+Plant design capacity | 1,000.0 | kg/day |
 
 # Construction
 
