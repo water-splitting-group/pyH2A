@@ -21,3 +21,8 @@ dependencies = [
     "pytest>=8.4.2",
     "scipy>=1.13.1",
 ]
+
+[project.optional-dependencies]
+performance = [
+    "scikit-umfpack>=0.3.3",
+]
