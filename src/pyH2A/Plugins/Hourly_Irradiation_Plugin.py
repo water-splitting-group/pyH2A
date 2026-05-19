@@ -324,9 +324,9 @@ def calculate_PV_power_ratio(file_name, module_tilt, array_azimuth, nominal_oper
 
 	power_dat = Quantity(data['Direct Normal Irradiance'].unit['W/m2'] * temperature_derating * mismatch_derating.unit['-'] * dirt_derating.unit['-'], 'W/m2')
 
-	yearly_averaged_power = Quantity(np.sum(power.unit['W/m2'])/(365*24), 'W/m2') 
-	yearly_averaged_power_sat = Quantity(np.sum(power_sat.unit['W/m2'])/(365*24), 'W/m2')
-	yearly_averaged_power_dat = Quantity(np.sum(power_dat.unit['W/m2'])/(365*24), 'W/m2')
+	yearly_averaged_power = Quantity(np.sum(power.unit['W/m2']), 'Wh_per_year/m2') 
+	yearly_averaged_power_sat = Quantity(np.sum(power_sat.unit['W/m2']), 'Wh_per_year/m2')
+	yearly_averaged_power_dat = Quantity(np.sum(power_dat.unit['W/m2']), 'Wh_per_year/m2')
 
 	return power, power_sat, power_dat, yearly_averaged_power, yearly_averaged_power_sat, yearly_averaged_power_dat
 
