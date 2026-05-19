@@ -2,7 +2,7 @@ from pyH2A.Utilities.input_modification import sum_all_tables
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
-input_dict = {
+input_dict_fixed = {
 	"Fixed Operating Costs": {
 		"Staff": {
 			"Value": {
@@ -27,6 +27,10 @@ input_dict = {
 			"description": "Hourly labor cost of staff."
 		},
 	},
+}
+
+input_dict_other = {
+
 	"<...> Other Fixed Operating Cost <...>": {
 		"<...>": {
 			"Value": {
@@ -39,10 +43,20 @@ input_dict = {
 			"optional": True,
 			"description": "Yearly other fixed operating cost contribution, summed for each individual table in ther Fixed Operating Cost group."
 		},
+        'sum_tables': {
+            'mode': 'all',
+            'arguments': {
+                'bottom_key': 'Value',
+                'middle_key_total_insertion': 'Summed total',
+                'middle_key_total_group_insertion': 'Summed group total',
+                'middle_key_contributions_insertion': 'Contributions',
+                'bottom_key_insertion': 'Value'
+            }
+        },			
 	},
 }
 
-output_dict = {
+output_dict_fixed = {
 	"Fixed Operating Costs": {
 		"Labor cost - uninflated": {
 			"Value": {
@@ -62,6 +76,11 @@ output_dict = {
 			"optional": False,
 			"description": "Yearly total labor cost after applying labor inflator."
 		},
+	},
+}
+
+output_dict_total = {
+	"Fixed Operating Costs": {
 		"Total": {
 			"Value": {
 				"inserted_value": "total_fixed_operating_cost",
@@ -71,18 +90,27 @@ output_dict = {
 			"optional": False,
 			"description": "Total yearly fixed operating cost, sum of total labor cost and total other fixed operating cost."
 		},
-	},
+	},	
 	 "special_insertions":
         {"sum_all_tables": {
             "<...> Other Fixed Operating Cost <...>": {
-                "Summed Total": {
+                "Summed total": {
+                    "Value": {
+                        "type": {float},
+                    },
+                    "optional": False,
+                    "description": "Summed total of other fixed operating costs for each table"
+                },
+            },
+            "Other Fixed Operating Cost": {
+                "Summed group total": {
                     "Value": {
                         "type": {float},
                     },
                     "optional": False,
                     "description": "Summed total of other fixed operating costs across all tables"
                 },
-            },
+            },			
         },
     },
 }
@@ -101,8 +129,10 @@ class Fixed_Operating_Cost_Plugin:
 
 	Returns
 	-------
-	<...> Other Fixed Operating Cost <...> > Summed Total > Value : float
+	<...> Other Fixed Operating Cost <...> > Summed total > Value : float
 		Summed total for each individual table in "Other Fixed Operating Cost" group.
+	Other Fixed Operating Cost > Summed group total > Value : float
+		Summed total for each individual table in "Other Fixed Operating Cost" group.		
 	Fixed Operating Costs > Labor Cost - Uninflated > Value : float
 		Yearly total labor cost.
 	Fixed Operating Costs > Labor Cost > Value : float
@@ -113,27 +143,33 @@ class Fixed_Operating_Cost_Plugin:
 
 
 	def __init__(self, dcf, print_info):
-		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Fixed_Operating_Cost_Plugin')
+		self.input_dict_resolved_fixed = input_resolver_function(input_dict_fixed, dcf, 'Fixed_Operating_Cost_Plugin')
 		
-		self.labor_cost(dcf)
-		other = self.other_cost(dcf, print_info)
+		labor_uninflated, labor = self.labor_cost(dcf)
+		self.labor_uninflated = Quantity(labor_uninflated, 'USD')
+		self.labor = Quantity(labor, 'USD')	
 
-		# The self variables are converted into Quantities at the last moment to avoid unnecessary complications
-		self.labor_uninflated = Quantity(self.labor_uninflated, 'USD')
-		self.total_fixed_operating_cost = Quantity(self.labor + other, 'USD')		
-		self.labor = Quantity(self.labor, 'USD')
-		output_inserter_function(output_dict, self, dcf, 'Fixed_Operating_Cost_Plugin')  
+		output_inserter_function(output_dict_fixed, self, dcf, 'Fixed_Operating_Cost_Plugin')  
+
+		self.input_dict_resolved_other = input_resolver_function(input_dict_other, dcf, 'Fixed_Operating_Cost_Plugin')
+
+		other = self.other_cost()	
+		self.total_fixed_operating_cost = Quantity(labor + other, 'USD')		
+
+		output_inserter_function(output_dict_total, self, dcf, 'Fixed_Operating_Cost_Plugin')  
 
 	def labor_cost(self, dcf):
 		'''Calculation of yearly labor costs by multiplying number of staff times hourly labor cost.'''
 		work_hours_per_year = 2080.
-		self.labor_uninflated = self.input_dict_resolved['Fixed Operating Costs']['Staff']['Value'].unit['-'] * self.input_dict_resolved['Fixed Operating Costs']['Hourly labor cost']['Value'].unit['USD/h']*work_hours_per_year
-		self.labor = self.labor_uninflated * dcf.labor_inflator 
+		labor_uninflated = self.input_dict_resolved_fixed['Fixed Operating Costs']['Staff']['Value'].unit['-'] * self.input_dict_resolved_fixed['Fixed Operating Costs']['Hourly labor cost']['Value'].unit['USD/h']*work_hours_per_year
+		labor = labor_uninflated * dcf.labor_inflator 
+
+		return labor_uninflated, labor
 	
-	def other_cost(self, dcf, print_info):
+	def other_cost(self):
 		'''Calculation of yearly other fixed operating costs by applying ``sum_all_tables()`` 
 		to "Other Fixed Operating Cost" group.'''
-		other = sum_all_tables(self.input_dict_resolved, 'Other Fixed Operating Cost', 'Value', insert_total = True, class_object = dcf, print_info = print_info).unit['USD'] * dcf.combined_inflator
+		other = self.input_dict_resolved_other['Other Fixed Operating Cost']['Summed group total']['Value'].unit['USD']
 
 		return other 
 
