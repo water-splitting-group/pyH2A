@@ -40,6 +40,11 @@ Documentation for pyH2A is available at: https://pyh2a.readthedocs.io
 
 pyH2A uses Python >=3.7 with the following libraries: `NumPy`, `SciPy`, `Pandas`, `Matplotlib` and `Click`
 
+For sparse linear solves in LCA workflows, pyH2A can optionally use a faster peformance backend:
+`scikit-umfpack` (UMFPACK-backed, optional on all platforms)
+  
+If it is installed, pyH2A will use it automatically for performance. If it is not available, pyH2A falls back to SciPy's default sparse solvers.
+
 # Use
 
 pyH2A can be used from the command line:
