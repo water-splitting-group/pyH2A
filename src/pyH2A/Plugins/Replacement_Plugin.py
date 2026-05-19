@@ -23,7 +23,7 @@ input_dict = {
 			},
    			"optional": True,
 			"description": "One-time replacement cost of <...>. Iteration over all entries in `Planned Replacement` table. Path key is 'Path'."
-		},
+		},		
 	},
 	"<...> Unplanned Replacement <...>": {
 		"<...>": {
@@ -37,6 +37,16 @@ input_dict = {
 			"optional": True,
 			"description": "Unplanned replacement costs. Can be provided for multiple entries under Unplanned Replacement, in which case they will be summed up to the total unplanned replacement costs."
 		},
+        'sum_tables': {
+            'mode': 'all',
+            'arguments': {
+                'bottom_key': 'Value',
+                'middle_key_total_insertion': 'Summed total',
+                'middle_key_total_group_insertion': 'Summed group total',
+                'middle_key_contributions_insertion': 'Contributions',
+                'bottom_key_insertion': 'Value'
+            }
+        },			
 	}
 }	
 
@@ -55,14 +65,23 @@ output_dict = {
 	"special_insertions":
         {"sum_all_tables": {
             "<...> Unplanned Replacement <...>": {
-                "Summed Total": {
+                "Summed total": {
+                    "Value": {
+                        "type": {float},
+                    },
+                    "optional": False,
+                    "description": "Summed total of unplanned replacement in each table"
+                },		
+            },
+            "Unplanned Replacement": {
+                "Summed group total": {
                     "Value": {
                         "type": {float},
                     },
                     "optional": False,
                     "description": "Summed total of unplanned replacement across all tables"
-                },
-            },
+                },				
+            },			
 		}
 	},
 }	
@@ -85,8 +104,10 @@ class Replacement_Plugin:
 
 	Returns
 	-------
-	[...] Unplanned Replacement [...] > Summed Total > Value : float
+	[...] Unplanned Replacement [...] > Summed total > Value : float
 		Summed total for each individual table in "Unplanned Replacement" group.
+	Unplanned Replacement > Summed group total > Value : float
+		Summed group total for all the tables in "Unplanned Replacement" group.		
 	Replacement > Total > Value : ndarray
 		Total inflated replacement costs (sum of `Planned Replacement` entries and
 		unplanned replacement costs).
@@ -99,7 +120,7 @@ class Replacement_Plugin:
 		self.initialize_yearly_costs(dcf)
 		self.initialize_contributions()
 		self.calculate_planned_replacement(dcf)
-		self.unplanned_replacement(dcf, print_info)
+		self.unplanned_replacement()
 		# contrary to the general rule of having self.* as Quantity objects, in the present plugin, only self.yearly_inflated, self.unplanned and self.contributions['Total'] are Quantity objects 
 		# to avoid the unnecessary complication of having in each look "self.X = Quantity(self.X.unit[] + ...) ".
 		self.contributions['Total'] = Quantity(np.sum(self.yearly), 'USD')
@@ -130,14 +151,12 @@ class Replacement_Plugin:
 			self.yearly[planned_replacement.years_idx] += planned_replacement.cost
 			self.contributions['Data'][key] = planned_replacement.total_cost
 
-	def unplanned_replacement(self, dcf, print_info):
+	def unplanned_replacement(self):
 		'''Calculating unplanned replacement costs by appling ``sum_all_tables()`` to 
 		"Unplanned Replacement" group.
 		'''
 
-		self.unplanned = sum_all_tables(self.input_dict_resolved, 'Unplanned Replacement', 'Value', 
-										insert_total = True, class_object = dcf, 
-										print_info = print_info)
+		self.unplanned = self.input_dict_resolved['Unplanned Replacement']['Summed group total']['Value'] # Calculated by sum_tables
 		self.yearly += self.unplanned.unit['USD']
 		self.contributions['Data']['Unplanned Replacement'] = np.sum(np.ones_like(self.yearly) * self.unplanned.unit['USD'])
 
