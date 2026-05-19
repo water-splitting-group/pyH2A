@@ -1,4 +1,5 @@
 import multiprocessing
+import concurrent.futures
 import copy
 from pathlib import Path
 from timeit import default_timer as timer
@@ -15,6 +16,52 @@ from pyH2A.Utilities.input_modification import convert_input_to_dictionary,parse
 from pyH2A.Discounted_Cash_Flow import Discounted_Cash_Flow
 from pyH2A.Utilities.output_utilities import make_bold, format_scientific, dynamic_value_formatting, insert_image, Figure_Lean
 
+
+def _mc_response_worker(value_batch, inp, parameters, dependent_variable):
+	'''Module-level worker for parallel Monte Carlo execution.
+
+	Parameters
+	----------
+	value_batch : ndarray
+		Batch of Monte Carlo parameter sets, one sample per row.
+	inp : dict
+		Input dictionary template copied and modified per sample.
+	parameters : dict
+		Parameter metadata containing path, type, and index mappings.
+	dependent_variable : str
+		Response key to evaluate (``h2_cost`` or an LCA impact name).
+
+	Returns
+	-------
+	tuple[list[float], str or None]
+		Pair ``(response_values, units)``. ``units`` is ``None`` for
+		``h2_cost`` and otherwise the LCA unit string from the first sample.
+
+	Notes
+	-----
+	The function is module-level (not a bound method), which makes it
+	picklable for ``ProcessPoolExecutor``. Within each worker process, the
+	LCA class-level cache reuses factorization work across samples in the
+	batch through the Sherman-Morrison update path.
+	'''
+	response_values = []
+	units = None
+	for value_set in value_batch:
+		input_dict = copy.deepcopy(inp)
+		for key, parameter in parameters.items():
+			set_by_path(input_dict, parameter['Parameter'], value_set[parameter['Index']],
+						value_type=parameter['Type'])
+		dcf = Discounted_Cash_Flow(input_dict, print_info=False)
+		if dependent_variable == 'h2_cost':
+			response_values.append(dcf.h2_cost)
+		else:
+			lca_entry = dcf.lca.lca_results[dependent_variable]
+			response_values.append(lca_entry['value'])
+			if units is None:
+				units = lca_entry['unit']
+	return response_values, units
+
+
 def select_non_reference_value(reference, values):
 	'''Select value from values which is not the reference one.
 	'''
@@ -23,7 +70,20 @@ def select_non_reference_value(reference, values):
 	return values[idx][0]
 
 def divide_into_batches(array, batch_size):
-	'''Divide provided array into batches of size batch_size for parallel processing'''
+	'''Split an array into batches for parallel processing.
+
+	Parameters
+	----------
+	array : ndarray
+		Array of samples to split.
+	batch_size : int
+		Number of samples per batch.
+
+	Returns
+	-------
+	list
+		List of ndarrays where each entry is a batch.
+	'''
 
 	number_of_divisions = np.floor(len(array)/batch_size)
 	idx = int(number_of_divisions * batch_size)
@@ -39,8 +99,23 @@ def divide_into_batches(array, batch_size):
 	return batches
 
 def normalize_parameter(parameter, base, limit, log_normalize = False):
-	'''Linear of log normalization of parameter (float or array) based on 
-	base and limit values.
+	'''Normalize parameter values using linear or logarithmic scaling.
+
+	Parameters
+	----------
+	parameter : float or ndarray
+		Value or values to normalize.
+	base : float
+		Reference value mapped to zero.
+	limit : float
+		Limit value mapped to one.
+	log_normalize : bool, optional
+		If ``True``, apply log normalization.
+
+	Returns
+	-------
+	float or ndarray
+		Normalized value or values.
 	'''
 
 	if log_normalize:
@@ -79,7 +154,7 @@ def calculate_distance(data, parameters, selection, metric = 'cityblock', log_no
 
 	Returns
 	-------
-	distances: ndarray
+	distances : ndarray
 		Array containing distance for each model.
 
 	Notes
@@ -111,7 +186,7 @@ def calculate_distance(data, parameters, selection, metric = 'cityblock', log_no
 	else:
 		distances = scipy_distance.cdist(data_scaled, reference_scaled, metric = metric)
 
-	if metric is 'cityblock':
+	if metric == 'cityblock':
 		distances = distances / number_of_parameters
 	else:
 		distances = distances / np.sqrt(number_of_parameters)
@@ -119,7 +194,20 @@ def calculate_distance(data, parameters, selection, metric = 'cityblock', log_no
 	return distances
 
 def extend_limits(limits_original, extension):
-	'''Extend limits_original in both directions by muliplying with extensions'''
+	'''Extend lower and upper bounds by a fraction of the current range.
+
+	Parameters
+	----------
+	limits_original : ndarray
+		Two-element array containing lower and upper limits.
+	extension : float
+		Fraction of the range used to extend both bounds.
+
+	Returns
+	-------
+	ndarray
+		Extended two-element bounds array.
+	'''
 
 	limits = np.copy(limits_original)
 
@@ -153,9 +241,13 @@ class Monte_Carlo_Analysis:
 	----------
 	Monte_Carlo_Analysis > Samples > Value : int
 		Number of samples for Monte Carlo analysis.
-	Monte_Carlo_Analysis > Target Price Range ($) > Value : str
-		Target price range for H2 specfied in the following format:
-		lower value; higher value (e.g. "1.5: 1.54").
+	Monte_Carlo_Analysis > Dependent Variable > Value : str
+		Dependent response variable used in Monte Carlo filtering and plots.
+		Supported values are ``h2_cost``, ``Climate change``, and
+		``Cumulative energy demand``.		
+	Monte_Carlo_Analysis > Target Response Range > Value : str
+		Target response range for the configured dependent variable in the
+		following format: lower value; higher value (e.g. ``1.5; 4.0``).
 	Monte_Carlo_Analysis > Output File > Value : str, optional
 		Path to location where output file containing Monte Carlo analysis
 		results should be saved.
@@ -189,8 +281,32 @@ class Monte_Carlo_Analysis:
 	axis in `plot_colored_scatter` (first parameter is on x axis, second on y axis, etc.).
 	'''
 
+	_DEPENDENT_VARIABLE_CONFIG = {
+		'h2_cost': {
+			'header': 'cost',
+			'label': 'H2 Cost ($/kg)',
+			'unit': r'\$/kg($H_{2}$)',
+			'source': 'h2_cost',
+		},
+		'Climate change': {
+			'header': 'climate change',
+			'label': 'Climate change (kg CO2-Eq/kg H2)',
+			'unit': 'kg $CO_{2}$-Eq/kg $H_{2}$',
+		},
+		'Cumulative energy demand': {
+			'header': 'cumulative energy demand',
+			'label': 'Cumulative energy demand (MJ_Eq/kg H2)',
+			'unit': 'MJ_Eq/kg $H_{2}$',
+		},
+	}
+
 	def __init__(self, input_file):
-		'''Initialization of Monte Carlo analysis.
+		'''Initialize and execute the Monte Carlo analysis workflow.
+
+		Parameters
+		----------
+		input_file : str or pathlib.Path
+			Input file path passed to ``convert_input_to_dictionary``.
 
 		Notes 
 		-----
@@ -202,7 +318,7 @@ class Monte_Carlo_Analysis:
 		If 'Input File' is not specified, the parameters specified in `input_file` are processed 
 		and used to generate Monte Carlo simulation data (using `perform_monte_carlo_multiprocessing()`), 
 		which are stored in the specified 'Output File'.
-		Subsequently, Monte Carlo datapoints are selected based on the specified target price range, 
+		Subsequently, Monte Carlo datapoints are selected based on the specified target response range, 
 		development distances are calculated and plots can be generated.
 		'''
 
@@ -215,6 +331,8 @@ class Monte_Carlo_Analysis:
 			self.color = 'darkgreen'
 			self.display_name = 'Model'
 
+		self.configure_dependent_variable()
+
 		if 'Input File' in self.inp['Monte_Carlo_Analysis']:
 			self.read_results(self.inp['Monte_Carlo_Analysis']['Input File']['Value'])
 		else:
@@ -223,12 +341,39 @@ class Monte_Carlo_Analysis:
 			self.save_results(self.inp['Monte_Carlo_Analysis']['Output File']['Value'])
 
 		self.check_parameter_integrity(self.results)
-		self.target_price_components()
+		self.target_response_components()
 		self.determine_principal_components()
 		self.development_distance()
 		self.full_distance_cost_relationship()
 
-	def process_parameters(self):
+	def configure_dependent_variable(self):
+		'''Configure the dependent Monte Carlo response variable.
+
+		Supported dependent variables are the keys of
+		``_DEPENDENT_VARIABLE_CONFIG``.
+		'''
+
+		monte = self.inp['Monte_Carlo_Analysis']
+		if 'Dependent Variable' not in monte or 'Value' not in monte['Dependent Variable']:
+			raise KeyError(
+				"Monte_Carlo_Analysis must define 'Dependent Variable > Value'."
+			)
+		self.dependent_variable = monte['Dependent Variable']['Value']
+		
+		config = self._DEPENDENT_VARIABLE_CONFIG.get(self.dependent_variable)		
+		if config is None:
+			supported = "', '".join(self._DEPENDENT_VARIABLE_CONFIG.keys())
+			raise ValueError(
+				f"Unsupported Dependent Variable '{self.dependent_variable}'. "
+				f"Use one of the supported values: '{supported}'."
+			)
+
+		self.dependent_variable_header = config['header']
+		self.dependent_variable_label = config['label']
+		self.dependent_variable_unit = config['unit']
+		self.target_range_header = f"Target {self.dependent_variable_header} range:"
+
+	def process_parameters(self):  
 		'''
 		Monte Carlo Analysis parameters are read from 'Monte Carlo Analysis - Parameters' 
 		in `self.inp` and processed.
@@ -241,7 +386,7 @@ class Monte_Carlo_Analysis:
 		Parameter information is stored in `self.parameters` attribute.
 		Based on the ranges for each parameter, random values (uniform distribution) are generated and stored
 		in the `self.values` attribute.
-		The target price range is read from `self.inp` file and stored in `self.target_price_range` attribute.
+		The target response range is read from `self.inp` file and stored in `self.target_response_range` attribute.
 		'''
 
 		monte = self.inp['Parameters - Monte_Carlo_Analysis']
@@ -276,12 +421,12 @@ class Monte_Carlo_Analysis:
 	
 		self.values = values
 		self.parameters = parameters
-		self.target_price_range = parse_parameter_to_array(self.inp['Monte_Carlo_Analysis']['Target Price Range ($)']['Value'], 
-														   delimiter = ';', 
-														   dictionary = self.inp)
+		self.target_response_range = parse_parameter_to_array(self.inp['Monte_Carlo_Analysis']['Target Response Range']['Value'], 
+												   delimiter = ';', 
+												   dictionary = self.inp)
 
-	def perform_h2_cost_calculation(self, values):
-		'''H2 cost calculation for provided parameter values is performed.
+	def perform_response_calculation(self, values):
+		'''Configured response calculation for provided parameter values is performed.
 
 		Parameters
 		----------
@@ -290,12 +435,12 @@ class Monte_Carlo_Analysis:
 
 		Returns
 		-------
-		h2_cost : ndarray
-			1D array of H2 cost values for each set of parameters.
+		response_values : ndarray
+			1D array of response values for each set of parameters.
 
 		Notes
 		-----
-		Performs H2 cost calulation by modifying a copy of self.inp based 
+		Performs configured response calculation by modifying a copy of self.inp based 
 		on the provided values and `self.parameters`. The modified copy of 
 		`self.inp` is then passed to `Discounted_Cash_Flow()`.
 		A parameter value can be either a value replacing the existing one 
@@ -304,7 +449,7 @@ class Monte_Carlo_Analysis:
 		'''
 
 		parameters = self.parameters
-		h2_cost = []
+		response_values = []
 
 		for value_set in values:
 			input_dict = copy.deepcopy(self.inp)
@@ -314,9 +459,9 @@ class Monte_Carlo_Analysis:
 							value_type = parameter['Type'])
 
 			dcf = Discounted_Cash_Flow(input_dict, print_info = False)
-			h2_cost.append(dcf.h2_cost)
+			response_values.append(self.get_dependent_variable_value(dcf))
 
-		return np.asarray(h2_cost)
+		return np.asarray(response_values)
 
 	def perform_monte_carlo_multiprocessing(self, values, return_full_array = True):
 		'''Monte Carlo analysis is performed with multiprocessing parallelization across
@@ -328,31 +473,39 @@ class Monte_Carlo_Analysis:
 			2D array containing parameters variations which are to be evaluated.
 		return_full_array : bool, optional
 			If `return_full_array` is True, the full 2D array containing parameter
-			variations and H2 cost is returned. Otherwise, a 1D array containing only
-			H2 cost values is returned.
+			variations and target response values is returned. Otherwise, a 1D array containing only
+			target response values is returned.
 
 		Returns
 		-------
 		full_array : ndarray
-			2D array containing parameter variations and H2 cost values.
-		h2_cost : ndarray
-			1D array containing H2 costvalues.
+			2D array containing parameter variations and dependent-response values.
+		response_values : ndarray
+			1D array containing dependent-response values.
 		'''
 
-		# num_cpus = multiprocessing.cpu_count()
-		# pool = multiprocessing.Pool(num_cpus)
+		num_cpus = multiprocessing.cpu_count()
+		value_batches = divide_into_batches(values, int(np.ceil(len(values) / num_cpus)))
 
-		# value_batches = divide_into_batches(values, np.ceil(len(values)/num_cpus))
-		
-		# h2_cost = pool.map(self.perform_h2_cost_calculation, value_batches)
-		# h2_cost = np.concatenate(h2_cost)
+		with concurrent.futures.ProcessPoolExecutor(max_workers=num_cpus) as executor:
+			futures = [
+				executor.submit(
+					_mc_response_worker,
+					batch,
+					self.inp,
+					self.parameters,
+					self.dependent_variable,
+				)
+				for batch in value_batches
+			]
+			results = [f.result() for f in futures]
 
-		h2_cost = self.perform_h2_cost_calculation(values)
+		response_values = np.concatenate([r[0] for r in results])
 
 		if return_full_array is True:
-			return np.c_[self.values, h2_cost]
+			return np.c_[self.values, response_values]
 		else:
-			return h2_cost
+			return response_values
 
 	def perform_full_monte_carlo(self):
 		'''Monte Carlo analysis is performed based on random parameter variations 
@@ -383,7 +536,7 @@ class Monte_Carlo_Analysis:
 			type_string += str(self.parameters[key]['Type']) + '	'
 			values_string += str(self.parameters[key]['Values']) + '	'
 
-		header_string += 'H2 Cost'
+		header_string += self.dependent_variable_header
 		complete_string = header_string + '\n' + path_string + '\n' + type_string + '\n' + values_string
 
 		np.savetxt(Path(file_name), self.results, header = complete_string, delimiter = '	')
@@ -399,11 +552,11 @@ class Monte_Carlo_Analysis:
 		Returns
 		-------
 		self.results : ndarray
-			Array containing parameters and H2 cost for each model.
+			Array containing parameters and dependent-response values for each model.
 		self.parameters : dict
 			Dictionary containing information on varied parameters.
-		self.target_price_range : ndarray
-			Selected target price range from `self.inp`.
+		self.target_response_range : ndarray
+			Selected target response range from `self.inp`.
 
 		Notes
 		-----
@@ -411,7 +564,7 @@ class Monte_Carlo_Analysis:
 		Header must contain name of parameters, path to parameters in input file, 
 		type of parameter and value range.
 		The header is processed to retrieve these atrribtues and stores them in `self.parameters`.
-		Reference values for each parameter and target price range are read from self.inp
+		Reference values for each parameter and target response range are read from self.inp
 		The order of parameters is also read from `self.inp` and stored in `self.parameters` 
 		as `Input Index`. If the name of a parameter has been changed in `self.inp` and is 
 		different from the parameter stored in `file_name`, it is checked whether a `File Index`
@@ -462,7 +615,14 @@ class Monte_Carlo_Analysis:
 
 		file_read.close()
 
-		del parameters['H2 Cost']
+		if self.dependent_variable_header in parameters:
+			del parameters[self.dependent_variable_header]
+		elif 'H2 Cost' in parameters:
+			del parameters['H2 Cost']
+		elif len(parameters) > 0:
+			last_key = column_dict[max(column_dict)]
+			if last_key in parameters:
+				del parameters[last_key]
 
 		for key in parameters:
 			parameters[key]['Reference'] = get_by_path(self.inp, parameters[key]['Parameter'])
@@ -470,7 +630,7 @@ class Monte_Carlo_Analysis:
 																  parameters[key]['Values'])
 
 		self.parameters = parameters
-		self.target_price_range = parse_parameter_to_array(self.inp['Monte_Carlo_Analysis']['Target Price Range ($)']['Value'], delimiter = ';')
+		self.target_response_range = parse_parameter_to_array(self.inp['Monte_Carlo_Analysis']['Target Response Range']['Value'], delimiter = ';')
 
 		for counter, (key, parameter) in enumerate(self.inp['Parameters - Monte_Carlo_Analysis'].items()):
 			
@@ -634,17 +794,32 @@ class Monte_Carlo_Analysis:
 		plot_edge(1, edge_padding)
 		plot_edge('last', 0)
 
-	def target_price_components(self):
-		'''Monte Carlo simulation results are sorted by H2 cost and the entries of 
-		`self.results` with a H2 cost within the specified target price range are stored 
-		in `self.target_price_data`.
+	def target_response_components(self):
+		'''Filter Monte Carlo results to entries within the specified target response range.
+
+		Notes
+		-----
+		The dependent response is stored in the last column of `self.results`, whether it is
+		`h2_cost` or a configured LCA result key.
 		'''
 
 		results_sorted = self.results[np.argsort(self.results[:,-1])]
-		idx = fn.find_nearest(results_sorted[:,-1], self.target_price_range)
-		data = results_sorted[idx[0]:idx[1]]
+		lower_bound, upper_bound = np.sort(self.target_response_range)
+		mask = ((results_sorted[:,-1] >= lower_bound) &
+				(results_sorted[:,-1] <= upper_bound))
+		data = results_sorted[mask]
 
-		self.target_price_data = data
+		if data.size == 0:
+			observed_min = np.min(results_sorted[:,-1])
+			observed_max = np.max(results_sorted[:,-1])
+			raise ValueError(
+				f"No Monte Carlo samples fell within the requested target range "
+				f"[{lower_bound}, {upper_bound}] for '{self.dependent_variable}'. "
+				f"Observed sample range was [{observed_min}, {observed_max}]. "
+				"Widen the target range or increase the number of Monte Carlo samples."
+			)
+
+		self.target_response_data = data
 
 	def determine_principal_components(self):
 		'''Converting parameters to list sorted by input index.
@@ -661,9 +836,8 @@ class Monte_Carlo_Analysis:
 			self.principal[parameter['Input Index']] = key
 			self.base_case[parameter['Index']] = parameter['Reference']
 
-	def target_price_2D_region(self, grid_points = 15):
-		'''Determining largest region spanned by first two parameters within which
-		target prices can be achieved.
+	def target_response_2D_region(self, grid_points = 15):
+		'''Determine region spanned by first two parameters within which target responses can be achieved.
 
 		Parameters
 		----------
@@ -672,15 +846,15 @@ class Monte_Carlo_Analysis:
 
 		Returns
 		-------
-		self.target_price_2D_region : dict
-			Dict of ndarrays with information of target price 2D region.
+		self.target_response_2D_region : dict
+			Dict of ndarrays with information of the target response 2D region.
 
 		Notes
 		-----		
 		Model is evaluated on grid spanned by first two parameters (density of grid is controlled by 
 		grid_points), other parameters are set to limit (non-reference) values.
-		Output is a dictionary (`self.target_price_2D_region`), which can be used to overlay 
-		target price region onto scatter ploting using plt.contourf
+		Output is a dictionary (`self.target_response_2D_region`), which can be used to overlay 
+		target response region onto scatter plotting using plt.contourf.
 		'''
 
 		grid_axes = np.empty((2, grid_points))
@@ -700,9 +874,9 @@ class Monte_Carlo_Analysis:
 				used_value = select_non_reference_value(parameter['Reference'], parameter['Values'])
 				values[:,parameter['Index']] = np.ones(len(values)) * used_value
 
-				parameter['Target Price Range'] = {}
-				parameter['Target Price Range']['Range'] = self.target_price_range
-				parameter['Target Price Range']['Used Value'] = used_value
+				parameter['Target Response Range'] = {}
+				parameter['Target Response Range']['Range'] = self.target_response_range
+				parameter['Target Response Range']['Used Value'] = used_value
 
 		grid_values = np.meshgrid(*grid_axes)
 		grid_values_ravel = np.c_[[np.ravel(i) for i in grid_values]].T
@@ -712,13 +886,17 @@ class Monte_Carlo_Analysis:
 
 		self.check_parameter_integrity(values)	
 
-		h2_cost = self.perform_monte_carlo_multiprocessing(values, return_full_array = False)
-		h2_cost_2D = np.reshape(h2_cost, (grid_points, grid_points))
+		response_values = self.perform_monte_carlo_multiprocessing(values, return_full_array = False)
+		response_values_2D = np.reshape(response_values, (grid_points, grid_points))
 
-		self.target_price_2D_region = {'Grid Values': grid_values, 'H2 Cost 2D': h2_cost_2D}
+		self.target_response_2D_region = {
+			'Grid Values': grid_values,
+			'Response 2D': response_values_2D,
+			'H2 Cost 2D': response_values_2D,
+		}
 
 	def development_distance(self, metric = 'cityblock', log_normalize = False, sum_distance = False):
-		'''Calculation of development distance for models within target price range.
+		'''Calculation of development distance for models within target response range.
 
 		Parameters
 		----------
@@ -728,21 +906,21 @@ class Monte_Carlo_Analysis:
 		Returns
 		-------
 		self.distances: ndarrray
-			Array containing distances for models within target price range.
+			Array containing distances for models within target response range.
 
 		Notes
 		-----
 		The euclidean or cityblock distance in n-dimensional space of each Monte Carlo simulation datapoint within 
-		the target price range to the reference point is calculated and stored in self.distances.
+		the target response range to the reference point is calculated and stored in self.distances.
 		Parameter ranges and the reference parameters are scaled to be within a n-dimensional unit cube.
 		Distances are normalized by the number of dimensions, so that the maximum distance is always 1.'''
 
-		self.distances = calculate_distance(self.target_price_data, self.parameters, 
+		self.distances = calculate_distance(self.target_response_data, self.parameters, 
 											self.principal, metric = metric,
 											log_normalize = log_normalize,
 											sum_distance = sum_distance)
 
-		target_distances = np.c_[self.target_price_data, self.distances]
+		target_distances = np.c_[self.target_response_data, self.distances]
 		self.target_distances_sorted = target_distances[np.argsort(target_distances[:,-1])]
 
 		self.shortest_target_distance = {}
@@ -750,7 +928,7 @@ class Monte_Carlo_Analysis:
 		for key, item in self.parameters.items():
 			self.shortest_target_distance[key] = self.target_distances_sorted[0][item['Index']]
 
-		self.shortest_target_distance['H2 Cost ($/kg)'] = self.target_distances_sorted[0][-2]
+		self.shortest_target_distance[self.dependent_variable_label] = self.target_distances_sorted[0][-2]
 		self.shortest_target_distance['Distance'] = self.target_distances_sorted[0][-1]
 
 	def full_distance_cost_relationship(self, metric = 'cityblock', reduction_factor = 25, 
@@ -794,11 +972,11 @@ class Monte_Carlo_Analysis:
 		self.distances_cost_savgol = np.c_[self.results_distances_sorted[:,-1], smoothed]
 
 	def plot_complete_histogram(self, bins = None, xlim_low = None, xlim_high = None,
-								xlabel_string = 'Levelized $H_{2}$ Cost / \$/kg', 
+								xlabel_string = r'Levelized $H_{2}$ Cost / \$/kg', 
 								ylabel_string = 'Normalized Frequency',
 								image_kwargs = {}, plot_kwargs = {},
 								**kwargs):
-		'''Complete histogram of price distribution from Monte Carlo analysis
+		'''Complete histogram of response distribution from Monte Carlo analysis
 
 		Parameters 
 		----------
@@ -859,11 +1037,11 @@ class Monte_Carlo_Analysis:
 		return figure.fig
 
 	def plot_colored_scatter(self, limit_extension = 0.03,   
-							 title_string = 'Target cost range: ', 
+							 title_string = None, 
 							 base_string = 'Base',
 							 image_kwargs = {}, plot_kwargs = {},  
 							 **kwargs):
-		'''Plotting colored scatter plot showing all models within target price range.
+		'''Plotting colored scatter plot showing all models within target response range.
 
 		Parameters
 		----------
@@ -913,20 +1091,22 @@ class Monte_Carlo_Analysis:
 
 		cm = plt.get_cmap('plasma')
 
-		self.target_price_2D_region()
+		self.target_response_2D_region()
+		response_2D = self.target_response_2D_region.get('Response 2D',
+									  self.target_response_2D_region['H2 Cost 2D'])
 
-		contour_fill = ax.contourf(*self.target_price_2D_region['Grid Values'], 
-							        self.target_price_2D_region['H2 Cost 2D'],
-							        levels = [0., max(self.target_price_range)], 
+		contour_fill = ax.contourf(*self.target_response_2D_region['Grid Values'], 
+						        response_2D,
+							        levels = [0., max(self.target_response_range)], 
 							        		  alpha = 0.1, colors = [cm(0.0)])
 
 		base_case_h2_cost_appended = np.r_[self.base_case, 0]
-		target_price_data_appended = np.vstack((self.target_price_data, 
+		target_response_data_appended = np.vstack((self.target_response_data, 
 												base_case_h2_cost_appended))
 
-		scatter = ax.scatter(target_price_data_appended[:,par[pc[0]]['Index']], 
-							 target_price_data_appended[:,par[pc[1]]['Index']], 
-						 c = target_price_data_appended[:,par[pc[2]]['Index']], 
+		scatter = ax.scatter(target_response_data_appended[:,par[pc[0]]['Index']], 
+							 target_response_data_appended[:,par[pc[1]]['Index']], 
+						 c = target_response_data_appended[:,par[pc[2]]['Index']], 
 						 	 cmap = 'plasma', alpha = 1.)
 
 		colorbar = fig.colorbar(scatter, ax=ax)
@@ -946,7 +1126,10 @@ class Monte_Carlo_Analysis:
 					par[pc[1]]['Reference']), xytext = (xtext, ytext), 
 					textcoords = 'axes fraction')
 
-		ax.set_title(title_string + f' {self.target_price_range[0]} - {self.target_price_range[1]} \$/kg($H_{2}$)')
+		if title_string is None:
+			title_string = self.target_range_header
+
+		ax.set_title(title_string + f' {self.target_response_range[0]} - {self.target_response_range[1]} {self.dependent_variable_unit}')
 
 		ax.grid(color = 'grey', linestyle = '--', linewidth = 0.2, zorder = 0)
 
@@ -960,9 +1143,9 @@ class Monte_Carlo_Analysis:
 		return figure.fig
 
 	def plot_colored_scatter_3D(self, limit_extension = 0.03,   
-							 	title_string = 'Target cost range: ',
+						 	title_string = None,
 							 	**kwargs):
-		'''3D colored scatter plot of models within target price range.
+		'''3D colored scatter plot of models within target response range.
 	
 		Parameters
 		----------
@@ -985,10 +1168,10 @@ class Monte_Carlo_Analysis:
 		ax = Axes3D(fig, auto_add_to_figure=False)
 		fig.add_axes(ax)
 
-		scatter = ax.scatter(self.target_price_data[:,par[pc[0]]['Index']], 
-							 self.target_price_data[:,par[pc[1]]['Index']],  
-							 self.target_price_data[:,par[pc[3]]['Index']], 
-							 c = self.target_price_data[:,par[pc[2]]['Index']], 
+		scatter = ax.scatter(self.target_response_data[:,par[pc[0]]['Index']], 
+							 self.target_response_data[:,par[pc[1]]['Index']],  
+							 self.target_response_data[:,par[pc[3]]['Index']], 
+							 c = self.target_response_data[:,par[pc[2]]['Index']], 
 							 cmap = 'plasma', depthshade = False)
 	
 		colorbar = fig.colorbar(scatter, ax=ax, shrink = 0.9)
@@ -1003,9 +1186,9 @@ class Monte_Carlo_Analysis:
 		ax.set_zlabel(pc[3])
 		colorbar.set_label(pc[2])
 
-		ax.set_title(make_bold(title_string) + '{0} - {1} \$/kg'.format(
-											self.target_price_range[0], 
-											self.target_price_range[1]))
+		ax.set_title(make_bold(title_string) + r'{0} - {1} \$/kg'.format(
+											self.target_response_range[0], 
+											self.target_response_range[1]))
 	
 		ax.grid(color = 'grey', linestyle = '--', linewidth = 0.2, zorder = 0)
 
@@ -1017,7 +1200,7 @@ class Monte_Carlo_Analysis:
 								figure_lean = True, xlabel = False, title = True,
 								xlabel_string = 'Development distance',
 								ylabel_string = 'Frequency',
-								title_string = 'Target cost range:',
+								title_string = None,
 								show_parameter_table = True,
 								show_mu = True, mu_x = 0.2, mu_y = 0.5,
 								table_kwargs = {}, image_kwargs = {}, plot_kwargs = {},
@@ -1086,8 +1269,11 @@ class Monte_Carlo_Analysis:
 			figure = Figure_Lean(**kwargs)
 			ax = figure.ax
 
+		if title_string is None:
+			title_string = self.target_range_header
+
 		if title is True:
-			ax.title.set_text(title_string + f' {self.target_price_range[0]} - {self.target_price_range[1]} \$/kg($H_{2}$)')
+			ax.title.set_text(title_string + f' {self.target_response_range[0]} - {self.target_response_range[1]} {self.dependent_variable_unit}')
 
 		yhist, xhist, rectangle = ax.hist(self.distances, bins = bins, density=False, 
 										  color=self.color, edgecolor = 'black')
@@ -1106,7 +1292,7 @@ class Monte_Carlo_Analysis:
 		ax.set_ylabel(ylabel_string)
 
 		if show_mu:
-			ax.annotate(f'$\mu$ = {mu:.2f}\n$\sigma$ = {std:.3f}', xy = (mu_x, mu_y),
+			ax.annotate(f'$\\mu$ = {mu:.2f}\n$\\sigma$ = {std:.3f}', xy = (mu_x, mu_y),
 						va = 'center', ha = 'center', xycoords = ax.transAxes)
 
 		if image_kwargs['path'] is not None:
@@ -1197,7 +1383,7 @@ class Monte_Carlo_Analysis:
 		ax.plot(self.distances_cost_savgol[:,0], self.distances_cost_savgol[:,1], color = self.color, 
 			    label = self.display_name, linewidth = linewidth)
 
-		ax.axhspan(self.target_price_range[0], self.target_price_range[1], color = 'grey', alpha = 0.7)
+		ax.axhspan(self.target_response_range[0], self.target_response_range[1], color = 'grey', alpha = 0.7)
 
 		if log_scale:
 			ax.set_yscale('log')
