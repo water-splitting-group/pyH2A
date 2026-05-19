@@ -64,7 +64,17 @@ input_dict = {
 			},
 			"optional": True,
 			"description": "Value for variable operating cost. `sum_all_tables()` is used for summing all tables in this group."
-		}
+		},
+        'sum_tables': {
+            'mode': 'all',
+            'arguments': {
+                'bottom_key': 'Value',
+                'middle_key_total_insertion': 'Summed total',
+                'middle_key_total_group_insertion': 'Summed group total',
+                'middle_key_contributions_insertion': 'Contributions',
+                'bottom_key_insertion': 'Value'
+            }
+        },			
 	}
 }
 
@@ -101,7 +111,16 @@ output_dict = {
     "special_insertions":
         {"sum_all_tables": {
             "<...> Other Variable Operating Cost <...>": {
-                "Summed Total": {
+                "Summed total": {
+                    "Value": {
+                        "type": {float},
+                    },
+                    "optional": False,
+                    "description": "Summed total of other variable in each table"
+                },
+            },
+            "Other Variable Operating Cost": {
+                "Summed group total": {
                     "Value": {
                         "type": {float},
                     },
@@ -109,6 +128,7 @@ output_dict = {
                     "description": "Summed total of other variable operating costs across all tables"
                 },
             },
+
 		},
 	}
 }
@@ -138,9 +158,12 @@ class Variable_Operating_Cost_Plugin:
 
 	Returns
 	-------
-	[...] Other Variable Operating Cost [...] > Summed Total > Value : float
+	[...] Other Variable Operating Cost [...] > Summed total > Value : float
 		Summed total for each individual table in "Other Variable Operating Cost"
 		group.
+	Other Variable Operating Cost > Summed group total > Value : float
+		Summed total for all the tables in "Other Variable Operating Cost"
+		group.		
 	Variable Operating Costs > Total > Value : ndarray
 		Sum of inflation corrected utilities costs and other variable operating costs.
 	Variable Operating Costs > Utilities > Value : ndarray
@@ -154,7 +177,7 @@ class Variable_Operating_Cost_Plugin:
 		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Variable_Operating_Cost_Plugin')
 
 		self.calculate_utilities_cost(dcf)
-		self.other_variable_costs(dcf, print_info)
+		self.other_variable_costs(dcf)
 		self.total_variable_costs = Quantity(self.utilities.unit['USD'] + self.other.unit['USD'], 'USD')	
 
 		output_inserter_function(output_dict, self, dcf, 'Variable_Operating_Cost_Plugin')   
@@ -173,13 +196,11 @@ class Variable_Operating_Cost_Plugin:
 		self.utilities = self.utilities * self.input_dict_resolved['Technical Operating Parameters and Specifications']['Output per year']['Value'].unit['kg']
 		self.utilities = Quantity(self.utilities, 'USD')
 
-	def other_variable_costs(self, dcf, print_info):
+	def other_variable_costs(self, dcf):
 		'''Applying ``sum_all_tables()`` to "Other Variable Operating Cost" group.
 		'''
-
-		self.other = dcf.chemical_inflator * sum_all_tables(self.input_dict_resolved, 'Other Variable Operating Cost', 'Value', 
-																insert_total = True, class_object = dcf, 
-																print_info = print_info).unit['USD'] 
+		self.Other_variable_operating_cost_total = self.input_dict_resolved['Other Variable Operating Cost']['Summed group total']['Value'] # Calculated by sum_tables
+		self.other = dcf.chemical_inflator * self.Other_variable_operating_cost_total.unit['USD'] 
 		self.other = Quantity(self.other, 'USD')
 
 class Utility:
