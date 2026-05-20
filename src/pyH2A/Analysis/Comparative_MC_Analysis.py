@@ -1,77 +1,1360 @@
-import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
+import multiprocessing
+import concurrent.futures
+import copy
+import sys
+from pathlib import Path
+from timeit import default_timer as timer
 import numpy as np
-from pyH2A.Analysis.Monte_Carlo_Analysis import Monte_Carlo_Analysis
-from pyH2A.Utilities.input_modification import convert_input_to_dictionary
-from pyH2A.Utilities.output_utilities import insert_image, Figure_Lean
+from scipy.signal import savgol_filter
+from scipy.spatial import distance as scipy_distance
+from scipy.stats import norm as normal_distribution
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
+from matplotlib.transforms import Bbox
 
-class Comparative_MC_Analysis:
-	'''Comparison of Monte Carlo analysis results for different models.
+import pyH2A.Utilities.find_nearest as fn
+from pyH2A.Utilities.input_modification import convert_input_to_dictionary,parse_parameter, parse_parameter_to_array, get_by_path, set_by_path, read_textfile, file_import, reverse_parameter_to_string
+from pyH2A.Discounted_Cash_Flow import Discounted_Cash_Flow
+from pyH2A.Utilities.output_utilities import make_bold, format_scientific, dynamic_value_formatting, insert_image, Figure_Lean
+
+
+def _mc_response_worker(value_batch, inp, parameters, dependent_variable,
+						progress_counter = None, progress_lock = None):
+	'''Module-level worker for parallel Monte Carlo execution.
 
 	Parameters
 	----------
-	Comparative_MC_Analysis > [...] > Value : str
-		Path to input file for model.
-	Comparative_MC_Analysis > [...] > Image : str, optional
-		Path to image for model.
+	value_batch : ndarray
+		Batch of Monte Carlo parameter sets, one sample per row.
+	inp : dict
+		Input dictionary template copied and modified per sample.
+	parameters : dict
+		Parameter metadata containing path, type, and index mappings.
+	dependent_variable : str
+		Response key to evaluate (``h2_cost`` or an LCA impact name).
+	progress_counter : multiprocessing.managers.ValueProxy, optional
+		Shared counter for completed samples used for live progress rendering.
+	progress_lock : multiprocessing.managers.AcquirerProxy, optional
+		Lock protecting updates to ``progress_counter``.
+
+	Returns
+	-------
+	tuple[list[float], str or None]
+		Pair ``(response_values, units)``. ``units`` is ``None`` for
+		``h2_cost`` and otherwise the LCA unit string from the first sample.
 
 	Notes
 	-----
-	First column of `Comparative_MC_Analysis` table can include arbitrary 
-	name for model.
+	The function is module-level (not a bound method), which makes it
+	picklable for ``ProcessPoolExecutor``. Within each worker process, the
+	LCA class-level cache reuses factorization work across samples in the
+	batch through the Sherman-Morrison update path.
+	'''
+	response_values = []
+	units = None
+	for value_set in value_batch:
+		input_dict = copy.deepcopy(inp)
+		for key, parameter in parameters.items():
+			set_by_path(input_dict, parameter['Parameter'], value_set[parameter['Index']],
+						value_type=parameter['Type'])
+		dcf = Discounted_Cash_Flow(input_dict, print_info=False)
+		if dependent_variable == 'h2_cost':
+			response_values.append(dcf.h2_cost)
+		else:
+			lca_entry = dcf.lca.lca_results[dependent_variable]
+			response_values.append(lca_entry['value'])
+			if units is None:
+				units = lca_entry['unit']
+
+		if progress_counter is not None:
+			if progress_lock is None:
+				progress_counter.value += 1
+			else:
+				with progress_lock:
+					progress_counter.value += 1
+	return response_values, units
+
+
+def select_non_reference_value(reference, values):
+	'''Select value from values which is not the reference one.
 	'''
 
+	idx = np.invert(np.equal(values, reference))
+	return values[idx][0]
+
+def divide_into_batches(array, batch_size):
+	'''Split an array into batches for parallel processing.
+
+	Parameters
+	----------
+	array : ndarray
+		Array of samples to split.
+	batch_size : int
+		Number of samples per batch.
+
+	Returns
+	-------
+	list
+		List of ndarrays where each entry is a batch.
+	'''
+
+	if batch_size <= 0:
+		raise ValueError('batch_size must be larger than zero')
+
+	if len(array) == 0:
+		return []
+
+	return [array[start:start + batch_size] for start in range(0, len(array), batch_size)]
+
+def render_progress_bar(completed, total, prefix = 'Monte Carlo', bar_width = 40):
+	'''Render an in-place terminal progress bar.
+
+	Parameters
+	----------
+	completed : int
+		Number of completed samples.
+	total : int
+		Total number of samples.
+	prefix : str, optional
+		Progress bar prefix text.
+	bar_width : int, optional
+		Character width of the progress bar.
+	'''
+
+	if total <= 0:
+		return
+
+	fraction = min(max(completed / total, 0), 1)
+	filled = int(bar_width * fraction)
+	empty = bar_width - filled
+
+	# Use solid block glyphs whenever stdout encoding supports them (including pytest capture).
+	stdout_encoding = getattr(sys.stdout, 'encoding', None) or 'utf-8'
+	try:
+		'█░'.encode(stdout_encoding)
+		filled_char = '█'
+		empty_char = '░'
+	except (UnicodeEncodeError, LookupError):
+		filled_char = '='
+		empty_char = '-'
+
+	# Use ANSI green for the completed part when writing to an interactive terminal.
+	if sys.stdout.isatty():
+		green = '\033[92m'
+		reset = '\033[0m'
+		bar = f'{green}{filled_char * filled}{reset}{empty_char * empty}'
+	else:
+		bar = filled_char * filled + empty_char * empty
+
+	percentage = fraction * 100
+
+	print(f'\r{prefix}: [{bar}] {percentage:6.2f}% ({completed}/{total})',
+		  end = '', flush = True)
+
+	if completed >= total:
+		print()
+
+def normalize_parameter(parameter, base, limit, log_normalize = False):
+	'''Normalize parameter values using linear or logarithmic scaling.
+
+	Parameters
+	----------
+	parameter : float or ndarray
+		Value or values to normalize.
+	base : float
+		Reference value mapped to zero.
+	limit : float
+		Limit value mapped to one.
+	log_normalize : bool, optional
+		If ``True``, apply log normalization.
+
+	Returns
+	-------
+	float or ndarray
+		Normalized value or values.
+	'''
+
+	if log_normalize:
+		ratio = limit / base
+		parameter_ratio = parameter / base
+		scaled = np.log10(parameter_ratio) / np.log10(ratio)
+
+	else:
+		range_covered = limit - base
+		scaled = (parameter - base) / range_covered
+
+	return scaled
+
+def calculate_distance(data, parameters, selection, metric = 'cityblock', log_normalize = False,
+					   sum_distance = False):
+	'''
+	Distance of datapoints to reference is calculated using the specified metric.
+
+	Parameters
+	----------
+	data : ndarray
+		2D array of datapoints containing parameter values for each model.
+	parameters : dict
+		Dictionary specifying ranges for each parameter.
+	selection : list
+		List of parameters names used for distance calculation.
+	metric : str, optional
+		Metric used for distance calculation (e.g. 'cityblock' or
+		'euclidean'). Default is 'cityblock'.
+	log_normalize : bool, optional
+		Flag to control if log normalization is used instead of linear normalization.
+	sum_distance : bool, optional
+		Flag to control if distance is calculated by simply summing individual 
+		normalized values (equal to cityblock distance but without using absolute values,
+		hence distance can be negative).
+
+	Returns
+	-------
+	distances : ndarray
+		Array containing distance for each model.
+
+	Notes
+	-----
+	Parameter ranges and the reference parameters are scaled to be within 
+	a n-dimensional unit cube.
+	Distances are normalized by the number of dimensions, so that the maximum 
+	distance is always 1.
+	'''
+
+	number_of_parameters = len(selection)
+
+	reference = []
+	data_scaled = np.empty((len(data), number_of_parameters))
+
+	for counter, key in enumerate(selection):
+		idx = parameters[key]['Index']
+		data_scaled[:,counter] = normalize_parameter(data[:,idx], parameters[key]['Reference'],
+													 parameters[key]['Limit'], 
+													 log_normalize = log_normalize)
+		reference.append(normalize_parameter(parameters[key]['Reference'], parameters[key]['Reference'],
+											 parameters[key]['Limit'],
+											 log_normalize = log_normalize))
+										
+	reference_scaled = np.array([reference])
+
+	if sum_distance:
+		distances = np.sum(data_scaled, axis = 1)
+	else:
+		distances = scipy_distance.cdist(data_scaled, reference_scaled, metric = metric)
+
+	if metric == 'cityblock':
+		distances = distances / number_of_parameters
+	else:
+		distances = distances / np.sqrt(number_of_parameters)
+
+	return distances
+
+def extend_limits(limits_original, extension):
+	'''Extend lower and upper bounds by a fraction of the current range.
+
+	Parameters
+	----------
+	limits_original : ndarray
+		Two-element array containing lower and upper limits.
+	extension : float
+		Fraction of the range used to extend both bounds.
+
+	Returns
+	-------
+	ndarray
+		Extended two-element bounds array.
+	'''
+
+	limits = np.copy(limits_original)
+
+	limit_range = limits[1] - limits[0]
+
+	limits[0] -= extension * limit_range
+	limits[1] += extension * limit_range
+
+	return limits
+
+def coordinate_position(x_reference, x_values, y_reference, y_values):
+	'''Determine correct position for base case label in `plot_colored_scatter()`.
+	'''
+
+	if x_reference - select_non_reference_value(x_reference, x_values) > 0:
+		xtext = 0.81
+	else:
+		xtext = 0.05
+
+	if y_reference - select_non_reference_value(y_reference, y_values) > 0:
+		ytext = 0.93
+	else:
+		ytext = 0.1
+
+	return xtext, ytext
+
+class Monte_Carlo_Analysis:
+	'''Monte Carlo analysis of a techno-economic model.
+
+	Parameters 
+	----------
+	Monte_Carlo_Analysis > Samples > Value : int
+		Number of samples for Monte Carlo analysis.
+	Monte_Carlo_Analysis > Dependent Variable > Value : str
+		Dependent response variable used in Monte Carlo filtering and plots.
+		Supported values are ``h2_cost``, ``Climate change``, and
+		``Cumulative energy demand``.		
+	Monte_Carlo_Analysis > Target Response Range > Value : str
+		Target response range for the configured dependent variable in the
+		following format: lower value; higher value (e.g. ``1.5; 4.0``).
+	Monte_Carlo_Analysis > Output File > Value : str, optional
+		Path to location where output file containing Monte Carlo analysis
+		results should be saved.
+	Monte_Carlo_Analysis > Input File > Value : str, optional
+		Path to location of file containing Monte Carlo analysis results that
+		should be read.
+	Parameters - Monte_Carlo_Analysis > [...] > Name : str
+		Display name for parameter, e.g. used for axis labels.
+	Parameters - Monte_Carlo_Analysis > [...] > Type : str
+		Type of parameter values. If `Type` is 'value', provided values are
+		used as is. If `Type` is 'factor', provided values are multiplied 
+		with base value of parameter in input file.
+	Parameters - Monte_Carlo_Analysis > [...] > Values : str
+		Value range for parameter in Monte Carlo analysis. Specified in following
+		format: upper limit; lower limit (order is irrelevant). Instead of actual values,
+		'Base' or 'Reference' can be used to retrieve base value of parameter in input file
+		as one of the values. E.g. 'Base; 20%'.
+	Parameters - Monte_Carlo_Analysis > [...] > File Index : int, optional
+		If Monte Carlo results are read from a provided input file, `File Index` for each
+		parameter can be specified. `File Index` refers to the column position of each parameter
+		in the read input file. This mapping allows for changing the display name and position
+		of a parameter in the `Parameters - Monte_Carlo_Analysis` analysis table and still
+		ensure correct mapping of the read results.
+
+	Notes
+	-----
+	`Parameters - Monte_Carlo_Analysis` contains parameters which are to be varied in
+	Monte Carlo Analysis. First column specifies path to parameter in input file 
+	(top key > middle key > bottom key format, e.g. Catalyst > Cost per kg ($) > Value).
+	Order of parameters can be changed, which for example affects the mapping onto different
+	axis in `plot_colored_scatter` (first parameter is on x axis, second on y axis, etc.).
+	'''
+
+	_DEPENDENT_VARIABLE_CONFIG = {
+		'h2_cost': {
+			'header': 'cost',
+			'label': 'H2 Cost ($/kg)',
+			'unit': r'\$/kg($H_{2}$)',
+			'source': 'h2_cost',
+		},
+		'Climate change': {
+			'header': 'climate change',
+			'label': 'Climate change (kg CO2-Eq/kg H2)',
+			'unit': 'kg $CO_{2}$-Eq/kg $H_{2}$',
+		},
+		'Cumulative energy demand': {
+			'header': 'cumulative energy demand',
+			'label': 'Cumulative energy demand (MJ_Eq/kg H2)',
+			'unit': 'MJ_Eq/kg $H_{2}$',
+		},
+	}
+
 	def __init__(self, input_file):
+		'''Initialize and execute the Monte Carlo analysis workflow.
+
+		Parameters
+		----------
+		input_file : str or pathlib.Path
+			Input file path passed to ``convert_input_to_dictionary``.
+
+		Notes 
+		-----
+		`self.inp` is generated from provided `input_file`. 
+		If 'Input File' is specified in Monte_Carlo_Analysis table of`input_file`, 
+		the provided file (which has to contain Monte Carlo simulation 
+		data formatted as done by `save_results()` method) is read and Monte Carlo simulation
+		results and corresponding parameter specification are retrieved.
+		If 'Input File' is not specified, the parameters specified in `input_file` are processed 
+		and used to generate Monte Carlo simulation data (using `perform_monte_carlo_multiprocessing()`), 
+		which are stored in the specified 'Output File'.
+		Subsequently, Monte Carlo datapoints are selected based on the specified target response range, 
+		development distances are calculated and plots can be generated.
+		'''
+
 		self.inp = convert_input_to_dictionary(input_file)
-		self.models = self.get_models()
-		self.check_target_price_range_consistency()
 
-	def get_models(self):
-		'''Get models which are to be compared from `Comparative_MC_Analysis` 
-		table in input file and perform Monte Carlo analysis for them.
+		if 'Display Parameters' in self.inp:
+			self.color = self.inp['Display Parameters']['Color']['Value']
+			self.display_name = self.inp['Display Parameters']['Name']['Value']
+		else:
+			self.color = 'darkgreen'
+			self.display_name = 'Model'
+
+		self.configure_dependent_variable()
+
+		if 'Input File' in self.inp['Monte_Carlo_Analysis']:
+			self.read_results(self.inp['Monte_Carlo_Analysis']['Input File']['Value'])
+		else:
+			self.process_parameters()
+			self.perform_full_monte_carlo()
+			self.save_results(self.inp['Monte_Carlo_Analysis']['Output File']['Value'])
+
+		self.check_parameter_integrity(self.results)
+		self.target_response_components()
+		self.determine_principal_components()
+		self.development_distance()
+		self.full_distance_cost_relationship()
+
+	def configure_dependent_variable(self):
+		'''Configure the dependent Monte Carlo response variable.
+
+		Supported dependent variables are the keys of
+		``_DEPENDENT_VARIABLE_CONFIG``.
 		'''
 
-		models = {}
+		monte = self.inp['Monte_Carlo_Analysis']
+		if 'Dependent Variable' not in monte or 'Value' not in monte['Dependent Variable']:
+			raise KeyError(
+				"Monte_Carlo_Analysis must define 'Dependent Variable > Value'."
+			)
+		self.dependent_variable = monte['Dependent Variable']['Value']
+		
+		config = self._DEPENDENT_VARIABLE_CONFIG.get(self.dependent_variable)		
+		if config is None:
+			supported = "', '".join(self._DEPENDENT_VARIABLE_CONFIG.keys())
+			raise ValueError(
+				f"Unsupported Dependent Variable '{self.dependent_variable}'. "
+				f"Use one of the supported values: '{supported}'."
+			)
 
-		for key, input_file in self.inp['Comparative_MC_Analysis'].items():
-			model = Monte_Carlo_Analysis(input_file['Value'])
+		self.dependent_variable_header = config['header']
+		self.dependent_variable_label = config['label']
+		self.dependent_variable_unit = config['unit']
+		self.target_range_header = f"Target {self.dependent_variable_header} range:"
 
-			models[key] = {}
-			models[key]['Model'] = model
+	def process_parameters(self):  
+		'''
+		Monte Carlo Analysis parameters are read from 'Monte Carlo Analysis - Parameters' 
+		in `self.inp` and processed.
 
-			try:
-				models[key]['Image'] = input_file['Image']
-			except KeyError:
-				pass
-
-		return models
-
-	def check_target_price_range_consistency(self):
-		'''Check that the same target price ranges are specified
-		for all models which are to be compared.
+		Notes
+		-----
+		The ranges for each parameter are defined in `Values` column as ';' seperated entries. Entries can
+		either be a number, a path, or a `special_value` such as `Base` or `Reference`. If such a `special_value`
+		is specified, the base value of that parameter is retrieved from `self.inp`.
+		Parameter information is stored in `self.parameters` attribute.
+		Based on the ranges for each parameter, random values (uniform distribution) are generated and stored
+		in the `self.values` attribute.
+		The target response range is read from `self.inp` file and stored in `self.target_response_range` attribute.
 		'''
 
-		model_keys = list(self.models)
+		monte = self.inp['Parameters - Monte_Carlo_Analysis']
+		samples = self.inp['Monte_Carlo_Analysis']['Samples']['Value']
 
-		target_price_range = np.asarray(self.models[model_keys[0]]['Model'].target_price_range)
-		for model_key in model_keys[1:]:
-			model_range = self.models[model_key]['Model'].target_price_range
-			assert np.array_equal(target_price_range, model_range), 'Target price ranges differ between input files. Reference: {0}, model: {1}'.format(target_price_range, model_range)
+		number_parameters = len(monte)
 
-		self.target_price_range = target_price_range
+		values = np.empty((samples, number_parameters))
+		parameters = {}
 
-	def plot_comparative_distance_histogram(self, ax = None, figure_lean = True, 
-											table_kwargs = {}, image_kwargs = {}, 
-											plot_kwargs = {}, hist_kwargs = {},
-										    **kwargs):
-		'''Plot comparative development distance histogram.
+		for counter, key in enumerate(monte):
+			values_range = parse_parameter_to_array(monte[key]['Values'], delimiter = ';', 
+													dictionary = self.inp, 
+													top_key = 'Parameters - Monte_Carlo_Analysis', 
+													middle_key = key, bottom_key = 'Values', 
+													special_values = ['Base', 'Reference'], 
+													path = key)
+
+			values_range = values_range[np.argsort(values_range)]
+			values[:,counter] = np.random.uniform(values_range[0], 
+												  values_range[1], 
+												  samples)
+
+			path = parse_parameter(key)
+			reference = get_by_path(self.inp, path)
+			limit = select_non_reference_value(reference, values_range)
+		
+			parameters[monte[key]['Name']] = {'Parameter': path, 'Type': monte[key]['Type'], 
+											  'Values': values_range, 'Reference': reference, 
+											  'Index': counter, 'Input Index': counter,
+											  'Limit': limit}
+	
+		self.values = values
+		self.parameters = parameters
+		self.target_response_range = parse_parameter_to_array(self.inp['Monte_Carlo_Analysis']['Target Response Range']['Value'], 
+												   delimiter = ';', 
+												   dictionary = self.inp)
+
+	def perform_response_calculation(self, values):
+		'''Configured response calculation for provided parameter values is performed.
+
+		Parameters
+		----------
+		values : ndarray
+			Array containing parameter variations.
+
+		Returns
+		-------
+		response_values : ndarray
+			1D array of response values for each set of parameters.
+
+		Notes
+		-----
+		Performs configured response calculation by modifying a copy of self.inp based 
+		on the provided values and `self.parameters`. The modified copy of 
+		`self.inp` is then passed to `Discounted_Cash_Flow()`.
+		A parameter value can be either a value replacing the existing one 
+		in self.inp (Type = value) or it can be a factor which will be multiplied 
+		by the existing value.
+		'''
+
+		parameters = self.parameters
+		response_values = []
+
+		for value_set in values:
+			input_dict = copy.deepcopy(self.inp)
+
+			for key, parameter in parameters.items():
+				set_by_path(input_dict, parameter['Parameter'], value_set[parameter['Index']], 
+							value_type = parameter['Type'])
+
+			dcf = Discounted_Cash_Flow(input_dict, print_info = False)
+			response_values.append(self.get_dependent_variable_value(dcf))
+
+		return np.asarray(response_values)
+
+	def perform_monte_carlo_multiprocessing(self, values, return_full_array = True,
+										show_progress = False,
+										progress_label = 'Monte Carlo'):
+		'''Monte Carlo analysis is performed with multiprocessing parallelization across
+		all available CPUs.
+
+		Parameters
+		----------
+		values : ndarray
+			2D array containing parameters variations which are to be evaluated.
+		return_full_array : bool, optional
+			If `return_full_array` is True, the full 2D array containing parameter
+			variations and target response values is returned. Otherwise, a 1D array containing only
+			target response values is returned.
+		show_progress : bool, optional
+			If `True`, render a progress bar during Monte Carlo execution.
+		progress_label : str, optional
+			Prefix label for the progress bar output.
+
+		Returns
+		-------
+		full_array : ndarray
+			2D array containing parameter variations and dependent-response values.
+		response_values : ndarray
+			1D array containing dependent-response values.
+		'''
+
+		total_samples = len(values)
+
+		if total_samples == 0:
+			if return_full_array is True:
+				return np.c_[values, np.asarray([])]
+			return np.asarray([])
+
+		num_cpus = multiprocessing.cpu_count()
+		target_batches = max(num_cpus * 20, num_cpus)
+		batch_size = max(1, int(np.ceil(total_samples / target_batches)))
+		value_batches = divide_into_batches(values, batch_size)
+		batch_results = [None] * len(value_batches)
+
+		if show_progress:
+			render_progress_bar(0, total_samples, prefix = progress_label)
+
+		progress_manager = None
+		progress_counter = None
+		progress_lock = None
+
+		if show_progress:
+			progress_manager = multiprocessing.Manager()
+			progress_counter = progress_manager.Value('i', 0)
+			progress_lock = progress_manager.Lock()
+
+		last_rendered = 0
+
+		try:
+			max_workers = min(num_cpus, len(value_batches))
+			with concurrent.futures.ProcessPoolExecutor(max_workers = max_workers) as executor:
+				future_to_batch_index = {
+					executor.submit(
+						_mc_response_worker,
+						batch,
+						self.inp,
+						self.parameters,
+						self.dependent_variable,
+						progress_counter,
+						progress_lock,
+					): batch_index
+					for batch_index, batch in enumerate(value_batches)
+				}
+
+				pending = set(future_to_batch_index)
+
+				while pending:
+					done, pending = concurrent.futures.wait(
+						pending,
+						timeout = 0.2,
+						return_when = concurrent.futures.FIRST_COMPLETED,
+					)
+
+					if show_progress:
+						completed_samples = progress_counter.value
+						if completed_samples != last_rendered:
+							render_progress_bar(completed_samples, total_samples,
+												 prefix = progress_label)
+							last_rendered = completed_samples
+
+					for future in done:
+						batch_index = future_to_batch_index[future]
+						batch_response_values, _ = future.result()
+						batch_results[batch_index] = batch_response_values
+
+			if show_progress and last_rendered < total_samples:
+				render_progress_bar(total_samples, total_samples,
+									 prefix = progress_label)
+		finally:
+			if progress_manager is not None:
+				progress_manager.shutdown()
+			elif show_progress and last_rendered < total_samples:
+				print()
+
+		response_values = np.concatenate(batch_results)
+
+		if return_full_array is True:
+			return np.c_[values, response_values]
+		else:
+			return response_values
+
+	def perform_full_monte_carlo(self):
+		'''Monte Carlo analysis is performed based on random parameter variations 
+		in `self.values`.
+		'''
+
+		start = timer()
+
+		self.results = self.perform_monte_carlo_multiprocessing(self.values,
+											show_progress = True,
+											progress_label = 'Monte Carlo')
+
+		end = timer()
+		print('Time Monte Carlo Multi:', end - start)
+
+	def save_results(self, file_name):
+		'''Results of Monte Carlo simulation are saved in `file_name` and a 
+		formatted header is added. Contains name, parameter path, type and values range 
+		from `self.parameters`.
+		'''
+
+		header_string = ''
+		path_string = ''
+		type_string = ''
+		values_string = ''
+
+		for key in self.parameters:
+			header_string += str(key) + '	'
+			path_string += str(self.parameters[key]['Parameter']) + '	'
+			type_string += str(self.parameters[key]['Type']) + '	'
+			values_string += str(self.parameters[key]['Values']) + '	'
+
+		header_string += self.dependent_variable_header
+		complete_string = header_string + '\n' + path_string + '\n' + type_string + '\n' + values_string
+
+		np.savetxt(Path(file_name), self.results, header = complete_string, delimiter = '	')
+
+	def read_results(self, file_name):
+		'''Reads Monte Carlo simulation results from `file_name`.
+
+		Parameters
+		----------
+		file_name : str
+			Path to file containing Monte Carlo simulation results.	
+
+		Returns
+		-------
+		self.results : ndarray
+			Array containing parameters and dependent-response values for each model.
+		self.parameters : dict
+			Dictionary containing information on varied parameters.
+		self.target_response_range : ndarray
+			Selected target response range from `self.inp`.
+
+		Notes
+		-----
+		Assumes formatting created by `self.save_results()`function.
+		Header must contain name of parameters, path to parameters in input file, 
+		type of parameter and value range.
+		The header is processed to retrieve these atrribtues and stores them in `self.parameters`.
+		Reference values for each parameter and target response range are read from self.inp
+		The order of parameters is also read from `self.inp` and stored in `self.parameters` 
+		as `Input Index`. If the name of a parameter has been changed in `self.inp` and is 
+		different from the parameter stored in `file_name`, it is checked whether a `File Index`
+		is specified, which allows for mapping of renamed parameter to parameter stored in 
+		`File Index`. If `File Index` is specified, the existing parameter at this position 
+		in `File Index` is renamed to the specified name.
+		'''
+
+		self.results = read_textfile(file_name, delimiter = '	', mode = 'r')
+
+		parameters = {}
+		column_dict = {}
+		row_dict = {0: 'Key', 1: 'Parameter', 2: 'Type', 3: 'Values'}
+
+		file_read = file_import(file_name, mode = 'r')
+
+		for row_counter, line in enumerate(file_read):
+
+			if line[0] != '#':
+				break
+			else:
+				line_clean = line.strip(' #\n')
+				line_split = parse_parameter(line_clean, delimiter = '	')
+
+				for column_counter, element in enumerate(line_split):
+
+					if row_dict[row_counter] == 'Key':
+						parameters[element] = {}
+						parameters[element]['Index'] = column_counter
+						column_dict[column_counter] = element
+
+					else:
+						row_key = row_dict[row_counter]
+						column_key = column_dict[column_counter]
+						element = element.strip('[]')
+
+						if row_key == 'Parameter':
+							arr = []
+							split = element.split(',')
+							for i in split:
+								arr.append(i.strip("' "))
+							element = arr
+				
+						if row_key == 'Values':
+							element = np.fromstring(element, sep = ' ', dtype = float)
+
+						parameters[column_key][row_key] = element
+
+		file_read.close()
+
+		if self.dependent_variable_header in parameters:
+			del parameters[self.dependent_variable_header]
+		elif 'H2 Cost' in parameters:
+			del parameters['H2 Cost']
+		elif len(parameters) > 0:
+			last_key = column_dict[max(column_dict)]
+			if last_key in parameters:
+				del parameters[last_key]
+
+		for key in parameters:
+			parameters[key]['Reference'] = get_by_path(self.inp, parameters[key]['Parameter'])
+			parameters[key]['Limit'] = select_non_reference_value(parameters[key]['Reference'],
+																  parameters[key]['Values'])
+
+		self.parameters = parameters
+		self.target_response_range = parse_parameter_to_array(self.inp['Monte_Carlo_Analysis']['Target Response Range']['Value'], delimiter = ';')
+
+		for counter, (key, parameter) in enumerate(self.inp['Parameters - Monte_Carlo_Analysis'].items()):
+			
+			if parameter['Name'] in self.parameters:
+				self.parameters[parameter['Name']]['Input Index'] = counter # Identical name, storing Input Index
+
+			elif 'File Index' in parameter:   # Non-identical name, looking for File Index to map
+				for self_key, self_parameter in self.parameters.items():
+
+					sucess = False
+
+					if self_parameter['Index'] == parameter['File Index']:
+						self_parameter['Input Index'] = counter
+						self.parameters[parameter['Name']] = self.parameters.pop(self_key)
+						sucess = True
+
+				if sucess is False:  # Raise error it not all parameters with different names could be mapped
+					raise KeyError('Input Parameter {0} could not be mapped.'.format(key))
+
+			else:
+				raise KeyError('Difference between input parameter names and those stored in Monte Carlo File, no index for mapping specified.')
+
+		for name, parameter in self.parameters.items():
+			if reverse_parameter_to_string(parameter['Parameter']) not in self.inp['Parameters - Monte_Carlo_Analysis']:
+				raise KeyError(f'Input file contains {name} which is not included in Parameter - Monte_Carlo_Analysis table.')
+
+	def check_parameter_integrity(self, values):
+		'''Checking that parameters in `self.results` are within 
+		ranges specified in `self.parameters['Values']`.
+		'''
+
+		for name, parameter in self.parameters.items():
+			results = values[:,parameter['Index']]
+			
+			minimum = np.amin(results)
+			maximum = np.amax(results)
+
+			assert minimum >= parameter['Values'][0], 'Minimum value of {0} ({1}) is smaller than specified range ({2}).'.format(name, minimum, parameter['Values'])
+			assert maximum <= parameter['Values'][1], 'Maximum value of {0} ({1}) is larger than specified range ({2}).'.format(name, maximum, parameter['Values']) 
+
+			reference = parameter['Reference']
+			limit = parameter['Limit']
+			values_range = parameter['Values']
+
+			assert reference in values_range, f'Reference value {reference} not found in value range {values_range} for {name}'
+			assert limit in values_range, f'Limit value {limit} not found in value range {values_range} for {name}'
+
+	def generate_parameter_string_table(self, base_string = 'Base', limit_string = 'Limit', 
+										format_cutoff = 6):
+		'''String of parameter table is generated, used in `self.render_parameter_table`.
+
+		Parameters 
+		----------
+		base_string : str, optional
+			String used to label base column.
+		limit_string : str, optinal
+			String used to label limit column.
+		format_cutoff : int
+			Length of number string at which it is converted to 
+			scientific/millified representation.
+		'''
+
+		self.parameter_string = make_bold(self.display_name) + '\n'
+		self.parameter_table = {'Table Data': [[make_bold(self.display_name), 
+												make_bold(base_string), '', 
+												make_bold(limit_string)]], 'Row Labels': []}
+
+		for key, value in self.parameters.items():
+			reference_value = dynamic_value_formatting(value['Reference'], cutoff = format_cutoff)
+			limit_value = dynamic_value_formatting(select_non_reference_value(value['Reference'], 
+																			  value['Values']), 
+																		   cutoff = format_cutoff)
+
+			string = key + ': ' + reference_value + r'$\rightarrow$' + limit_value + '\n'
+			self.parameter_string += string
+
+			self.parameter_table['Table Data'].append([key, reference_value, 
+													   r'$\longrightarrow$', limit_value])
+			self.parameter_table['Row Labels'].append(key)
+
+
+	def render_parameter_table(self, ax, xpos = 1.05, ypos = 0.0, height = 1.0, 
+							   colWidths = [0.55, 0.25, 0.07, 0.25],
+							   left_pad = 0.01, edge_padding = 0.02, 
+							   fontsize = 12, base_string = 'Base',
+							   limit_string = 'Limit',
+							   format_cutoff = 7):
+		'''Rendering table of parameters which are varied during Monte Carlo analysis.
+
+		Parameters
+		----------
+		ax : matplotlib.axes
+			Axes object in which parameter table is displayed.
+		xpos : float, optional
+			x axis position of left edge of table in axis fraction coordinates.
+		ypos : float, optional
+			y axis position of lower edge of table in axis fraction coordinates.
+		height : float, optional
+			Height of table in axis fraction coordinates (e.g. height = 0.5 meaning that
+			the table has half the height of the plot).
+		colWidths : list, optional
+			List of length 4 with widths for each column from left to right in axis
+			fraction coordinates.
+		left_pad : float, optional
+			Padding of the table on the left site.
+		edge_padding: float, optional
+			Padding of edges that are drawn.
+		fontsize : float, optional
+			fontsize for table.
+		base_string : str, optional
+			String used to label base column.
+		limit_string : str, optional
+			String used to label limit column.
+
+		Notes
+		-----
+		Table is rendered in provided matplotlib.axes object.
+		'''
+
+		self.generate_parameter_string_table(base_string = base_string, limit_string = limit_string,
+											 format_cutoff = format_cutoff)
+
+		bbox = [xpos, ypos, sum(colWidths), height]
+		number_of_rows = len(self.parameter_table['Table Data'])
+		cell_height = bbox[3] / number_of_rows
+
+		table = ax.table(cellText = self.parameter_table['Table Data'],
+						 edges = 'open',
+						 bbox = bbox,
+						 colWidths = colWidths,
+						 cellLoc = 'left')
+
+		for key, cell in table.get_celld().items():
+			cell.get_text().set_color('black')
+			if key[0] == 0 or key[1] >= 1:
+				cell.get_text().set_color(self.color)
+
+		table.auto_set_font_size(False)
+		table.set_fontsize(fontsize)
+
+		def set_pad_for_column(col, pad):
+			cells = table.get_celld()
+			column = [cell for cell in table.get_celld() if cell[1] == col]
+			for cell in column:
+				cells[cell].PAD = pad
+
+		set_pad_for_column(col=0, pad = left_pad)
+
+		def plot_edge(row_position, edge_padding):
+
+			if row_position == 'last':
+				y_edge = bbox[1] + edge_padding
+			else:
+				y_edge = bbox[1] + bbox[3] - (row_position * cell_height) + edge_padding
+
+			table_edge = ax.annotate('', xy = (bbox[0], y_edge), 
+									 xytext = (bbox[0] + bbox[2], y_edge), 
+									 xycoords = ax.transAxes, textcoords = ax.transAxes, 
+									 arrowprops={'arrowstyle': '-', 'color': self.color})
+
+		plot_edge(1, edge_padding)
+		plot_edge('last', 0)
+
+	def target_response_components(self):
+		'''Filter Monte Carlo results to entries within the specified target response range.
+
+		Notes
+		-----
+		The dependent response is stored in the last column of `self.results`, whether it is
+		`h2_cost` or a configured LCA result key.
+		'''
+
+		results_sorted = self.results[np.argsort(self.results[:,-1])]
+		lower_bound, upper_bound = np.sort(self.target_response_range)
+		mask = ((results_sorted[:,-1] >= lower_bound) &
+				(results_sorted[:,-1] <= upper_bound))
+		data = results_sorted[mask]
+
+		if data.size == 0:
+			observed_min = np.min(results_sorted[:,-1])
+			observed_max = np.max(results_sorted[:,-1])
+			raise ValueError(
+				f"No Monte Carlo samples fell within the requested target range "
+				f"[{lower_bound}, {upper_bound}] for '{self.dependent_variable}'. "
+				f"Observed sample range was [{observed_min}, {observed_max}]. "
+				"Widen the target range or increase the number of Monte Carlo samples."
+			)
+
+		self.target_response_data = data
+
+	def determine_principal_components(self):
+		'''Converting parameters to list sorted by input index.
+		'''
+
+		# placeholder for actual PCA
+		# parameter/principal component class instead of dict
+		# map PCs to W, X, Y, Z?
+
+		self.principal = [None] * len(self.parameters)
+		self.base_case = [None] * len(self.parameters)
+
+		for key, parameter in self.parameters.items():
+			self.principal[parameter['Input Index']] = key
+			self.base_case[parameter['Index']] = parameter['Reference']
+
+	def target_response_2D_region(self, grid_points = 15):
+		'''Determine region spanned by first two parameters within which target responses can be achieved.
+
+		Parameters
+		----------
+		grid_points : int, optional
+			Number of grid points to determine density of grid evaluation.
+
+		Returns
+		-------
+		self.target_response_2D_region : dict
+			Dict of ndarrays with information of the target response 2D region.
+
+		Notes
+		-----		
+		Model is evaluated on grid spanned by first two parameters (density of grid is controlled by 
+		grid_points), other parameters are set to limit (non-reference) values.
+		Output is a dictionary (`self.target_response_2D_region`), which can be used to overlay 
+		target response region onto scatter plotting using plt.contourf.
+		'''
+
+		grid_axes = np.empty((2, grid_points))
+		grid_idx = []
+
+		values = np.empty((grid_points**2, len(self.parameters)))
+
+		for key, parameter in self.parameters.items():
+			if parameter['Input Index'] < 2:
+				value_range = parameter['Values']
+
+				grid_axis = np.linspace(value_range[0], value_range[1], grid_points)
+				grid_axes[parameter['Input Index']] = grid_axis
+				grid_idx.append([parameter['Index'], parameter['Input Index']])
+
+			else:
+				used_value = select_non_reference_value(parameter['Reference'], parameter['Values'])
+				values[:,parameter['Index']] = np.ones(len(values)) * used_value
+
+				parameter['Target Response Range'] = {}
+				parameter['Target Response Range']['Range'] = self.target_response_range
+				parameter['Target Response Range']['Used Value'] = used_value
+
+		grid_values = np.meshgrid(*grid_axes)
+		grid_values_ravel = np.c_[[np.ravel(i) for i in grid_values]].T
+
+		for idx, idx_input in grid_idx:
+			values[:,idx] = grid_values_ravel[:,idx_input]
+
+		self.check_parameter_integrity(values)	
+
+		response_values = self.perform_monte_carlo_multiprocessing(values, return_full_array = False)
+		response_values_2D = np.reshape(response_values, (grid_points, grid_points))
+
+		self.target_response_2D_region = {
+			'Grid Values': grid_values,
+			'Response 2D': response_values_2D,
+			'H2 Cost 2D': response_values_2D,
+		}
+
+	def development_distance(self, metric = 'cityblock', log_normalize = False, sum_distance = False):
+		'''Calculation of development distance for models within target response range.
+
+		Parameters
+		----------
+		metric: str, optional
+			Metric used for distance calculation, defaults to `cityblock`.
+
+		Returns
+		-------
+		self.distances: ndarrray
+			Array containing distances for models within target response range.
+
+		Notes
+		-----
+		The euclidean or cityblock distance in n-dimensional space of each Monte Carlo simulation datapoint within 
+		the target response range to the reference point is calculated and stored in self.distances.
+		Parameter ranges and the reference parameters are scaled to be within a n-dimensional unit cube.
+		Distances are normalized by the number of dimensions, so that the maximum distance is always 1.'''
+
+		self.distances = calculate_distance(self.target_response_data, self.parameters, 
+											self.principal, metric = metric,
+											log_normalize = log_normalize,
+											sum_distance = sum_distance)
+
+		target_distances = np.c_[self.target_response_data, self.distances]
+		self.target_distances_sorted = target_distances[np.argsort(target_distances[:,-1])]
+
+		self.shortest_target_distance = {}
+
+		for key, item in self.parameters.items():
+			self.shortest_target_distance[key] = self.target_distances_sorted[0][item['Index']]
+
+		self.shortest_target_distance[self.dependent_variable_label] = self.target_distances_sorted[0][-2]
+		self.shortest_target_distance['Distance'] = self.target_distances_sorted[0][-1]
+
+	def full_distance_cost_relationship(self, metric = 'cityblock', reduction_factor = 25, 
+										poly_order = 4, log_normalize = False, sum_distance = False):
+		'''Calculation of development distance for all datapoints from Monte Carlo Analysis and
+		calculation of Savitzky-Golay filter.
+
+		Parameters
+		----------
+		metric : str, optional
+			Distance metric used for 
+			:func:`~pyH2A.Analysis.Monte_Carlo_Analysis.Monte_Carlo_Analysis.calculate_distance`
+		reduction_factor : int, optional
+			Determines window size for Savitzky-Golay filter.
+		poly_order : int, optional
+			Order of polynomial for Savitzky-Golay filter
+
+		Returns
+		-------
+		self.results_distances_sorted : ndarray
+			Sorted array of distances for all datapoints from Monte Carlo Analysis.
+		self.distances_cost_savgol : ndarray
+			Savitzky-Golay filter results.
+		'''
+
+		window_length = int(len(self.results)/reduction_factor)
+
+		if window_length % 2 == 0:
+			window_length += 1
+
+		distances = calculate_distance(self.results, self.parameters, 
+									   self.principal, metric = metric,
+									   log_normalize = log_normalize,
+									   sum_distance = sum_distance)
+
+		results_distances = np.c_[self.results, distances]
+		self.results_distances_sorted = results_distances[np.argsort(results_distances[:,-1])]
+
+		smoothed = savgol_filter(self.results_distances_sorted[:,-2], window_length, poly_order)
+	
+		self.distances_cost_savgol = np.c_[self.results_distances_sorted[:,-1], smoothed]
+
+	def plot_complete_histogram(self, bins = None, xlim_low = None, xlim_high = None,
+								xlabel_string = r'Levelized $H_{2}$ Cost / \$/kg', 
+								ylabel_string = 'Normalized Frequency',
+								image_kwargs = {}, plot_kwargs = {},
+								**kwargs):
+		'''Complete histogram of response distribution from Monte Carlo analysis
+
+		Parameters 
+		----------
+		bins : int, optional
+			Number of bins for histogram. If `None`, bins is calculated
+			from the size of `self.results`.
+		xlim_low : float or None, optional
+			Lower x axis limit.
+		xlim_high : float or None, optional
+			Higher x axis limit.
+		xlabel_string : str, optional
+			String for x axis label.
+		ylabel_string : str, optional
+			String for y axis label.
+		image_kwargs: dict, optional
+			Dictionary containing optional keyword arguments for
+			:func:`~pyH2A.Utilities.output_utilities.insert_image`
+		plot_kwargs: dict, optional
+			Dictionary containing optional keyword arguments for
+			:func:`~pyH2A.Utilities.output_utilities.Figure_Lean`, has priority over `**kwargs`.
+		**kwargs: 
+			Additional `kwargs` passed to 
+			:func:`~pyH2A.Utilities.output_utilities.Figure_Lean`
+
+		Returns
+		-------
+		figure : matplotlib.fig or None
+			matplotlib.fig is returned.
+		'''
+
+		kwargs = {**{'right': 0.95, 'bottom': 0.15, 'top': 0.95,
+	 			     'fig_width': 7, 'fig_height': 4, 'font_size': 12,
+	 			     'name': 'Monte_Carlo_Complete_Histogram'}, 
+	 			  **kwargs, **plot_kwargs}
+
+		image_kwargs = {**{'path': None, 'x': 0.5, 'y': 0.8, 'zoom': 0.08}, 
+						**image_kwargs}
+
+		figure = Figure_Lean(**kwargs)
+		ax = figure.ax
+
+		if bins is None:
+			bins = int(len(self.results) / 20)
+
+		ax.hist(self.results[:,-1], bins = bins, density=True, color=self.color, edgecolor = 'black')
+
+		ax.set_xlabel(xlabel_string)
+		ax.set_ylabel(ylabel_string)
+
+		if xlim_low is not None:
+			ax.set_xlim(xlim_low, xlim_high)
+
+		if image_kwargs['path'] is not None:
+			insert_image(ax = ax, **image_kwargs)
+
+		figure.execute()
+
+		return figure.fig
+
+	def plot_colored_scatter(self, limit_extension = 0.03,   
+							 title_string = None, 
+							 base_string = 'Base',
+							 image_kwargs = {}, plot_kwargs = {},  
+							 **kwargs):
+		'''Plotting colored scatter plot showing all models within target response range.
+
+		Parameters
+		----------
+		limit_extension: float, optional
+			Amount of limit extension of axes as fraction of axis range.
+		title_string : str, optional
+			String for title.
+		base_string : str, optional
+			String to label base case datapoint.
+		image_kwargs: dict, optional
+			Dictionary containing optional keyword arguments for
+			:func:`~pyH2A.Utilities.output_utilities.insert_image`
+		plot_kwargs: dict, optional
+			Dictionary containing optional keyword arguments for
+			:func:`~pyH2A.Utilities.output_utilities.Figure_Lean`, has priority over `**kwargs`.
+		**kwargs: 
+			Additional `kwargs` passed to 
+			:func:`~pyH2A.Utilities.output_utilities.Figure_Lean`
+
+		Returns 
+		-------
+		figure : matplotlib.fig or None
+			matplotlib.fig is returned.
+
+		Notes
+		-----
+		x, y and color axis are determined by 
+		:func:`~pyH2A.Analysis.Monte_Carlo_Analysis.Monte_Carlo_Analysis.determine_principal_components`,
+		with pc[0] being the x axis, pc[1] the y axis and pc[2] the color axis. Order can
+		be changed by changing order of parameters in input file.
+		'''
+
+		kwargs = {**{'left': 0.15, 'right': 0.9, 'bottom': 0.11, 'top': 0.88,
+	 			     'fig_width': 6.4, 'fig_height': 4.8, 'font_size': 12,
+	 			     'name': 'Monte_Carlo_Colored_Scatter'}, 
+	 			  **kwargs, **plot_kwargs}
+
+		image_kwargs = {**{'path': None, 'x': 0.5, 'y': 0.8, 'zoom': 0.08}, 
+						**image_kwargs}
+
+		pc = self.principal
+		par = self.parameters
+
+		figure = Figure_Lean(**kwargs)
+		ax = figure.ax
+		fig = figure.fig
+
+		cm = plt.get_cmap('plasma')
+
+		self.target_response_2D_region()
+		response_2D = self.target_response_2D_region.get('Response 2D',
+									  self.target_response_2D_region['H2 Cost 2D'])
+
+		contour_fill = ax.contourf(*self.target_response_2D_region['Grid Values'], 
+						        response_2D,
+							        levels = [0., max(self.target_response_range)], 
+							        		  alpha = 0.1, colors = [cm(0.0)])
+
+		base_case_h2_cost_appended = np.r_[self.base_case, 0]
+		target_response_data_appended = np.vstack((self.target_response_data, 
+												base_case_h2_cost_appended))
+
+		scatter = ax.scatter(target_response_data_appended[:,par[pc[0]]['Index']], 
+							 target_response_data_appended[:,par[pc[1]]['Index']], 
+						 c = target_response_data_appended[:,par[pc[2]]['Index']], 
+						 	 cmap = 'plasma', alpha = 1.)
+
+		colorbar = fig.colorbar(scatter, ax=ax)
+
+		ax.set_xlim(extend_limits(par[pc[0]]['Values'], limit_extension))
+		ax.set_ylim(extend_limits(par[pc[1]]['Values'], limit_extension))
+		scatter.set_clim(par[pc[2]]['Values'])
+
+		ax.set_xlabel(pc[0])
+		ax.set_ylabel(pc[1])
+		colorbar.set_label(pc[2])
+
+		xtext, ytext = coordinate_position(par[pc[0]]['Reference'], par[pc[0]]['Values'],
+										   par[pc[1]]['Reference'], par[pc[1]]['Values']) 
+
+		ax.annotate(make_bold(base_string), xy = (par[pc[0]]['Reference'], 
+					par[pc[1]]['Reference']), xytext = (xtext, ytext), 
+					textcoords = 'axes fraction')
+
+		if title_string is None:
+			title_string = self.target_range_header
+
+		ax.set_title(title_string + f' {self.target_response_range[0]} - {self.target_response_range[1]} {self.dependent_variable_unit}')
+
+		ax.grid(color = 'grey', linestyle = '--', linewidth = 0.2, zorder = 0)
+
+		#ax.set_aspect('equal')
+
+		if image_kwargs['path'] is not None:
+			insert_image(ax = ax, **image_kwargs)
+
+		figure.execute()
+
+		return figure.fig
+
+	def plot_colored_scatter_3D(self, limit_extension = 0.03,   
+						 	title_string = None,
+							 	**kwargs):
+		'''3D colored scatter plot of models within target response range.
+	
+		Parameters
+		----------
+		limit_extension: float, optional
+			Amount of limit extension of axes as fraction of axis range.
+		title_string: str, optional
+			Title string.
+
+		Returns
+		-------
+		fig: matplotlib.figure
+			Figure object.
+		'''
+		from mpl_toolkits.mplot3d import Axes3D
+	
+		pc = self.principal
+		par = self.parameters
+
+		fig = plt.figure()
+		ax = Axes3D(fig, auto_add_to_figure=False)
+		fig.add_axes(ax)
+
+		scatter = ax.scatter(self.target_response_data[:,par[pc[0]]['Index']], 
+							 self.target_response_data[:,par[pc[1]]['Index']],  
+							 self.target_response_data[:,par[pc[3]]['Index']], 
+							 c = self.target_response_data[:,par[pc[2]]['Index']], 
+							 cmap = 'plasma', depthshade = False)
+	
+		colorbar = fig.colorbar(scatter, ax=ax, shrink = 0.9)
+
+		ax.set_xlim(extend_limits(par[pc[0]]['Values'], limit_extension))
+		ax.set_ylim(extend_limits(par[pc[1]]['Values'], limit_extension))
+		ax.set_zlim(extend_limits(par[pc[3]]['Values'], limit_extension))
+		scatter.set_clim(par[pc[2]]['Values'])
+
+		ax.set_xlabel(pc[0])
+		ax.set_ylabel(pc[1])
+		ax.set_zlabel(pc[3])
+		colorbar.set_label(pc[2])
+
+		ax.set_title(make_bold(title_string) + r'{0} - {1} \$/kg'.format(
+											self.target_response_range[0], 
+											self.target_response_range[1]))
+	
+		ax.grid(color = 'grey', linestyle = '--', linewidth = 0.2, zorder = 0)
+
+		plt.show()
+
+		return fig
+
+	def plot_distance_histogram(self, ax = None, bins = 25, 
+								figure_lean = True, xlabel = False, title = True,
+								xlabel_string = 'Development distance',
+								ylabel_string = 'Frequency',
+								title_string = None,
+								show_parameter_table = True,
+								show_mu = True, mu_x = 0.2, mu_y = 0.5,
+								table_kwargs = {}, image_kwargs = {}, plot_kwargs = {},
+								 **kwargs):
+
+		'''Plotting development distances as histogram.
 
 		Parameters
 		----------
 		ax : matplotlib.axes, optional
 			Axes object in which plot is drawn. Default is None, creating new plot.
+		bins : int, optional
+			Number of bins for histogram.
 		figure_lean : bool, optional
 			If figure_lean is True, matplotlib.fig object is returned.
+		xlabel : bool, optional
+			Flag to control if x axis label is displayed or not.
+		title : bool, optional
+			Flag to control if title is displayed or not.
+		title_string : str, optional
+			String for title.
+		xlabel_string : str, optional
+			String for x axis label.
+		ylabel_string : str, optional
+			String for y axis label.
+		show_parameter_table : bool, optional
+			Flag to control if parameter table is shown.
+		show_mu : bool, optional
+			Flag to control if mu and sigma values of normal distribution are shown.
+		mu_x : float, optional
+			x axis coordinate of shown mu and sigma values in axis coordinates.
+		mu_y : float, optional
+			y axis coordinate of shown mu and sigma values in axis coordinates.
 		table_kwargs : dict, optional
 			Dictionary containing optional keyword arguments for 
 			:func:`~pyH2A.Analysis.Monte_Carlo_Analysis.Monte_Carlo_Analysis.render_parameter_table`
@@ -81,9 +1364,6 @@ class Comparative_MC_Analysis:
 		plot_kwargs: dict, optional
 			Dictionary containing optional keyword arguments for
 			:func:`~pyH2A.Utilities.output_utilities.Figure_Lean`, has priority over `**kwargs`.
-		hist_kwargs: dict, optional
-			Dictionary containg optional keyword arguments for
-			:func:`~pyH2A.Analysis.Monte_Carlo_Analysis.Monte_Carlo_Analysis.plot_distance_histogram`
 		**kwargs: 
 			Additional `kwargs` passed to 
 			:func:`~pyH2A.Utilities.output_utilities.Figure_Lean`
@@ -92,18 +1372,15 @@ class Comparative_MC_Analysis:
 		-------
 		figure : matplotlib.fig or None
 			matplotlib.fig is returned if `figure_lean` is True.
+
 		'''
 
-		model_number = len(self.models)
-
-		kwargs = {**{'left': 0.2, 'right': 0.55, 'bottom': 0.15, 'top': 0.9, 'hspace': 0.2,
-	 				 'nrows': model_number, 'ncols': 1,	'sharex': True,	     
-	 			     'fig_width': 11, 'fig_height': 1.7 * model_number, 
-	 			     'font_size': 12,
-	 			     'name': 'Monte_Carlo_Comparative_Distance_Histogram'}, 
+		kwargs = {**{'left': 0.2, 'right': 0.55, 'bottom': 0.25, 'top': 0.85, 'hspace': 0.2,
+	 			     'fig_width': 11, 'fig_height': 2.5, 'font_size': 12,
+	 			     'name': 'Monte_Carlo_Distance_Histogram'}, 
 	 			  **kwargs, **plot_kwargs}
 
-		table_kwargs = {**{'colWidths': [0.55, 0.25, 0.07, 0.25]}, 
+		table_kwargs = {**{'colWidths': [0.55, 0.25, 0.07, 0.25], 'format_cutoff': 7}, 
 						**table_kwargs}
 
 		image_kwargs = {**{'path': None, 'x': -0.35, 'y': 0.5, 'zoom': 0.08}, 
@@ -113,46 +1390,81 @@ class Comparative_MC_Analysis:
 			figure = Figure_Lean(**kwargs)
 			ax = figure.ax
 
-		for counter, (model_name, model) in enumerate(self.models.items()):
-			if counter == 0:
-				show_title = True
-				show_xlabel = False
+		if title_string is None:
+			title_string = self.target_range_header
 
-			elif counter == model_number - 1:
-				show_title = False
-				show_xlabel = True
+		if title is True:
+			ax.title.set_text(title_string + f' {self.target_response_range[0]} - {self.target_response_range[1]} {self.dependent_variable_unit}')
 
-			else:
-				show_title = False
-				show_xlabel = False
+		yhist, xhist, rectangle = ax.hist(self.distances, bins = bins, density=False, 
+										  color=self.color, edgecolor = 'black')
+		density = np.sum(np.diff(xhist) * yhist)
+	
+		mu, std = normal_distribution.fit(self.distances)
 
-			model['Model'].plot_distance_histogram(ax = ax[counter], 
-											       figure_lean = False, 
-												   xlabel = show_xlabel, 
-												   title = show_title,
-												   table_kwargs = table_kwargs,
-												   **hist_kwargs)
+		ax.set_xlim(0, 1)
+		xmin, xmax = plt.xlim()
+		x = np.linspace(xmin, xmax, 500)
+		p = normal_distribution.pdf(x, mu, std)
+		ax.plot(x, p * density, 'k', linewidth=2)
 
-			if 'Image' in model:
-				image_kwargs['path'] = model['Image']
-				insert_image(ax = ax[counter], **image_kwargs)
+		if xlabel:
+			ax.set_xlabel(xlabel_string)
+		ax.set_ylabel(ylabel_string)
 
+		if show_mu:
+			ax.annotate(f'$\\mu$ = {mu:.2f}\n$\\sigma$ = {std:.3f}', xy = (mu_x, mu_y),
+						va = 'center', ha = 'center', xycoords = ax.transAxes)
+
+		if image_kwargs['path'] is not None:
+			insert_image(ax = ax, **image_kwargs)
+
+		if show_parameter_table:
+			self.render_parameter_table(ax, **table_kwargs)
+	
 		if figure_lean is True:
 			figure.execute()
 			return figure.fig
-
-	def plot_comparative_distance_cost_relationship(self, ax = None, figure_lean = True,
-													table_kwargs = {}, image_kwargs = {}, 
-											        plot_kwargs = {}, dist_kwargs = {},
-													**kwargs):
-		'''Plot comparative development distance/H2 cost relationship.
+								
+	def plot_distance_cost_relationship(self, ax = None, ylim = None, xlim = None, 
+										figure_lean = True, 
+										parameter_table = True, 
+	 									legend_loc = 'upper left',
+	 									log_scale = False, 
+	 									xlabel_string = 'Development distance',
+	 									ylabel_string = r'Levelized $H_{2}$ cost / \$/kg',
+	 									linewidth = 1.5,
+	 									markersize = 0.2, marker_alpha = 0.2,
+	 									table_kwargs = {}, image_kwargs = {}, plot_kwargs = {},
+	 									**kwargs):
+		'''Plotting relationship of development distance and H2 cost.
 
 		Parameters
 		----------
 		ax : matplotlib.axes, optional
 			Axes object in which plot is drawn. Default is None, creating new plot.
+		ylim : array, optional
+			Ordered limit values for y axis. Default is None.
+		xlim : array, optional
+			Ordered limit values for x axis. Default is None.
 		figure_lean : bool, optional
 			If figure_lean is True, matplotlib.fig object is returned.
+		parameter_table : bool, optional
+			If parameter_table is True, the parameter table is shown in the plot.
+		legend_loc : str, optional
+			Controls location of legend in plot. Defaults to 'upper left'.
+		log_scale : bool, optional
+			If log_scale is True, the y axis will use a log scale.
+		xlabel_string : str, optional
+			String for x axis label.
+		ylabel_string : str, optional
+			String for y axis label.
+		linewidth : float, optional
+			Line width for smoothed trendline.
+		markersize : float, optional
+			Size of markers in scatter plot.
+		marker_alpha : float, optional
+			Transparency of markers in scatter plot (0: maximum transpareny, 1: no transparency).
 		table_kwargs : dict, optional
 			Dictionary containing optional keyword arguments for 
 			:func:`~pyH2A.Analysis.Monte_Carlo_Analysis.Monte_Carlo_Analysis.render_parameter_table`
@@ -162,94 +1474,6 @@ class Comparative_MC_Analysis:
 		plot_kwargs: dict, optional
 			Dictionary containing optional keyword arguments for
 			:func:`~pyH2A.Utilities.output_utilities.Figure_Lean`, has priority over `**kwargs`.
-		dist_kwargs: dict, optional
-			Dictionary containg optional keyword arguments for
-			:func:`~pyH2A.Analysis.Monte_Carlo_Analysis.Monte_Carlo_Analysis.plot_distance_cost_relationship`
-		**kwargs: 
-			Additional `kwargs` passed to 
-			:func:`~pyH2A.Utilities.output_utilities.Figure_Lean`
-
-		Returns 
-		-------
-		figure : Figure_Lean object
-			Figure_Lean object is returned.
-		'''
-
-		model_number = len(self.models)
-
-		kwargs = {**{'right': 0.43, 'left': 0.08, 'top': 0.92,
-	 			     'fig_width': 10, 'fig_height': 6, 
-	 			     'font_size': 12,
-	 			     'name': 'Monte_Carlo_Comparative_Distance_Cost_Relationship'}, 
-	 			  **kwargs, **plot_kwargs}
-
-		image_kwargs = {**{'path': None, 'x': 1.2, 'y': 0.5, 'zoom': 0.08}, 
-						**image_kwargs}
-
-		dist_kwargs = {**{'log_scale': False, 'legend_loc': 'upper right'},
-					   **dist_kwargs}
-
-		table_kwargs = {**{'height': 0.23}, **table_kwargs}
-
-		if ax is None:
-			figure = Figure_Lean(**kwargs)
-			ax = figure.ax
-			return_figure = True
-		else:
-			return_figure = False
-
-		ax.axhspan(self.target_price_range[0], self.target_price_range[1], color = 'grey', alpha = 0.7)
-
-		for counter, (model_name, model) in enumerate(self.models.items()):
-			ycoord = 1 - 1.1 * (counter / model_number) - table_kwargs['height']
-
-			table_kwargs['ypos'] = ycoord
-
-			model['Model'].plot_distance_cost_relationship(ax = ax, figure_lean = False, 
-														   table_kwargs = table_kwargs,
-														   **dist_kwargs)
-
-			if 'Image' in model:
-				image_kwargs['path'] = model['Image']
-				image_kwargs['y'] = ycoord + 0.12
-				insert_image(ax = ax, **image_kwargs)
-
-		if figure_lean is True:
-			figure.execute()
-		
-		if return_figure:
-			return figure
-
-	def plot_combined_distance(self, fig_width = 12, fig_height = 2,
-							   table_kwargs = {}, image_kwargs = {}, 
-							   plot_kwargs = {}, dist_kwargs = {},
-							   hist_kwargs = {}, **kwargs):
-		'''Plot combining development distance histogram and distance/H2 cost
-		relationship.
-
-		Parameters
-		----------
-		fig_width : float, optional
-			Width of figure in inches.
-		fig_height : float, optional
-			Height of figure per model in inches.
-		target_line : float, optional
-			y axis coordinate of target price line.
-		table_kwargs : dict, optional
-			Dictionary containing optional keyword arguments for 
-			:func:`~pyH2A.Analysis.Monte_Carlo_Analysis.Monte_Carlo_Analysis.render_parameter_table`
-		image_kwargs: dict, optional
-			Dictionary containing optional keyword arguments for
-			:func:`~pyH2A.Utilities.output_utilities.insert_image`
-		plot_kwargs: dict, optional
-			Dictionary containing optional keyword arguments for
-			:func:`~pyH2A.Utilities.output_utilities.Figure_Lean`, has priority over `**kwargs`.
-		dist_kwargs: dict, optional
-			Dictionary containg optional keyword arguments for
-			:func:`~pyH2A.Analysis.Monte_Carlo_Analysis.Monte_Carlo_Analysis.plot_distance_cost_relationship`
-		hist_kwargs: dict, optional
-			Dictionary containg optional keyword arguments for
-			:func:`~pyH2A.Analysis.Monte_Carlo_Analysis.Monte_Carlo_Analysis.plot_distance_histogram`
 		**kwargs: 
 			Additional `kwargs` passed to 
 			:func:`~pyH2A.Utilities.output_utilities.Figure_Lean`
@@ -260,47 +1484,88 @@ class Comparative_MC_Analysis:
 			matplotlib.fig is returned if `figure_lean` is True.
 		'''
 
-		model_number = len(self.models)
-
-		kwargs = {**{'right': 0.675, 'left': 0.04, 'bottom': 0.15, 'top': 0.9,
-				     'hspace': 0.2, 'wspace': 0.62,
-	 			     'name': 'Monte_Carlo_Combined_Plot'}, 
+		kwargs = {**{'left': 0.1, 'right': 0.9, 'bottom': 0.1, 'top': 0.95,
+	 			     'fig_width': 7, 'fig_height': 4, 'font_size': 12,
+	 			     'name': 'Monte_Carlo_Distance_Cost_Relationship'}, 
 	 			  **kwargs, **plot_kwargs}
 
-		image_kwargs = {**{'x': -0.4}, 
+		table_kwargs = {**{'xpos': 1.4, 'height': 0.23, 'edge_padding': 0.0}, 
+						**table_kwargs}
+
+		image_kwargs = {**{'path': None, 'x': 0.5, 'y': 0.8, 'zoom': 0.08}, 
 						**image_kwargs}
 
-		dist_kwargs = {**{'log_scale': False, 'legend_loc': 'upper right'},
-					   **dist_kwargs}
+		if ax is None:
+			figure = Figure_Lean(**kwargs)
+			ax = figure.ax
 
-		gs = gridspec.GridSpec(model_number, 2)
+		ax.plot(self.results_distances_sorted[:,-1], self.results_distances_sorted[:,-2], '.', 
+				markersize = markersize, color = self.color, alpha = marker_alpha)
+		ax.plot(self.distances_cost_savgol[:,0], self.distances_cost_savgol[:,1], color = self.color, 
+			    label = self.display_name, linewidth = linewidth)
 
-		fig = plt.figure(figsize = (fig_width, fig_height * model_number))
-		ax0 = plt.subplot(gs[:, 0])
+		ax.axhspan(self.target_response_range[0], self.target_response_range[1], color = 'grey', alpha = 0.7)
 
-		ax_hist = []
-		for i in range(model_number):
-			ax_hist.append(plt.subplot(gs[i, 1]))
-
-		figure = Figure_Lean(provided_figure_and_axis = (fig, ax0), **kwargs)
-
-		for model_name, model in self.models.items():
-			model['Model'].plot_distance_cost_relationship(figure_lean = False, ax = ax0 ,
-														   parameter_table = False,
-														   **dist_kwargs)
+		if log_scale:
+			ax.set_yscale('log')
+			fmt = mticker.StrMethodFormatter("{x:g}")
+			ax.yaxis.set_major_formatter(fmt)
+		#else:
+		if ylim is not None:
+			ax.set_ylim(ylim[0], ylim[1])
 		
-		self.plot_comparative_distance_histogram(figure_lean = False, ax = ax_hist, 
-											     table_kwargs = table_kwargs,
-											     image_kwargs = image_kwargs,
-											     hist_kwargs = hist_kwargs)
+		if xlim is not None:
+			ax.set_xlim(xlim[0], xlim[1])
 
-		ax0.axhspan(self.target_price_range[0], self.target_price_range[1], color = 'grey', alpha = 0.7)
+		ax.set_xlabel(xlabel_string)
+		ax.set_ylabel(ylabel_string)
+		ax.grid(color = 'grey', linestyle = '--', linewidth = 0.2, zorder = 0)
+		ax.legend(loc = legend_loc)
 
-		ax0.text(-0.16, 1.04, 'A', transform=ax0.transAxes, size = 24, weight='bold')
-		ax0.text(1.36, 1.04, 'B', transform=ax0.transAxes, size = 24, weight='bold')
+		if parameter_table is True:
+			self.render_parameter_table(ax, **table_kwargs)
 
-		figure.execute()
+		if image_kwargs['path'] is not None:
+			insert_image(ax = ax, **image_kwargs)
 
-		return fig
+		if figure_lean is True:
+			figure.execute()
+			return figure.fig
 
-	
+	def plot_target_parameters_by_distance(self, ax = None, figure_lean = True,
+										   table_kwargs = {}, image_kwargs = {}, plot_kwargs = {},
+	 									   **kwargs):
+		'''
+
+		'''
+
+		kwargs = {**{'left': 0.1, 'right': 0.9, 'bottom': 0.1, 'top': 0.95,
+	 			     'fig_width': 7, 'fig_height': 4, 'font_size': 12,
+	 			     'name': 'Monte_Carlo_Distance_Cost_Relationship'}, 
+	 			  **kwargs, **plot_kwargs}
+
+		table_kwargs = {**{'xpos': 1.4, 'height': 0.23, 'edge_padding': 0.0}, 
+						**table_kwargs}
+
+		image_kwargs = {**{'path': None, 'x': 0.5, 'y': 0.8, 'zoom': 0.08}, 
+						**image_kwargs}
+
+		if ax is None:
+			figure = Figure_Lean(**kwargs)
+			ax = figure.ax
+
+
+		#ax.plot(self.target_distances_sorted[:,-1], self.target_distances_sorted[:,4], '.')
+		ax.plot(self.results_distances_sorted[:,3], self.results_distances_sorted[:,-1], '.')
+
+		if figure_lean is True:
+			figure.execute()
+			return figure.fig
+
+
+
+
+
+
+
+
