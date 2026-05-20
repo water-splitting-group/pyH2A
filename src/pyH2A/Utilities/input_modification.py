@@ -846,7 +846,8 @@ def sum_table_quantity(dictionary,
 					   middle_key_total_insertion = 'Summed Total',
 					   bottom_key_insertion = 'Value',
 					   class_object = None,
-					   print_info = True):
+					   print_info = True, 
+					   base_unit = None):
 	'''For the provided `dictionary`, all entries in dictionary[top_key] are summed.
 
 	Parameters
@@ -881,7 +882,7 @@ def sum_table_quantity(dictionary,
 		quantity = dictionary[top_key][key][bottom_key]
 		value += quantity.base_value
 
-	value = Quantity(value, quantity.base_unit)
+	value = Quantity(value, base_unit)
 
 	if insert_total is True:
 		insert(class_object, top_key, middle_key_total_insertion, bottom_key_insertion, 
@@ -898,7 +899,8 @@ def sum_all_tables_quantity(dictionary,
 							middle_key_contributions_insertion = 'Contributions',
 				   			bottom_key_insertion = 'Value', 
 							print_info = True, 
-							return_contributions = False):
+							return_contributions = False, 
+							base_unit = None):
 	'''
 	Sums all sums of tables within table group (assumes that sum_all_tables_quantity has already been applied to all tables in table group, 
 	so that the dictionary[top_key][middle_key_total_insertion][bottom_key_insertion] position of each table contains a Quantity object 
@@ -951,8 +953,8 @@ def sum_all_tables_quantity(dictionary,
 			value = dictionary[key][middle_key_total_insertion][bottom_key_insertion]
 			total += value.base_value
 			contributions['Data'][key] = value.base_value
-				
-	total = Quantity(total, value.base_unit)
+
+	total = Quantity(total, base_unit)				
 	contributions['Total'] = total
 
 	# Inserting total sum across all tables in table group

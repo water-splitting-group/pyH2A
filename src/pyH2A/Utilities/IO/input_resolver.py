@@ -3,6 +3,7 @@ import numpy as np
 
 from pyH2A.Utilities.check_functions import check_type, check_if_in_options, check_dimension, check_bounds
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+from pyH2A.Utilities.Unit_Handler import config as config
 from pyH2A.Utilities.input_modification import process_input, sum_table_quantity, sum_all_tables_quantity
 
 from tests.Utilities.Input_Resolver.input_resolver_test_data import DummyDCF, input_dict, input_dict_resolved
@@ -439,12 +440,32 @@ def table_resolver_function(top_key, table_dict, dcf_class):
         sum_table_arguments.pop('middle_key_contributions_insertion', None)
         sum_table_arguments.pop('middle_key_total_group_insertion', None)
 
+        # Determination of the base unit, from the dimension specified in input_dict
+        bottom_key = sum_table_arguments['bottom_key']
+        dimension = None
+
+        for middle_key, row_dict in table_dict.items():
+            if middle_key == SUM_TABLES_KEY:
+                continue
+
+            if bottom_key == VALUE_KEY:
+                unit_key = UNIT_KEY
+            else:
+                unit_key = bottom_key.replace(VALUE_SUFFIX, UNIT_SUFFIX)
+
+            if unit_key in row_dict:
+                dimension = row_dict[unit_key][DIMENSION_KEY]
+                break
+
+        base_unit = config.DIMENSIONS[dimension]["base"]
+
         table_sum = sum_table_quantity(
             dictionary = {top_key: resolved_table},
             top_key = top_key,
             insert_total = True,
             class_object = dcf_class,
             print_info = False,
+            base_unit = base_unit,
             **sum_table_arguments)
 
         resolved_table[sum_table_arguments['middle_key_total_insertion']] = {sum_table_arguments['bottom_key_insertion']: table_sum}     
@@ -477,6 +498,25 @@ def table_group_resolver_function(table_group_top_key, table_group_dict, dcf_cla
         sum_table_arguments = dict(table_group_dict[SUM_TABLES_KEY]['arguments'])
         sum_table_arguments.pop('bottom_key', None)
 
+        # Determination of the base unit, from the dimension specified in input_dict
+        bottom_key = table_group_dict[SUM_TABLES_KEY]['arguments']['bottom_key']
+        dimension = None
+
+        for middle_key, row_dict in table_group_dict.items():
+            if middle_key in [SUM_TABLES_KEY]:
+                continue
+
+            if bottom_key == VALUE_KEY:
+                unit_key = UNIT_KEY
+            else:
+                unit_key = bottom_key.replace(VALUE_SUFFIX, UNIT_SUFFIX)
+
+            if unit_key in row_dict:
+                dimension = row_dict[unit_key][DIMENSION_KEY]
+                break
+
+        base_unit = config.DIMENSIONS[dimension]["base"]
+        
         sum, contributions = sum_all_tables_quantity(
                     dictionary = resolved_table_group,
                     table_group = table_group_top_key,
@@ -484,6 +524,7 @@ def table_group_resolver_function(table_group_top_key, table_group_dict, dcf_cla
                     class_object = dcf_class,
                     print_info = False,
                     return_contributions = True,
+                    base_unit = base_unit,
                     **sum_table_arguments)
         
         # Updating resolved_table_group with total sum and contributions across all tables in the group 
