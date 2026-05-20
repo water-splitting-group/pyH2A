@@ -143,6 +143,15 @@ output_dict = {
 		},
 	},
 	"Depreciable Capital Costs": {
+		"Total": {
+			"Value": {
+				"inserted_value": "depreciable",
+				"type": {float,},
+				"dimension": "currency",
+			},	
+			"description": "Total depreciable capital costs.",
+			"optional": False,
+		},		
 		"Inflated": {
 			"Value": {
 				"inserted_value": "depreciable_inflated",
@@ -239,15 +248,15 @@ class Capital_Cost_Plugin:
 	Parameters
 	----------
 	<...> Direct Capital Cost <...> >> Value : float
-		``sum_all_tables()`` is used.
+		``sum_all_tables()`` is used in the input resolver.
 	<...> Indirect Capital Cost <...> >> Value : float
-		``sum_all_tables()`` is used.
+		``sum_all_tables()`` is used in the input resolver.
 	Non-Depreciable Capital Costs > Cost of land > Value : float
 		Cost of land.
 	Non-Depreciable Capital Costs > Land required > Value : float
 		Total land area required.
 	<...> Other Non-Depreciable Capital Cost <...> >> Value : float
-		``sum_all_tables()`` is used.
+		``sum_all_tables()`` is used in the input resolver.
 
 	Returns
 	-------
@@ -257,12 +266,14 @@ class Capital_Cost_Plugin:
 		Summed total for each individual table in "Indirect Capital Cost" group.
 	<...> Other Non-Depreciable Capital Cost  <...> > Summed total > Value : float
 		Summed total for each individual table in "Other Non-Depreciable Capital Cost" group.
-	Direct Capital Costs > Total > Value : float
-		Total direct capital costs.
+	Direct Capital Cost > Summed group total > Value : float
+		Summed total for all the tables in "Direct Capital Cost" group.
+	Indirect Capital Cost > Summed group total > Value : float
+		Summed total for all the tables in "Indirect Capital Cost" group.
+	Other Non-Depreciable Capital Cost > Summed group total > Value : float
+		Summed total for all the tables in "Other Non-Depreciable Capital Cost" group.		
 	Direct Capital Costs > Inflated > Value : float
 		Total direct capital costs multiplied by combined inflator.
-	Indirect Capital Costs > Total > Value : float
-		Total indirect capital costs.
 	Indirect Capital Costs > Inflated > Value : float
 		Total indirect capital costs multiplied by combined inflator.
 	Non-Depreciable Capital Costs > Total > Value : float
@@ -318,8 +329,8 @@ class Capital_Cost_Plugin:
 
 
 	def non_depreciable_capital_costs(self, dcf, print_info):
-		'''Calculation of non-depreciable capital costs by calculating cost of land and applying
-		``sum_all_tables()`` to "Other Non-Depreciable Capital Cost" group.
+		'''Calculation of non-depreciable capital costs by calculating cost of land and 
+			obtaining the total of the "Other Non-Depreciable Capital Cost" group.
 		'''
 
 		non_depreciable = self.input_dict_resolved['Non-Depreciable Capital Costs']
