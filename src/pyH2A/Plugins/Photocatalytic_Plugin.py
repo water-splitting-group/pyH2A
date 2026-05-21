@@ -209,7 +209,7 @@ input_dict = {
 			"description": "Solar-to-hydrogen efficiency in percentage or as a value between 0 and 1."
 		},
 	},
-	"Solar Input": {
+ 	"Solar Input": {
 		"Mean solar input": {
 			"Value": {
 				"type": {float,},
@@ -234,7 +234,7 @@ input_dict = {
 		},
 	},	
 }
-
+  
 output_dict = {
 	"Non-Depreciable Capital Costs": {
 		"Land required": {
@@ -297,7 +297,7 @@ output_dict = {
 			"description": "Total baggie cost."
 		},
 	},
-	"Direct Capital Costs - Photocatalyst": {
+ 	"Direct Capital Costs - Photocatalyst": {
 		"Catalyst cost": {
 			"Value": {
 				"inserted_value": "catalyst_cost",
@@ -446,7 +446,7 @@ class Photocatalytic_Plugin:
 
 		peak_hourly_irradiation_per_m2 = np.amax(self.input_dict_resolved['Solar Input']['Hourly']['Value'].unit['J/m2'])
 		
-		peak_mol_H2_per_m2_per_h = peak_hourly_irradiation_per_m2 * self.input_dict_resolved['Solar-to-Hydrogen Efficiency']['STH']['Value'].unit['-'] / self.H2_molecule_energy.unit['J/mol']
+		peak_hourly_mol_H2_per_m2 = peak_hourly_irradiation_per_m2 * self.input_dict_resolved['Solar-to-Hydrogen Efficiency']['STH']['Value'].unit['-'] / self.H2_molecule_energy.unit['J/mol']
 
 		self.mean_mol_rate_H2_per_surface = Quantity(
 			self.input_dict_resolved['Solar Input']['Mean solar input']['Value'].unit['W/m2'] *self.input_dict_resolved['Solar-to-Hydrogen Efficiency']['STH']['Value'].unit['-'] / self.H2_molecule_energy.unit['J/mol'], 
@@ -455,10 +455,10 @@ class Photocatalytic_Plugin:
 
 		kg_catalyst_per_m2 = self.input_dict_resolved['Reactor Baggies']['Filling height']['Value'].unit['m'] * self.input_dict_resolved['Catalyst']['Concentration']['Value'].unit['kg/m3']
 
-		self.activity_H2_rate_per_catalyst_mass = Quantity(peak_mol_H2_per_m2_per_h / kg_catalyst_per_m2, 'mol/h/kg')
+		self.activity_H2_rate_per_catalyst_mass = Quantity(peak_hourly_mol_H2_per_m2 / kg_catalyst_per_m2, 'mol/h/kg')
 
 		catalyst_properties['Peak activity'] = self.activity_H2_rate_per_catalyst_mass
-		catalyst_properties['Peak H2 production'] = Quantity(peak_mol_H2_per_m2_per_h, 'mol/m2/h')
+		catalyst_properties['Peak H2 production'] = Quantity(peak_hourly_mol_H2_per_m2, 'mol/m2/h')
 		catalyst_properties['Catalyst Conc.'] = Quantity(kg_catalyst_per_m2, 'kg/m2')
 		catalyst_properties['Catalyst Conc.'] = self.input_dict_resolved['Catalyst']['Concentration']['Value']
 	
@@ -470,7 +470,7 @@ class Photocatalytic_Plugin:
 
 			mol_catalyst_per_m2 = liter_per_m2 * catalyst_mol_per_L
 
-			peak_TOF_hourly = peak_mol_H2_per_m2_per_h / mol_catalyst_per_m2
+			peak_TOF_hourly = peak_hourly_mol_H2_per_m2 / mol_catalyst_per_m2
 			average_TOF_daily = self.mean_mol_rate_H2_per_surface.unit['mol/day/m2'] / mol_catalyst_per_m2
 			TON = average_TOF_daily * self.input_dict_resolved['Catalyst']['Lifetime']['Value'].unit['day']
 
