@@ -49,9 +49,9 @@ class DummyDCF:
             "expected": {
                 "latitude": Quantity(34.859,"deg"),
                 "longitude": Quantity(-116.889,"deg"),
-                "mean_power_dat": Quantity(6.801704863179404/24.,"kW/m2"), # the original value was kWh/m2/day, which is not supported, so we divide by 24 to have equivalent kWh/m2
-                "mean_power": Quantity(5.499228123213646/24.,"kW/m2"),
-                "mean_power_sat": Quantity(6.8301271595436885/24.,"kW/m2"),
+                "mean_power_dat": Quantity(6.801704863179404,"kWh_per_day/m2"), 
+                "mean_power": Quantity(5.499228123213646,"kWh_per_day/m2"),
+                "mean_power_sat": Quantity(6.8301271595436885,"kWh_per_day/m2"),
             },
         },
     ],
