@@ -209,7 +209,7 @@ input_dict = {
 			"description": "Solar-to-hydrogen efficiency in percentage or as a value between 0 and 1."
 		},
 	},
- 	"Solar Input": {
+	"Solar Input": {
 		"Mean solar input": {
 			"Value": {
 				"type": {float,},
@@ -234,7 +234,7 @@ input_dict = {
 		},
 	},	
 }
-  
+
 output_dict = {
 	"Non-Depreciable Capital Costs": {
 		"Land required": {
@@ -246,7 +246,7 @@ output_dict = {
 			"optional": False,
 			"description": "Total land area required."
 		},
-		"Solar Collection area": {
+		"Solar collection area": {
 			"Value": {
 				"inserted_value": "total_solar_collection_area",
 				"type": {float,},
@@ -297,7 +297,7 @@ output_dict = {
 			"description": "Total baggie cost."
 		},
 	},
- 	"Direct Capital Costs - Photocatalyst": {
+	"Direct Capital Costs - Photocatalyst": {
 		"Catalyst cost": {
 			"Value": {
 				"inserted_value": "catalyst_cost",
@@ -409,16 +409,15 @@ class Photocatalytic_Plugin:
 
 	def __init__(self, dcf, print_info):
 		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Photocatalytic_Plugin')
-		
 		self.H2_molecule_energy = Quantity(2*1.229, 'eV/entity')
 		self.H2_molecular_weight = Quantity(2, 'g/mol')
-		
 		self.hydrogen_production(dcf)
+
 		self.baggie_cost(dcf)
+
 		self.catalyst_cost(dcf)
 		self.land_area(dcf)
 		self.catalyst_activity(dcf)
-		
 		self.catalyst_lifetime = self.input_dict_resolved['Catalyst']['Lifetime']['Value']
 		self.baggie_lifetime = self.input_dict_resolved['Reactor Baggies']['Lifetime']['Value']
 
@@ -431,7 +430,6 @@ class Photocatalytic_Plugin:
 		baggie = self.input_dict_resolved['Reactor Baggies']
 
 		self.baggie_area = Quantity(baggie['Length']['Value'].unit['m'] * baggie['Width']['Value'].unit['m'], 'm2')
-		
 		baggie_insolation = self.baggie_area.unit['m2'] * self.input_dict_resolved['Solar Input']['Mean solar input']['Value'].unit['W/m2']
 		mol_H2_per_baggie_per_second = baggie_insolation * self.input_dict_resolved['Solar-to-Hydrogen Efficiency']['STH']['Value'].unit['-'] / self.H2_molecule_energy.unit['J/mol']
 
