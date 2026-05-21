@@ -1,6 +1,5 @@
 import pytest
-import numpy as np
-from pyH2A.Plugins.Fixed_Operating_Cost_Plugin import Fixed_Operating_Cost_Plugin
+from pyH2A.Plugins.Other_Fixed_Operating_Cost_Plugin import Other_Fixed_Operating_Cost_Plugin
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
 
@@ -9,23 +8,18 @@ class DummyDCF:
 
     def __init__(
         self,
-        staff,
-        hourly_labor_cost,
         other_fixed_costs,
-        labor_inflator,
+        labor_cost,
         combined_inflator,
     ):
         self.inp = {
             "Fixed Operating Costs": {
-                "Staff": {
-                    "Value": staff,
-                    "Unit": "-",
-                },
-                "Hourly labor cost": {
-                    "Value": hourly_labor_cost,
-                    "Unit": "USD / h",
+                "Labor cost": {
+                    "Value": labor_cost,
+                    "Unit": "USD",
                 },
             },
+
             "<...> Other Fixed Operating Cost <...>": {
                 key: {
                     "Value": value,
@@ -35,7 +29,6 @@ class DummyDCF:
             },
         }
 
-        self.labor_inflator = labor_inflator
         self.combined_inflator = combined_inflator
 
 
@@ -44,19 +37,15 @@ class DummyDCF:
     [
         {
             "input": {
-                "staff": 1.0,
-                "hourly_labor_cost": 50.0,
+                "labor_cost": 109200.,
                 "other_fixed_costs": {
                     "electrolyzer_OPEX": 0.2, 
                     "PV_OPEX": 0.2
                 },
-                "labor_inflator": 1.05,
                 "combined_inflator": 1.1,
             },
             "expected": {
-                "labor_uninflated": Quantity(104000.0, "USD"),
-                "labor": Quantity(109200.0, "USD"),
-                "total_fixed_operating_cost": Quantity(109200.44000000000000006, "USD"),
+                "total_fixed_operating_cost": Quantity(109200.44, "USD"),
             },
         },
     ],
@@ -68,24 +57,14 @@ def test_fixed_operating_cost_plugin(case):
     dcf = DummyDCF(**case["input"])
 
     # Run plugin
-    plugin = Fixed_Operating_Cost_Plugin(dcf, print_info=False)
+    plugin = Other_Fixed_Operating_Cost_Plugin(dcf, print_info=False)
     expected = case["expected"]
     
     # Tolerance (very small)
     tolerance = 1e-12
 
-    assert plugin.labor_uninflated.unit['USD'] == pytest.approx(
-        expected["labor_uninflated"].unit['USD'],
-        abs=tolerance
-    )
-
-    assert plugin.labor.unit['USD'] == pytest.approx(
-        expected["labor"].unit['USD'],
-        abs=tolerance
-    )
 
     assert plugin.total_fixed_operating_cost.unit['USD'] == pytest.approx(
         expected["total_fixed_operating_cost"].unit['USD'],
         abs=tolerance
     )
-
