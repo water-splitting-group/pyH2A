@@ -141,8 +141,8 @@ output_dict = {
                 "type": {float,},
                 "dimension": "time",
             },
-            "add_processed": False,
-            "insert_path": False,
+         #   "add_processed": False, # problem here: if add_processed is false, we get an error parsing the inputs ; if it'S true, then the Cost_Path is ignored in the input file.
+        #    "insert_path": False,
             "optional": False,
             "description": "Frequency of electrolyzer stack replacements in years, calculated from replacement time and hourly irradiation data."
         },
@@ -246,8 +246,6 @@ class Electrolyzer_Plugin:
         Yearly operation data of electrolyzer : H2 produced during the year.
     Electrolyzer > Yearly operation data > Duration_Value : nd.array
         Yearly operation data of electrolyzer : duration of operation during the year.                
-    Electrolyzer > H2 production (yearly) > Value : nd.array
-        Yearly hydrogen production.
     Power Generation > Available energy (hourly) > Value : dict
         Available energy (hourly) after subtracting power consumed by electrolyzer. 
         (dictionary of years).
