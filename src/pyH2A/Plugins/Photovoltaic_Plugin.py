@@ -11,7 +11,7 @@ input_dict = {
 				"bounds": (0, None),
 			},
 			"Unit": {
-				"dimension": "power / area",
+				"dimension": "energy / area",
 			},
 			"optional": False,
 			"description": "Hourly power ratio data for electricity production calculation. Either a path to a text file containing the data or ndarray. A suitable array can be retrieved from 'Hourly Irradiation > *type of tracking* > Value'."
@@ -30,6 +30,19 @@ input_dict = {
 			"description": "Multiplier to describe cost reduction of PV CAPEX for every ten-fold increase of power relative to CAPEX reference power. Based on the multiplier the CAPEX scaling factor is calculated as: multiplier ^ (number of ten-fold increases). A value of 1 leads to no CAPEX reduction, a value < 1 enables cost reduction."
 		},
 	},
+	"Electrolyzer": {
+		"Nominal power": {
+			"Value": {	
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {	
+				"dimension": "power",
+			},
+			"optional": True,
+			"description": "Nominal power of electrolyzer; can be used to size the PV array."
+		},
+	},	
 	"Photovoltaic": {
 		"Nominal power": {
 			"Value": {	
@@ -93,7 +106,7 @@ output_dict = {
 	"Power Generation": {
 		"PV hourly power generation": {
 			"Value": {
-				"inserted_value": "power_generation_yearly_data",
+				"inserted_value": "electric_energy_generation_yearly_data",
 				"type": {dict,},
 				"dimension": "energy",
 			},
@@ -102,7 +115,7 @@ output_dict = {
 		},
 		"Available energy (hourly)": {
 			"Value": {
-				"inserted_value": "power_generation_yearly_data",
+				"inserted_value": "electric_energy_generation_yearly_data",
 				"type": {dict,},
 				"dimension": "energy",
 			},
@@ -111,7 +124,7 @@ output_dict = {
 		},
 		"Available energy (daily)": {
 			"Value": {
-				"inserted_value": "power_generation_yearly_data_daily_power",
+				"inserted_value": "electric_energy_generation_yearly_data_daily_power",
 				"type": {dict,},
 				"dimension": "energy",
 			},
@@ -198,22 +211,22 @@ class Photovoltaic_Plugin:
 		'''
 
 		if isinstance(self.input_dict_resolved['Irradiation Used']['Data']['Value'], str):
-			data = Quantity(read_textfile(self.input_dict_resolved['Irradiation Used']['Data']['Value'], delimiter = '	')[:,1], 'kW/m2').unit['W/m2']
+			data = Quantity(read_textfile(self.input_dict_resolved['Irradiation Used']['Data']['Value'], delimiter = '	')[:,1], 'kWh/m2').unit['J/m2']
 		else:
-			data = self.input_dict_resolved['Irradiation Used']['Data']['Value'].unit['W/m2']
+			data = self.input_dict_resolved['Irradiation Used']['Data']['Value'].unit['J/m2']
 
 		yearly_data = {}
 		yearly_data_daily_power = {}
 
 		for year in dcf.operation_years:
 			data_loss_corrected = self.calculate_photovoltaic_loss_correction(data, year)
-			power_generation = data_loss_corrected * self.input_dict_resolved['Photovoltaic']['Nominal power']['Value'].unit['W']
+			electric_energy_generation = data_loss_corrected * self.input_dict_resolved['Photovoltaic']['Nominal power']['Value'].unit['kW']
 
-			yearly_data[year] = Quantity(power_generation, 'Wh') # conversion from power to energy into 1-hour slots
-			yearly_data_daily_power[year] = Quantity(hourly_to_daily_power(power_generation), 'Wh')
+			yearly_data[year] = Quantity(electric_energy_generation, 'J') 
+			yearly_data_daily_power[year] = Quantity(hourly_to_daily_power(electric_energy_generation), 'J')			
 
-		self.power_generation_yearly_data = yearly_data
-		self.power_generation_yearly_data_daily_power = yearly_data_daily_power
+		self.electric_energy_generation_yearly_data = yearly_data
+		self.electric_energy_generation_yearly_data_daily_power = yearly_data_daily_power
 
 	def calculate_photovoltaic_loss_correction(self, data, year):
 		'''Calculation of yearly reduction in electricity production by PV array.
