@@ -6,7 +6,7 @@ from pyH2A.Utilities.input_modification import convert_input_to_dictionary
     [
         {
             "input": {
-                "file_path": "src/tests/Utilities/Dictionary_Merger/dictionary_merger_test_data/override_two.md"
+                "file_path": "src/tests/Utilities/Arbitary_Input_Merger/arbitary_input_merger_test_data/override_two.md"
             },
             "expected": {
                 "Process > Temperature > Value": 320,
@@ -19,7 +19,7 @@ from pyH2A.Utilities.input_modification import convert_input_to_dictionary
         },
         {
              "input": {
-                "file_path": "src/tests/Utilities/Dictionary_Merger/dictionary_merger_test_data/cycle_a.md"
+                "file_path": "src/tests/Utilities/Arbitary_Input_Merger/arbitary_input_merger_test_data/cycle_a.md"
             },
             "expected": {
                 "A > Value > Value": 1,
@@ -32,9 +32,9 @@ from pyH2A.Utilities.input_modification import convert_input_to_dictionary
         "without_base_file"
     ]
 )
-def test_dictionary_merger(case, request):
+def test_arbitrary_input_merger(case, request):
     """
-    Tests Dictionary merger functionality for two different scenarios:
+    Tests input merger functionality for two different scenarios:
 
     1. "with_base_file"
         - Input contains a Base input file table
