@@ -25,7 +25,7 @@ class DummyDCF:
             "Technical Operating Parameters and Specifications": {
                 "Output per year": {
                     "Value": plant_output_per_year, 
-                    "Unit": "kg / year",
+                    "Unit": "kg",
                     "Processed": "Yes"
                 }
             },
@@ -71,7 +71,7 @@ def test_reverse_osmosis_plugin(case):
     dcf = DummyDCF(**case["input"])
 
     # Run plugin
-    plugin = Reverse_Osmosis_Plugin(dcf)
+    plugin = Reverse_Osmosis_Plugin(dcf, print_info=False)
     expected = case["expected"]
 
     # Tolerance (very small)
