@@ -17,7 +17,8 @@ input_dict = {
 			"Cost_Value": {
 				"type": {float,},
 				"bounds": (0, None),
-			},
+				"path": "Cost_Path"
+			},		
 			"Cost_Unit": {
 				"dimension": "currency",
 			},
@@ -80,8 +81,8 @@ output_dict = {
                     },
                     "optional": False,
                     "description": "Summed total of unplanned replacement across all tables"
-                },				
-            },			
+                },
+            },
 		}
 	},
 }	
@@ -114,9 +115,8 @@ class Replacement_Plugin:
 	'''
 
 	def __init__(self, dcf, print_info):
-
 		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Replacement_Plugin')
-
+		
 		self.initialize_yearly_costs(dcf)
 		self.initialize_contributions()
 		self.calculate_planned_replacement(dcf)
@@ -127,7 +127,7 @@ class Replacement_Plugin:
 		
 		self.yearly_inflated = Quantity(self.yearly * dcf.inflation_correction * dcf.inflation_factor, 'USD')
 		output_inserter_function(output_dict, self, dcf, 'Replacement_Plugin') 
-
+	
 	def initialize_yearly_costs(self, dcf):
 		'''Initializes ndarray filled with zeros with same length as dcf.inflation_factor.
 		'''
