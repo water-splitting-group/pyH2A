@@ -8,7 +8,7 @@ input_dict = {
 	"Technical Operating Parameters and Specifications": {
 		"Output per year": {
 			"Value": {
-				"type": {float},
+				"type": {float, np.ndarray},
 				"bounds": (0, None)
 			},
 			"Unit": {
@@ -22,14 +22,16 @@ input_dict = {
 		"<...>": {
 			"Cost_Value": {
 				"type": {float, str, np.ndarray},
-				"bounds": (0, None)
+				"bounds": (0, None),
+				"path": "Cost_Path"
 			},
 			"Cost_Unit": {
 				"dimension": "currency" # we omit the basis on purpose, at it is transparent, and will simplify with the basis per kg; the raito is precisely what the conversion factor is there for
 			},			
 			"Usage_Value": {
 				"type": {float},
-				"bounds": (0, None)
+				"bounds": (0, None), 
+				"path": "Usage_Path"
 			},
 			"Usage_Unit": {
 				"dimension": "dimensionless/mass" # basis per kg of hydrogen
@@ -40,23 +42,15 @@ input_dict = {
 			},
 			"Price_Conversion_Factor_Unit": {
 				"dimension": "dimensionless"
-			},
-			"Cost_Path": {
-				"type": {str},
-				"bounds": None, 
-			},			
-			"Usage_Path": {
-				"type": {str},
-				"bounds": None, 
-			},
+			},		
 			"optional": True,
-			"description": "Utilities are specified by specifying the cost of a given utility (e.g. USD of each kWh of electricity and specifying the usage of the utility per mass of product (e.g. kWh of electricity consumption /kg (H2). The cost of the utility may be either a float, a ndarray with the same length as `dcf.inflation_correction` or a textfile containing cost values (cost values have to be in second column). For cost the path key is Cost_Path and for usage the path key is Usage_Path"
+			"description": "Utilities are specified by specifying the cost of a given utility (e.g. USD of each kWh of electricity) and specifying the usage of the utility per mass of product (e.g. kWh of electricity consumption /kg (H2). The cost of the utility may be either a float, a ndarray with the same length as `dcf.inflation_correction` or a textfile containing cost values (cost values have to be in second column). For cost the path key is Cost_Path and for usage the path key is Usage_Path"
 		}
 	},
 	"<...> Other Variable Operating Cost <...>": {
 		"<...>": {
 			"Value": {
-				"type": {float},
+				"type": {float, np.ndarray},
 				"bounds": (0, None)
 			},
 			"Unit": {
@@ -101,7 +95,7 @@ output_dict = {
 		"Other": {
 			"Value": {
 				"inserted_value": "other",
-				"type": {float},
+				"type": {float, np.ndarray},
 				"dimension": "currency",
 			},
 			"optional": False,
@@ -128,7 +122,6 @@ output_dict = {
                     "description": "Summed total of other variable operating costs across all tables"
                 },
             },
-
 		},
 	}
 }
@@ -179,7 +172,6 @@ class Variable_Operating_Cost_Plugin:
 		self.calculate_utilities_cost(dcf)
 		self.other_variable_costs(dcf)
 		self.total_variable_costs = Quantity(self.utilities.unit['USD'] + self.other.unit['USD'], 'USD')	
-
 		output_inserter_function(output_dict, self, dcf, 'Variable_Operating_Cost_Plugin')   
 
 
