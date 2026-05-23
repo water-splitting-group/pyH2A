@@ -409,33 +409,37 @@ class Photocatalytic_Plugin:
 
 	def __init__(self, dcf, print_info):
 		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Photocatalytic_Plugin')
+		
 		self.H2_molecule_energy = Quantity(2*1.229, 'eV/entity')
 		self.H2_molecular_weight = Quantity(2, 'g/mol')
-		self.hydrogen_production(dcf)
-
-		self.baggie_cost(dcf)
-
-		self.catalyst_cost(dcf)
-		self.land_area(dcf)
-		self.catalyst_activity(dcf)
+		
 		self.catalyst_lifetime = self.input_dict_resolved['Catalyst']['Lifetime']['Value']
 		self.baggie_lifetime = self.input_dict_resolved['Reactor Baggies']['Lifetime']['Value']
-
+		
+		self.hydrogen_production()
+		self.baggie_cost()
+		self.catalyst_cost()
+		self.land_area()
+		self.catalyst_activity()
+		
 		output_inserter_function(output_dict, self, dcf, 'Photocatalytic_Plugin') 
 
-	def hydrogen_production(self, dcf):
+	def hydrogen_production(self):
 		'''Calculation of hydrogen produced per day per baggie (in kg).
 		'''
 
 		baggie = self.input_dict_resolved['Reactor Baggies']
 
 		self.baggie_area = Quantity(baggie['Length']['Value'].unit['m'] * baggie['Width']['Value'].unit['m'], 'm2')
-		baggie_insolation = self.baggie_area.unit['m2'] * self.input_dict_resolved['Solar Input']['Mean solar input']['Value'].unit['W/m2']
-		mol_H2_per_baggie_per_second = baggie_insolation * self.input_dict_resolved['Solar-to-Hydrogen Efficiency']['STH']['Value'].unit['-'] / self.H2_molecule_energy.unit['J/mol']
+		baggie_insolation = (self.baggie_area.unit['m2'] 
+							 * self.input_dict_resolved['Solar Input']['Mean solar input']['Value'].unit['W/m2'])
+		mol_H2_per_baggie_per_second = (baggie_insolation 
+										* self.input_dict_resolved['Solar-to-Hydrogen Efficiency']['STH']['Value'].unit['-'] 
+										/ self.H2_molecule_energy.unit['J/mol'])
 
 		self.mass_rate_H2_per_baggie = Quantity(mol_H2_per_baggie_per_second*self.H2_molecular_weight.unit['kg/mol'], 'kg/s')
 
-	def catalyst_activity(self, dcf):
+	def catalyst_activity(self):
 		'''Calculation of detailed catalyst properties based on provided parameters. If "Molar Weight (g/mol)"
 		is specified in "Catalyst" table properties of a homogeneous catalyst are also calculated. Furthermore,
 		if "Molar Attenuation Coefficient (M^-1 cm^-1)" is also provided, the light absorption properties 
@@ -446,25 +450,30 @@ class Photocatalytic_Plugin:
 
 		peak_hourly_irradiation_per_m2 = np.amax(self.input_dict_resolved['Solar Input']['Hourly']['Value'].unit['J/m2'])
 		
-		peak_hourly_mol_H2_per_m2 = peak_hourly_irradiation_per_m2 * self.input_dict_resolved['Solar-to-Hydrogen Efficiency']['STH']['Value'].unit['-'] / self.H2_molecule_energy.unit['J/mol']
+		peak_hourly_mol_H2_per_m2 = (peak_hourly_irradiation_per_m2
+									 * self.input_dict_resolved['Solar-to-Hydrogen Efficiency']['STH']['Value'].unit['-']
+									 / self.H2_molecule_energy.unit['J/mol'])
 
-		self.mean_mol_rate_H2_per_surface = Quantity(
-			self.input_dict_resolved['Solar Input']['Mean solar input']['Value'].unit['W/m2'] *self.input_dict_resolved['Solar-to-Hydrogen Efficiency']['STH']['Value'].unit['-'] / self.H2_molecule_energy.unit['J/mol'], 
-			'mol/s/m2'
-		)
+		mean_mol_rate_H2_per_surface = (self.input_dict_resolved['Solar Input']['Mean solar input']['Value'].unit['W/m2'] 
+										* self.input_dict_resolved['Solar-to-Hydrogen Efficiency']['STH']['Value'].unit['-']
+										/ self.H2_molecule_energy.unit['J/mol'])
+		
+		self.mean_mol_rate_H2_per_surface = Quantity(mean_mol_rate_H2_per_surface, 'mol/s/m2')
 
-		kg_catalyst_per_m2 = self.input_dict_resolved['Reactor Baggies']['Filling height']['Value'].unit['m'] * self.input_dict_resolved['Catalyst']['Concentration']['Value'].unit['kg/m3']
+		kg_catalyst_per_m2 = (self.input_dict_resolved['Reactor Baggies']['Filling height']['Value'].unit['m']
+							  * self.input_dict_resolved['Catalyst']['Concentration']['Value'].unit['kg/m3'])
 
 		self.activity_H2_rate_per_catalyst_mass = Quantity(peak_hourly_mol_H2_per_m2 / kg_catalyst_per_m2, 'mol/h/kg')
 
 		catalyst_properties['Peak activity'] = self.activity_H2_rate_per_catalyst_mass
 		catalyst_properties['Peak H2 production'] = Quantity(peak_hourly_mol_H2_per_m2, 'mol/m2/h')
-		catalyst_properties['Catalyst Conc.'] = Quantity(kg_catalyst_per_m2, 'kg/m2')
-		catalyst_properties['Catalyst Conc.'] = self.input_dict_resolved['Catalyst']['Concentration']['Value']
+		catalyst_properties['Catalyst Concentration (mass / area)'] = Quantity(kg_catalyst_per_m2, 'kg/m2')
+		catalyst_properties['Catalyst Concentration (mass / volume)'] = self.input_dict_resolved['Catalyst']['Concentration']['Value']
 	
 		if 'Molar Weight' in self.input_dict_resolved['Catalyst']:
 
-			catalyst_mol_per_L = self.input_dict_resolved['Catalyst']['Concentration']['Value'].unit['g/liter'] / self.input_dict_resolved['Catalyst']['Molar Weight']['Value'].unit['g/mol']
+			catalyst_mol_per_L = (self.input_dict_resolved['Catalyst']['Concentration']['Value'].unit['g/liter'] 
+								  / self.input_dict_resolved['Catalyst']['Molar Weight']['Value'].unit['g/mol'])
 
 			liter_per_m2 = self.input_dict_resolved['Reactor Baggies']['Filling height']['Value'].unit['mm']
 
@@ -475,61 +484,91 @@ class Photocatalytic_Plugin:
 			TON = average_TOF_daily * self.input_dict_resolved['Catalyst']['Lifetime']['Value'].unit['day']
 
 			catalyst_properties['Homogeneous'] = {}
-			catalyst_properties['Homogeneous']['Catalyst Conc. per vol.'] = Quantity(catalyst_mol_per_L, 'mol/liter')
-			catalyst_properties['Homogeneous']['Catalyst Conc. per area'] = Quantity(mol_catalyst_per_m2, 'mol/m2')
-			catalyst_properties['Homogeneous']['Peak TOF'] = Quantity(peak_TOF_hourly, '-/hour')
-			catalyst_properties['Homogeneous']['Mean daily TOF'] = Quantity(average_TOF_daily, '-/day')
+			catalyst_properties['Homogeneous']['Molar catalyst concentration per volume'] = Quantity(catalyst_mol_per_L, 'mol/liter')
+			catalyst_properties['Homogeneous']['Molar catalyst Concentration per area'] = Quantity(mol_catalyst_per_m2, 'mol/m2')
+			catalyst_properties['Homogeneous']['Peak TOF'] = Quantity(peak_TOF_hourly, '1/hour')
+			catalyst_properties['Homogeneous']['Mean daily TOF'] = Quantity(average_TOF_daily, '1/day')
 			catalyst_properties['Homogeneous']['TON'] = Quantity(TON, '-')
 
 			if 'Molar Attenuation Coefficient' in self.input_dict_resolved['Catalyst']:
-				absorbance = catalyst_mol_per_L * self.input_dict_resolved['Reactor Baggies']['Filling height']['Value'].unit['cm'] * self.input_dict_resolved['Catalyst']['Molar Attenuation Coefficient']['Value'].unit['liter/cm/mol']
+				absorbance = (catalyst_mol_per_L 
+							  * self.input_dict_resolved['Reactor Baggies']['Filling height']['Value'].unit['cm'] 
+							  * self.input_dict_resolved['Catalyst']['Molar Attenuation Coefficient']['Value'].unit['liter/cm/mol'])
 
 				catalyst_properties['Homogeneous']['Absorbance'] = Quantity(absorbance, '-')
 				catalyst_properties['Homogeneous']['Absorbed light'] = Quantity(1 - 10**(-absorbance), '-')
 
-			kg_H2_per_day_TOF_calculation = self.catalyst_amount.unit['kg'] / self.input_dict_resolved['Catalyst']['Molar weight']['Value'].unit['kg/mol'] * average_TOF_daily * self.H2_molecular_weight.unit['kg/mol']
+			kg_H2_per_day_TOF_calculation = (self.catalyst_amount.unit['kg'] 
+											 / self.input_dict_resolved['Catalyst']['Molar weight']['Value'].unit['kg/mol'] 
+											 * average_TOF_daily * self.H2_molecular_weight.unit['kg/mol'])
+			
 			kg_H2_per_day_baggie_calculation = self.mass_rate_H2_per_baggie.unit['kg/day'] * self.baggie_number
 
-			assert abs(kg_H2_per_day_TOF_calculation - kg_H2_per_day_baggie_calculation) < 1e-6, 'Difference between baggie and TOF calculation for daily H2 production: TOF: {0}, Baggie: {0}.'.format(
+			assert abs(kg_H2_per_day_TOF_calculation - kg_H2_per_day_baggie_calculation) < 1e-6, 
+					   'Difference between baggie and TOF calculation for daily H2 production: TOF: {0}, Baggie: {0}.'.format(
 					kg_H2_per_day_TOF_calculation, kg_H2_per_day_baggie_calculation)
 
 		self.catalyst_properties = catalyst_properties
 
-	def baggie_cost(self, dcf):
+	def baggie_cost(self):
 		'''Calculation of cost per baggie, number of required baggies and total baggie cost.
 		'''
 
 		baggie = self.input_dict_resolved['Reactor Baggies']
 
-		material_cost = self.baggie_area.unit['m2'] * (baggie['Cost material top']['Value'].unit['USD/m2'] + baggie['Cost material bottom']['Value'].unit['USD/m2'])
-		port_cost = baggie['Number of ports per baggie']['Value'].unit['-'] * baggie['Cost of port']['Value'].unit['USD']
+		material_cost = (self.baggie_area.unit['m2'] 
+						 * (baggie['Cost material top']['Value'].unit['USD/m2'] 
+							+ baggie['Cost material bottom']['Value'].unit['USD/m2']))
+		
+		port_cost = (baggie['Number of ports per baggie']['Value'].unit['-'] 
+					 * baggie['Cost of port']['Value'].unit['USD'])
 
-		cost_per_baggie = baggie['Markup factor']['Value'].unit['-'] * (material_cost + port_cost + baggie['Other costs per baggie']['Value'].unit['USD'])
+		cost_per_baggie = (baggie['Markup factor']['Value'].unit['-'] 
+						   * (material_cost + port_cost + baggie['Other costs per baggie']['Value'].unit['USD']))
 
-		self.baggie_number = Quantity((np.ceil(self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output flowrate']['Value'].unit['kg/day'] / self.mass_rate_H2_per_baggie.unit['kg/day'])).astype(int), '-')
+		baggie_number = (self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output flowrate']['Value'].unit['kg/day'] 
+						 / self.mass_rate_H2_per_baggie.unit['kg/day'])
+		baggie_number_rounded_up = np.ceil(baggie_number).astype(int)
+		
+		self.baggie_number = Quantity(baggie_number_rounded_up, '-')
 		self.baggies_cost = Quantity(self.baggie_number.unit['-'] * cost_per_baggie, 'USD')
 
-	def catalyst_cost(self, dcf):
+	def catalyst_cost(self):
 		'''Calculation of individual baggie volume, catalyst amount per baggie, total catalyst amount 
 		and total catalyst cost.
 		'''
 
 		baggie = self.input_dict_resolved['Reactor Baggies']
 
-		baggie_volume = baggie['Length']['Value'].unit['m'] * baggie['Width']['Value'].unit['m'] * baggie['Filling height']['Value'].unit['m']
+		baggie_volume = (baggie['Length']['Value'].unit['m'] 
+						 * baggie['Width']['Value'].unit['m']
+						 * baggie['Filling height']['Value'].unit['m'])
 
-		self.total_volume = Quantity(baggie_volume * self.baggie_number.unit['-'], 'm3')
+		self.total_volume = Quantity(baggie_volume 
+									 * self.baggie_number.unit['-'], 
+									 'm3')
+		
+		self.catalyst_amount_per_baggie = Quantity(baggie_volume 
+												   * self.input_dict_resolved['Catalyst']['Concentration']['Value'].unit['kg/m3'], 
+												   'kg')
+		
+		self.catalyst_amount = Quantity(self.catalyst_amount_per_baggie.unit['kg'] 
+										* self.baggie_number.unit['-'], 
+										'kg')
+		
+		self.catalyst_cost = Quantity(self.catalyst_amount.unit['kg'] 
+									  * self.input_dict_resolved['Catalyst']['Cost per unit of mass']['Value'].unit['USD/kg'], 
+									  'USD')
 
-		self.catalyst_amount_per_baggie = Quantity(baggie_volume * self.input_dict_resolved['Catalyst']['Concentration']['Value'].unit['kg/m3'], 'kg')
-		self.catalyst_amount = Quantity(self.catalyst_amount_per_baggie.unit['kg'] * self.baggie_number.unit['-'], 'kg')
-
-		self.catalyst_cost = Quantity(self.catalyst_amount.unit['kg'] * self.input_dict_resolved['Catalyst']['Cost per unit of mass']['Value'].unit['USD/kg'], 'USD')
-
-	def land_area(self, dcf):
+	def land_area(self):
 		'''Calculation of total required land area and solar collection area.
 		'''
 
 		baggie_land_area = self.baggie_number.unit['-'] * self.baggie_area.unit['m2']
-		self.total_land_area = Quantity(baggie_land_area * (1. + self.input_dict_resolved['Reactor Baggies']['Additional land area']['Value'].unit['-']), 'm2')
-
+		
 		self.total_solar_collection_area = Quantity(baggie_land_area, 'm2')
+		self.total_land_area = Quantity(baggie_land_area * 
+										(1. + self.input_dict_resolved['Reactor Baggies']['Additional land area']['Value'].unit['-']), 
+										'm2')
+
+
