@@ -504,9 +504,7 @@ class Photocatalytic_Plugin:
 			
 			kg_H2_per_day_baggie_calculation = self.mass_rate_H2_per_baggie.unit['kg/day'] * self.baggie_number
 
-			assert abs(kg_H2_per_day_TOF_calculation - kg_H2_per_day_baggie_calculation) < 1e-6, 
-					   'Difference between baggie and TOF calculation for daily H2 production: TOF: {0}, Baggie: {0}.'.format(
-					kg_H2_per_day_TOF_calculation, kg_H2_per_day_baggie_calculation)
+			assert abs(kg_H2_per_day_TOF_calculation - kg_H2_per_day_baggie_calculation) < 1e-6, 'Difference between baggie and TOF calculation for daily H2 production: TOF: {0}, Baggie: {0}.'.format(kg_H2_per_day_TOF_calculation, kg_H2_per_day_baggie_calculation)
 
 		self.catalyst_properties = catalyst_properties
 
