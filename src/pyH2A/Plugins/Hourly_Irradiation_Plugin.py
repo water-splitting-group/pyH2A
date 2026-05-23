@@ -73,10 +73,10 @@ input_dict = {
 		"Temperature coefficient": {
 			"Value": {
 				"type": {float,},
-				"bounds": (-0.1, 0), 
+				"bounds": (-0.5, 0.5), 
 			},
 			"Unit": {
-				"dimension": "dimensionless/temperature_diff",
+				"dimension": "1/temperature_diff",
 			},
 			"optional": False,
 			"description": "Performance decrease of irradiated module per degree increase."
@@ -185,16 +185,26 @@ class Hourly_Irradiation_Plugin:
 		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Hourly_Irradiation_Plugin')
 
 		pv = self.input_dict_resolved['Irradiance Area Parameters']
+		
 		if 'Module tilt' in pv:
 			tilt = pv['Module tilt']['Value']
 		else: # if we want to make the tilt equal to latitude, we don't point it through a path in the input fiale, we let it be the default
 			tilt = 'Default' 
 
-		self.hourly_energy, self.hourly_energy_sat, self.hourly_energy_dat, self.yearly_averaged_power, self.yearly_averaged_power_sat, self.yearly_averaged_power_dat = calculate_PV_power_ratio(dcf.inp['Hourly Irradiation']['File']['Value'],
-											tilt, pv['Array azimuth']['Value'],
-											pv['Nominal operating temperature']['Value'], 
-											pv['Temperature coefficient']['Value'],
-											pv['Mismatch derating']['Value'], pv['Dirt derating']['Value'])
+		(self.hourly_energy, 
+		 self.hourly_energy_sat, 
+		 self.hourly_energy_dat, 
+		 self.yearly_averaged_power, 
+		 self.yearly_averaged_power_sat, 
+		 self.yearly_averaged_power_dat) = calculate_PV_power_ratio(
+												pv['Hourly Irradiation']['File']['Value'],
+												tilt, 
+												pv['Array azimuth']['Value'],
+												pv['Nominal operating temperature']['Value'], 
+												pv['Temperature coefficient']['Value'],
+												pv['Mismatch derating']['Value'], 
+			 									pv['Dirt derating']['Value']
+												)
 
 		output_inserter_function(output_dict, self, dcf, 'Hourly_Irradiation_Plugin') 
 
