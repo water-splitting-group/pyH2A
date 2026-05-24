@@ -5,7 +5,7 @@ input_dict = {
 	"Water Volume": {
 		"Volume": {
 			"Value": {
-				"type": {float,},
+				"type": {int,float,},
 				"bounds": (0, None),
 			},		
 			"Unit": {
@@ -18,7 +18,7 @@ input_dict = {
 	"Catalyst": {
 		"Lifetime": {
 			"Value": {
-				"type": {float,},
+				"type": {int,float,},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -31,7 +31,7 @@ input_dict = {
 	"Catalyst Separation": {
 		"Filtration cost": {
 			"Value": {
-				"type": {float,},
+				"type": {int,float,},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -62,12 +62,12 @@ class Catalyst_Separation_Plugin:
 
 	Parameters
 	----------
-	Water Volume > Volume > Value : float
+	Water Volume > Volume > Value : float, int
 		Total water volume.
-	Catalyst > Lifetime > Value : float
+	Catalyst > Lifetime > Value : float, int
 		Lifetime of catalysts before replacement is required.
-	Catalyst Separation > Filtration cost > Value : float
-		Cost of filtration.
+	Catalyst Separation > Filtration cost > Value : float, int
+		Cost of filtration in curreny per volume of filtered water.
 
 	Returns
 	-------
@@ -89,14 +89,18 @@ class Catalyst_Separation_Plugin:
 
 		fraction_to_be_filtered_yearly = 1./self.input_dict_resolved['Catalyst']['Lifetime']['Value'].unit['year']
 
-		self.yearly_filtration_volume = Quantity(self.input_dict_resolved['Water Volume']['Volume']['Value'].unit['m3'] * fraction_to_be_filtered_yearly, 'm3')
+		self.yearly_filtration_volume = Quantity(self.input_dict_resolved['Water Volume']['Volume']['Value'].unit['m3'] 
+												 * fraction_to_be_filtered_yearly, 
+										'm3')
 		
 
 	def calculate_filtration_cost(self):
 		'''Yearly cost of water filtration to remove catalyst.
 		'''
 
-		self.yearly_cost = Quantity(self.yearly_filtration_volume.unit['m3'] * self.input_dict_resolved['Catalyst Separation']['Filtration cost']['Value'].unit['USD/m3'], 'USD')
+		self.yearly_cost = Quantity(self.yearly_filtration_volume.unit['m3'] 
+									* self.input_dict_resolved['Catalyst Separation']['Filtration cost']['Value'].unit['USD/m3'], 
+						   'USD')
 
 
 
