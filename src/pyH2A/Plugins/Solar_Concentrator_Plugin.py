@@ -50,7 +50,7 @@ input_dict = {
 				"dimension": "length",	
 			},
 			"optional": False,
-			"description": "South spacing of solar concentrators."
+			"description": "South spacing of solar concentrators (length)."
 		},
 		"East/West spacing": {
 			"Value": {
@@ -61,7 +61,7 @@ input_dict = {
 				"dimension": "length",	
 			},
 			"optional": False,
-			"description": "East/West Spacing of solar concentrators."
+			"description": "East/West Spacing of solar concentrators (length)."
 		},
 	},
 	"Non-Depreciable Capital Costs": {
@@ -125,16 +125,14 @@ class Solar_Concentrator_Plugin:
 	PEC Cells > Number > Value : float
 		Number of PEC cells required for design H2 production capacity.
 	Land Area Requirement > South spacing > Value : float
-		South spacing of solar concentrators in m.
+		South spacing of solar concentrators (in length).
 	Land Area Requirement > East/West spacing > Value : float
-		East/West spacing of solar concentrators.
+		East/West spacing of solar concentrators (in length).
 	Non-Depreciable Capital Costs > Solar Collection Area > Value : float
 		Total solar collection area.
 
 	Returns
 	-------
-	Non-Depreciable Capital Costs > Land required > Value : float
-		Total land requirement.
 	Non-Depreciable Capital Costs > Land required > Value : float
 		Total land requirement.
 	Non-Depreciable Capital Costs > Solar Collection Area > Value : float
@@ -153,13 +151,18 @@ class Solar_Concentrator_Plugin:
 
 	def land_area(self):
 		'''Calculation of solar collection area by multiplying concentration factor by supplied
-		(unconcentrated) solar collection area. Calculation of total land area requirement based
-		on number of PEC cells and spacing of solar concentrators.
+		solar collection area (the calculation assumes that concentrated solar light 
+		is passed as input to the PEC_Plugin, where the corresponding area of PEC cells is calculated. This is the
+		supplied solar collection area). 
+		Calculation of total land area requirement based on number of PEC cells and spacing of solar concentrators.
 		'''
 
 		land = self.input_dict_resolved['Land Area Requirement']
 
-		self.total_solar_collection_area = Quantity(self.input_dict_resolved['Solar Concentrator']['Concentration factor']['Value'].unit['-'] * self.input_dict_resolved['Non-Depreciable Capital Costs']['Solar collection area']['Value'].unit['m2'], 'm2')
+		self.total_solar_collection_area = Quantity(
+											  self.input_dict_resolved['Solar Concentrator']['Concentration factor']['Value'].unit['-'] 
+											  * self.input_dict_resolved['Non-Depreciable Capital Costs']['Solar collection area']['Value'].unit['m2'], 
+										   'm2')
 
 		area_per_element_m2 = self.total_solar_collection_area.unit['m2'] / self.input_dict_resolved['PEC Cells']['Number']['Value'].unit['-']
 		side_length_m = np.sqrt(area_per_element_m2)
@@ -169,11 +172,14 @@ class Solar_Concentrator_Plugin:
 
 		spaced_area_per_element_m2 = x_length_m * y_length_m
 
-		self.total_land_area = Quantity(spaced_area_per_element_m2 * self.input_dict_resolved['PEC Cells']['Number']['Value'].unit['-'], 'm2')
-		#self.total_land_area = Quantity(self.total_solar_collection_area.unit['m2'] + land['South Spacing']['Value'].unit['m'] * land['East/West Spacing (m)']['Value'].unit['m']  * self.input_dict_resolved['PEC Cells']['Number']['Value'].unit['-'] , m2)
+		self.total_land_area = Quantity(spaced_area_per_element_m2 
+										* self.input_dict_resolved['PEC Cells']['Number']['Value'].unit['-'], 
+								'm2')
 
 	def calculate_cost(self):
 		'''Calculation of solar concentrator cost based on cost per m2 and total solar collection area.
 		'''
 
-		self.concentrator_cost = Quantity(self.input_dict_resolved['Solar Concentrator']['Cost']['Value'].unit['USD/m2'] * self.total_solar_collection_area.unit['m2'], 'USD')
+		self.concentrator_cost = Quantity(self.input_dict_resolved['Solar Concentrator']['Cost']['Value'].unit['USD/m2'] 
+										  * self.total_solar_collection_area.unit['m2'], 
+								'USD')
