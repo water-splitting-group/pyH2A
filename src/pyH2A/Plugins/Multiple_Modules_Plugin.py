@@ -114,8 +114,8 @@ class Multiple_Modules_Plugin:
 		'''Calculation of total required staff for all plant modules, then scaling down to staff
 		requirements for one module.'''
 
-		area = self.input_dict_resolved['Technical Operating Parameters and Specifications']['Plant modules']['Value'].unit['-'] 
-			   * self.input_dict_resolved['Non-Depreciable Capital Costs']['Solar collection area']['Value'].unit['m2']
+		area = (self.input_dict_resolved['Technical Operating Parameters and Specifications']['Plant modules']['Value'].unit['-'] 
+			   * self.input_dict_resolved['Non-Depreciable Capital Costs']['Solar collection area']['Value'].unit['m2'])
 
 		staff = (np.ceil(area 
 						 / self.input_dict_resolved['Fixed Operating Costs']['Solar collection area per staffer']['Value'].unit['m2'])
