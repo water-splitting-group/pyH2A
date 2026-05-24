@@ -23,12 +23,12 @@ class DummyDCF:
         self.inp = {
             "Hourly Irradiation": {"File": {"Value": hourly_file}},
             "Irradiance Area Parameters": {
-                "Module tilt": {"Value": module_tilt, "Unit":"deg"}, # we can actually comment-out this line, it's just the latitude, which is the default
-                "Array azimuth": {"Value": array_azimuth, "Unit":"deg"},
-                "Nominal operating temperature": {"Value": nominal_temp, "Unit":"degC"},
-                "Mismatch derating": {"Value": mismatch_derating, "Unit":"-"},
-                "Dirt derating": {"Value": dirt_derating, "Unit":"-"},
-                "Temperature coefficient": {"Value": temp_coeff, "Unit":"-/delta_degC"},
+                "Module tilt": {"Value": module_tilt, "Unit" : "deg"}, # we can actually comment-out this line, it's just the latitude, which is the default
+                "Array azimuth": {"Value": array_azimuth, "Unit" : "deg"},
+                "Nominal operating temperature": {"Value": nominal_temp, "Unit" : "degC"},
+                "Mismatch derating": {"Value": mismatch_derating, "Unit" : "-"},
+                "Dirt derating": {"Value": dirt_derating, "Unit" : "-"},
+                "Temperature coefficient": {"Value": temp_coeff, "Unit" : "1/delta_degC"},
             },
         }
 
@@ -49,9 +49,9 @@ class DummyDCF:
             "expected": {
                 "latitude": Quantity(34.859,"deg"),
                 "longitude": Quantity(-116.889,"deg"),
-                "mean_power_dat": Quantity(6.801704863179404,"kWh_per_day/m2"), 
-                "mean_power": Quantity(5.499228123213646,"kWh_per_day/m2"),
-                "mean_power_sat": Quantity(6.8301271595436885,"kWh_per_day/m2"),
+                "mean_power_dat": Quantity(6.801704863179404 * 1000./24., "W/m2"), # Conversion from kWh/m2/day to W/m2 through multiplication with 1000/24
+                "mean_power": Quantity(5.499228123213646 * 1000./24., "W/m2"),
+                "mean_power_sat": Quantity(6.8301271595436885 * 1000./24., "W/m2"),
             },
         },
     ],
