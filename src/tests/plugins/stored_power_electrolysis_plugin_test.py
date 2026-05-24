@@ -24,33 +24,49 @@ class DummyDCF:
         self.inp = {
             "Electrolysis Using Stored Power": {
                 "Fraction of stored power used for electrolysis": {
-                    "Value": fraction_stored_power_for_electrolysis, "Unit":"-"
+                    "Value" : fraction_stored_power_for_electrolysis, 
+                    "Unit" : "-"
                 }
             },
             "Electrolyzer": {
-                "Nominal power": {"Value": electrolyzer_nominal_power_kW, "Unit":"kW"},
+                "Nominal power": {
+                    "Value": electrolyzer_nominal_power_kW, 
+                    "Unit" : "kW"
+                    },
                 "Power requirement increase per year": {
-                    "Value": electrolyzer_power_increase_per_year, "Unit":"-"
-                },
-                "Minimum capacity": {"Value": electrolyzer_min_capacity, "Unit":"-"},
+                    "Value": electrolyzer_power_increase_per_year, 
+                    "Unit" : "-"
+                    },
+                "Minimum capacity": {
+                    "Value": electrolyzer_min_capacity, 
+                    "Unit" : "-"
+                    },
                 "Hydrogen yield per unit energy": {
-                    "Value": electrolyzer_conversion_efficiency, "Unit":"kg/kWh"
-                },
-                "Replacement time": {"Value": electrolyzer_replacement_time_h, "Unit":"h"},
+                    "Value": electrolyzer_conversion_efficiency,
+                    "Unit" : "kg/kWh"
+                    },
+                "Replacement time": {
+                    "Value": electrolyzer_replacement_time_h, 
+                    "Unit" : "h"},
                 "H2 production (yearly)": {
-                    "Value": electrolyzer_yearly_H2_production_kg, "Unit":"kg",
+                    "Value": electrolyzer_yearly_H2_production_kg, 
+                    "Unit" : "kg / year",
                     "Processed": "Yes"
-                },
+                    },
                 "Yearly operation data": {
-                    "Year_Value": yearly_operation_data_year, "Year_Unit":"-", 
-                    "Production_Value": yearly_operation_data_production, "Production_Unit":"kg", 
-                    "Duration_Value": yearly_operation_data_duration, "Duration_Unit":"h", 
+                    "Year_Value" : yearly_operation_data_year, 
+                    "Year_Unit" : "-", 
+                    "Production_Value" : yearly_operation_data_production,
+                    "Production_Unit" : "kg", 
+                    "Duration_Value": yearly_operation_data_duration, 
+                    "Duration_Unit" : "h", 
                     "Processed": "Yes"
-                },
+                    },
             },
             "Power Generation": {
                 "Stored energy (daily)": {
-                    "Value": stored_power_daily_kWh, "Unit":"kWh",
+                    "Value": stored_power_daily_kWh, 
+                    "Unit" : "kWh",
                     "Processed": "Yes"
                 }
             },
