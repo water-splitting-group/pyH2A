@@ -93,7 +93,7 @@ output_dict = {
 				"dimension": "energy / area",
 			},
 			"optional": False,
-			"description": "Hourly irradiation with no tracking per m2."
+			"description": "Hourly irradiation with no tracking per area."
 		},
 		"Horizontal single axis tracking": {
 			"Value": {
@@ -102,7 +102,7 @@ output_dict = {
 				"dimension": "energy / area",
 			},
 			"optional": False,
-			"description": "Hourly irradiation with single axis tracking per m2."
+			"description": "Hourly irradiation with single axis tracking per area."
 		},
 		"Two axis tracking": {
 			"Value": {
@@ -111,7 +111,7 @@ output_dict = {
 				"dimension": "energy / area",
 			},
 			"optional": False,
-			"description": "Hourly irradiation with two axis tracking per m2."
+			"description": "Hourly irradiation with two axis tracking per area."
 		},
 		"Mean solar input no tracking": {
 			"Value": {
@@ -120,7 +120,7 @@ output_dict = {
 				"dimension": "power / area",
 			},
 			"optional": False,
-			"description": "Mean solar input with no tracking."
+			"description": "Mean solar input with no tracking per area."
 		},
 		"Mean solar input single axis tracking": {
 			"Value": {
@@ -129,7 +129,7 @@ output_dict = {
 				"dimension": "power / area",
 			},
 			"optional": False,
-			"description": "Mean solar input with single axis tracking."
+			"description": "Mean solar input with single axis tracking per area."
 		},
 		"Mean solar input two axis tracking": {
 			"Value": {
@@ -138,7 +138,7 @@ output_dict = {
 				"dimension": "power / area",
 			},
 			"optional": False,
-			"description": "Mean solar input with two axis tracking."
+			"description": "Mean solar input with two axis tracking per area."
 		},
 	},
 }
@@ -223,10 +223,13 @@ def import_Chang_data(file_name):
 
 	data = read_textfile(file_name, delimiter = '	')
 
-	data_dict = {'Time': Quantity(data[:,0] - 10., '-'), 'Temperature': Quantity(data[:,1], 'degC'),
-				  'Direct Normal Irradiance': Quantity(data[:,2], 'W/m2'), 'Diffuse Horizontal Irradiance': Quantity(data[:,3], 'W/m2')}
+	data_dict = {'Time': Quantity(data[:,0] - 10., '-'), 
+				 'Temperature': Quantity(data[:,1], 'degC'),
+				 'Direct Normal Irradiance': Quantity(data[:,2], 'W/m2'), 
+				 'Diffuse Horizontal Irradiance': Quantity(data[:,3], 'W/m2')}
 
-	location = {'Latitude (decimal degrees)': -19.25, 'Longitude (decimal degrees)': 146.77}
+	location = {'Latitude (decimal degrees)': -19.25, 
+				'Longitude (decimal degrees)': 146.77}
 
 	return data_dict, location
 	
@@ -255,14 +258,22 @@ def import_hourly_data(file_name):
 			break
 	file_read.close()
 
-	data_dict = {'Time': Quantity(data[:,0], '-'), 'Temperature': Quantity(data[:,1], 'degC'), 'Global Horizontal Irradiance':  Quantity(data[:,3], 'W/m2'),
-				 'Direct Normal Irradiance': Quantity(data[:,4], 'W/m2'), 'Diffuse Horizontal Irradiance': Quantity(data[:,5], 'W/m2')}
+	data_dict = {'Time': Quantity(data[:,0], '-'), 
+				 'Temperature': Quantity(data[:,1], 'degC'), 
+				 'Global Horizontal Irradiance':  Quantity(data[:,3], 'W/m2'),
+				 'Direct Normal Irradiance': Quantity(data[:,4], 'W/m2'), 
+				 'Diffuse Horizontal Irradiance': Quantity(data[:,5], 'W/m2')}
 
 	return data_dict, location
 
 @lru_cache(maxsize = None)
-def calculate_PV_power_ratio(file_name, module_tilt, array_azimuth, nominal_operating_temperature,
-							 temperature_coefficient, mismatch_derating, dirt_derating):
+def calculate_PV_power_ratio(file_name, 
+							 module_tilt, 
+							 array_azimuth, 
+							 nominal_operating_temperature,
+							 temperature_coefficient, 
+							 mismatch_derating, 
+							 dirt_derating):
 	'''Calculation based on Chang 2020, https://doi.org/10.1016/j.xcrp.2020.100209
 	SAT: horzontal single axis tracking
 	DAT: dual axis tracking, no diffuse radiation
@@ -283,23 +294,37 @@ def calculate_PV_power_ratio(file_name, module_tilt, array_azimuth, nominal_oper
 	day_number = np.arange(1, len(data['Time'].unit['-']) + 1) / 24
 	#day_number = np.arange(0, len(data['Time'])) / 24
 
-	declination_angle = Quantity(23.45 * np.sin((day_number - 81) * 2 * np.pi / 365.),'deg')
+	declination_angle = Quantity(23.45 * np.sin((day_number - 81) * 2 * np.pi / 365.),'deg') # Cooper equation to calculate solar declination angle
 	hour_angle = Quantity((data['Time'].unit['-'] - 12) * 15 + longitude.unit['deg'], 'deg')
 
 	altitude_angle = Quantity(
-					np.arcsin(np.sin(declination_angle.unit['rad']) * 
-					np.sin(latitude.unit['rad']) + np.cos(declination_angle.unit['rad']) * 
-					np.cos(latitude.unit['rad']) * np.cos(hour_angle.unit['rad'])), 
-					'rad')
+						np.arcsin(
+							np.sin(declination_angle.unit['rad'])
+						    * np.sin(latitude.unit['rad']) 
+						    + np.cos(declination_angle.unit['rad']) 
+						    * np.cos(latitude.unit['rad']) 
+						    * np.cos(hour_angle.unit['rad'])
+						), 
+						'rad')
 
 	azimuth_angle = Quantity(
-					np.arccos((np.sin(declination_angle.unit['rad']) * 
-					np.cos(latitude.unit['rad']) - np.cos(declination_angle.unit['rad']) * 
-					np.sin(latitude.unit['rad']) * np.cos(hour_angle.unit['rad'])) / 
-					np.cos(altitude_angle.unit['rad'])) * np.sign(hour_angle.unit['rad']), 
-					'rad')
+						np.arccos(
+							(np.sin(declination_angle.unit['rad']) 
+						     * np.cos(latitude.unit['rad']) 
+						     - np.cos(declination_angle.unit['rad']) 
+							 * np.sin(latitude.unit['rad']) 
+							 * np.cos(hour_angle.unit['rad'])
+						     ) / 
+						     np.cos(altitude_angle.unit['rad'])
+						) * np.sign(hour_angle.unit['rad']), 
+						'rad')
 
-	dni_fraction = np.cos(altitude_angle.unit['rad']) * np.sin(module_tilt.unit['rad']) * np.cos(array_azimuth.unit['rad'] - azimuth_angle.unit['rad']) + np.sin(altitude_angle.unit['rad']) * np.cos(module_tilt.unit['rad'])
+	dni_fraction = (np.cos(altitude_angle.unit['rad']) 
+					* np.sin(module_tilt.unit['rad']) 
+					* np.cos(array_azimuth.unit['rad'] 
+				    - azimuth_angle.unit['rad']) 
+					+ np.sin(altitude_angle.unit['rad']) 
+					* np.cos(module_tilt.unit['rad']))
 	
 	dni_fraction = dni_fraction.clip(min = 0)
 
@@ -307,36 +332,65 @@ def calculate_PV_power_ratio(file_name, module_tilt, array_azimuth, nominal_oper
 	diffuse_plane_radiation = data['Diffuse Horizontal Irradiance'].unit['W/m2'] * (180 - module_tilt.unit['deg']) / 180
 	total_plane_radiation = direct_plane_radiation + diffuse_plane_radiation
 
-	cell_temperature = data['Temperature'].unit['degC'] + (nominal_operating_temperature.unit['degC'] - 
-					   20) * total_plane_radiation/800  
+	cell_temperature = (data['Temperature'].unit['degC'] 
+						+ (nominal_operating_temperature.unit['degC'] - 20) 
+						* total_plane_radiation/800)  
 
-	temperature_derating = 1 + temperature_coefficient.unit['-/delta_degC'] * (cell_temperature - 25)  
-
-	hourly_energy = Quantity((temperature_derating * mismatch_derating.unit['-'] * 
-					 dirt_derating.unit['-'] * total_plane_radiation), 'Wh/m2')
+	temperature_derating = 1 + temperature_coefficient.unit['1/delta_degC'] * (cell_temperature - 25)  
 
 	sat_azimuth = Quantity(np.sign(azimuth_angle.unit['rad']) * np.pi/2, 'rad')
 
-	sat_tilt = Quantity(np.arctan(1 / np.tan(altitude_angle.unit['rad']) * 
-			   np.cos(sat_azimuth.unit['rad'] - azimuth_angle.unit['rad'])), 
-			   'rad')
+	sat_tilt = Quantity(
+		           np.arctan(
+					   1 / np.tan(altitude_angle.unit['rad']) 
+				       * np.cos(sat_azimuth.unit['rad'] - azimuth_angle.unit['rad'])
+				   ), 
+			   	   'rad')
 
-	sat_fraction = (np.cos(altitude_angle.unit['rad']) * np.sin(sat_tilt.unit['rad']) * 
-					np.cos(sat_azimuth.unit['rad'] - azimuth_angle.unit['rad']) + np.sin(altitude_angle.unit['rad']) * 
-					np.cos(sat_tilt.unit['rad']))
+	sat_fraction = (np.cos(altitude_angle.unit['rad']) 
+					* np.sin(sat_tilt.unit['rad']) 
+					* np.cos(sat_azimuth.unit['rad'] - azimuth_angle.unit['rad']) 
+					+ np.sin(altitude_angle.unit['rad']) 
+					* np.cos(sat_tilt.unit['rad']))
 	sat_fraction = sat_fraction.clip(min = 0)
 
 	sat_direct_POA = sat_fraction * data['Direct Normal Irradiance'].unit['W/m2']
 	sat_diffuse_POA = data['Diffuse Horizontal Irradiance'].unit['W/m2'] * (180 - sat_tilt.unit['deg']) / 180
 	sat_total_POA = sat_direct_POA + sat_diffuse_POA
 
-	hourly_energy_sat = Quantity(temperature_derating * mismatch_derating.unit['-'] * dirt_derating.unit['-'] * sat_total_POA, 'Wh/m2')
+	hourly_energy = Quantity(temperature_derating 
+						     * mismatch_derating.unit['-'] 
+						     * dirt_derating.unit['-'] 
+						     * total_plane_radiation, 
+					'Wh/m2')
+								 
+	hourly_energy_sat = Quantity(temperature_derating 
+								 * mismatch_derating.unit['-'] 
+								 * dirt_derating.unit['-'] 
+								 * sat_total_POA, 
+						'Wh/m2')
 
-	hourly_energy_dat = Quantity(data['Direct Normal Irradiance'].unit['W/m2'] * temperature_derating * mismatch_derating.unit['-'] * dirt_derating.unit['-'], 'Wh/m2')
+	hourly_energy_dat = Quantity(data['Direct Normal Irradiance'].unit['W/m2'] 
+								 * temperature_derating 
+								 * mismatch_derating.unit['-'] 
+								 * dirt_derating.unit['-'], 
+						'Wh/m2')
 
-	yearly_averaged_power = Quantity(np.sum(hourly_energy.unit['Wh/m2']), 'Wh_per_year/m2') 
-	yearly_averaged_power_sat = Quantity(np.sum(hourly_energy_sat.unit['Wh/m2']), 'Wh_per_year/m2')
-	yearly_averaged_power_dat = Quantity(np.sum(hourly_energy_dat.unit['Wh/m2']), 'Wh_per_year/m2')
+	
+	# Summing hourly energy data and dividing by 1 year to get average power
+	time_for_averaging = Quantity(1., 'year')
+								 
+	yearly_averaged_power = Quantity(np.sum(hourly_energy.unit['J/m2']) / time_for_averaging.unit['s'], 
+							'W/m2') 							 
+	yearly_averaged_power_sat = Quantity(np.sum(hourly_energy_sat.unit['J/m2']) / time_for_averaging.unit['s'], 
+							    'W/m2')
+	yearly_averaged_power_dat = Quantity(np.sum(hourly_energy_dat.unit['J/m2']) / time_for_averaging.unit['s'], 
+								'W/m2')
 
-	return hourly_energy, hourly_energy_sat, hourly_energy_dat, yearly_averaged_power, yearly_averaged_power_sat, yearly_averaged_power_dat
+	return (hourly_energy, 
+			hourly_energy_sat, 
+			hourly_energy_dat, 
+			yearly_averaged_power, 
+			yearly_averaged_power_sat, 
+			yearly_averaged_power_dat)
 
