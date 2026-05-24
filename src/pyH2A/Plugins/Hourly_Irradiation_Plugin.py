@@ -197,7 +197,7 @@ class Hourly_Irradiation_Plugin:
 		 self.yearly_averaged_power, 
 		 self.yearly_averaged_power_sat, 
 		 self.yearly_averaged_power_dat) = calculate_PV_power_ratio(
-												pv['Hourly Irradiation']['File']['Value'],
+												self.input_dict_resolved['Hourly Irradiation']['File']['Value'],
 												tilt, 
 												pv['Array azimuth']['Value'],
 												pv['Nominal operating temperature']['Value'], 
