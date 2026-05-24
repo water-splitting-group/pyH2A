@@ -183,7 +183,16 @@ output_dict = {
             },                      
             "optional": False,
             "description": "Yearly operation data of electrolyzer: year, H2 produced, duration of operation."
-        }
+        },
+        "H2 production (yearly)": {
+            "Value": {
+                "inserted_value": "h2_production",
+                "type": {np.ndarray,},
+                "dimension": "mass / time",
+            },
+            "optional": False,
+            "description": "Yearly hydrogen production."
+        },
     },
     "Power Generation": {
         "Available energy (hourly)": {
