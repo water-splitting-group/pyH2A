@@ -257,7 +257,7 @@ class Stored_Power_Electrolysis_Plugin:
                                                    self.input_dict_resolved['Electrolyzer']['Hydrogen yield per unit energy']['Value'].unit['kg/J'],
                                                    power_increase_ratio)
         
-        old_h2_production = self.input_dict_resolved['Electrolyzer']['H2 production (yearly)']['Value'].unit['kg']
+        old_h2_production = self.input_dict_resolved['Electrolyzer']['H2 production (yearly)']['Value'].unit['kg/year']
 
         self.new_h2_production = old_h2_production.copy()
         self.new_h2_production[-len(additional_h2_production):] += additional_h2_production
