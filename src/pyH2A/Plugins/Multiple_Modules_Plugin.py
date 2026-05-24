@@ -86,9 +86,9 @@ class Multiple_Modules_Plugin:
 
 	Parameters
 	----------
-	Technical Operating Parameters and Specifications > Plant Modules > Value : float or int
+	Technical Operating Parameters and Specifications > Plant modules > Value : float or int
 		Number of plant modules considered in this calculation.
-	Non-Depreciable Capital Costs > Solar Collection Area > Value : float
+	Non-Depreciable Capital Costs > Solar collection area > Value : float
 		Solar collection area for one plant module.
 	Fixed Operating Costs > Solar collection area per staffer > Value : float
 		Solar collection area that can be covered by one staffer.
@@ -104,7 +104,6 @@ class Multiple_Modules_Plugin:
 	''' 
 
 	def __init__(self, dcf, print_info):
-
 		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Multiple_Modules_Plugin')
 		
 		self.required_staff()
@@ -115,12 +114,15 @@ class Multiple_Modules_Plugin:
 		'''Calculation of total required staff for all plant modules, then scaling down to staff
 		requirements for one module.'''
 
-		area = self.input_dict_resolved['Technical Operating Parameters and Specifications']['Plant modules']['Value'].unit['-'] * self.input_dict_resolved['Non-Depreciable Capital Costs']['Solar collection area']['Value'].unit['m2']
+		area = self.input_dict_resolved['Technical Operating Parameters and Specifications']['Plant modules']['Value'].unit['-'] 
+			   * self.input_dict_resolved['Non-Depreciable Capital Costs']['Solar collection area']['Value'].unit['m2']
 
-		staff = np.ceil(
-			area / self.input_dict_resolved['Fixed Operating Costs']
-			['Solar collection area per staffer']['Value'].unit['m2']
-		) + self.input_dict_resolved['Fixed Operating Costs']['Number of supervisors']['Value'].unit['-']
+		staff = (np.ceil(area 
+						 / self.input_dict_resolved['Fixed Operating Costs']['Solar collection area per staffer']['Value'].unit['m2'])
+		         + self.input_dict_resolved['Fixed Operating Costs']['Number of supervisors']['Value'].unit['-'])
+		
 		staff = staff * self.input_dict_resolved['Fixed Operating Costs']['Number of 8-hour shifts']['Value'].unit['-']
 
-		self.staff_per_module = Quantity(staff / self.input_dict_resolved['Technical Operating Parameters and Specifications']['Plant modules']['Value'].unit['-'], '-')
+		self.staff_per_module = Quantity(staff 
+										 / self.input_dict_resolved['Technical Operating Parameters and Specifications']['Plant modules']['Value'].unit['-'], 
+								'-')
