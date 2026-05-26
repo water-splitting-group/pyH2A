@@ -140,20 +140,6 @@ output_dict = {
             "description": "Operating capacity factor is set to 1."
         },
     },
-    "Planned Replacement": {
-        "Electrolyzer stack replacement": {
-            "Frequency_Value": {
-                "inserted_value": "replacement_frequency",
-                "type": {float,},
-                "dimension": "time",
-            },
-            "add_processed": False,
-            "insert_path": False,
-            "optional": False,
-            "description": "Frequency of electrolyzer stack replacements in years, \
-                            calculated from replacement time and hourly irradiation data."
-        },
-    },
     "Electrolyzer": {
         "Scaling factor": {
             "Value": {
@@ -165,6 +151,15 @@ output_dict = {
             "description": "CAPEX scaling factor for electrolyzer calculated based \
                             on CAPEX multiplier, reference and nominal power."
         },
+        "Stack lifetime": {
+            "Value": {
+                "inserted_value": "stack_lifetime",
+                "type": {float,},
+                "dimension": "time",
+            },
+            "optional": False,
+            "description": "Lifetime of electrolyzer stack replacements in years, calculated from replacement time and hourly irradiation data."
+        },                
         "Yearly operation data": {
             "Year_Value": {
                 "inserted_value": "yearly_data_year",
@@ -183,15 +178,6 @@ output_dict = {
             },                      
             "optional": False,
             "description": "Yearly operation data of electrolyzer: year, H2 produced, duration of operation."
-        },
-        "H2 production (yearly)": {
-            "Value": {
-                "inserted_value": "h2_production",
-                "type": {np.ndarray,},
-                "dimension": "mass / time",
-            },
-            "optional": False,
-            "description": "Yearly hydrogen production."
         },
     },
     "Power Generation": {
@@ -251,12 +237,11 @@ class Electrolyzer_Plugin:
         electrolysis power capacity and hourly power generation data.
     Technical Operating Parameters and Specifications >	Operating capacity factor > Value : float
         Operating capacity factor is set to 1.
-    Planned Replacement > Electrolyzer stack replacement > Frequency : float
-        Frequency of electrolyzer stack replacements, calculated from replacement time and hourly
-        irradiation data.
     Electrolyzer > Scaling factor > Value : float
         CAPEX scaling factor for electrolyzer calculated based on CAPEX multiplier, 
         reference and nominal power.
+    Electrolyzer > Stack lifetime > Value : float
+        Frequency of electrolyzer stack replacements, calculated from replacement time and hourly irradiation data.        
     Electrolyzer > Yearly operation data > Year_Value : nd.array
         Yearly operation data of electrolyzer : year.
     Electrolyzer > Yearly operation data > Production_Value : nd.array
@@ -277,7 +262,7 @@ class Electrolyzer_Plugin:
         self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Electrolyzer_Plugin')
 
         self.calculate_H2_production(dcf)
-        self.replacement_frequency = calculate_stack_replacement(self.yearly_data_duration, 
+        self.stack_lifetime = calculate_stack_replacement(self.yearly_data_duration, 
                                     self.input_dict_resolved['Electrolyzer']['Replacement time']['Value'].unit['h'])
         self.calculate_scaling_factors()
 
@@ -388,7 +373,7 @@ def calculate_stack_replacement(operation_hours, replacement_time):
     stack_usage = cumulative_running_time / replacement_time
 
     number_of_replacements = np.floor_divide(stack_usage[-1], 1)
-    replacement_frequency = len(stack_usage) / (number_of_replacements + 1.)
+    stack_lifetime = len(stack_usage) / (number_of_replacements + 1.)
 
-    return Quantity(replacement_frequency, 'year') # the inputs being : (hours of operation in the year, hours of operation before replacement), 
+    return Quantity(stack_lifetime, 'year') # the inputs being : (hours of operation in the year, hours of operation before replacement), 
                                                    # the result corresponds to the number of years between replacements

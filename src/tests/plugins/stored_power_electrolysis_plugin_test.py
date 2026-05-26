@@ -48,11 +48,6 @@ class DummyDCF:
                 "Replacement time": {
                     "Value": electrolyzer_replacement_time_h, 
                     "Unit" : "h"},
-                "H2 production (yearly)": {
-                    "Value": electrolyzer_yearly_H2_production_kg, 
-                    "Unit" : "kg / year",
-                    "Processed": "Yes"
-                    },
                 "Yearly operation data": {
                     "Year_Value" : yearly_operation_data_year, 
                     "Year_Unit" : "-", 
@@ -63,6 +58,13 @@ class DummyDCF:
                     "Processed": "Yes"
                     },
             },
+            "Technical Operating Parameters and Specifications": {
+                "Plant design capacity": {
+                    "Value": electrolyzer_yearly_H2_production_kg, 
+                    "Unit" : "kg / year",
+                    "Processed": "Yes"
+                    },       
+            },                         
             "Power Generation": {
                 "Stored energy (daily)": {
                     "Value": stored_power_daily_kWh, 
@@ -97,7 +99,7 @@ class DummyDCF:
             },
             "expected": {
                 "energy_consumption": Quantity(np.array([1760.0, 1280.0]), "kWh"),
-                "replacement_frequency": Quantity(2.0, "year"),
+                "stack_lifetime": Quantity(2.0, "year"),
                 "new_h2_production": Quantity(np.array([1.0, 8.0]), "kg/year"),
             },
         }
@@ -123,8 +125,8 @@ def test_stored_power_electrolysis_plugin(case):
         atol=tolerance,
     )
     
-    assert plugin.replacement_frequency.unit['s'] == pytest.approx(
-        expected["replacement_frequency"].unit['s'],
+    assert plugin.stack_lifetime.unit['s'] == pytest.approx(
+        expected["stack_lifetime"].unit['s'],
         abs=tolerance,
     )
     
