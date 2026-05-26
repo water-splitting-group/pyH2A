@@ -31,7 +31,7 @@ input_dict = {
     "Power Consumption": {
         "<...>": {
             "Value": {
-                "type": {np.ndarray,},
+                "type": {np.ndarray,float,},
                 "bounds": (0, None),
             },
             "Type": {
@@ -132,7 +132,7 @@ class Power_Management_Plugin:
         Available energy, daily basis, dictionary of years
     Power Generation > Stored energy (daily) > Value : dict, optional
         Stored energy, daily basis, dictionary of years
-    Power Consumption > [...] > Value : nd.array, optional
+    Power Consumption > [...] > Value : nd.array or float, optional
         Array of yearly power consumption values
     Power Consumption > [...] > Type : str, optional
         Type of power consumer, either 'flexible' for power consumer that can consume both 
