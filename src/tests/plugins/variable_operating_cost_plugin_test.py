@@ -22,7 +22,7 @@ class DummyDCF:
             "Utilities": {
                 key: {
                     "Cost_Value": value["Cost"], "Cost_Unit":"USD", "Cost_Path": "",
-                    "Usage_Value": value["Usage"], "Usage_Unit":"-/kg", "Usage_Path": "",
+                    "Usage_Value": value["Usage"], "Usage_Unit":"1/kg", "Usage_Path": "",
                     "Price_Conversion_Factor_Value": value.get("Conversion", 1.0), "Price_Conversion_Factor_Unit": "-",
                 } 
                 for key, value in utilities.items()

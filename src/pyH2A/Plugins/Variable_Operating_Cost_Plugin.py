@@ -34,7 +34,7 @@ input_dict = {
 				"path": "Usage_Path"
 			},
 			"Usage_Unit": {
-				"dimension": "dimensionless/mass" # basis per kg of hydrogen
+				"dimension": "1/mass" # basis per kg of hydrogen
 			},			
 			"Price_Conversion_Factor_Value": {
 				"type": {float},
@@ -216,8 +216,8 @@ class Utility:
 			years_idx = fn.find_nearest(prices, dcf.years)
 			prices = prices[years_idx]
 
-			self.cost_per_kg_H2 = Quantity(prices[:,1] * dcf.inflation_correction * dictionary['Price_Conversion_Factor_Value'].unit['-'] * dictionary['Usage_Value'].unit['-/kg'], 'USD/kg') 
+			self.cost_per_kg_H2 = Quantity(prices[:,1] * dcf.inflation_correction * dictionary['Price_Conversion_Factor_Value'].unit['-'] * dictionary['Usage_Value'].unit['1/kg'], 'USD/kg') 
 
 		else:
-			annual_cost_per_kg_H2 = dcf.inflation_correction * dictionary['Cost_Value'].unit['USD'] * dictionary['Usage_Value'].unit['-/kg'] * dictionary['Price_Conversion_Factor_Value'].unit['-']
+			annual_cost_per_kg_H2 = dcf.inflation_correction * dictionary['Cost_Value'].unit['USD'] * dictionary['Usage_Value'].unit['1/kg'] * dictionary['Price_Conversion_Factor_Value'].unit['-']
 			self.cost_per_kg_H2 = Quantity(np.ones(len(dcf.inflation_factor)) * annual_cost_per_kg_H2, 'USD/kg')
