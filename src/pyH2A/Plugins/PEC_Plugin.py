@@ -1,36 +1,36 @@
 import numpy as np
-from pyH2A.Utilities.Energy_Conversion import Energy, kWh, eV
-from pyH2A.Utilities.input_modification import insert, process_table
+from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
+from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
 input_dict = {
 	"Technical Operating Parameters and Specifications": {
-		"Design output per Day": {
+		"Design output flowrate": {
 			"Value": {
-				"type": {float,},
+				"type": {float,int,},
 				"bounds": (0, None),
 			},
 			"Unit": {
-				"dimension": "mass",
+				"dimension": "mass / time",
 			},
 			"optional": False,
-			"description": "Design output in mass per day."
+			"description": "Design output in mass per unit time."
 		},
 	},
 	"PEC Cells": {
 		"Cell cost": {
 			"Value": {
-				"type": {float,},
+				"type": {float,int,},
 				"bounds": (0, None),
 			},
 			"Unit": {
 				"dimension": "currency / area",
 			},
 			"optional": False,
-			"description": "Cost of PEC cells."
+			"description": "Cost of PEC cells per cell area."
 		},
 		"Lifetime": {
 			"Value": {
-				"type": {float,},
+				"type": {float,int,},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -41,7 +41,7 @@ input_dict = {
 		},
 		"Length": {
 			"Value": {
-				"type": {float,},
+				"type": {float,int,},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -52,7 +52,7 @@ input_dict = {
 		},
 		"Width": {
 			"Value": {
-				"type": {float,},
+				"type": {float,int,},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -65,7 +65,7 @@ input_dict = {
 	"Land Area Requirement": {
 		"Cell angle": {
 			"Value": {
-				"type": {float,},
+				"type": {float,int,},
 				"bounds": (0, np.pi / 2), 
 			},
 			"Unit": {
@@ -76,7 +76,7 @@ input_dict = {
 		},
 		"South spacing": {
 			"Value": {
-				"type": {float,},
+				"type": {float,int,},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -87,7 +87,7 @@ input_dict = {
 		},
 		"East/West spacing": {
 			"Value": {
-				"type": {float,},
+				"type": {float,int,},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -100,7 +100,7 @@ input_dict = {
 	"Solar-to-Hydrogen Efficiency": {
 		"STH": {
 			"Value": {
-				"type": {float,},
+				"type": {float,int,},
 				"bounds": (0, 1),
 			},
 			"Unit": {
@@ -113,16 +113,77 @@ input_dict = {
 	"Solar Input": {
 		"Mean solar input": {
 			"Value": {
-				"type": {float,},
+				"type": {float,int,},
 				"bounds": (0, None),
 			},
 			"Unit": {
 				"dimension": "power / area",
 			},
 			"optional": False,
-			"description": "Mean solar input in power / area and yearly average of solar input."
+			"description": "Mean solar input in power / area, yearly average of solar input."
 		}
 	}
+}
+
+output_dict = {
+	"Non-Depreciable Capital Costs": {
+		"Land required": {
+			"Value": {
+				"inserted_value": "total_land_area", 
+				"type": {float,int,}, 
+				"dimension":"area",
+        	},
+			"description": "Total land area required.",
+			"optional": False,
+		},
+		"Solar collection area": {
+			"Value": {
+				"inserted_value": "total_solar_collection_area",
+				"type": {float,int,},
+				"dimension":"area",
+			},
+			"description": "Solar collection area.",
+			"optional": False,
+		}
+	},
+	"Planned Replacement": {
+		"Planned replacement PEC cells": {
+			"Cost_Value": {
+				"inserted_value": "cell_cost",
+				"type": {float,int,},
+				"dimension":"currency",
+			},
+			"Frequency_Value": {
+				"inserted_value": "cell_lifetime",
+				"type": {float,int,}, 
+				"dimension":"time",
+			},
+			"description": "Total cost of replacing all PEC cells once.",
+			"optional": False,		
+		}
+	},
+ 	"Direct Capital Costs - PEC Cells": {
+		"PEC cell cost": {
+			"Value": {
+				"inserted_value": "cell_cost",
+				"type": {float,int,}, 
+				"dimension": "currency"
+			},
+			"description": "Total cost of all PEC cells.",
+			"optional": False,
+		}
+	},
+	"PEC Cells": {
+		"Number": {
+			"Value": {
+				"inserted_value": "cell_number",
+				"type": {float,int}, 
+				"dimension":"dimensionless",
+			},
+			"description": "Number of individual PEC cells required for design H2 output capacity.",
+			"optional": False,
+		}
+	},
 }
 
 class PEC_Plugin:
@@ -130,103 +191,115 @@ class PEC_Plugin:
 
 	Parameters
 	----------
-	Technical Operating Parameters and Specifications > Design Output per Day > Value : float
-		Design output in (kg of H2)/day, ``process_table()`` is used.
-	PEC Cells > Cell Cost ($/m2) > Value : float
+	Technical Operating Parameters and Specifications > Design output flowrate > Value : float
+		Design output flowrate.
+	PEC Cells > Cell cost > Value : float
 		Cost of PEC cells in $/m2.
-	PEC Cells > Lifetime (year) > Value : float
+	PEC Cells > Lifetime > Value : float
 		Lifetime of PEC cells in years before replacement is required.
-	PEC Cells > Length (m) > Value : float
-		Length of single PEC cell in m.
-	PEC Cells > Width (m) > Value : float
-		Width of single PEC cell in m.
-	Land Area Requirement > Cell Angle (degree) > Value : float
-		Angle of PEC cells from the ground, in degrees.
-	Land Area Requirement > South Spacing (m) > Value : float
-		South spacing of PEC cells in m.
-	Land Area Requirement > East/West Spacing (m) > Value : float
-		East/West Spacing of PEC cells in m.
-	Solar-to-Hydrogen Efficiency > STH (%) > Value : float
+	PEC Cells > Length > Value : float
+		Length of single PEC cell.
+	PEC Cells > Width > Value : float
+		Width of single PEC cell.
+	Land Area Requirement > Cell angle > Value : float
+		Angle of PEC cells from the ground.
+	Land Area Requirement > South spacing > Value : float
+		South spacing of PEC cells.
+	Land Area Requirement > East/West spacing > Value : float
+		East/West Spacing of PEC cells.
+	Solar-to-Hydrogen Efficiency > STH > Value : float
 		Solar-to-hydrogen efficiency in percentage or as a value between 0 and 1.
-	Solar Input > Mean solar input (kWh/m2/day) > Value : float
-		Mean solar input in kWh/m2/day, ``process_table()`` is used.
+	Solar Input > Mean solar input > Value : float
+		Mean solar power per surface.
 
 	Returns
 	-------
-	Non-Depreciable Capital Costs > Land required (acres) > Value : float
-		Total land area required in acres.
-	Non-Depreciable Capital Costs > Solar Collection Area (m2) > Value : float
-		Solar collection area in m2.
-	Planned Replacement > Planned Replacement PEC Cells > Cost ($) : float
+	Non-Depreciable Capital Costs > Land required > Value : float
+		Total land area required.
+	Non-Depreciable Capital Costs > Solar collection area > Value : float
+		Solar collection area.
+	Planned Replacement > Planned replacement PEC Cells > Cost_Value : float
 		Total cost of replacing all PEC cells once.
-	Planned Replacement > Planned Replacement PEC Cells > Frequency (years) : float
+	Planned Replacement > Planned replacement PEC Cells > Frequency_Value : float
 		Replacement frequency of PEC cells in years, identical to PEC cell lifetime.
-	Direct Capital Costs - PEC Cells > PEC Cell Cost ($) > Value : float
+	Direct Capital Costs - PEC Cells > PEC cell cost > Value : float
 		Total cost of all PEC cells.
 	PEC Cells > Number > Value : float
 		Number of individual PEC cells required for design H2 output capacity.
 	'''
 
 	def __init__(self, dcf, print_info):
-		process_table(dcf.inp, 'Solar Input', 'Value')
-		process_table(dcf.inp, 'Solar-to-Hydrogen Efficiency', 'Value')
-		process_table(dcf.inp, 'PEC Cells', 'Value')
-		process_table(dcf.inp, 'Land Area Requirement', 'Value')
-		process_table(dcf.inp, 'Technical Operating Parameters and Specifications', 'Value')
-
-		self.hydrogen_production(dcf)
-		self.PEC_cost(dcf)
-		self.land_area(dcf)
-
-		insert(dcf, 'Non-Depreciable Capital Costs', 'Land required (acres)', 'Value', 
-		       self.total_land_area_acres, __name__, print_info = print_info)
-		insert(dcf, 'Non-Depreciable Capital Costs', 'Solar Collection Area (m2)', 'Value', 
-			   self.total_solar_collection_area, __name__, print_info = print_info)
+		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'PEC_Plugin')
 		
-		insert(dcf, 'Planned Replacement', 'Planned Replacement PEC Cells', 'Cost ($)', 
-			   self.cell_cost, __name__, print_info = print_info)
-		insert(dcf, 'Planned Replacement', 'Planned Replacement PEC Cells', 'Frequency (years)', 
-			   dcf.inp['PEC Cells']['Lifetime (years)']['Value'], __name__, print_info = print_info)
+		self.hydrogen_production()
+		self.PEC_cost()
+		self.land_area()
 
-		insert(dcf, 'Direct Capital Costs - PEC Cells', 'PEC Cell Cost ($)', 'Value', 
-			   self.cell_cost, __name__, print_info = print_info)
+		self.cell_lifetime = self.input_dict_resolved['PEC Cells']['Lifetime']['Value']
 
-		insert(dcf, 'PEC Cells', 'Number', 'Value', self.cell_number, __name__, print_info = print_info)
+		output_inserter_function(output_dict, self, dcf, 'PEC_Plugin') 
 
-	def hydrogen_production(self, dcf):
+	def hydrogen_production(self):
 		'''Calculation of (kg of H2)/day produced by single PEC cell.
 		'''
 
-		pec = dcf.inp['PEC Cells']
+		pec = self.input_dict_resolved['PEC Cells']
 
-		self.cell_area = pec['Length (m)']['Value'] * pec['Width (m)']['Value']
-		cell_insolation = Energy(self.cell_area * dcf.inp['Solar Input']['Mean solar input (kWh/m2/day)']['Value'], kWh)
+		self.cell_area = Quantity(pec['Length']['Value'].unit['m'] 
+								  * pec['Width']['Value'].unit['m'], 
+						'm2')
+		cell_insolation = (self.cell_area.unit['m2'] 
+						   * self.input_dict_resolved['Solar Input']['Mean solar input']['Value'].unit['W/m2'])
+		
+		self.H2_molecule_energy = Quantity(2 * 1.229, 'eV/entity')
+		self.H2_molecular_weight = Quantity(2, 'g/mol')
+		
+		mol_H2_per_cell_per_second = (cell_insolation 
+									  * self.input_dict_resolved['Solar-to-Hydrogen Efficiency']['STH']['Value'].unit['-']
+									  / self.H2_molecule_energy.unit['J/mol'])
+		
+		self.mass_rate_H2_per_cell = Quantity(mol_H2_per_cell_per_second 
+											  * self.H2_molecular_weight.unit['kg/mol'], 
+									 'kg/s')
+		self.mol_rate_H2_per_surface = Quantity(mol_H2_per_cell_per_second 
+												/ self.cell_area.unit['m2'], 
+									   'mol/s/m2')
 
-		mol_H2_per_cell = (cell_insolation.J * dcf.inp['Solar-to-Hydrogen Efficiency']['STH (%)']['Value']) / Energy(2*1.229, eV).Jmol
-		self.kg_H2_per_cell = (2 * mol_H2_per_cell) / 1000.
-		self.mol_H2_per_m2_per_day = mol_H2_per_cell / self.cell_area
-
-	def PEC_cost(self, dcf):
+	def PEC_cost(self):
 		'''Calculation of cost per cell, number of required cells and total cell cost.
 		'''
 
-		cost_per_cell = self.cell_area * dcf.inp['PEC Cells']['Cell Cost ($/m2)']['Value']
-		self.cell_number = np.ceil(dcf.inp['Technical Operating Parameters and Specifications']['Design Output per Day']['Value'] / self.kg_H2_per_cell)
-		self.cell_cost = self.cell_number * cost_per_cell
+		cost_per_cell = (self.cell_area.unit['m2'] 
+						 * self.input_dict_resolved['PEC Cells']['Cell cost']['Value'].unit['USD/m2'])
 
-	def land_area(self, dcf):
+		
+
+		self.cell_number = Quantity(np.ceil(
+			   							self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output flowrate']['Value'].unit['kg/day'] 
+										/ self.mass_rate_H2_per_cell.unit['kg/day']
+										), 
+							'-')
+		
+		self.cell_cost = Quantity(self.cell_number.unit['-'] 
+								  * cost_per_cell, 
+						'USD')
+
+	def land_area(self):
 		'''Calculation of total required land area and solar collection area.
 		'''
 
-		land = dcf.inp['Land Area Requirement']
-		pec = dcf.inp['PEC Cells']
+		self.land = self.input_dict_resolved['Land Area Requirement']
+		self.pec = self.input_dict_resolved['PEC Cells']
 
-		self.total_solar_collection_area = self.cell_area * self.cell_number
+		self.total_solar_collection_area = Quantity(self.cell_area.unit['m2'] 
+													* self.cell_number.unit['-'], 
+										   'm2')
 
-		cell_plan_view = pec['Length (m)']['Value'] * np.cos(np.radians(land['Cell Angle (degree)']['Value']))
-		total_length = cell_plan_view + land['South Spacing (m)']['Value']	
-		total_width = pec['Width (m)']['Value'] + land['East/West Spacing (m)']['Value']
+		cell_plan_view = self.pec['Length']['Value'].unit['m'] * np.cos(self.land['Cell angle']['Value'].unit['rad'])
+		total_length = cell_plan_view + self.land['South spacing']['Value'].unit['m']	
+		total_width = self.pec['Width']['Value'].unit['m'] + self.land['East/West spacing']['Value'].unit['m']
 
-		self.total_land_area = total_width * total_length * self.cell_number
-		self.total_land_area_acres = self.total_land_area * 0.000247105
-		
+		self.total_land_area = Quantity(total_width 
+										* total_length 
+										* self.cell_number.unit['-'], 
+								'm2')

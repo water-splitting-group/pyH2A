@@ -1,6 +1,7 @@
 import pytest
 import numpy as np
 from pyH2A.Plugins.PEC_Plugin import PEC_Plugin
+from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
 
 class DummyDCF:
@@ -21,24 +22,54 @@ class DummyDCF:
     ):
         self.inp = {
             "Technical Operating Parameters and Specifications": {
-                "Design Output per Day": {"Value": design_output},
+                "Design output flowrate": {
+                    "Value": design_output,
+                    "Unit": "kg/day",
+                },
             },
             "PEC Cells": {
-                "Cell Cost ($/m2)": {"Value": cell_cost},
-                "Lifetime (years)": {"Value": lifetime},
-                "Length (m)": {"Value": length},
-                "Width (m)": {"Value": width},
+                "Cell cost": {
+                    "Value": cell_cost,
+                    "Unit": "USD/m2"
+                },
+                "Lifetime": {
+                    "Value": lifetime,
+                    "Unit": "year"
+                },
+                "Length": {
+                    "Value": length,
+                    "Unit": "m"
+                },
+                "Width": {
+                    "Value": width,
+                    "Unit": "m"
+                },
             },
             "Land Area Requirement": {
-                "Cell Angle (degree)": {"Value": cell_angle},
-                "South Spacing (m)": {"Value": south_spacing},
-                "East/West Spacing (m)": {"Value": east_spacing},
+                "Cell angle": {
+                    "Value": cell_angle,
+                    "Unit": "deg"
+                },
+                "South spacing": {
+                    "Value": south_spacing,
+                    "Unit": "m"
+                },
+                "East/West spacing": {
+                    "Value": east_spacing,
+                    "Unit": "m"
+                },
             },
             "Solar-to-Hydrogen Efficiency": {
-                "STH (%)": {"Value": sth}
+                "STH": {
+                    "Value": sth,
+                    "Unit": "-"
+                }
             },
             "Solar Input": {
-                "Mean solar input (kWh/m2/day)": {"Value": solar_input}
+                "Mean solar input": {
+                    "Value": solar_input,
+                    "Unit": "kW / m2"
+                }
             },
         }
 
@@ -48,25 +79,24 @@ class DummyDCF:
     [
         {
             "input": {
-                "design_output": 1000,
+                "design_output": 1000.0,
                 "cell_cost": 21000.0,
                 "lifetime": 0.33,
-                "length": 6,
+                "length": 6.0,
                 "width": 0.3,
-                "cell_angle": 35,
+                "cell_angle": 35.0,
                 "south_spacing": 6.71,
                 "east_spacing": 17.3,
                 "sth": 0.14,
-                "solar_input": 5.0,
+                "solar_input": 5.0/24,
             },
             "expected": {
-                "total_land_area_acres": 1321.7195315319523,
-                "total_solar_collection_area": 47057.399999999994,
-                "cell_cost": 988205399.9999998,
-                "cell_number": 26143.0,
-                "mol_H2_per_m2_per_day": 10.62569970259003,
-                "kg_H2_per_cell": 0.0382525189293241,
-                "total_land_area": 5348817.431990256,
+                "total_solar_collection_area": Quantity(47057.399999999994, 'm2'),
+                "cell_cost": Quantity(988205399.9999998, 'USD'),
+                "cell_number": Quantity(26143.0, '-'),
+                "mol_H2_per_m2_per_day": Quantity(10.6256954979, 'mol/day/m2'),
+                "flowrate_H2_per_cell": Quantity(0.0382525189293241, 'kg/day'),
+                "total_land_area": Quantity(5348817.431990256, 'm2'),
             },
         },
     ],
@@ -83,39 +113,34 @@ def test_pec_plugin(case):
     
     # Tolerance (very small)
     tolerance = 1e-12
-
-    assert plugin.total_land_area_acres == pytest.approx(
-        expected["total_land_area_acres"],
+    
+    assert plugin.total_solar_collection_area.unit['m2'] == pytest.approx(
+        expected["total_solar_collection_area"].unit['m2'],
         abs=tolerance
     )
     
-    assert plugin.total_solar_collection_area == pytest.approx(
-        expected["total_solar_collection_area"],
+    assert plugin.cell_cost.unit['USD'] == pytest.approx(
+        expected["cell_cost"].unit['USD'],
         abs=tolerance
     )
     
-    assert plugin.cell_cost == pytest.approx(
-        expected["cell_cost"],
+    assert plugin.cell_number.unit['-'] == pytest.approx(
+        expected["cell_number"].unit['-'],
         abs=tolerance
     )
     
-    assert plugin.cell_number == pytest.approx(
-        expected["cell_number"],
+    assert plugin.mol_rate_H2_per_surface.unit['mol/s/m2'] == pytest.approx(
+        expected["mol_H2_per_m2_per_day"].unit['mol/s/m2'],
         abs=tolerance
     )
     
-    assert plugin.mol_H2_per_m2_per_day == pytest.approx(
-        expected["mol_H2_per_m2_per_day"],
+    assert plugin.mass_rate_H2_per_cell.unit['kg/s'] == pytest.approx(
+        expected["flowrate_H2_per_cell"].unit['kg/s'],
         abs=tolerance
     )
     
-    assert plugin.kg_H2_per_cell == pytest.approx(
-        expected["kg_H2_per_cell"],
-        abs=tolerance
-    )
-    
-    assert plugin.total_land_area == pytest.approx(
-        expected["total_land_area"],
+    assert plugin.total_land_area.unit['m2'] == pytest.approx(
+        expected["total_land_area"].unit['m2'],
         abs=tolerance
     )
     
