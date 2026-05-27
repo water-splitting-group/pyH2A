@@ -6,7 +6,7 @@ input_dict = {
 	"Technical Operating Parameters and Specifications": {
 		"Design output flowrate": {
 			"Value": {
-				"type": {float,},
+				"type": {float,int,},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -19,7 +19,7 @@ input_dict = {
 	"PEC Cells": {
 		"Cell cost": {
 			"Value": {
-				"type": {float,},
+				"type": {float,int,},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -30,7 +30,7 @@ input_dict = {
 		},
 		"Lifetime": {
 			"Value": {
-				"type": {float,},
+				"type": {float,int,},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -41,7 +41,7 @@ input_dict = {
 		},
 		"Length": {
 			"Value": {
-				"type": {float,},
+				"type": {float,int,},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -52,7 +52,7 @@ input_dict = {
 		},
 		"Width": {
 			"Value": {
-				"type": {float,},
+				"type": {float,int,},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -65,7 +65,7 @@ input_dict = {
 	"Land Area Requirement": {
 		"Cell angle": {
 			"Value": {
-				"type": {float,},
+				"type": {float,int,},
 				"bounds": (0, np.pi / 2), 
 			},
 			"Unit": {
@@ -76,7 +76,7 @@ input_dict = {
 		},
 		"South spacing": {
 			"Value": {
-				"type": {float,},
+				"type": {float,int,},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -87,7 +87,7 @@ input_dict = {
 		},
 		"East/West spacing": {
 			"Value": {
-				"type": {float,},
+				"type": {float,int,},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -100,7 +100,7 @@ input_dict = {
 	"Solar-to-Hydrogen Efficiency": {
 		"STH": {
 			"Value": {
-				"type": {float,},
+				"type": {float,int,},
 				"bounds": (0, 1),
 			},
 			"Unit": {
@@ -113,7 +113,7 @@ input_dict = {
 	"Solar Input": {
 		"Mean solar input": {
 			"Value": {
-				"type": {float,},
+				"type": {float,int,},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -130,7 +130,7 @@ output_dict = {
 		"Land required": {
 			"Value": {
 				"inserted_value": "total_land_area", 
-				"type": {float,}, 
+				"type": {float,int,}, 
 				"dimension":"area",
         	},
 			"description": "Total land area required.",
@@ -139,7 +139,7 @@ output_dict = {
 		"Solar collection area": {
 			"Value": {
 				"inserted_value": "total_solar_collection_area",
-				"type": {float,},
+				"type": {float,int,},
 				"dimension":"area",
 			},
 			"description": "Solar collection area.",
@@ -150,12 +150,12 @@ output_dict = {
 		"Planned replacement PEC cells": {
 			"Cost_Value": {
 				"inserted_value": "cell_cost",
-				"type": {float,},
+				"type": {float,int,},
 				"dimension":"currency",
 			},
 			"Frequency_Value": {
 				"inserted_value": "cell_lifetime",
-				"type": {float,}, 
+				"type": {float,int,}, 
 				"dimension":"time",
 			},
 			"description": "Total cost of replacing all PEC cells once.",
@@ -166,7 +166,7 @@ output_dict = {
 		"PEC cell cost": {
 			"Value": {
 				"inserted_value": "cell_cost",
-				"type": {float,}, 
+				"type": {float,int,}, 
 				"dimension": "currency"
 			},
 			"description": "Total cost of all PEC cells.",
@@ -177,7 +177,7 @@ output_dict = {
 		"Number": {
 			"Value": {
 				"inserted_value": "cell_number",
-				"type": {float,}, 
+				"type": {float,int}, 
 				"dimension":"dimensionless",
 			},
 			"description": "Number of individual PEC cells required for design H2 output capacity.",
