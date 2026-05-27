@@ -4,7 +4,7 @@ from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
 input_dict = {
 	"Technical Operating Parameters and Specifications": {
-		"Design output flowrate": {
+		"Design output rate": {
 			"Value": {
 				"type": {float,},
 				"bounds": (0, None),
@@ -246,7 +246,7 @@ output_dict = {
 			"optional": False,
 			"description": "Total land area required."
 		},
-		"Solar Collection area": {
+		"Solar collection area": {
 			"Value": {
 				"inserted_value": "total_solar_collection_area",
 				"type": {float,},
@@ -258,12 +258,12 @@ output_dict = {
 	},
 	"Planned Replacement": {
 		"Planned replacement catalyst": {
-			"Cost": {
+			"Cost_Value": {
 				"inserted_value": "catalyst_cost",
 				"type": {float,},
 				"dimension": "currency",
 			},
-			"Frequency": {
+			"Frequency_Value": {
 				"inserted_value": "catalyst_lifetime",
 				"type": {float,},
 				"dimension": "time",
@@ -272,12 +272,12 @@ output_dict = {
 			"description": "Total cost of completely replacing the catalyst once and replacement frequency in years, identical to catalyst lifetime."
 		},
 		"Planned Replacement Baggie": {
-			"Cost": {
+			"Cost_Value": {
 				"inserted_value": "baggies_cost",
 				"type": {float,},
 				"dimension": "currency",
 			},
-			"Frequency": {
+			"Frequency_Value": {
 				"inserted_value": "baggie_lifetime",
 				"type": {float,},
 				"dimension": "time",
@@ -337,8 +337,8 @@ class Photocatalytic_Plugin:
 
 	Parameters
 	----------
-	Technical Operating Parameters and Specifications > Design output flowrate > Value : float
-		Design output flowrate.
+	Technical Operating Parameters and Specifications > Design output rate > Value : float
+		Design output rate.
 	Reactor Baggies > Cost material top > Value : float
 		Cost of baggie top material.
 	Reactor Baggies > Cost Material Bottom > Value : float
@@ -446,7 +446,7 @@ class Photocatalytic_Plugin:
 
 		peak_hourly_irradiation_per_m2 = np.amax(self.input_dict_resolved['Solar Input']['Hourly']['Value'].unit['J/m2'])
 		
-		peak_mol_H2_per_m2_per_h = peak_hourly_irradiation_per_m2 * self.input_dict_resolved['Solar-to-Hydrogen Efficiency']['STH']['Value'].unit['-'] / self.H2_molecule_energy.unit['J/mol']
+		peak_hourly_mol_H2_per_m2 = peak_hourly_irradiation_per_m2 * self.input_dict_resolved['Solar-to-Hydrogen Efficiency']['STH']['Value'].unit['-'] / self.H2_molecule_energy.unit['J/mol']
 
 		self.mean_mol_rate_H2_per_surface = Quantity(
 			self.input_dict_resolved['Solar Input']['Mean solar input']['Value'].unit['W/m2'] *self.input_dict_resolved['Solar-to-Hydrogen Efficiency']['STH']['Value'].unit['-'] / self.H2_molecule_energy.unit['J/mol'], 
@@ -455,10 +455,10 @@ class Photocatalytic_Plugin:
 
 		kg_catalyst_per_m2 = self.input_dict_resolved['Reactor Baggies']['Filling height']['Value'].unit['m'] * self.input_dict_resolved['Catalyst']['Concentration']['Value'].unit['kg/m3']
 
-		self.activity_H2_rate_per_catalyst_mass = Quantity(peak_mol_H2_per_m2_per_h / kg_catalyst_per_m2, 'mol/h/kg')
+		self.activity_H2_rate_per_catalyst_mass = Quantity(peak_hourly_mol_H2_per_m2 / kg_catalyst_per_m2, 'mol/h/kg')
 
 		catalyst_properties['Peak activity'] = self.activity_H2_rate_per_catalyst_mass
-		catalyst_properties['Peak H2 production'] = Quantity(peak_mol_H2_per_m2_per_h, 'mol/m2/h')
+		catalyst_properties['Peak H2 production'] = Quantity(peak_hourly_mol_H2_per_m2, 'mol/m2/h')
 		catalyst_properties['Catalyst Conc.'] = Quantity(kg_catalyst_per_m2, 'kg/m2')
 		catalyst_properties['Catalyst Conc.'] = self.input_dict_resolved['Catalyst']['Concentration']['Value']
 	
@@ -470,14 +470,14 @@ class Photocatalytic_Plugin:
 
 			mol_catalyst_per_m2 = liter_per_m2 * catalyst_mol_per_L
 
-			peak_TOF_hourly = peak_mol_H2_per_m2_per_h / mol_catalyst_per_m2
+			peak_TOF_hourly = peak_hourly_mol_H2_per_m2 / mol_catalyst_per_m2
 			average_TOF_daily = self.mean_mol_rate_H2_per_surface.unit['mol/day/m2'] / mol_catalyst_per_m2
 			TON = average_TOF_daily * self.input_dict_resolved['Catalyst']['Lifetime']['Value'].unit['day']
 
 			catalyst_properties['Homogeneous'] = {}
 			catalyst_properties['Homogeneous']['Catalyst Conc. per vol.'] = Quantity(catalyst_mol_per_L, 'mol/liter')
 			catalyst_properties['Homogeneous']['Catalyst Conc. per area'] = Quantity(mol_catalyst_per_m2, 'mol/m2')
-			catalyst_properties['Homogeneous']['Peak TOF'] = Quantity(peak_TOF_hourly, '-/hour')
+			catalyst_properties['Homogeneous']['Peak TOF'] = Quantity(peak_TOF_hourly, '-/h')
 			catalyst_properties['Homogeneous']['Mean daily TOF'] = Quantity(average_TOF_daily, '-/day')
 			catalyst_properties['Homogeneous']['TON'] = Quantity(TON, '-')
 
@@ -506,7 +506,7 @@ class Photocatalytic_Plugin:
 
 		cost_per_baggie = baggie['Markup factor']['Value'].unit['-'] * (material_cost + port_cost + baggie['Other costs per baggie']['Value'].unit['USD'])
 
-		self.baggie_number = Quantity((np.ceil(self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output flowrate']['Value'].unit['kg/day'] / self.mass_rate_H2_per_baggie.unit['kg/day'])).astype(int), '-')
+		self.baggie_number = Quantity((np.ceil(self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output rate']['Value'].unit['kg/day'] / self.mass_rate_H2_per_baggie.unit['kg/day'])).astype(int), '-')
 		self.baggies_cost = Quantity(self.baggie_number.unit['-'] * cost_per_baggie, 'USD')
 
 	def catalyst_cost(self, dcf):

@@ -31,7 +31,7 @@ input_dict = {
     "Power Consumption": {
         "<...>": {
             "Value": {
-                "type": {np.ndarray,},
+                "type": {np.ndarray,float,},
                 "bounds": (0, None),
             },
             "Type": {

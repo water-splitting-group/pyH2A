@@ -4,7 +4,7 @@ from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
 input_dict = {
 	"Technical Operating Parameters and Specifications": {
-		"Design output flowrate": {
+		"Design output rate": {
 			"Value": {
 				"type": {float,},
 				"bounds": (0, None),
@@ -110,6 +110,19 @@ input_dict = {
 			"description": "Solar-to-hydrogen efficiency in percentage or as a value between 0 and 1."
 		}
 	},
+	"Solar Concentrator": {
+		"Concentration factor": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "dimensionless",
+			},
+			"optional": True,
+			"description": "Concentration factor created by solar concentration module."
+		},
+	},
 	"Solar Input": {
 		"Mean solar input": {
 			"Value": {
@@ -148,12 +161,12 @@ output_dict = {
 	},
 	"Planned Replacement": {
 		"Planned replacement PEC cells": {
-			"Cost": {
+			"Cost_Value": {
 				"inserted_value": "cell_cost",
 				"type": {float,},
 				"dimension":"currency",
 			},
-			"Frequency": {
+			"Frequency_Value": {
 				"inserted_value": "cell_lifetime",
 				"type": {float,}, 
 				"dimension":"time",
@@ -162,7 +175,7 @@ output_dict = {
 			"optional": False,		
 		}
 	},
- 	"Direct capital costs - PEC Cells": {
+ 	"Itemized Direct Capital Costs - PEC Cells": {
 		"PEC cell cost": {
 			"Value": {
 				"inserted_value": "cell_cost",
@@ -191,8 +204,8 @@ class PEC_Plugin:
 
 	Parameters
 	----------
-	Technical Operating Parameters and Specifications > Design output flowrate > Value : float
-		Design output flowrate.
+	Technical Operating Parameters and Specifications > Design output rate > Value : float
+		Design output rate.
 	PEC Cells > Cell cost > Value : float
 		Cost of PEC cells in $/m2.
 	PEC Cells > Lifetime > Value : float
@@ -211,6 +224,9 @@ class PEC_Plugin:
 		Solar-to-hydrogen efficiency in percentage or as a value between 0 and 1.
 	Solar Input > Mean solar input > Value : float
 		Mean solar power per surface.
+	Solar Concentrator > Concentration Factor > Value : float, optional
+		Concentration factor created by solar concentration module, which is used in combination
+		with PEC cells. If "Solar Concentrator" is in dcf.inp, ``process_table()`` is used.		
 
 	Returns
 	-------
@@ -218,11 +234,11 @@ class PEC_Plugin:
 		Total land area required.
 	Non-Depreciable Capital Costs > Solar collection area > Value : float
 		Solar collection area.
-	Planned Replacement > Planned replacement PEC Cells > Cost : float
+	Planned Replacement > Planned replacement PEC Cells > Cost_Value : float
 		Total cost of replacing all PEC cells once.
-	Planned Replacement > Planned replacement PEC Cells > Frequency : float
+	Planned Replacement > Planned replacement PEC Cells > Frequency_Value : float
 		Replacement frequency of PEC cells in years, identical to PEC cell lifetime.
-	Direct Capital Costs - PEC Cells > PEC cell cost > Value : float
+	Itemized Direct Capital Costs - PEC Cells > PEC cell cost > Value : float
 		Total cost of all PEC cells.
 	PEC Cells > Number > Value : float
 		Number of individual PEC cells required for design H2 output capacity.
@@ -257,7 +273,7 @@ class PEC_Plugin:
 		'''
 
 		cost_per_cell = self.cell_area.unit['m2'] * self.input_dict_resolved['PEC Cells']['Cell cost']['Value'].unit['USD/m2']
-		self.cell_number = Quantity(np.ceil(self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output flowrate']['Value'].unit['kg/day'] / self.mass_rate_H2_per_cell.unit['kg/day']), '-')
+		self.cell_number = Quantity(np.ceil(self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output rate']['Value'].unit['kg/day'] / self.mass_rate_H2_per_cell.unit['kg/day']), '-')
 		self.cell_cost = Quantity(self.cell_number.unit['-'] * cost_per_cell, 'USD')
 
 	def land_area(self):

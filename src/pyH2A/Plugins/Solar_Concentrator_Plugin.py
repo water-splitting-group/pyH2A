@@ -100,7 +100,7 @@ output_dict = {
 			"description": "Total solar collection area."
 		},
 	},
-	"Direct Capital Costs - Solar Concentrator": {
+	"Itemized Direct Capital Costs - Solar Concentrator": {
 		"Solar concentrator cost": {
 			"Value": {
 				"inserted_value": "concentrator_cost",
@@ -139,7 +139,7 @@ class Solar_Concentrator_Plugin:
 		Total land requirement.
 	Non-Depreciable Capital Costs > Solar Collection Area > Value : float
 		Total solar collection area.
-	Direct Capital Costs - Solar Concentrator > Solar Concentrator Cost > Value : float
+	Itemized Direct Capital Costs - Solar Concentrator > Solar Concentrator Cost > Value : float
 		Total cost of all solar concentrators.
 	'''
 

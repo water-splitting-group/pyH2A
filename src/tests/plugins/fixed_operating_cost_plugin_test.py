@@ -1,6 +1,7 @@
 import pytest
 import numpy as np
 from pyH2A.Plugins.Fixed_Operating_Cost_Plugin import Fixed_Operating_Cost_Plugin
+from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
 
 class DummyDCF:
@@ -16,11 +17,21 @@ class DummyDCF:
     ):
         self.inp = {
             "Fixed Operating Costs": {
-                "staff": {"Value": staff},
-                "hourly labor cost": {"Value": hourly_labor_cost},
+                "Staff": {
+                    "Value": staff,
+                    "Unit": "-",
+                },
+                "Hourly labor cost": {
+                    "Value": hourly_labor_cost,
+                    "Unit": "USD / h",
+                },
             },
-            "Dummy Left Other Fixed Operating Cost Dummy Right": {
-                key: {"Value": value} for key, value in other_fixed_costs.items()
+            "<...> Other Fixed Operating Cost <...>": {
+                key: {
+                    "Value": value,
+                    "Unit": "USD"
+                } 
+            for key, value in other_fixed_costs.items()
             },
         }
 
@@ -33,7 +44,7 @@ class DummyDCF:
     [
         {
             "input": {
-                "staff": 1,
+                "staff": 1.0,
                 "hourly_labor_cost": 50.0,
                 "other_fixed_costs": {
                     "electrolyzer_OPEX": 0.2, 
@@ -43,9 +54,9 @@ class DummyDCF:
                 "combined_inflator": 1.1,
             },
             "expected": {
-                "labor_uninflated": 104000.0,
-                "labor": 109200.0,
-                "other": 0.44000000000000006,
+                "labor_uninflated": Quantity(104000.0, "USD"),
+                "labor": Quantity(109200.0, "USD"),
+                "total_fixed_operating_cost": Quantity(109200.44000000000000006, "USD"),
             },
         },
     ],
@@ -63,17 +74,18 @@ def test_fixed_operating_cost_plugin(case):
     # Tolerance (very small)
     tolerance = 1e-12
 
-    assert plugin.labor_uninflated == pytest.approx(
-        expected["labor_uninflated"],
+    assert plugin.labor_uninflated.unit['USD'] == pytest.approx(
+        expected["labor_uninflated"].unit['USD'],
         abs=tolerance
     )
-    
-    assert plugin.labor == pytest.approx(
-        expected["labor"],
+
+    assert plugin.labor.unit['USD'] == pytest.approx(
+        expected["labor"].unit['USD'],
         abs=tolerance
     )
-    
-    assert plugin.other == pytest.approx(
-        expected["other"],
+
+    assert plugin.total_fixed_operating_cost.unit['USD'] == pytest.approx(
+        expected["total_fixed_operating_cost"].unit['USD'],
         abs=tolerance
     )
+

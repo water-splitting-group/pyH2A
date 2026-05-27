@@ -16,6 +16,16 @@ input_dict = {
 			"optional": True,
 			"description": "Direct capital cost contribution, summed for each individual table in 'Direct Capital Cost' group."
 		},
+        'sum_tables': {
+            'mode': 'all',
+            'arguments': {
+                'bottom_key': 'Value',
+                'middle_key_total_insertion': 'Summed total',
+                'middle_key_total_group_insertion': 'Summed group total',
+                'middle_key_contributions_insertion': 'Contributions',
+                'bottom_key_insertion': 'Value'
+            }
+        },		
 	},
 	"<...> Indirect Capital Cost <...>": {
 		"<...>": {
@@ -29,6 +39,16 @@ input_dict = {
 			"optional": True,
 			"description": "Indirect capital cost contribution, summed for each individual table in 'Indirect Capital Cost' group."
 		},
+        'sum_tables': {
+            'mode': 'all',
+            'arguments': {
+                'bottom_key': 'Value',
+                'middle_key_total_insertion': 'Summed total',
+                'middle_key_total_group_insertion': 'Summed group total',
+                'middle_key_contributions_insertion': 'Contributions',
+                'bottom_key_insertion': 'Value'
+            }
+        },			
 	},
 	"Non-Depreciable Capital Costs": {
 		"Cost of land": {
@@ -66,20 +86,21 @@ input_dict = {
 			"optional": True,
 			"description": "Other non-depreciable capital cost contribution, summed for each individual table in 'Other Non-Depreciable Capital Cost' group."
 		},
+        'sum_tables': {
+            'mode': 'all',
+            'arguments': {
+                'bottom_key': 'Value',
+                'middle_key_total_insertion': 'Summed total',
+                'middle_key_total_group_insertion': 'Summed group total',
+                'middle_key_contributions_insertion': 'Contributions',
+                'bottom_key_insertion': 'Value'
+            }
+        },			
 	}
 }
 
 output_dict = {
 	"Direct Capital Costs": {
-		"Total": {
-			"Value": {
-				"inserted_value": "direct",
-				"type": {float,},	
-				"dimension": "currency",
-			},
-			"description": "Total direct capital costs.",
-			"optional": False,
-		},
 		"Inflated": {
 			"Value": {
 				"inserted_value": "direct_inflated",
@@ -91,15 +112,6 @@ output_dict = {
 		},
 	},
 	"Indirect Capital Costs": {
-		"Total": {
-			"Value": {
-				"inserted_value": "indirect",
-				"type": {float,},
-				"dimension": "currency",
-			},
-			"description": "Total indirect capital costs.",
-			"optional": False,
-		},
 		"Inflated": {
 			"Value": {
 				"inserted_value": "indirect_inflated",
@@ -139,7 +151,7 @@ output_dict = {
 			},	
 			"description": "Total depreciable capital costs.",
 			"optional": False,
-		},
+		},				
 		"Inflated": {
 			"Value": {
 				"inserted_value": "depreciable_inflated",
@@ -173,7 +185,7 @@ output_dict = {
 	"special_insertions":
         {"sum_all_tables": {
             "<...> Direct Capital Cost <...>": {
-                "Summed Total": {
+                "Summed total": {
                     "Value": {
                         "type": {float},
                     },
@@ -182,7 +194,7 @@ output_dict = {
                 },
             },
             "<...> Indirect Capital Cost <...>": {
-                "Summed Total": {
+                "Summed total": {
                     "Value": {
                         "type": {float},
                     },
@@ -191,7 +203,7 @@ output_dict = {
                 },
             },
             "<...> Other Non-Depreciable Capital Cost <...>": {
-                "Summed Total": {
+                "Summed total": {
                     "Value": {
                         "type": {float},
                     },
@@ -221,11 +233,11 @@ class Capital_Cost_Plugin:
 
 	Returns
 	-------
-	<...> Direct Capital Cost <...> > Summed Total > Value : float
+	<...> Direct Capital Cost <...> > Summed total > Value : float
 		Summed total for each individual table in "Direct Capital Cost" group.
-	<...> Indirect Capital Cost <...> > Summed Total > Value : float
+	<...> Indirect Capital Cost <...> > Summed total > Value : float
 		Summed total for each individual table in "Indirect Capital Cost" group.
-	<...> Other Non-Depreciable Capital Cost  <...> > Summed Total > Value : float
+	<...> Other Non-Depreciable Capital Cost  <...> > Summed total > Value : float
 		Summed total for each individual table in "Other Non-Depreciable Capital Cost" group.
 	Direct Capital Costs > Total > Value : float
 		Total direct capital costs.
@@ -255,42 +267,32 @@ class Capital_Cost_Plugin:
 		
 		# Except for self.direct and self.indirect, which are natively Quantities as they are the results of sum_all_tables calls, 
 		# all the self.X variable are converted into Quantites just before their insertion, to avoid unnecessary complications
-		self.direct_capital_costs(dcf, print_info)  
-		self.direct_inflated = self.direct.unit['USD'] * dcf.combined_inflator
+		self.direct = self.input_dict_resolved['Direct Capital Cost']['Summed group total']['Value'] # Calculated during the call of sum_tables
+		direct_inflated = self.direct.unit['USD'] * dcf.combined_inflator		
+		self.indirect = self.input_dict_resolved['Indirect Capital Cost']['Summed group total']['Value'] # Calculated during the call of sum_tables
+		indirect_inflated = self.indirect.unit['USD'] * dcf.combined_inflator
+
+		depreciable = self.direct.unit['USD'] + self.indirect.unit['USD']
+		depreciable_inflated = direct_inflated + indirect_inflated
 		
-		self.indirect_capital_costs(dcf, print_info)
-		self.indirect_inflated = self.indirect.unit['USD'] * dcf.combined_inflator
-		self.depreciable = self.direct.unit['USD'] + self.indirect.unit['USD']
-		self.depreciable_inflated = self.direct_inflated + self.indirect_inflated
-		
-		self.non_depreciable_capital_costs(dcf, print_info)
-		self.non_depreciable_inflated = self.non_depreciable * dcf.ci_inflator
-		self.total = self.depreciable + self.non_depreciable
-		self.total_inflated = self.depreciable_inflated + self.non_depreciable_inflated
+		non_depreciable = self.non_depreciable_capital_costs(dcf, print_info)
+
+		non_depreciable_inflated = non_depreciable * dcf.ci_inflator
+		total = depreciable + non_depreciable
+		total_inflated = depreciable_inflated + non_depreciable_inflated
 
 		# convert the values into Quantities
-		self.direct_inflated = Quantity(self.direct_inflated, 'USD')
-		self.indirect_inflated = Quantity(self.indirect_inflated, 'USD')
-		self.depreciable = Quantity(self.depreciable, 'USD')
-		self.depreciable_inflated = Quantity(self.depreciable_inflated, 'USD')
-		self.non_depreciable = Quantity(self.non_depreciable, 'USD')
-		self.non_depreciable_inflated = Quantity(self.non_depreciable_inflated, 'USD')        
-		self.total = Quantity(self.total, 'USD')
-		self.total_inflated = Quantity(self.total_inflated, 'USD')     
+		self.direct_inflated = Quantity(direct_inflated, 'USD')
+		self.indirect_inflated = Quantity(indirect_inflated, 'USD')
+		self.depreciable = Quantity(depreciable, 'USD')
+		self.depreciable_inflated = Quantity(depreciable_inflated, 'USD')
+		self.non_depreciable = Quantity(non_depreciable, 'USD')
+		self.non_depreciable_inflated = Quantity(non_depreciable_inflated, 'USD')        
+		self.total = Quantity(total, 'USD')
+		self.total_inflated = Quantity(total_inflated, 'USD')     
 
 		output_inserter_function(output_dict, self, dcf, 'Capital_Cost_Plugin')
-        
-	def direct_capital_costs(self, dcf, print_info):
-		'''Calculation of direct capital costs by applying ``sum_all_tables()`` to "Direct Capital Cost" group.'''
-                                                               
-		self.direct, self.direct_contributions = sum_all_tables(self.input_dict_resolved, 'Direct Capital Cost', 'Value', insert_total = True, 
-																class_object = dcf, print_info = print_info, return_contributions = True)
 
-	def indirect_capital_costs(self, dcf, print_info):
-		'''Calculation of indirect capital costs by applying ``sum_all_tables()`` to "Indirect Capital Cost" group.'''
-
-		self.indirect = sum_all_tables(self.input_dict_resolved, 'Indirect Capital Cost', 'Value', insert_total = True, 
-									   class_object = dcf, print_info = print_info)
 
 	def non_depreciable_capital_costs(self, dcf, print_info):
 		'''Calculation of non-depreciable capital costs by calculating cost of land and applying
@@ -298,5 +300,7 @@ class Capital_Cost_Plugin:
 		'''
 
 		non_depreciable = self.input_dict_resolved['Non-Depreciable Capital Costs']
-		self.non_depreciable = non_depreciable['Cost of land']['Value'].unit['USD/m2'] * non_depreciable['Land required']['Value'].unit['m2']
-		self.non_depreciable += sum_all_tables(self.input_dict_resolved, 'Other Non-Depreciable Capital Cost', 'Value', insert_total = True, class_object = dcf, print_info = print_info).unit['USD']
+		non_depreciable = non_depreciable['Cost of land']['Value'].unit['USD/m2'] * non_depreciable['Land required']['Value'].unit['m2']
+		non_depreciable += self.input_dict_resolved['Other Non-Depreciable Capital Cost']['Summed group total']['Value'].unit['USD']
+
+		return non_depreciable

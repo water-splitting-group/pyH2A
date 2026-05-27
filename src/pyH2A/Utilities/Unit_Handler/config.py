@@ -33,7 +33,7 @@ DIMENSIONS = {
             "MWh": 3.6e9,
             "GWh": 3.6e12,
             "TWh": 3.6e15,
-            "eV": 1.602176634e-19,
+            "eV": 1.602176e-19,#1.602176634e-19,
             "cal": 4.184,
             "kcal": 4184.0, 
             "toe": 4.1868e10
@@ -85,7 +85,7 @@ DIMENSIONS = {
             "mm2": 1e-6,
             "cm2": 1e-4,
             "km2": 1e6,
-            "acre": 4046.8564224,
+            "acre": 1/0.000247105 ,#4046.8564224,
             "ha": 1e4
         }
     },
@@ -118,7 +118,7 @@ DIMENSIONS = {
         "base": "USD",
         "conversions": {
             "USD": 1.0,
-            "EUR": 1.0  # Exchange rate should be adjusted via an API or manually when needed
+            "EUR": 0.8  # Exchange rate should be adjusted via an API or manually when needed
         }
     },
     "mass": {

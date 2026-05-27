@@ -76,7 +76,7 @@ input_dict = {
 				"bounds": (-0.1, 0), 
 			},
 			"Unit": {
-				"dimension": "dimensionless/temperature_diff",
+				"dimension": "1/temperature_diff",
 			},
 			"optional": False,
 			"description": "Performance decrease of irradiated module per degree increase."
@@ -88,27 +88,27 @@ output_dict = {
 	"Hourly Irradiation": {
 		"No tracking": {
 			"Value": {
-				"inserted_value": "power",
+				"inserted_value": "hourly_energy",
 				"type": {np.ndarray,},
-				"dimension": "power / area",
+				"dimension": "energy / area",
 			},
 			"optional": False,
 			"description": "Hourly irradiation with no tracking per m2."
 		},
 		"Horizontal single axis tracking": {
 			"Value": {
-				"inserted_value": "power_sat",
+				"inserted_value": "hourly_energy_sat",
 				"type": {np.ndarray,},
-				"dimension": "power / area",
+				"dimension": "energy / area",
 			},
 			"optional": False,
 			"description": "Hourly irradiation with single axis tracking per m2."
 		},
 		"Two axis tracking": {
 			"Value": {
-				"inserted_value": "power_dat",
+				"inserted_value": "hourly_energy_dat",
 				"type": {np.ndarray,},
-				"dimension": "power / area",
+				"dimension": "energy / area",
 			},
 			"optional": False,
 			"description": "Hourly irradiation with two axis tracking per m2."
@@ -167,11 +167,11 @@ class Hourly_Irradiation_Plugin:
 	Returns
 	-------
 	Hourly Irradiation > No tracking > Value : ndarray
-		Hourly irradiation poer with no tracking per area.
+		Hourly irradiation energy with no tracking per area.
 	Hourly Irradiation > Horizontal single axis tracking > Value : ndarray
-		Hourly irradiation power with single axis tracking per area.
+		Hourly irradiation energy with single axis tracking per area.
 	Hourly Irradiation > Two axis tracking > Value : ndarray
-		Hourly irradiation power with two axis tracking per area.
+		Hourly irradiation energy with two axis tracking per area.
 	Hourly Irradiation > Mean solar input > Value : float
 		Mean solar input power with no tracking in per area.
 	Hourly Irradiation > Mean solar input, single axis tracking > Value : float
@@ -190,7 +190,7 @@ class Hourly_Irradiation_Plugin:
 		else: # if we want to make the tilt equal to latitude, we don't point it through a path in the input fiale, we let it be the default
 			tilt = 'Default' 
 
-		self.power, self.power_sat, self.power_dat, self.yearly_averaged_power, self.yearly_averaged_power_sat, self.yearly_averaged_power_dat = calculate_PV_power_ratio(dcf.inp['Hourly Irradiation']['File']['Value'],
+		self.hourly_energy, self.hourly_energy_sat, self.hourly_energy_dat, self.yearly_averaged_power, self.yearly_averaged_power_sat, self.yearly_averaged_power_dat = calculate_PV_power_ratio(dcf.inp['Hourly Irradiation']['File']['Value'],
 											tilt, pv['Array azimuth']['Value'],
 											pv['Nominal operating temperature']['Value'], 
 											pv['Temperature coefficient']['Value'],
@@ -300,10 +300,10 @@ def calculate_PV_power_ratio(file_name, module_tilt, array_azimuth, nominal_oper
 	cell_temperature = data['Temperature'].unit['degC'] + (nominal_operating_temperature.unit['degC'] - 
 					   20) * total_plane_radiation/800  
 
-	temperature_derating = 1 + temperature_coefficient.unit['-/delta_degC'] * (cell_temperature - 25)  
+	temperature_derating = 1 + temperature_coefficient.unit['1/delta_degC'] * (cell_temperature - 25)  
 
-	power = Quantity((temperature_derating * mismatch_derating.unit['-'] * 
-					 dirt_derating.unit['-'] * total_plane_radiation), 'W/m2')
+	hourly_energy = Quantity((temperature_derating * mismatch_derating.unit['-'] * 
+					 dirt_derating.unit['-'] * total_plane_radiation), 'Wh/m2')
 
 	sat_azimuth = Quantity(np.sign(azimuth_angle.unit['rad']) * np.pi/2, 'rad')
 
@@ -320,13 +320,13 @@ def calculate_PV_power_ratio(file_name, module_tilt, array_azimuth, nominal_oper
 	sat_diffuse_POA = data['Diffuse Horizontal Irradiance'].unit['W/m2'] * (180 - sat_tilt.unit['deg']) / 180
 	sat_total_POA = sat_direct_POA + sat_diffuse_POA
 
-	power_sat = Quantity(temperature_derating * mismatch_derating.unit['-'] * dirt_derating.unit['-'] * sat_total_POA, 'W/m2')
+	hourly_energy_sat = Quantity(temperature_derating * mismatch_derating.unit['-'] * dirt_derating.unit['-'] * sat_total_POA, 'Wh/m2')
 
-	power_dat = Quantity(data['Direct Normal Irradiance'].unit['W/m2'] * temperature_derating * mismatch_derating.unit['-'] * dirt_derating.unit['-'], 'W/m2')
+	hourly_energy_dat = Quantity(data['Direct Normal Irradiance'].unit['W/m2'] * temperature_derating * mismatch_derating.unit['-'] * dirt_derating.unit['-'], 'Wh/m2')
 
-	yearly_averaged_power = Quantity(np.sum(power.unit['W/m2'])/(365*24), 'W/m2') 
-	yearly_averaged_power_sat = Quantity(np.sum(power_sat.unit['W/m2'])/(365*24), 'W/m2')
-	yearly_averaged_power_dat = Quantity(np.sum(power_dat.unit['W/m2'])/(365*24), 'W/m2')
+	yearly_averaged_power = Quantity(np.sum(hourly_energy.unit['Wh/m2']), 'Wh_per_year/m2') 
+	yearly_averaged_power_sat = Quantity(np.sum(hourly_energy_sat.unit['Wh/m2']), 'Wh_per_year/m2')
+	yearly_averaged_power_dat = Quantity(np.sum(hourly_energy_dat.unit['Wh/m2']), 'Wh_per_year/m2')
 
-	return power, power_sat, power_dat, yearly_averaged_power, yearly_averaged_power_sat, yearly_averaged_power_dat
+	return hourly_energy, hourly_energy_sat, hourly_energy_dat, yearly_averaged_power, yearly_averaged_power_sat, yearly_averaged_power_dat
 

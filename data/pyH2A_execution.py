@@ -129,7 +129,7 @@ def test():
 	print(Energy(285.83 * (1000./2.) * con.Avogadro, kJmol).J)
 
 def lca():
-	result = pyH2A('src/tests/end_to_end/Thermal_Base.md', '.')
+	result = pyH2A('src/tests/end_to_end/PV_E_Base_test.md', '.')
 	print(result)
 
 def main():

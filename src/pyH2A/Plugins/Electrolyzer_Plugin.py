@@ -27,7 +27,11 @@ input_dict = {
                 "dimension": "dimensionless",
             },
             "optional": False,
-            "description": "Multiplier to describe cost reduction of electrolysis CAPEX for every ten-fold increase of power relative to CAPEX reference power. Based on the multiplier the CAPEX scaling factor is calculated as: multiplier ^ (number of ten-fold increases). A value of 1 leads to no CAPEX reduction, a value < 1 enables cost reduction."
+            "description": "Multiplier to describe cost reduction of electrolysis CAPEX \
+                            for every ten-fold increase of power relative to CAPEX reference power. \
+                            Based on the multiplier the CAPEX scaling factor is calculated as: \
+                            multiplier ^ (number of ten-fold increases).\
+                            A value of 1 leads to no CAPEX reduction, a value < 1 enables cost reduction."
         },
     },
     "Electrolyzer": {
@@ -62,7 +66,8 @@ input_dict = {
                 "dimension": "dimensionless",
             },
             "optional": False,
-            "description": "Electrolyzer power requirement increase per year due to stack degradation. Percentage or value > 0. Increase calculated as: (1 + increase per year) ^ year."
+            "description": "Electrolyzer power requirement increase per year due to stack degradation.\
+                            Percentage or value > 0. Increase calculated as: (1 + increase per year) ^ year."
         },
         "Minimum capacity": {
             "Value": {
@@ -122,7 +127,8 @@ output_dict = {
                 "dimension": "mass / time",
             },
             "optional": False,
-            "description": "Plant design capacity calculated from installed electrolysis power capacity and hourly power generation data."
+            "description": "Plant design capacity calculated from installed \
+                            electrolysis power capacity and hourly power generation data."
         },
         "Operating capacity factor": {
             "Value": {
@@ -134,19 +140,6 @@ output_dict = {
             "description": "Operating capacity factor is set to 1."
         },
     },
-    "Planned Replacement": {
-        "Electrolyzer stack replacement": {
-            "Frequency": {
-                "inserted_value": "replacement_frequency",
-                "type": {float,},
-                "dimension": "time",
-            },
-            "add_processed": False,
-            "insert_path": False,
-            "optional": False,
-            "description": "Frequency of electrolyzer stack replacements in years, calculated from replacement time and hourly irradiation data."
-        },
-    },
     "Electrolyzer": {
         "Scaling factor": {
             "Value": {
@@ -155,8 +148,18 @@ output_dict = {
                 "dimension": "dimensionless",
             },
             "optional": False,
-            "description": "CAPEX scaling factor for electrolyzer calculated based on CAPEX multiplier, reference and nominal power."
+            "description": "CAPEX scaling factor for electrolyzer calculated based \
+                            on CAPEX multiplier, reference and nominal power."
         },
+        "Stack lifetime": {
+            "Value": {
+                "inserted_value": "stack_lifetime",
+                "type": {float,},
+                "dimension": "time",
+            },
+            "optional": False,
+            "description": "Lifetime of electrolyzer stack replacements in years, calculated from replacement time and hourly irradiation data."
+        },                
         "Yearly operation data": {
             "Year_Value": {
                 "inserted_value": "yearly_data_year",
@@ -175,7 +178,7 @@ output_dict = {
             },                      
             "optional": False,
             "description": "Yearly operation data of electrolyzer: year, H2 produced, duration of operation."
-        }
+        },
     },
     "Power Generation": {
         "Available energy (hourly)": {
@@ -234,12 +237,11 @@ class Electrolyzer_Plugin:
         electrolysis power capacity and hourly power generation data.
     Technical Operating Parameters and Specifications >	Operating capacity factor > Value : float
         Operating capacity factor is set to 1.
-    Planned Replacement > Electrolyzer stack replacement > Frequency : float
-        Frequency of electrolyzer stack replacements, calculated from replacement time and hourly
-        irradiation data.
     Electrolyzer > Scaling factor > Value : float
         CAPEX scaling factor for electrolyzer calculated based on CAPEX multiplier, 
         reference and nominal power.
+    Electrolyzer > Stack lifetime > Value : float
+        Frequency of electrolyzer stack replacements, calculated from replacement time and hourly irradiation data.        
     Electrolyzer > Yearly operation data > Year_Value : nd.array
         Yearly operation data of electrolyzer : year.
     Electrolyzer > Yearly operation data > Production_Value : nd.array
@@ -260,7 +262,7 @@ class Electrolyzer_Plugin:
         self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Electrolyzer_Plugin')
 
         self.calculate_H2_production(dcf)
-        self.replacement_frequency = calculate_stack_replacement(self.yearly_data_duration, 
+        self.stack_lifetime = calculate_stack_replacement(self.yearly_data_duration, 
                                     self.input_dict_resolved['Electrolyzer']['Replacement time']['Value'].unit['h'])
         self.calculate_scaling_factors()
 
@@ -283,9 +285,10 @@ class Electrolyzer_Plugin:
 
             energy_generation = energy_generation_yearly_data[year].unit['J']
 
-            electrolyzer_power_demand, power_increase_ratio = calculate_electrolyzer_power_demand(self.input_dict_resolved['Electrolyzer']['Power requirement increase per year']['Value'].unit['-'],
-                                                                                            self.input_dict_resolved['Electrolyzer']['Nominal power']['Value'].unit['W'],
-                                                                                            year) # returns: power (Watt), dimensionless
+            electrolyzer_power_demand, power_increase_ratio = calculate_electrolyzer_power_demand(
+                              self.input_dict_resolved['Electrolyzer']['Power requirement increase per year']['Value'].unit['-'],
+                              self.input_dict_resolved['Electrolyzer']['Nominal power']['Value'].unit['W'],
+                              year) # returns: power (Watt), dimensionless
 
             electrolyzer_energy_demand = 3600*electrolyzer_power_demand # integrate the power over 1 hour, since we ultimately think in terms of energy involved in each 1-hour slot
             electrolyzer_energy_demand *= np.ones(len(energy_generation))
@@ -298,12 +301,13 @@ class Electrolyzer_Plugin:
 
             electrolyzer_energy_consumption *= electrolyzer_capacity
 
-            h2_produced = calculate_hydrogen_production(electrolyzer_energy_consumption,
-                                                        self.input_dict_resolved['Electrolyzer']['Hydrogen yield per unit energy']['Value'].unit['kg/J'],
-                                                        power_increase_ratio) # returns an array of kg of H2 produced during each hour
+            h2_produced = calculate_hydrogen_production(
+                                electrolyzer_energy_consumption,
+                                self.input_dict_resolved['Electrolyzer']['Hydrogen yield per unit energy']['Value'].unit['kg/J'],
+                                power_increase_ratio) # returns an array of kg of H2 produced during each hour
             
             yearly_data_year.append(year)
-            yearly_data_production.append(np.sum(h2_produced),)
+            yearly_data_production.append(np.sum(h2_produced))
             yearly_data_duration.append(np.sum(electrolyzer_capacity))
 
 
@@ -316,7 +320,10 @@ class Electrolyzer_Plugin:
         self.yearly_data_production = Quantity(np.asarray(yearly_data_production), 'kg')
         self.yearly_data_duration = Quantity(np.asarray(yearly_data_duration), 'h')
 
-        self.h2_production = np.concatenate([np.zeros(dcf.inp['Financial Input Values']['Construction time']['Value']), self.yearly_data_production.unit['kg']])
+        self.h2_production = np.concatenate([
+                                   np.zeros(dcf.inp['Financial Input Values']['Construction time']['Value']), 
+                                   self.yearly_data_production.unit['kg']
+                                    ])
         self.h2_production = Quantity(self.h2_production, 'kg/year') # needs to be expressed as a flowrate, as it ultimately serves as the plant design capacity etc
         
         self.yearly_data_unused_energy = yearly_data_unused_energy
@@ -326,8 +333,12 @@ class Electrolyzer_Plugin:
         '''Calculation of electrolyzer CAPEX scaling factors.
         '''
 
-        self.electrolyzer_scaling_factor = Quantity(self.scaling_factor(self.input_dict_resolved['Electrolyzer']['Nominal power']['Value'].unit['W'], self.input_dict_resolved['Electrolyzer']['CAPEX reference power']['Value'].unit['W']), '-')
-        
+        scaling_factor = self.scaling_factor(
+            self.input_dict_resolved['Electrolyzer']['Nominal power']['Value'].unit['W'],
+            self.input_dict_resolved['Electrolyzer']['CAPEX reference power']['Value'].unit['W'])
+
+        self.electrolyzer_scaling_factor = Quantity(scaling_factor, '-')
+            
     def scaling_factor(self, power, reference):
         '''Calculation of CAPEX scaling factor based on nominal and reference power.
         '''
@@ -362,6 +373,7 @@ def calculate_stack_replacement(operation_hours, replacement_time):
     stack_usage = cumulative_running_time / replacement_time
 
     number_of_replacements = np.floor_divide(stack_usage[-1], 1)
-    replacement_frequency = len(stack_usage) / (number_of_replacements + 1.)
+    stack_lifetime = len(stack_usage) / (number_of_replacements + 1.)
 
-    return Quantity(replacement_frequency, 'year') # the inputs being : (hours of operation in the year, hours of operation before replacement), the result corresponds to the number of years betweentreplacements
+    return Quantity(stack_lifetime, 'year') # the inputs being : (hours of operation in the year, hours of operation before replacement), 
+                                                   # the result corresponds to the number of years between replacements

@@ -750,7 +750,7 @@ def process_table(dictionary, top_key, bottom_key, path_key = 'Path',
 						  path_key = path_key[-1], add_processed = True,
 						  print_processing_warning = print_processing_warning)
 
-def sum_table(dictionary, top_key, bottom_key):
+def sum_table(dictionary, top_key, bottom_key, path_key = 'Path'):
 	'''For the provided `dictionary`, all entries in dictionary[top_key] are processed 
 	using ``process_input()`` (positions: top_key > key > bottom key) and summed.
 
@@ -762,15 +762,16 @@ def sum_table(dictionary, top_key, bottom_key):
 		Top key.
 	bottom_key : str, ndarray or list
 		Bottom key.
+	path_key : str, optional
+		Key used for path column. Defaults to 'Path'.
 	'''
 
 	value = 0.
 
 	for key in dictionary[top_key]:
-		value += dictionary[top_key][key][bottom_key].base_value
-		base_unit = dictionary[top_key][key][bottom_key].base_unit
+		value += process_input(dictionary, top_key, key, bottom_key, path_key = path_key)
 
-	return Quantity(value, base_unit)
+	return value
 
 def sum_all_tables(dictionary, table_group, bottom_key, insert_total = False, 
 				   class_object = None, middle_key_insertion = 'Summed Total', 
@@ -818,29 +819,158 @@ def sum_all_tables(dictionary, table_group, bottom_key, insert_total = False,
 	total = 0.
 	contributions = {}
 	contributions['Data'] = {}
-	base_unit = 'USD'
 
 	for key in dictionary:
 
 		if table_group in key:
-			value = sum_table(dictionary, key, bottom_key) # value is a Quantity object
-			total += value.base_value
-			contributions['Data'][key] = value.base_value
-			base_unit = value.base_unit
+			value = sum_table(dictionary, key, bottom_key, path_key = path_key)
+			total += value
+			contributions['Data'][key] = value
 
 			if insert_total is True:
 				insert(class_object, key, middle_key_insertion, bottom_key_insertion, 
-					    value.base_value, __name__, print_info = print_info)
+					    value, __name__, print_info = print_info)
 
 	contributions['Total'] = total
 	contributions['Table Group'] = table_group
-	total = Quantity(total, base_unit)
 
 	if return_contributions is True:
 		return total, contributions
 	else:
 		return total
 	
+def sum_table_quantity(dictionary, 
+					   top_key, 
+					   bottom_key,
+					   insert_total = False,
+					   middle_key_total_insertion = 'Summed Total',
+					   bottom_key_insertion = 'Value',
+					   class_object = None,
+					   print_info = True, 
+					   base_unit = None):
+	'''For the provided `dictionary`, all entries in dictionary[top_key] are summed.
+
+	Parameters
+	----------
+	dictionary : dict
+		Dictionary within which function operates.
+	top_key : str
+		Top key.
+	bottom_key : str, ndarray or list
+		Bottom key.
+	insert_total : bool, optional
+		If `insert_total` is True, the total of each table is inserted in the
+		respective table.
+	middle_key_total_insertion : str, optional
+		Middle key used for insertion of total.
+	bottom_key_insertion : str, optional
+		Bottom key used for insertion of total.
+	class_object : Discounted_Cash_Flow object
+		Discounted_Cash_Flow object whose .inp attribute is modified.
+	print_info : bool, optional
+		Flag to control if information on action of ``insert()`` is printed.
+
+	Returns
+	-------
+	value : Quantity
+		Summed value across all entries in dictionary[top_key] at position bottom_key.
+	'''
+
+	value = 0.
+
+	for key in dictionary[top_key]:
+		quantity = dictionary[top_key][key][bottom_key]
+		value += quantity.base_value
+
+	value = Quantity(value, base_unit)
+
+	if insert_total is True:
+		insert(class_object, top_key, middle_key_total_insertion, bottom_key_insertion, 
+					    value, __name__, print_info = print_info)
+
+	return value
+
+def sum_all_tables_quantity(dictionary, 
+							table_group, 
+							insert_total_table_group = False,
+				   			class_object = None, 
+							middle_key_total_insertion = 'Summed Total', 
+							middle_key_total_group_insertion = 'Summed Group Total',
+							middle_key_contributions_insertion = 'Contributions',
+				   			bottom_key_insertion = 'Value', 
+							print_info = True, 
+							return_contributions = False, 
+							base_unit = None):
+	'''
+	Sums all sums of tables within table group (assumes that sum_all_tables_quantity has already been applied to all tables in table group, 
+	so that the dictionary[top_key][middle_key_total_insertion][bottom_key_insertion] position of each table contains a Quantity object 
+	representing the sum of that table).
+	
+	Parameters
+	----------
+	dictionary : dict
+		Dictionary within which function operates.
+	table_group : str
+		String to identify table group. If a dictionary key contains the `table_group`
+		substring it is part of the table group.
+	insert_total_table_group : bool, optional
+		If `insert_total_table_group` is True, the total of across all tables
+		is inserted in class_object.inp at table_group > middle_key_total_group_insertion > bottom_key_insertion.
+	class_object : Discounted_Cash_Flow object
+		Discounted_Cash_Flow object whose .inp attribute is modified.
+	middle_key_total_insertion : str, optional
+		Middle key, in which the total of each table was previously inserted by ``sum_table_quantity()``.
+	middle_key_total_group_insertion : str, optional
+		Middle key used for insertion of total across all tables in table group.
+	middle_key_contributions_insertion : str, optional
+		Middle key used for insertion of contributions breakdown.
+	bottom_key_insertion : str, optional
+		Bottom key, in which the total of each table was previously inserted by ``sum_table_quantity()``. 
+		Also used for insertion of total across all tables in table group and contributions breakdown.
+	print_info : bool, optional
+		Flag to control if information on action of ``insert()`` is printed.
+	return_contributions : bool, optional
+		Flag to control if a dictionary with contributions breakdown (for use 
+		in cost ``Cost_Contributions_Analysis`` module) is returned and inserted in class_object.inp at 
+		table_group > middle_key_contributions_insertion > bottom_key_insertion.
+
+	Notes
+	-----
+	The contributions of each table in table_group are stored in `contributions` dictionary, 
+	which is returned if `return_contributions` is set to True. Dictionary is structured so 
+	that it can be provided to "Cost_Contributions_Analysis" class to generate a cost breakdown plot.
+	'''
+
+	total = 0.
+
+	contributions = {}
+	contributions['Data'] = {}
+	contributions['Table Group'] = table_group
+	
+	for key in dictionary:
+
+		if table_group in key:
+			value = dictionary[key][middle_key_total_insertion][bottom_key_insertion]
+			total += value.base_value
+			contributions['Data'][key] = value.base_value
+
+	total = Quantity(total, base_unit)				
+	contributions['Total'] = total
+
+	# Inserting total sum across all tables in table group
+	if insert_total_table_group is True:
+		insert(class_object, table_group, middle_key_total_group_insertion, bottom_key_insertion, 
+							total, __name__, print_info = print_info)
+
+	# Inserting contributions breakdown and returning contributions breakdown dictionary if return_contributions is True
+	if return_contributions is True:
+		insert(class_object, table_group, middle_key_contributions_insertion, bottom_key_insertion, 
+							contributions, __name__, print_info = print_info)
+		return total, contributions
+	
+	else:
+		return total
+
 def hourly_to_daily_power(array):
 	'''Convert array of hourly power values to array of daily power values.'''
 		

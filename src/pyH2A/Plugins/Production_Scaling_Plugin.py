@@ -1,12 +1,13 @@
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+import numpy as np
 from pyH2A import functional_unit as fu
 
 input_dict = {
     "Technical Operating Parameters and Specifications": {
 		"Plant design capacity": {
 			"Value": {
-				"type": {float,},
+				"type": {float, np.ndarray,},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -89,7 +90,7 @@ output_dict = {
 		"Design output rate": {
 			"Value": {
 				"inserted_value": "scaled_design_output",
-				"type": {float,},
+				"type": {float, np.ndarray,},
 				"dimension": fu.FD_dot,
 			},
 			"optional": False,
@@ -98,7 +99,7 @@ output_dict = {
 		"Max gate output rate": {
 			"Value": {
 				"inserted_value": "max_gate_output_rate",
-				"type": {float,},
+				"type": {float, np.ndarray,},
 				"dimension": fu.FD_dot,
     		},
 			"optional": False,
@@ -107,7 +108,7 @@ output_dict = {
 		"Output per year": {
 			"Value": {
 				"inserted_value": "output_per_year",
-				"type": {float,},
+				"type": {float, np.ndarray,},
 				"dimension": fu.FD,
 			},
 			"optional": False,
@@ -116,7 +117,7 @@ output_dict = {
 		"Output per year at gate": {
 			"Value": {
 				"inserted_value": "output_per_year_at_gate",
-				"type": {float,},
+				"type": {float, np.ndarray,},
 				"dimension": fu.FD,
 			},
 			"optional": False,
@@ -125,7 +126,7 @@ output_dict = {
 		"Maximum output rate at gate": {
 			"Value": {
 				"inserted_value": "maximum_output_at_gate",
-				"type": {float,},
+				"type": {float, np.ndarray,},
 				"dimension": fu.FD_dot,
 			},
 			"optional": False,
@@ -168,7 +169,7 @@ class Production_Scaling_Plugin:
 
 	Parameters
 	----------
-	Technical Operating Parameters and Specifications > Plant design capacity > Value : float
+	Technical Operating Parameters and Specifications > Plant design capacity > Value : float or nd.array
 		Plant design capacity (mass per time).
 	Technical Operating Parameters and Specifications > Operating capacity factor > Value : float
 		Operating capacity factor.
