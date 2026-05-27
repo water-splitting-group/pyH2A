@@ -1,6 +1,7 @@
 import pytest
 import numpy as np
 from pyH2A.Plugins.Photovoltaic_Plugin import Photovoltaic_Plugin
+from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
 
 class DummyDCF:
@@ -18,14 +19,35 @@ class DummyDCF:
 
         self.inp = {
             "Irradiation Used": {
-                "Data": {"Value": irradiation_hourly.flatten(), "Processed": "Yes"}
+                "Data": {
+                    "Value": irradiation_hourly.flatten(), 
+                    "Unit": "kWh/m2",
+                    "Processed": "Yes"
+                }
             },
-            "CAPEX Multiplier": {"Multiplier": {"Value": capex_multiplier}},
+            "CAPEX Multiplier": {
+                "Multiplier": {
+                    "Value": capex_multiplier,
+                    "Unit": "-"
+                }
+            },
             "Photovoltaic": {
-                "Nominal Power (kW)": {"Value": nominal_power},
-                "CAPEX Reference Power (kW)": {"Value": capex_reference},
-                "Power loss per year": {"Value": power_loss_per_year},
-                "Efficiency": {"Value": efficiency},
+                "Nominal power": {
+                    "Value": nominal_power,
+                    "Unit": "kW"
+                },
+                "CAPEX reference power": {
+                    "Value": capex_reference,
+                    "Unit": "kW"
+                },
+                "Power loss per year": {
+                    "Value": power_loss_per_year,
+                    "Unit": "-"
+                },
+                "Efficiency": {
+                    "Value": efficiency,
+                    "Unit": "-"
+                },
             },
         }
 
@@ -56,11 +78,10 @@ class DummyDCF:
                 "efficiency": 0.2,
             },
             "expected": {
-                "pv_scaling_factor": 0.990984576405111,
-                "area_m2": 5000.0,
-                "area_acres": 1.235525,
-                "power_generation_yearly_data": {
-                    2026: np.array([
+                "pv_scaling_factor": Quantity(0.990984576405111, '-'),
+                "area": Quantity(5000.0, 'm2'),
+                "energy_generation_yearly_data": {
+                    2026: Quantity(np.array([
                         0.3964256642812647, 0.20209935826103692, 0.4741561866893559, 0.0,
                         0.3964256642812647, 0.20209935826103692, 0.4741561866893559, 0.4741561866893559,
                         0.3964256642812647, 0.20209935826103692, 0.4741561866893559, 0.4741561866893559,
@@ -73,8 +94,8 @@ class DummyDCF:
                         0.0, 0.20209935826103692, 0.4741561866893559, 0.4741561866893559,
                         0.3964256642812647, 0.20209935826103692, 0.4741561866893559, 0.4741561866893559,
                         0.0, 0.20209935826103692, 0.4741561866893559, 0.4741561866893559
-                    ]),
-                    2027: np.array([
+                    ]), 'kWh'),
+                    2027: Quantity(np.array([
                         0.39444353595985837, 0.20108886146973173, 0.4717854057559091, 0.0,
                         0.39444353595985837, 0.20108886146973173, 0.4717854057559091, 0.4717854057559091,
                         0.39444353595985837, 0.20108886146973173, 0.4717854057559091, 0.4717854057559091,
@@ -87,15 +108,18 @@ class DummyDCF:
                         0.0, 0.20108886146973173, 0.4717854057559091, 0.4717854057559091,
                         0.39444353595985837, 0.20108886146973173, 0.4717854057559091, 0.4717854057559091,
                         0.0, 0.20108886146973173, 0.4717854057559091, 0.4717854057559091
-                    ])
+                    ]), 'kWh')
                 }, 
-                "power_generation_yearly_data_daily_power": {
-                    2026: np.array([8.014016860274, 8.014016860274]),
-                    2027: np.array([7.9739467759728235, 7.9739467759728235])
+                "energy_generation_yearly_data_daily_energy": {
+                    2026: Quantity(np.array([8.014016860274, 8.014016860274]), 'kWh'),
+                    2027: Quantity(np.array([7.9739467759728235, 7.9739467759728235]), 'kWh')
                 },
             },
         }
     ],
+    ids=[
+        "Realistic case - Photovoltaic plugin"
+    ]
 )
 def test_photovoltaic_plugin(case):
     """Test Photovoltaic_Plugin using base inputs (direct names style)."""
@@ -110,32 +134,27 @@ def test_photovoltaic_plugin(case):
     # Tolerance (very small)
     tolerance = 1e-12
 
-    assert plugin.pv_scaling_factor == pytest.approx(
-        expected["pv_scaling_factor"], 
+    assert plugin.pv_scaling_factor.unit['-'] == pytest.approx(
+        expected["pv_scaling_factor"].unit['-'], 
         abs=tolerance
     )
 
-    assert plugin.area_m2 == pytest.approx(
-        expected["area_m2"], 
-        abs=tolerance
-    )
-
-    assert plugin.area_acres == pytest.approx(
-        expected["area_acres"], 
+    assert plugin.area.unit['m2'] == pytest.approx(
+        expected["area"].unit['m2'], 
         abs=tolerance
     )
 
     for year in dcf.operation_years:
         np.testing.assert_allclose(
-            plugin.power_generation_yearly_data[year],
-            expected["power_generation_yearly_data"][year],
+            plugin.electric_energy_generation_yearly_data[year].unit['J'],
+            expected["energy_generation_yearly_data"][year].unit['J'],
             rtol=tolerance,
             atol=tolerance,
         )
 
         np.testing.assert_allclose(
-            plugin.power_generation_yearly_data_daily_power[year],
-            expected["power_generation_yearly_data_daily_power"][year],
+            plugin.electric_energy_generation_yearly_data_daily_energy[year].unit["Wh"],
+            expected["energy_generation_yearly_data_daily_energy"][year].unit["Wh"],
             rtol=tolerance,
             atol=tolerance,
         )
