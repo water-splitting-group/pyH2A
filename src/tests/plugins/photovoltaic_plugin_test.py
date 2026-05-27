@@ -153,7 +153,7 @@ def test_photovoltaic_plugin(case):
         )
 
         np.testing.assert_allclose(
-            plugin.electric_energy_generation_yearly_data_daily_power[year].unit["Wh"],
+            plugin.electric_energy_generation_yearly_data_daily_energy[year].unit["Wh"],
             expected["energy_generation_yearly_data_daily_energy"][year].unit["Wh"],
             rtol=tolerance,
             atol=tolerance,
