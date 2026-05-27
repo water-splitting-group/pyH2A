@@ -80,7 +80,7 @@ class DummyDCF:
             "expected": {
                 "pv_scaling_factor": Quantity(0.990984576405111, '-'),
                 "area": Quantity(5000.0, 'm2'),
-                "power_generation_yearly_data": {
+                "energy_generation_yearly_data": {
                     2026: Quantity(np.array([
                         0.3964256642812647, 0.20209935826103692, 0.4741561866893559, 0.0,
                         0.3964256642812647, 0.20209935826103692, 0.4741561866893559, 0.4741561866893559,
@@ -110,7 +110,7 @@ class DummyDCF:
                         0.0, 0.20108886146973173, 0.4717854057559091, 0.4717854057559091
                     ]), 'kWh')
                 }, 
-                "power_generation_yearly_data_daily_power": {
+                "energy_generation_yearly_data_daily_energy": {
                     2026: Quantity(np.array([8.014016860274, 8.014016860274]), 'kWh'),
                     2027: Quantity(np.array([7.9739467759728235, 7.9739467759728235]), 'kWh')
                 },
@@ -147,14 +147,14 @@ def test_photovoltaic_plugin(case):
     for year in dcf.operation_years:
         np.testing.assert_allclose(
             plugin.electric_energy_generation_yearly_data[year].unit['J'],
-            expected["power_generation_yearly_data"][year].unit['J'],
+            expected["energy_generation_yearly_data"][year].unit['J'],
             rtol=tolerance,
             atol=tolerance,
         )
 
         np.testing.assert_allclose(
             plugin.electric_energy_generation_yearly_data_daily_power[year].unit["Wh"],
-            expected["power_generation_yearly_data_daily_power"][year].unit["Wh"],
+            expected["energy_generation_yearly_data_daily_energy"][year].unit["Wh"],
             rtol=tolerance,
             atol=tolerance,
         )
