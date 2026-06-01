@@ -96,7 +96,7 @@ DIMENSIONS = {
         "base": "USD",
         "conversions": {
             "USD": 1.0,
-            "EUR": 1.0  # Exchange rate should be adjusted via an API or manually when needed
+            "EUR": 0.8  # Exchange rate should be adjusted via an API or manually when needed
         }
     },
     "mass": {

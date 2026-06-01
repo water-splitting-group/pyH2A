@@ -455,6 +455,18 @@ def parse_parameter(key, delimiter = '>'):
 		
 	return output
 
+def parse_path_with_unit(text):
+	'''Parsing path with the notation "{top_key > middle_key > bottom_key, unit}" '''
+
+	text = text.strip()
+	if not (text.startswith("{") and text.endswith("}")):
+		raise ValueError("Expected a string wrapped in braces, but got '{0}' instead".format(text))
+
+	inner = text[1:-1].strip()
+	path, unit = inner.rsplit(",", 1)
+
+	return path.strip(), unit.strip()
+
 def reverse_parameter_to_string(parameter):
 	'''Reverts processed parameter list to string.'''
 
@@ -509,7 +521,7 @@ def parse_parameter_to_array(key, delimiter = '>', dictionary = None, top_key = 
 
 	return np.asarray(array)
 
-def process_path(dictionary, path, top_key, key, bottom_key, print_processing_warning = True):
+def process_path(dictionary, path, top_key, key, bottom_key):
 	'''Processing provided path. Checks are performed to see if path is valid.
 
 	Parameters
@@ -539,9 +551,11 @@ def process_path(dictionary, path, top_key, key, bottom_key, print_processing_wa
 	If the retrieved target value is numerical, it is returned.
 	'''
 
-	parsed_path = parse_parameter(path)
+	path_alone, unit = parse_path_with_unit(path)
+	parsed_path = parse_parameter(path_alone)
 
 	if len(parsed_path) == 1:
+		print('Warning: Provided path "{0}" at "{1} > {2} > {3}" does not contain ">" symbol, treating as non-path and setting to 1.'.format(path, top_key, key, bottom_key))
 		return 1.
 
 	elif len(parsed_path) == 3:
@@ -549,22 +563,17 @@ def process_path(dictionary, path, top_key, key, bottom_key, print_processing_wa
 		try:
 			target_value = get_by_path(dictionary, parsed_path)
 
-			if 'Processed' not in dictionary[parsed_path[0]][parsed_path[1]] and print_processing_warning is True:
-				print('Warning: Unprocessed value is being used at "{0} > {1} > {2}" (by "{3} > {4}")'
+			if 'Processed' not in dictionary[parsed_path[0]][parsed_path[1]]:
+				raise ValueError ('Unprocessed value is being used at "{0} > {1} > {2}" (by "{3} > {4}")'
 					  .format(parsed_path[0], parsed_path[1], parsed_path[2], top_key, key))
 
-			if not isinstance(target_value, numbers.Number):
-				if isinstance(target_value, list) or type(target_value).__module__ == np.__name__:
-					pass
+			if isinstance(target_value, Quantity):
+				target_value = target_value.unit[unit]
 
-				# If target value is a Quantity object, its base value is retrieved for further calculations
-				elif isinstance(target_value, Quantity):
-					target_value = target_value.base_value
-
-				else:
-					print('Warning: Non-numerical value retrieved at "{0} > {1} > {2}" (by "{3} > {4}"), setting to 1'
-						  .format(parsed_path[0], parsed_path[1], parsed_path[2], top_key, key))
-					target_value = 1.
+			else:
+				print('Warning: Non-numerical (non-Quantity) value retrieved at "{0} > {1} > {2}" (by "{3} > {4}"), obtained value is {5}, setting to 1'
+						.format(parsed_path[0], parsed_path[1], parsed_path[2], top_key, key, target_value))
+				target_value = 1.
 
 		except KeyError:
 			print('Warning: Invalid path specified for "{0}" (at "{1} > {2} > {3}"), setting to 1'
@@ -626,8 +635,7 @@ def process_cell(dictionary, top_key, key, bottom_key, cell = None, print_proces
 		paths = parse_parameter(cell, delimiter = ';')
 
 		for path in paths:
-			target_value = process_path(dictionary, path, top_key, key, bottom_key, 
-								print_processing_warning = print_processing_warning)
+			target_value = process_path(dictionary, path, top_key, key, bottom_key)
 			value *= target_value
 
 		return value
@@ -839,6 +847,136 @@ def sum_all_tables(dictionary, table_group, bottom_key, insert_total = False,
 	else:
 		return total
 	
+def sum_table_quantity(dictionary, 
+					   top_key, 
+					   bottom_key,
+					   insert_total = False,
+					   middle_key_total_insertion = 'Summed Total',
+					   bottom_key_insertion = 'Value',
+					   class_object = None,
+					   print_info = True):
+	'''For the provided `dictionary`, all entries in dictionary[top_key] are summed.
+
+	Parameters
+	----------
+	dictionary : dict
+		Dictionary within which function operates.
+	top_key : str
+		Top key.
+	bottom_key : str, ndarray or list
+		Bottom key.
+	insert_total : bool, optional
+		If `insert_total` is True, the total of each table is inserted in the
+		respective table.
+	middle_key_total_insertion : str, optional
+		Middle key used for insertion of total.
+	bottom_key_insertion : str, optional
+		Bottom key used for insertion of total.
+	class_object : Discounted_Cash_Flow object
+		Discounted_Cash_Flow object whose .inp attribute is modified.
+	print_info : bool, optional
+		Flag to control if information on action of ``insert()`` is printed.
+
+	Returns
+	-------
+	value : Quantity
+		Summed value across all entries in dictionary[top_key] at position bottom_key.
+	'''
+
+	value = 0.
+
+	for key in dictionary[top_key]:
+		quantity = dictionary[top_key][key][bottom_key]
+		value += quantity.base_value
+
+	value = Quantity(value, quantity.base_unit)
+
+	if insert_total is True:
+		insert(class_object, top_key, middle_key_total_insertion, bottom_key_insertion, 
+					    value, __name__, print_info = print_info)
+
+	return value
+
+def sum_all_tables_quantity(dictionary, 
+							table_group, 
+							insert_total_table_group = False,
+				   			class_object = None, 
+							middle_key_total_insertion = 'Summed Total', 
+							middle_key_total_group_insertion = 'Summed Group Total',
+							middle_key_contributions_insertion = 'Contributions',
+				   			bottom_key_insertion = 'Value', 
+							print_info = True, 
+							return_contributions = False):
+	'''
+	Sums all sums of tables within table group (assumes that sum_all_tables_quantity has already been applied to all tables in table group, 
+	so that the dictionary[top_key][middle_key_total_insertion][bottom_key_insertion] position of each table contains a Quantity object 
+	representing the sum of that table).
+	
+	Parameters
+	----------
+	dictionary : dict
+		Dictionary within which function operates.
+	table_group : str
+		String to identify table group. If a dictionary key contains the `table_group`
+		substring it is part of the table group.
+	insert_total_table_group : bool, optional
+		If `insert_total_table_group` is True, the total of across all tables
+		is inserted in class_object.inp at table_group > middle_key_total_group_insertion > bottom_key_insertion.
+	class_object : Discounted_Cash_Flow object
+		Discounted_Cash_Flow object whose .inp attribute is modified.
+	middle_key_total_insertion : str, optional
+		Middle key, in which the total of each table was previously inserted by ``sum_table_quantity()``.
+	middle_key_total_group_insertion : str, optional
+		Middle key used for insertion of total across all tables in table group.
+	middle_key_contributions_insertion : str, optional
+		Middle key used for insertion of contributions breakdown.
+	bottom_key_insertion : str, optional
+		Bottom key, in which the total of each table was previously inserted by ``sum_table_quantity()``. 
+		Also used for insertion of total across all tables in table group and contributions breakdown.
+	print_info : bool, optional
+		Flag to control if information on action of ``insert()`` is printed.
+	return_contributions : bool, optional
+		Flag to control if a dictionary with contributions breakdown (for use 
+		in cost ``Cost_Contributions_Analysis`` module) is returned and inserted in class_object.inp at 
+		table_group > middle_key_contributions_insertion > bottom_key_insertion.
+
+	Notes
+	-----
+	The contributions of each table in table_group are stored in `contributions` dictionary, 
+	which is returned if `return_contributions` is set to True. Dictionary is structured so 
+	that it can be provided to "Cost_Contributions_Analysis" class to generate a cost breakdown plot.
+	'''
+
+	total = 0.
+
+	contributions = {}
+	contributions['Data'] = {}
+	contributions['Table Group'] = table_group
+	
+	for key in dictionary:
+
+		if table_group in key:
+			value = dictionary[key][middle_key_total_insertion][bottom_key_insertion]
+			total += value.base_value
+			contributions['Data'][key] = value
+				
+	total = Quantity(total, value.base_unit)
+	contributions['Total'] = total
+
+	# Inserting total sum across all tables in table group
+	if insert_total_table_group is True:
+		insert(class_object, table_group, middle_key_total_group_insertion, bottom_key_insertion, 
+							total, __name__, print_info = print_info)
+
+	# Inserting contributions breakdown and returning contributions breakdown dictionary if return_contributions is True
+	if return_contributions is True:
+		insert(class_object, table_group, middle_key_contributions_insertion, bottom_key_insertion, 
+							contributions, __name__, print_info = print_info)
+		return total, contributions
+	
+	else:
+		return total
+
 def hourly_to_daily_power(array):
 	'''Convert array of hourly power values to array of daily power values.'''
 		

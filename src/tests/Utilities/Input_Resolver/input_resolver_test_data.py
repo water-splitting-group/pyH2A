@@ -25,10 +25,10 @@ class DummyDCF:
                 'Water': {
                     'Usage_Value': 2,
                     'Usage_Unit': 'J/kg',
-                    'Usage_Path': 'Number of units > Bag number > Value', # testing that path information is correctly passed and used
-                    'Cost_Value': 'Pump - Other Variable Operating Cost - Brand A > Maintenance > Value', # testing that path information is correctly passed and used
+                    'Usage_Path': '{Number of units > Bag number > Value, -}', # testing that path information is correctly passed and used
+                    'Cost_Value': '{Pump - Other Variable Operating Cost - Brand A > Maintenance > Value, USD}', # testing that path information is correctly passed and used
                     'Cost_Unit': 'USD/J',
-                    'Cost_Path': 'Number of units > Bag number > Value', # testing that path information is correctly passed and used
+                    'Cost_Path': '{Number of units > Bag number > Value, -}', # testing that path information is correctly passed and used
                     'Type': 'water'
                 }
             },        
@@ -50,7 +50,7 @@ class DummyDCF:
                 'Bag number': {
                     'Value': 50, 
                     'Unit': '-',
-                    'Processed': True,
+                    'Processed': 'No',
                 }
             },  
             
@@ -78,17 +78,18 @@ class DummyDCF:
             'Power Generation': {
                 'Available Power': {
                     'Value': {
-                        '2025':np.array([400., 250., 350.]), '2024':np.array([500., 350., 450.])
+                        '2025': Quantity(np.array([400.*3600, 250.*3600, 350.*3600]), 'kJ'),
+                        '2024': np.array([500., 350., 450.])
                     }, 
-                    'Unit': 'kWh',
-                    'Processed': True
+                    'Unit': 'kWh',                    
+                    'Processed': 'Yes'
                 },
                 'Stored Power': {
                     'Value': {
                         '2025': 200., '2024': 250.
                     }, 
                     'Unit': 'kWh',
-                    'Processed': True,
+                    'Processed': 'Yes',
                     }
                 },
                 
@@ -98,13 +99,13 @@ class DummyDCF:
                     'Value': np.array([100., 120., 110.]),
                     'Type': 'on demand',
                     'Unit': 'kWh',
-                    'Processed': True
+                    'Processed': 'Yes'
                 },
                 'Another mid key': {
                     'Value': np.array([50., 40., 60.]), 
                     'Type': 'flexible',
                     'Unit': 'kWh',
-                    'Processed': True
+                    'Processed': 'Yes'
                 },
             }, 
             
@@ -113,7 +114,7 @@ class DummyDCF:
                 'Maintenance': {
                     'Value': 12.5, 
                     'Unit': 'USD',
-                    'Processed': True,
+                    'Processed': 'Yes',
                 },
                 'lubrication':  {
                     'Value': 8.2, 
@@ -125,7 +126,7 @@ class DummyDCF:
                 'Lubrication': {
                     'Value': np.array([1.3, 1.2, 1.1]),
                     'Unit': 'USD',
-                    'Processed': True
+                    'Processed': 'Yes'
                 },
                 'Electricity': {
                     'Value': 2.2, 
@@ -135,18 +136,18 @@ class DummyDCF:
 
             'Bag - Other Variable Operating Cost': {
                 'Replacement': {
-                    'Value': 'Number of units > Bag number > Value', 
+                    'Value': '{Number of units > Bag number > Value, -}', 
                     'Unit': 'USD'
                 },
                 'Disposal': {
                     'Value': 10,
                     'Unit': 'USD',
-                    'Path': 'Number of units > Bag number > Value' # testing that path information is correctly passed and used
+                    'Path': '{Number of units > Bag number > Value, -}' # testing that path information is correctly passed and used
                 },
                 'Recycling': {
                     'Value': 10,
                     'Unit': 'USD',
-                    'Path': 'Number of units > Bag number > Value; Catalyst > Lifetime > Value' # testing that multiple path information is correctly passed and used
+                    'Path': '{Number of units > Bag number > Value, -}; {Catalyst > Lifetime > Value, year}' # testing that multiple path information is correctly passed and used
                 }                     
             },
 
@@ -172,31 +173,70 @@ class DummyDCF:
                 'Other Data': {
                     'Value': np.array([1., 2., 3.]),
                     'Unit': 'J/m2',
-                    'Processed': True,
+                    'Processed': 'Yes',
                 },
                 'Only String': {
                     'Value': 'Just a string',
                 },
                 'Quantity object': {
                     'Value': Quantity(np.array([1., 2., 3.]), 'J/m2'),
-                    'Processed': True,
+                    'Processed': 'Yes',
                 }
             },
 
             'Quantity Path Testing': {
                 'Electrolyzer power': { 
                     'Value': Quantity(100, 'kW'),
-                    'Processed': True,
+                    'Processed': 'Yes',
                 },
                 'PV power': {
                     'Value': 1.5,
-                    'Path': 'Quantity Path Testing > Electrolyzer power > Value', # testing that path information is correctly passed and used for Quantity objects
+                    'Path': '{Quantity Path Testing > Electrolyzer power > Value, W}', # testing that path information is correctly passed and used for Quantity objects
                     'Unit': 'W',
                 }
             }
     }
 
 input_dict = {
+    'Catalyst':{
+        'Lifetime':{
+            'Value': {
+                'type': {float, int},
+                'bounds': (0, None),
+            },
+            'Unit': {
+                'dimension': 'time'
+            },                    
+            'optional': False,
+            'description': 'Catalyst lifetime in years.'
+        },                                                        
+    },
+    'Number of units':{
+        'Bag number':{
+            'Value': {
+                'type': {int,},
+                'bounds': (0, None),
+            },
+            'Unit': {
+                'dimension': 'dimensionless',
+            },                    
+            'optional': False,
+            'description': 'Number of bags in the system.'
+        },                                                        
+    },
+    '<...> Other Variable Operating Cost <...>':{ # table group
+        '<...>':{ 
+            'Value': {
+                'type': {float, int, np.ndarray},
+                'bounds': (0, None),
+            },
+            'Unit': {
+                'dimension': 'currency'
+            },   
+            'optional': True,
+            'description': 'All other variable operating costs.'
+            },                                                        
+    },
     'Utilities':{
         '<...>':{
             'Usage_Value': {
@@ -256,32 +296,6 @@ input_dict = {
             'optional': False,
             'description': 'The purity of water in the system.'
         }
-    },
-    'Number of units':{
-        'Bag number':{
-            'Value': {
-                'type': {int,},
-                'bounds': (0, None),
-            },
-            'Unit': {
-                'dimension': 'dimensionless',
-            },                    
-            'optional': False,
-            'description': 'Number of bags in the system.'
-        },                                                        
-    },
-    'Catalyst':{
-        'Lifetime':{
-            'Value': {
-                'type': {float, int},
-                'bounds': (0, None),
-            },
-            'Unit': {
-                'dimension': 'time'
-            },                    
-            'optional': False,
-            'description': 'Catalyst lifetime in years.'
-        },                                                        
     },
     'Catalyst Separation':{
         'Filtration cost':{
@@ -390,19 +404,6 @@ input_dict = {
             'optional': True,
             'description': 'Power consumption per consumer.'
         },                                                        
-    },
-    '<...> Other Variable Operating Cost <...>':{ # table group
-        '<...>':{ 
-            'Value': {
-                'type': {float, int, np.ndarray},
-                'bounds': (0, None),
-            },
-            'Unit': {
-                'dimension': 'currency'
-            },   
-            'optional': True,
-            'description': 'All other variable operating costs.'
-            },                                                        
     },
     '<...> Table group which is not used <...>': {
         '<...>':{ 

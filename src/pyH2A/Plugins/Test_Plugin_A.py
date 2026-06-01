@@ -1,9 +1,22 @@
 import numpy as np
 
+from pyH2A.Utilities.input_modification import sum_all_tables_quantity
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler import Quantity
 
 input_dict = {
+    'Plugin A - Photovoltaic Input': {
+        'Nominal Power': {
+            'Value': {
+                'type': {float, int},
+                'bounds': (0, None),
+            },
+            'Unit': { 
+                'dimension': 'power'
+            },
+            'description': 'Nominal power of the photovoltaic system'
+        }
+    },
     'Plugin A Input': {
         'Power': {
             'Value': {
@@ -15,7 +28,77 @@ input_dict = {
             },
             'description': 'Power Test Value'
         }
-    } 
+    },
+    '<...> Sum Testing <...>': {
+        '<...>': {
+            'Value': {
+                'type': {float, int},
+                'bounds': (0, None),
+                'path': 'Sum Path'
+            },
+            'Unit': {
+                'dimension': 'currency'
+            },
+            'optional': True,
+            'description': 'Sum Test Value'
+        },
+        'sum_tables': {
+            'mode': 'all',
+            'arguments': {
+                'bottom_key': 'Value',
+                'middle_key_total_insertion': 'Summed Total',
+                'middle_key_total_group_insertion': 'Summed Group Total',
+                'middle_key_contributions_insertion': 'Contributions',
+                'bottom_key_insertion': 'Value'
+            }
+        },
+    },
+    '<...> Indirect Testing <...>': {
+        '<...>': {
+            'Value': {
+                'type': {float, int},
+                'bounds': (0, None),
+                'path': 'Path'
+            },
+            'Unit': {
+                'dimension': 'currency'
+            },
+            'optional': True,
+            'description': 'Indirect Test Value'
+        },
+        'sum_tables': {
+            'mode': 'all',
+            'arguments': {
+                'bottom_key': 'Value',
+                'middle_key_total_insertion': 'Summed Total',
+                'middle_key_total_group_insertion': 'Summed Group Total',
+                'middle_key_contributions_insertion': 'Contributions',
+                'bottom_key_insertion': 'Value'
+            }
+        },
+    },
+    'Individual Table Sum': {
+        '<...>': {
+            'Value': {
+                'type': {float, int},
+                'bounds': (0, None),
+                'path': 'Path'
+            },
+            'Unit': {
+                'dimension': 'currency'
+            },
+            'optional': True,
+            'description': 'Individual Table Sum Test Value'
+        },
+        'sum_tables': {
+            'mode': 'single',
+            'arguments': {
+                'bottom_key': 'Value',
+                'middle_key_total_insertion': 'Summed Total',
+                'bottom_key_insertion': 'Value'
+            }
+        }
+    }
 }
 
 output_dict = {
@@ -28,9 +111,80 @@ output_dict = {
             },
             'description': 'Calculated energy'
         }
-    }
+    },
+    'special_insertions': {
+        'sum_all_tables': {
+            '<...> Sum Testing <...>': {
+                'Summed Total': {
+                    'Value': {
+                        'type': {float, int},
+                        'dimension': 'currency',
+                    },
+                    'description': 'Sum of table values'
+                },
+            },
+            'Sum Testing': {
+                'Summed Total': {
+                    'Value': {
+                        'type': {float, int},
+                        'dimension': 'currency',        
+                    },
+                    'optional': True,
+                    'description': 'Sum of table values'
+                },
+                'Summed Group Total': {
+                    'Value': {
+                        'type': {float, int},
+                        'dimension': 'currency',
+                    },
+                    'optional': False,
+                    'description': 'Sum of all values in table group "Sum Testing"'
+                },
+                'Contributions': {
+                    'Value': {
+                        'type': {dict},
+                        'dimension': 'currency',
+                    },
+                    'description': 'Contributions to the sum'
+                },
+            },
+            '<...> Indirect Testing <...>': {
+                'Summed Total': {
+                    'Value': {
+                        'type': {float, int},
+                        'dimension': 'currency',
+                    },
+                    'description': 'Sum of all values in table group "Indirect Testing"'
+                }
+            },
+            'Indirect Testing': {
+                'Summed Group Total': {
+                    'Value': {
+                        'type': {float, int},
+                        'dimension': 'currency'
+                    },
+                    'description': 'Sum of all values in table group "Indirect Testing"'
+                },
+                'Contributions': {
+                    'Value': {
+                        'type': {dict},
+                        'dimension': 'currency',
+                    },
+                    'description': 'Contributions to the sum'
+                },
+            },
+            'Individual Table Sum': {
+                'Summed Total': {
+                    'Value': {
+                        'type': {float, int},
+                        'dimension': 'currency'
+                    },
+                    'description': 'Sum of all values in this table'
+                }
+            }
+        }
+    } 
 }
-
 
 class Test_Plugin_A:
 
