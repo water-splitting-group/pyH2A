@@ -8,7 +8,7 @@ from tests.Utilities.check_dicts_for_testing import check_dicts
 
 def test_plugin_IO():
 
-    result = pyH2A('src/tests/end_to_end/PV_E_Plugin_IO.md', 
+    result = pyH2A('src/tests/end_to_end/Testing_Plugin_IO.md', 
                    'src/tests/end_to_end/')
         
     expected_input_x_sum_testing_dcf = {
@@ -16,13 +16,13 @@ def test_plugin_IO():
               'Processed': 'Yes',
               'Sum Path': 'None',
               'Unit': 'EUR',
-              'Value': 500
+              'Value': Quantity(500, 'EUR')
               },
         'Compressor': {
                 'Processed': 'Yes',
                 'Sum Path': 'None',
                 'Unit': 'USD',
-                'Value': 100
+                'Value': Quantity(100, 'USD')
                 },
         'Summed Total': {
             'Processed': 'Yes', 
@@ -34,16 +34,16 @@ def test_plugin_IO():
         'Pumps': {
            'Former Value': 0.3,
            'Processed': 'Yes',
-           'Sum Path': 'Input X - Sum Testing > Compressor > Value',
+           'Sum Path': '{Input X - Sum Testing > Compressor > Value, USD}',
            'Unit': 'USD',
-           'Value': 30.0
+           'Value': Quantity(30.0, 'USD')
            },
         'Reactor': {
             'Former Value': 0.2,
             'Processed': 'Yes',
-            'Sum Path': 'Input X - Sum Testing > Summed Total > Value',
+            'Sum Path': '{Input X - Sum Testing > Summed Total > Value, USD}',
             'Unit': 'USD',
-            'Value': 100.0},
+            'Value': Quantity(100.0, 'USD')},
         'Summed Total': {
             'Processed': 'Yes', 
             'Value': Quantity(130.0, 'USD')
@@ -55,9 +55,9 @@ def test_plugin_IO():
             'Processed': 'Yes',
             'Value': {
                 'Data': {
-                    'Input X - Sum Testing': 500.0,
-                    'Input Y - Sum Testing': 130.0,
-                    'Sum Testing': 100.0
+                    'Input X - Sum Testing': Quantity(500.0, 'USD'),
+                    'Input Y - Sum Testing': Quantity(130.0, 'USD'),
+                    'Sum Testing': Quantity(100.0, 'USD')
                     },
                 'Table Group': 'Sum Testing',
                 'Total': Quantity(730.0, 'USD')
@@ -67,7 +67,8 @@ def test_plugin_IO():
             'Processed': 'Yes', 
             'Sum Path': 'None', 
             'Unit': 'USD', 
-            'Value': 100},
+            'Value': Quantity(100.0, 'USD')
+            },
         'Summed Group Total': {
             'Processed': 'Yes', 
             'Value': Quantity(730.0, 'USD')
@@ -81,10 +82,10 @@ def test_plugin_IO():
     expected_input_z_indirect_testing_dcf = {
         'Design': {
             'Former Value': 0.1,
-            'Path': 'Sum Testing > Summed Group Total > Value',
+            'Path': '{Sum Testing > Summed Group Total > Value, USD}',
             'Processed': 'Yes',
             'Unit': 'USD',
-            'Value': 73.0
+            'Value': Quantity(73.0, 'USD')
             },
         'Summed Total': {
             'Processed': 'Yes', 
@@ -97,7 +98,7 @@ def test_plugin_IO():
             'Processed': 'Yes',
             'Value': {
                 'Data': {
-                    'Input Z - Indirect Testing': 73.0
+                    'Input Z - Indirect Testing': Quantity(73.0, 'USD')
                     },
                 'Table Group': 'Indirect Testing',
                 'Total': Quantity(73.0, 'USD')}},
@@ -110,12 +111,14 @@ def test_plugin_IO():
             'Path': 'None', 
             'Processed': 'Yes', 
             'Unit': 'USD', 
-            'Value': 1},
+            'Value': Quantity(1.0, 'USD')
+            },
         'Entry B': {
             'Path': 'None', 
             'Processed': 'Yes', 
             'Unit': 'USD',
-            'Value': 2},
+            'Value': Quantity(2.0, 'USD')
+            },
         'Summed Total': {
             'Processed': 'Yes', 
             'Value': Quantity(3.0, 'USD')
@@ -125,19 +128,47 @@ def test_plugin_IO():
     expected_plugin_a_input_dcf = {
         'Power': {
             'Former Value': 10,
-            'Path': 'Photovoltaic > Nominal Power (kW) > Value',
+            'Path': '{Plugin A - Photovoltaic Input > Nominal Power > Value, kW}',
             'Processed': 'Yes',
             'Unit': 'kW',
-            'Value': 82500.0
+            'Value': Quantity(82500.0, 'kW')
         }
     }
 
+    expected_plugin_b_input_dcf = {
+        'Mass': {
+            'Comment': 'Value "2" is in unit kg/J, multiplying by "Plugin A Output > Energy > Value" (which is dimension energy, used in unit "J") gives kg, second path just for testing',
+            'Former Value': 2,
+            'Path': '{Plugin A Output > Energy > Value, J}; {Individual Table Sum > Entry A > Value, USD}',
+            'Processed': 'Yes',
+            'Unit': 'kg',
+            'Value': Quantity(np.array([1.188e+13, 1.188e+13, 1.188e+13]), 'kg')
+        }
+    }
+
+    expected_plugin_b_value_unit_pairs_dcf = {
+        'Test Input': {
+            'Cost_Unit': 'EUR',
+            'Cost_Value': Quantity(2.5, 'EUR'),
+            'Former Cost_Value': '{Individual Table Sum > Entry B > Value, EUR}',
+            'Former Usage_Value': '{Plugin A Input > Power > Value, kW}',
+            'Processed': 'Yes',
+            'Usage_Path': '{Individual Table Sum > Entry A > Value, USD}',
+            'Usage_Unit': 'kW',
+            'Usage_Value': Quantity(82500000.0, 'W')}
+    }
+
     expected_plugin_a_processed_input = {
+        'Plugin A - Photovoltaic Input': {
+            'Nominal Power': {
+                'Value': Quantity(8250, 'kW'),
+                },
+            },
         'Indirect Testing': {
             'Contributions': {
                 'Value': {
                     'Data': {
-                        'Input Z - Indirect Testing': 73.0
+                        'Input Z - Indirect Testing': Quantity(73.0, 'USD')
                         },
                     'Table Group': 'Indirect Testing',
                     'Total': Quantity(73.0, 'USD')
@@ -197,9 +228,9 @@ def test_plugin_IO():
             'Contributions': {
                 'Value': {
                     'Data': {
-                        'Input X - Sum Testing': 500.0,
-                        'Input Y - Sum Testing': 130.0,
-                        'Sum Testing': 100.0
+                        'Input X - Sum Testing': Quantity(500.0, 'USD'),
+                        'Input Y - Sum Testing': Quantity(130.0, 'USD'),
+                        'Sum Testing': Quantity(100.0, 'USD')
                         },
                     'Table Group': 'Sum Testing',
                     'Total': Quantity(730.0, 'USD')
@@ -228,22 +259,32 @@ def test_plugin_IO():
                 }
             }, 
         }
+    
+    expected_plugin_b_processed_input = {
+        'Plugin A Output': {
+            'Energy': {
+                'Value': Quantity(np.array([5.94e+12, 5.94e+12, 5.94e+12]), 
+                              'J')
+            }
+        },
+        'Plugin B Input': {
+            'Mass': {
+                'Value': Quantity(np.array([1.188e+13, 1.188e+13, 1.188e+13]), 'kg')
+            }
+        },
+        'Plugin B - Value/Unit pairs': {
+            'Test Input': {
+                'Cost_Value': Quantity(2.5, 'EUR'),
+                'Usage_Value': Quantity(82500000.0, 'W')
+            }
+        },
+    }
 
     expected_plugin_a_output = {
         'Energy': {
             'Processed': 'Yes',
-            'Value': Quantity(np.array([5.94e+12, 5.94e+12, 5.94e+12]), 'J')
-        }
-    }
-
-    expected_plugin_b_input_dcf = {
-        'Mass': {
-            'Comment': 'Value "2" is in unit kg/J, multiplying by "Plugin A Output > Energy > Value" (which is dimension energy, used in basic unit "J") gives kg',
-            'Former Value': 2,
-            'Path': 'Plugin A Output > Energy > Value',
-            'Processed': 'Yes',
-            'Unit': 'kg',
-            'Value': np.array([1.188e+13, 1.188e+13, 1.188e+13])
+            'Value': Quantity(np.array([5.94e+12, 5.94e+12, 5.94e+12]), 
+                              'J')
         }
     }
 
@@ -254,6 +295,7 @@ def test_plugin_IO():
         }
     }
     
+    # Checking different sum tables inputs which go into plugin A
     check_dicts(result.base_case.inp['Input X - Sum Testing'], expected_input_x_sum_testing_dcf)
     check_dicts(result.base_case.inp['Input Y - Sum Testing'], expected_input_y_sum_testing_dcf)
     check_dicts(result.base_case.inp['Sum Testing'], expected_input_sum_testing_dcf)
@@ -261,11 +303,17 @@ def test_plugin_IO():
     check_dicts(result.base_case.inp['Indirect Testing'], expected_input_indirect_testing_dcf)
     check_dicts(result.base_case.inp['Individual Table Sum'], expected_individual_table_sum_dcf)
 
-    check_dicts(result.base_case.plugs['Test_Plugin_A'].inp, expected_plugin_a_processed_input)
-
+    # Checking non sum tables inputs into plugins A and B
     check_dicts(result.base_case.inp['Plugin A Input'], expected_plugin_a_input_dcf)
-    check_dicts(result.base_case.inp['Plugin A Output'], expected_plugin_a_output)
     check_dicts(result.base_case.inp['Plugin B Input'], expected_plugin_b_input_dcf)
+    check_dicts(result.base_case.inp['Plugin B - Value/Unit pairs'], expected_plugin_b_value_unit_pairs_dcf)
+
+    # Checking processed input dicts passed into plugins A and B
+    check_dicts(result.base_case.plugs['Test_Plugin_A'].inp, expected_plugin_a_processed_input)
+    check_dicts(result.base_case.plugs['Test_Plugin_B'].inp, expected_plugin_b_processed_input)
+
+    # Checking outputs from plugins A and B
+    check_dicts(result.base_case.inp['Plugin A Output'], expected_plugin_a_output)
     check_dicts(result.base_case.inp['Plugin B Output'], expected_plugin_b_output)
     
 if __name__ == '__main__':

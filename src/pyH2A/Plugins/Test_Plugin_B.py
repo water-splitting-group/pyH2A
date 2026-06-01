@@ -28,6 +28,26 @@ input_dict = {
             'description': 'Mass test data',
             'optional': True
         }
+    },
+    'Plugin B - Value/Unit pairs' : {
+        'Test Input': {
+            'Usage_Value': {
+                'type': {float, int},
+                'bounds': (0, None),
+                'path': 'Usage_Path'
+            },
+            'Usage_Unit': {
+                'dimension': 'power'
+            },
+            'Cost_Value': {
+                'type': {float, int},
+                'bounds': (0, None),
+                'path': 'Cost_Path'
+            },
+            'Cost_Unit': {
+                'dimension': 'currency'
+            }
+        }
     }
 }
 

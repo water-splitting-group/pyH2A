@@ -439,6 +439,18 @@ def value_with_unit_resolver_function(top_key,
             bottom_key_group[0]
             )
         
+        # Overwrite numerical value with newly generated Quantity object
+        insert(dcf_class,
+               top_key,
+               middle_key,
+               bottom_key_group[0],
+               resolved_quantity,
+               name = '...',
+               print_info = False,
+               add_processed = False,
+               insert_path = False
+               )
+        
         return resolved_quantity
     
     # If retrieved value is string, it is directly returned (after type check performed in value_resolver_function,
@@ -507,7 +519,6 @@ def row_resolver_function(top_key, middle_key, row_dict, dcf_class):
                                                                   row_dict, 
                                                                   dcf_class)
             resolved_row[bottom_key_group[0]] = resolved_quantity
-            
         
         # Length == 1 indicates standalone value, so resolve value only (typically triggered by non-numerical values)
         elif len(bottom_key_group) == 1:
