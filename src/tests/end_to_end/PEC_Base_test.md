@@ -22,11 +22,12 @@ Color | darkred |
 
 # Technical Operating Parameters and Specifications
 
-Name | Value | Path | Unit | Full Name |
+Name | Value | Unit | Full Name |
 --- | --- | --- | --- | --- |
-Operating capacity factor | 90% | None | - |
-Plant design capacity | 1,000. | None | kg/day |
-Plant modules | 10 | None | - | 10 identical modules, only affects labor requirement calculation. |
+Operating capacity factor | 90% | - |
+Plant design capacity | 1,000. | kg/day |
+Plant modules | 10 | - | 10 identical modules, only affects labor requirement calculation. |
+Fraction of output that reaches gate | 100% | -
 
 # Construction
 

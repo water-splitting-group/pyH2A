@@ -7,9 +7,9 @@ from pyH2A import functional_unit as fu
 
 input_dict = {	
 	"Technical Operating Parameters and Specifications": {
-		"Output per year": {
+		"Design output by year": {
 			"Value": {
-				"type": {float, np.ndarray},
+				"type": {np.ndarray},
 				"bounds": (0, None)
 			},
 			"Unit": {
@@ -17,7 +17,18 @@ input_dict = {
 			},
 			"optional": False,
 			"description": "Yearly output taking operating capacity factor into account, in amount of functional unit"
-		}
+		}, 
+		"Operating capacity factor": { 
+			"Value": {
+				"type": {float, int},
+				"bounds": (0, 1),
+			},
+			"Unit": {
+				"dimension": "dimensionless",
+			},
+			"optional": True,
+			"description": "Operating capacity factor value between 0 and 1 or percentage value."
+		},		
 	},
 	"Utilities": {
 		"<...>": {
@@ -123,7 +134,7 @@ class Variable_Operating_Cost_Plugin:
 
 	Parameters
 	----------
-	Technical Operating Parameters and Specifications > Output per year > Value : float
+	Technical Operating Parameters and Specifications > Design output by year > Value : float
 		Yearly output taking operating capacity factor into account, in amount of functional unit.
 	Utilities > [...] > Cost : float, ndarray or str
 		Cost of utility (e.g. $/kWh for electricity). May be either a float, a ndarray with the
@@ -174,7 +185,8 @@ class Variable_Operating_Cost_Plugin:
 			utility = Utility(self.input_dict_resolved['Utilities'][key], dcf)
 			self.utilities += utility.cost_per_functional_unit.unit['USD/'+fu.FU]
 
-		self.utilities = self.utilities * self.input_dict_resolved['Technical Operating Parameters and Specifications']['Output per year']['Value'].unit[fu.FU]
+		self.utilities = self.utilities * self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output by year']['Value'].unit[fu.FU]
+		self.utilities = self.utilities * self.input_dict_resolved['Technical Operating Parameters and Specifications']['Operating capacity factor']['Value'].unit['-'] # Utilities are consumed only during operation
 		self.utilities = Quantity(self.utilities, 'USD')
 
 	def other_variable_costs(self, dcf):

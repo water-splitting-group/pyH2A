@@ -51,6 +51,7 @@ Data | Hourly Irradiation > Horizontal single axis tracking > Value | J/m2 | Sin
 Name | Value | Unit | Comment |
 --- | --- | --- | --- |
 Plant modules | 10 | - | Modelling of 10 modules for calculation of staff cost to facilitate comparison with PEC and photocatalytic model. |
+Fraction of output that reaches gate | 100% | -
 
 # Construction
 

@@ -23,6 +23,7 @@ Name | Value | Unit |
 --- | --- | --- |
 Operating capacity factor | 90% | - |
 Plant design capacity | 1,000. | kg/day |
+Fraction of output that reaches gate | 100% | -
 
 # Construction
 

@@ -120,14 +120,14 @@ input_dict = {
 
 output_dict = {
     "Technical Operating Parameters and Specifications": {
-        "Plant design capacity": {
+        "Design output by year": { 
             "Value": {
                 "inserted_value": "h2_production",
-                "type": {np.ndarray,float,},
-                "dimension": "mass / time",
+                "type": {np.ndarray,}, 
+                "dimension": "mass",
             },
             "optional": False,
-            "description": "Plant design capacity calculated from installed \
+            "description": "Design output calculated from installed \
                             electrolysis power capacity and hourly power generation data."
         },
         "Operating capacity factor": {
@@ -232,7 +232,7 @@ class Electrolyzer_Plugin:
 
     Returns
     -------
-    Technical Operating Parameters and Specifications > Plant design capacity > Value : nd.array
+    Technical Operating Parameters and Specifications > Plant design capacity > Value : float
         Plant design capacity calculated from installed 
         electrolysis power capacity and hourly power generation data.
     Technical Operating Parameters and Specifications >	Operating capacity factor > Value : float
@@ -324,7 +324,7 @@ class Electrolyzer_Plugin:
                                    np.zeros(dcf.inp['Financial Input Values']['Construction time']['Value']), 
                                    self.yearly_data_production.unit['kg']
                                     ])
-        self.h2_production = Quantity(self.h2_production, 'kg/year') # needs to be expressed as a flowrate, as it ultimately serves as the plant design capacity etc
+        self.h2_production = Quantity(self.h2_production, 'kg') # needs to be expressed as a flowrate, as it ultimately serves as the plant design capacity etc
         
         self.yearly_data_unused_energy = yearly_data_unused_energy
         self.yearly_data_unused_energy_daily = yearly_data_unused_energy_daily

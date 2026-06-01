@@ -4,7 +4,7 @@ from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
 input_dict = {
 	"Technical Operating Parameters and Specifications": {
-		"Design output rate": {
+		"Plant design capacity": {
 			"Value": {
 				"type": {float,int,},
 				"bounds": (0, None),
@@ -204,8 +204,8 @@ class PEC_Plugin:
 
 	Parameters
 	----------
-	Technical Operating Parameters and Specifications > Design output rate > Value : float
-		Design output rate.
+	Technical Operating Parameters and Specifications > Plant design capacity > Value : float
+		Plant design capacity.
 	PEC Cells > Cell cost > Value : float
 		Cost of PEC cells in $/m2.
 	PEC Cells > Lifetime > Value : float
@@ -288,7 +288,7 @@ class PEC_Plugin:
 		
 
 		self.cell_number = Quantity(np.ceil(
-			   							self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output rate']['Value'].unit['kg/day'] 
+			   							self.input_dict_resolved['Technical Operating Parameters and Specifications']['Plant design capacity']['Value'].unit['kg/day'] 
 										/ self.mass_rate_H2_per_cell.unit['kg/day']
 										), 
 							'-')
