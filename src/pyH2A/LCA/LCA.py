@@ -23,7 +23,13 @@ import numpy as np
 import scipy.sparse
 from pyH2A import Discounted_Cash_Flow
 from pyH2A.Utilities.input_modification import process_table
-from pyH2A.Utilities.lca_utils import *
+from pyH2A.Utilities.lca_utils import (
+    ExportFolder,
+    Matrix,
+    build_matrix_cache_key,
+    factorize,
+    get_disk_cache_dir,
+)
 
 class LCA:
     '''Perform LCA calculations from an openLCA matrix export.
