@@ -6,9 +6,11 @@ from tests.Utilities.check_dicts_for_testing import check_dicts
 
 def test_input_resolver():
 
-    actual = input_resolver_function(input_dict, DummyDCF(), 'TestPlugin')         
-    check_dicts(actual, input_dict_resolved)
+    dummy_dcf = DummyDCF()
 
+    actual = input_resolver_function(input_dict, dummy_dcf, 'TestPlugin')   
+
+    check_dicts(actual, input_dict_resolved)
 
 if __name__ == "__main__":
     test_input_resolver()

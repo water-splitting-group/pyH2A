@@ -5,6 +5,18 @@ from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler import Quantity
 
 input_dict = {
+    'Plugin A - Photovoltaic Input': {
+        'Nominal Power': {
+            'Value': {
+                'type': {float, int},
+                'bounds': (0, None),
+            },
+            'Unit': { 
+                'dimension': 'power'
+            },
+            'description': 'Nominal power of the photovoltaic system'
+        }
+    },
     'Plugin A Input': {
         'Power': {
             'Value': {
