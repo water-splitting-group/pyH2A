@@ -3,8 +3,8 @@
 Name | Value | Unit 
 --- | --- | --- 
 Temperature | 300 | K 
-Pressure | 5 | bar 
-Owner | BaseTeam | n/a 
+Pressure | 5 | pa 
+Owner | BaseTeam | -
 
 # Economics
 

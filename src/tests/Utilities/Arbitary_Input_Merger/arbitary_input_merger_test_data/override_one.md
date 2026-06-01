@@ -3,7 +3,7 @@
 Name | Value | Unit
 --- | --- | ---
 Temperature | 320 | K
-Owner | LayerOne | n/a
+Owner | LayerOne | -
 
 # Economics
 
