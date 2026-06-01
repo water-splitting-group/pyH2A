@@ -10,7 +10,7 @@ Lowest priority | src/tests/Utilities/Arbitary_Input_Merger/arbitary_input_merge
 Name | Value | Unit
 --- | --- | ---
 Pressure | 8 | bar
-Owner | LayerTwo | n/a
+Owner | LayerTwo | -
 Flow | 25 | sccm
 
 # Economics
