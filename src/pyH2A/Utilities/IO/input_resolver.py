@@ -3,7 +3,8 @@ import numpy as np
 
 from pyH2A.Utilities.check_functions import check_type, check_if_in_options, check_dimension, check_bounds
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
-from pyH2A.Utilities.input_modification import process_input
+from pyH2A.Utilities.Unit_Handler import config as config
+from pyH2A.Utilities.input_modification import process_input, sum_table_quantity, sum_all_tables_quantity
 
 from tests.Utilities.Input_Resolver.input_resolver_test_data import DummyDCF, input_dict, input_dict_resolved
 
@@ -11,8 +12,14 @@ from tests.Utilities.Input_Resolver.input_resolver_test_data import DummyDCF, in
 # It is used to indicate that the number of tables/rows is flexible and can be determined based on the content of dcf_class.inp
 WILDCARD_MARKER = "<...>"
 
+# Special middle keys 
+SPECIAL_MIDDLE_KEYS = ['sum_tables']
+
 # These keys are not considered when constructing the resolved values 
 SPECIAL_BOTTOM_KEYS = ['description', 'optional']
+
+# Sum tables key
+SUM_TABLES_KEY = 'sum_tables'
 
 # Key indicating if a value is optional or not
 OPTIONAL_KEY = 'optional'
@@ -154,6 +161,19 @@ def _create_quantity_and_validate(value_retrieved,
             )
         return processed_dict
 
+    # Existing Quantity: validate only
+    elif isinstance(value_retrieved, Quantity):
+        _perform_checks_on_quantity(
+            value_retrieved,
+            value_specification,
+            unit_specification,
+            top_key,
+            middle_key,
+            bottom_key
+        )
+
+        return value_retrieved
+    
     # Upon finding numerical values, run our processing
     elif isinstance(value_retrieved, (float, int, np.ndarray)):
         # 1. Create Quantity object
@@ -234,23 +254,6 @@ def value_resolver_function(top_key,
         return value_specification, value_retrieved
     else:
         return value_retrieved
-            
-def unit_resolver_function(top_key, 
-                           middle_key, 
-                           bottom_key, 
-                           row_dict, 
-                           dcf_class):
-    '''
-    Resolve unit
-    '''
-    
-    unit_specification, unit_retrieved = _get_specification_and_retrieved_value(top_key,
-                                                                               middle_key,
-                                                                               bottom_key,
-                                                                               row_dict,
-                                                                               dcf_class)
-    
-    return unit_specification, unit_retrieved
      
 def value_with_unit_resolver_function(top_key, 
                                       middle_key, 
@@ -283,16 +286,15 @@ def value_with_unit_resolver_function(top_key,
                                     bottom_key_group[0],)
         
         return value_retrieved
-
+    
     # If retrieved value is numerical, quantity object is created, 
     # checks are performed and newly created quantity object is returned
     elif isinstance(value_retrieved, (int, float, np.ndarray, dict)):
 
-        unit_specification, unit_retrieved = unit_resolver_function(top_key, 
-                                                                    middle_key, 
-                                                                    bottom_key_group[1], 
-                                                                    row_dict, 
-                                                                    dcf_class)
+        unit_specification = row_dict[bottom_key_group[1]]
+
+        # Only try to get Unit from dcf.inp if it exists
+        unit_retrieved = dcf_class.inp[top_key][middle_key].get(bottom_key_group[1], None)
 
 
         # Create quantities and check them based on specifications 
@@ -412,18 +414,61 @@ def table_resolver_function(top_key, table_dict, dcf_class):
     resolved_table = {}
 
     for middle_key, row_dict in table_dict.items():
+
+        # Skip special middle keys
+        if middle_key in SPECIAL_MIDDLE_KEYS:
+            continue
+
         # Check if middle_key indicates wildcard row (flexible number of rows, middle_key is only placeholder), 
         # if so call wildcard row resolver function
         if WILDCARD_MARKER in middle_key:
             resolved_rows = wildcard_row_resolver_function(top_key, row_dict, dcf_class)
             resolved_table.update(resolved_rows)
-        
+
         # If not, resolve row as normal
         else:
             resolved_row = row_resolver_function(top_key, middle_key, row_dict, dcf_class)
 
             if resolved_row is not None:
                 resolved_table[middle_key] = resolved_row
+
+    # Handle sum tables if specified in table_dict (sum of values across multiple tables, 
+    # with specifications provided in table_dict under middle key SUM_TABLES_KEY)
+    if SUM_TABLES_KEY in table_dict:
+
+        sum_table_arguments = dict(table_dict[SUM_TABLES_KEY]['arguments'])
+        sum_table_arguments.pop('middle_key_contributions_insertion', None)
+        sum_table_arguments.pop('middle_key_total_group_insertion', None)
+
+        # Determination of the base unit, from the dimension specified in input_dict
+        bottom_key = sum_table_arguments['bottom_key']
+        dimension = None
+
+        for middle_key, row_dict in table_dict.items():
+            if middle_key == SUM_TABLES_KEY:
+                continue
+
+            if bottom_key == VALUE_KEY:
+                unit_key = UNIT_KEY
+            else:
+                unit_key = bottom_key.replace(VALUE_SUFFIX, UNIT_SUFFIX)
+
+            if unit_key in row_dict:
+                dimension = row_dict[unit_key][DIMENSION_KEY]
+                break
+
+        base_unit = config.DIMENSIONS[dimension]["base"]
+
+        table_sum = sum_table_quantity(
+            dictionary = {top_key: resolved_table},
+            top_key = top_key,
+            insert_total = True,
+            class_object = dcf_class,
+            print_info = False,
+            base_unit = base_unit,
+            **sum_table_arguments)
+
+        resolved_table[sum_table_arguments['middle_key_total_insertion']] = {sum_table_arguments['bottom_key_insertion']: table_sum}     
 
     return resolved_table
 
@@ -445,6 +490,52 @@ def table_group_resolver_function(table_group_top_key, table_group_dict, dcf_cla
         # Call table resolver function for each table in the table group
         resolved_table = table_resolver_function(table_key, table_group_dict, dcf_class)
         resolved_table_group[table_key] = resolved_table
+
+    # If sum_tables mode is 'all', sum across all tables in the group 
+    # and insert into dcf_class.inp according to specifications in table_group_dict
+    if table_group_dict.get(SUM_TABLES_KEY, {}).get('mode', None) == 'all':
+        
+        sum_table_arguments = dict(table_group_dict[SUM_TABLES_KEY]['arguments'])
+        sum_table_arguments.pop('bottom_key', None)
+
+        # Determination of the base unit, from the dimension specified in input_dict
+        bottom_key = table_group_dict[SUM_TABLES_KEY]['arguments']['bottom_key']
+        dimension = None
+
+        for middle_key, row_dict in table_group_dict.items():
+            if middle_key in [SUM_TABLES_KEY]:
+                continue
+
+            if bottom_key == VALUE_KEY:
+                unit_key = UNIT_KEY
+            else:
+                unit_key = bottom_key.replace(VALUE_SUFFIX, UNIT_SUFFIX)
+
+            if unit_key in row_dict:
+                dimension = row_dict[unit_key][DIMENSION_KEY]
+                break
+
+        base_unit = config.DIMENSIONS[dimension]["base"]
+
+        sum, contributions = sum_all_tables_quantity(
+                    dictionary = resolved_table_group,
+                    table_group = table_group_top_key,
+                    insert_total_table_group = True,
+                    class_object = dcf_class,
+                    print_info = False,
+                    return_contributions = True,
+                    base_unit = base_unit,
+                    **sum_table_arguments)
+        
+        # Updating resolved_table_group with total sum and contributions across all tables in the group 
+        resolved_table_group.setdefault(table_group_top_key, {}).update({
+            sum_table_arguments['middle_key_total_group_insertion']: {
+                sum_table_arguments['bottom_key_insertion']: sum
+            },
+            sum_table_arguments['middle_key_contributions_insertion']: {
+                sum_table_arguments['bottom_key_insertion']: contributions
+            }
+        })
 
     return resolved_table_group
 

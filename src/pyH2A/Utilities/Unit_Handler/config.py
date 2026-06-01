@@ -32,9 +32,11 @@ DIMENSIONS = {
             "kWh": 3.6e6,
             "MWh": 3.6e9,
             "GWh": 3.6e12,
-            "eV": 1.602176634e-19,
+            "TWh": 3.6e15,
+            "eV": 1.602176e-19,#1.602176634e-19,
             "cal": 4.184,
-            "kcal": 4184.0
+            "kcal": 4184.0, 
+            "toe": 4.1868e10
         }
     },
     "power": {
@@ -44,7 +46,25 @@ DIMENSIONS = {
             "kW": 1e3,
             "MW": 1e6,
             "GW": 1e9,
-            "hp": 745.699872
+            "hp": 745.699872, # imperial horsepower 
+            "cv": 735.49875,  # metric horsepower
+            "J_per_day": 1./86400.,
+            "kJ_per_day": 1e3/86400.,
+            "MJ_per_day": 1e6/86400.,
+            "GJ_per_day": 1e9/86400.,
+            "Wh_per_day": 1./24.,
+            "kWh_per_day": 1e3/24.,
+            "MWh_per_day": 1e6/24.,            
+            "GWh_per_day": 1e9/24.,   
+            "J_per_year": 1./(86400.*365.),
+            "kJ_per_year": 1e3/(86400.*365.),
+            "MJ_per_year": 1e6/(86400.*365.),
+            "GJ_per_year": 1e9/(86400.*365.),            
+            "Wh_per_year": 1./(24.*365.),                     
+            "kWh_per_year": 1e3/(24.*365.), 
+            "MWh_per_year": 1e6/(24.*365.), 
+            "GWh_per_year": 1e9/(24.*365.),             
+            "TWh_per_year": 1e12/(24.*365.),             
         }
     },
     "length": {
@@ -53,7 +73,9 @@ DIMENSIONS = {
             "m": 1.0,
             "mm": 1e-3,
             "cm": 1e-2,
-            "km": 1e3
+            "km": 1e3, 
+            "ft": 0.3048, 
+            "in": 0.0254
         }
     },
     "area": {
@@ -63,7 +85,7 @@ DIMENSIONS = {
             "mm2": 1e-6,
             "cm2": 1e-4,
             "km2": 1e6,
-            "acre": 4046.8564224,
+            "acre": 1/0.000247105 ,#4046.8564224,
             "ha": 1e4
         }
     },
@@ -96,7 +118,7 @@ DIMENSIONS = {
         "base": "USD",
         "conversions": {
             "USD": 1.0,
-            "EUR": 1.0  # Exchange rate should be adjusted via an API or manually when needed
+            "EUR": 0.8  # Exchange rate should be adjusted via an API or manually when needed
         }
     },
     "mass": {
@@ -121,7 +143,10 @@ DIMENSIONS = {
             "mol": 1.0,
             "umol": 1e-6,
             "mmol": 1e-3, 
-            "entity": 1/con.Avogadro
+            "entity": 1/con.Avogadro, 
+            "kmol": 1e3,
+            "Nm3": 44.6150334063, # reference 0°C, 1 atm
+            "Sm3":  42.2925433799 # reference 15°C, 1 atm
         }
     },
     "voltage": {
@@ -175,9 +200,11 @@ DIMENSIONS = {
         "base": "C",
         "conversions": {
             "C": 1.0,
+            "F": 9.64853321233100184e4, # Faraday constant
             "mC": 1e-3,
             "Ah": 3600.0,
-            "mAh": 3.6
+            "mAh": 3.6, 
+            "e": 1.602176634e-19
         }
     },
     "resistance": {

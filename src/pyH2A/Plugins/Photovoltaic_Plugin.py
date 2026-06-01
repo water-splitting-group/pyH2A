@@ -30,6 +30,19 @@ input_dict = {
 			"description": "Multiplier to describe cost reduction of PV CAPEX for every ten-fold increase of power relative to CAPEX reference power. Based on the multiplier the CAPEX scaling factor is calculated as: multiplier ^ (number of ten-fold increases). A value of 1 leads to no CAPEX reduction, a value < 1 enables cost reduction."
 		},
 	},
+	"Electrolyzer": {
+		"Nominal power": {
+			"Value": {	
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {	
+				"dimension": "power",
+			},
+			"optional": True,
+			"description": "Nominal power of electrolyzer; can be used to size the PV array."
+		},
+	},		
 	"Photovoltaic": {
 		"Nominal power": {
 			"Value": {	

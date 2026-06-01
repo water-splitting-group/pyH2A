@@ -4,7 +4,7 @@ from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
 input_dict = {
 	"Technical Operating Parameters and Specifications": {
-		"Design output flowrate": {
+		"Design output rate": {
 			"Value": {
 				"type": {float,int,},
 				"bounds": (0, None),
@@ -110,6 +110,19 @@ input_dict = {
 			"description": "Solar-to-hydrogen efficiency in percentage or as a value between 0 and 1."
 		}
 	},
+	"Solar Concentrator": {
+		"Concentration factor": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "dimensionless",
+			},
+			"optional": True,
+			"description": "Concentration factor created by solar concentration module."
+		},
+	},	
 	"Solar Input": {
 		"Mean solar input": {
 			"Value": {
@@ -191,8 +204,8 @@ class PEC_Plugin:
 
 	Parameters
 	----------
-	Technical Operating Parameters and Specifications > Design output flowrate > Value : float
-		Design output flowrate.
+	Technical Operating Parameters and Specifications > Design output rate > Value : float
+		Design output rate.
 	PEC Cells > Cell cost > Value : float
 		Cost of PEC cells in $/m2.
 	PEC Cells > Lifetime > Value : float
@@ -275,7 +288,7 @@ class PEC_Plugin:
 		
 
 		self.cell_number = Quantity(np.ceil(
-			   							self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output flowrate']['Value'].unit['kg/day'] 
+			   							self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output rate']['Value'].unit['kg/day'] 
 										/ self.mass_rate_H2_per_cell.unit['kg/day']
 										), 
 							'-')
