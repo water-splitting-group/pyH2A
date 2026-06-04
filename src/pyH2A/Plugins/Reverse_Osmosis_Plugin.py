@@ -6,7 +6,7 @@ input_dict = {
     "Financial Input Values": {
         "Construction time": {
             "Value": {
-                "type": {int,},
+                "type": {int,float},
                 "bounds": (0, 40*365*86400),
             },
             "Unit": {
@@ -32,7 +32,7 @@ input_dict = {
 			"Value": {
 				"type": {float, int},
 				"bounds": (0, 1),
-			},
+    },
 			"Unit": {
 				"dimension": "dimensionless",
 			},
@@ -160,7 +160,10 @@ class Reverse_Osmosis_Plugin:
         self.sea_water_demand = Quantity(fresh_water_demand_m3 / self.input_dict_resolved['Reverse Osmosis']['Recovery rate']['Value'].unit['-'], 'm3')
 
         electricity_demand_J = self.sea_water_demand.unit['m3'] * self.input_dict_resolved['Reverse Osmosis']['Power demand']['Value'].unit['J/m3']
-        self.electricity_demand = Quantity(electricity_demand_J[dcf.inp['Financial Input Values']['Construction time']['Value']:], 'J')
+
+        # XXX temporary : introduce a construction time variable to make the plugin run
+        construction_time_years = int(round(dcf.inp['Financial Input Values']['Construction time']['Value'].unit['year']))        
+        self.electricity_demand = Quantity(electricity_demand_J[construction_time_years:], 'J')
 
     def calculate_reverse_osmosis_scaling(self):
         '''
