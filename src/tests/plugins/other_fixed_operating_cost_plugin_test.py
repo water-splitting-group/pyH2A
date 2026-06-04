@@ -14,7 +14,7 @@ class DummyDCF:
     ):
         self.inp = {
             "Fixed Operating Costs": {
-                "Labor cost": {
+                "Labor cost - inflated": {
                     "Value": labor_cost,
                     "Unit": "USD",
                 },
