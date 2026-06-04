@@ -38,11 +38,11 @@ from pyH2A.Utilities.input_modification import convert_input_to_dictionary
                     },
                 },
                 "Input files to merge": {
-                    "0": {
+                    "Mid priority": {
                         "Value": "src/tests/Utilities/Arbitrary_Input_Merger/arbitrary_input_merger_test_data/override_one.md",
                     },
-                    "1": {
-                        "Value": "src/tests/Utilities/Arbitrary_Input_Merger/arbitrary_input_merger_test_data/base_file.md",
+                    "Lowest priority": {
+                        "Value": "src/tests/Utilities/Arbitrary_Input_Merger/arbitrary_input_merger_test_data/base_input.md",
                     },
                 },
             },
