@@ -2,8 +2,8 @@
 
 Name | Value
 --- | ---
-Mid priority | src/tests/Utilities/Arbitary_Input_Merger/arbitary_input_merger_test_data/override_one.md
-Lowest priority | src/tests/Utilities/Arbitary_Input_Merger/arbitary_input_merger_test_data/base_input.md
+Mid priority | src/tests/Utilities/Arbitrary_Input_Merger/arbitrary_input_merger_test_data/override_one.md
+Lowest priority | src/tests/Utilities/Arbitrary_Input_Merger/arbitrary_input_merger_test_data/base_input.md
 
 # Process
 
