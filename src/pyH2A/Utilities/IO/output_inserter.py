@@ -28,7 +28,35 @@ def _retrieve_value_to_be_inserted(inserted_value,
                                    middle_key,
                                    bottom_key,
                                    optional):
-    '''Helper function to retrieve the value to be inserted based on the 'inserted_value' key in the output dictionary.
+    '''
+    Resolve the actual value to insert from an output dictionary
+    based on the 'inserted_value' key in the output dictionary
+
+    If `inserted_value` is a string, it is treated as a plugin attribute
+    name and retrieved from `plugin_class`. If the attribute is missing and
+    the row is optional, insertion is skipped.
+
+    Parameters
+    ----------
+    inserted_value : Quantity or str
+        Either a `Quantity` value or the name of a plugin attribute.
+    plugin_class : object
+        Plugin instance that holds computed output attributes.
+    plugin_name : str
+        Name of the plugin used in error messages.
+    top_key : str
+        Table name in `dcf_class.inp`.
+    middle_key : str
+        Row name in `dcf_class.inp[top_key]`.
+    bottom_key : str
+        Column key in `dcf_class.inp[top_key][middle_key]`.
+    optional : bool
+        Whether the row is optional; missing attributes are ignored if True.
+
+    Returns
+    -------
+    value_to_be_inserted : Quantity, Any, or None
+        The value to insert, or None when optional and missing.
     '''
 
     # Quantity objects are returned as they are
@@ -61,7 +89,32 @@ def _perform_checks_on_value_to_be_inserted(value_to_be_inserted,
                                             middle_key,
                                             bottom_key,
                                             check_type_setting = True):
-    
+    '''
+    Validate the value to be inserted against the output specification.
+
+    This checks types and, for `Quantity` values, validates dimensionality.
+    When the value is a dictionary, validation recurses through values.
+
+    Parameters
+    ----------
+    value_to_be_inserted : Quantity | dict | str
+        Resolved value to insert.
+    value_dict : dict
+        Output specification for the bottom-level key.
+    top_key : str
+        Table name in `dcf_class.inp`.
+    middle_key : str
+        Row name in `dcf_class.inp[top_key]`.
+    bottom_key : str
+        Column key in `dcf_class.inp[top_key][middle_key]`.
+    check_type_setting : bool, default True
+        Control for top-level type checks when recursing into dict values.
+
+    Returns
+    -------
+    None
+        Raises if validation fails.
+    '''
     
     # If value_to_be_inserted is a dict, check type of the dict and 
     # then recursively perform checks on the values in the dict
@@ -130,6 +183,36 @@ def insert_value(top_key : str,
                  dcf_class,
                  plugin_name : str,
                  ):
+    '''
+    Insert a single output value into `dcf_class.inp` with validation.
+
+    This resolves the output value, validates type/dimension, and calls
+    the shared `insert` helper to write into the DCF input structure.
+
+    Parameters
+    ----------
+    top_key : str
+        Table name in `dcf_class.inp`.
+    middle_key : str
+        Row name in `dcf_class.inp[top_key]`.
+    bottom_key : str
+        Column key in `dcf_class.inp[top_key][middle_key]`.
+    value_dict : dict
+        Bottom-level output specification (includes `inserted_value`).
+    row_dict : dict
+        Row-level specification (optional flags, path settings).
+    plugin_class : object
+        Plugin instance containing computed output attributes.
+    dcf_class : object
+        DCF-like object that provides `inp` and receives inserted values.
+    plugin_name : str
+        Name of the plugin used in error messages.
+
+    Returns
+    -------
+    None
+        Writes to `dcf_class.inp` or skips optional missing values.
+    '''
     
     # Extracting properties of the row, with suitable defaults values if not provided
     optional = row_dict.get(OPTIONAL_KEY, False)
@@ -173,6 +256,29 @@ def output_inserter_function(output_dict,
                              plugin_class,
                              dcf_class, 
                              plugin_name):
+    '''
+    Insert all plugin outputs into `dcf_class.inp` using output specs.
+
+    The output dictionary defines where and how each value should be
+    inserted. Special top-level keys and row-level metadata keys are
+    ignored during iteration.
+
+    Parameters
+    ----------
+    output_dict : dict
+        Output specification mapping tables and rows to insertion specs.
+    plugin_class : object
+        Plugin instance containing computed output attributes.
+    dcf_class : object
+        DCF-like object that receives inserted values.
+    plugin_name : str
+        Name of the plugin used to prefix error messages.
+
+    Returns
+    -------
+    None
+        Mutates `dcf_class.inp` by inserting output values.
+    '''
 
     try:
         # Iterating through the top level of the output dictionary
@@ -205,11 +311,6 @@ def output_inserter_function(output_dict,
     except Exception as error:
         error_message = error.args[0] if getattr(error, 'args', None) else str(error)
         raise type(error)(f"[Plugin: {plugin_name}] {error_message}") from error
-
-
-
-        
-
 
 
 if __name__ == "__main__":
