@@ -44,7 +44,7 @@ Temperature coefficient | -0.4% | 1/delta_degC | Based on Chang 2020. |
 
 Name | Value | Unit | Comment |
 --- | --- | --- | --- |
-Data | Hourly Irradiation > Horizontal single axis tracking > Value | J/m2 | Single axis tracking based on Chang 2020. |
+Data | {Hourly Irradiation > Horizontal single axis tracking > Value, kWh/m2} | kWh/m2 | Single axis tracking based on Chang 2020. |
 
 # Technical Operating Parameters and Specifications
 
@@ -85,7 +85,7 @@ Fraction of stored power used for electrolysis | 0.95 | - | Additional electroly
 
 Name | Value | Path | Unit | Comment |
 --- | --- | --- | --- | --- |
-Nominal power | 1.5 | Electrolyzer > Nominal power > Value | W | Optimal PV oversize ratio, same as Chang 2020 |
+Nominal power | 1.5 | {Electrolyzer > Nominal power > Value, kW} | kW | Optimal PV oversize ratio, same as Chang 2020 |
 CAPEX reference power | 1,000.0 | None | kW |
 Power loss per year | 0.5% | None | - | Based on Chang 2020 |
 Efficiency | 22% | None | - | Only used for area calculation. |
@@ -117,25 +117,25 @@ Test consumer | 0. | kWh | on_demand |
 
 Name | Value | Path | Unit | Comment |
 --- | --- | --- | --- | --- |
-Reverse osmosis CAPEX | 21600000. | Reverse Osmosis > Capacity > Value | USD | Based on https://samcotech.com/much-reverse-osmosis-nanofiltration-membrane-systems-cost/, Conversion factor of 4.5 * 3600 from GPM to m3/s |
+Reverse osmosis CAPEX | 6000. | {Reverse Osmosis > Capacity > Value, m3/h} | USD | Based on https://samcotech.com/much-reverse-osmosis-nanofiltration-membrane-systems-cost/, Conversion factor of 4.5 from GPM to m3/h |
 
 # Direct Capital Costs - Battery
 
 Name | Value | Path | Unit |
 --- | --- | --- | --- |
-Battery CAPEX | 0. | Battery > Design capacity > Value | USD |
+Battery CAPEX | 0. | {Battery > Design capacity > Value, kWh} | USD |
 
 # Direct Capital Costs - PV
 
 Name | Value | Path | Unit | Comment |
 --- | --- | --- | --- | --- |
-PV CAPEX | 0.818 | Photovoltaic > Nominal power > Value ; Photovoltaic > Scaling factor > Value | USD | Based on Chang 2020, Chiesa 2021 Middle East PV installation cost, Shah 2021. |
+PV CAPEX | 818. | {Photovoltaic > Nominal power > Value, kW} ; {Photovoltaic > Scaling factor > Value, -} | USD | Based on Chang 2020, Chiesa 2021 Middle East PV installation cost, Shah 2021. |
 
 # Direct Capital Costs - Electrolyzer
 
 Name | Value | Path | Unit | Comment |
 --- | --- | --- | --- | --- |
-Electrolyzer CAPEX | 0.784 | Electrolyzer > Nominal power > Value ; Electrolyzer > Scaling factor > Value | USD | Based on Chang 2020, IRENA 2020 Green Hydrogen (PEM System CAPEX 700 - 1400 USD/kg), Shah 2021. |
+Electrolyzer CAPEX | 784. | {Electrolyzer > Nominal power > Value, kW} ; {Electrolyzer > Scaling factor > Value, -} | USD | Based on Chang 2020, IRENA 2020 Green Hydrogen (PEM System CAPEX 700 - 1400 USD/kg), Shah 2021. |
 
 # Non-Depreciable Capital Costs
 
@@ -156,8 +156,8 @@ Hourly labor cost | Burdened labor cost, including overhead (USD per man-hr) | 5
 
 Name | Value | Path | Unit | Comment |
 --- | --- | --- | --- | --- |
-Electrolyzer OPEX (fraction of CAPEX) | 2% | Direct Capital Costs - Electrolyzer > Electrolyzer CAPEX > Value | USD | Based on Stolten 2020, Shah 2021. |
-PV OPEX (fraction of CAPEX) | 2% | Direct Capital Costs - PV > PV CAPEX > Value | USD | Based on Stolten 2020. |
+Electrolyzer OPEX (fraction of CAPEX) | 2% | {Direct Capital Costs - Electrolyzer > Electrolyzer CAPEX > Value, USD} | USD | Based on Stolten 2020, Shah 2021. |
+PV OPEX (fraction of CAPEX) | 2% | {Direct Capital Costs - PV > PV CAPEX > Value, USD} | USD | Based on Stolten 2020. |
 
 # Utilities
 
@@ -175,5 +175,5 @@ Cost | 10000.12 | USD/kWh |
 
 Name | Cost_Value | Cost_Path | Cost_Unit | Frequency_Value | Frequency_Unit | Comment |
 --- | --- | --- | --- | --- |
-Electrolyzer stack replacement | 40% | Direct Capital Costs - Electrolyzer > Electrolyzer CAPEX > Value | USD | Electrolyzer > Stack lifetime > Value | s | Based on Chang 2020 |
+Electrolyzer stack replacement | 40% | {Direct Capital Costs - Electrolyzer > Electrolyzer CAPEX > Value, USD} | USD | {Electrolyzer > Stack lifetime > Value, year} | year | Based on Chang 2020 |
 

@@ -110,6 +110,19 @@ input_dict = {
 			"description": "Solar-to-hydrogen efficiency in percentage or as a value between 0 and 1."
 		}
 	},
+	"Solar Concentrator": {
+		"Concentration factor": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "dimensionless",
+			},
+			"optional": True,
+			"description": "Concentration factor created by solar concentration module."
+		},
+	},	
 	"Solar Input": {
 		"Mean solar input": {
 			"Value": {
@@ -122,7 +135,7 @@ input_dict = {
 			"optional": False,
 			"description": "Mean solar input in power / area, yearly average of solar input."
 		}
-	}
+	}, 
 }
 
 output_dict = {

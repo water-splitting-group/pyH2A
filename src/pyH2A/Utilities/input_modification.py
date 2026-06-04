@@ -455,6 +455,18 @@ def parse_parameter(key, delimiter = '>'):
 		
 	return output
 
+def parse_path_with_unit(text):
+	'''Parsing path with the notation "{top_key > middle_key > bottom_key, unit}" '''
+
+	text = text.strip()
+	if not (text.startswith("{") and text.endswith("}")):
+		raise ValueError("Expected a string wrapped in braces, but got '{0}' instead".format(text))
+
+	inner = text[1:-1].strip()
+	path, unit = inner.rsplit(",", 1)
+
+	return path.strip(), unit.strip()
+
 def reverse_parameter_to_string(parameter):
 	'''Reverts processed parameter list to string.'''
 
@@ -509,7 +521,7 @@ def parse_parameter_to_array(key, delimiter = '>', dictionary = None, top_key = 
 
 	return np.asarray(array)
 
-def process_path(dictionary, path, top_key, key, bottom_key, print_processing_warning = True):
+def process_path(dictionary, path, top_key, key, bottom_key):
 	'''Processing provided path. Checks are performed to see if path is valid.
 
 	Parameters
@@ -539,9 +551,11 @@ def process_path(dictionary, path, top_key, key, bottom_key, print_processing_wa
 	If the retrieved target value is numerical, it is returned.
 	'''
 
-	parsed_path = parse_parameter(path)
+	path_alone, unit = parse_path_with_unit(path)
+	parsed_path = parse_parameter(path_alone)
 
 	if len(parsed_path) == 1:
+		print('Warning: Provided path "{0}" at "{1} > {2} > {3}" does not contain ">" symbol, treating as non-path and setting to 1.'.format(path, top_key, key, bottom_key))
 		return 1.
 
 	elif len(parsed_path) == 3:
@@ -549,38 +563,17 @@ def process_path(dictionary, path, top_key, key, bottom_key, print_processing_wa
 		try:
 			target_value = get_by_path(dictionary, parsed_path)
 
-			# If reference is raw number → try to promote to Quantity
-			if not isinstance(target_value, Quantity):
-
-				parent = get_by_path(dictionary, parsed_path[:-1])
-				leaf = parsed_path[-1]
-
-				# Case 1: standard "Value / Unit" pattern
-				if leaf == "Value":
-					unit = parent.get("Unit", None)
-
-				# Case 2: suffix pattern (CAPEX_Value / CAPEX_Unit)
-				elif leaf.endswith("_Value"):
-					unit = parent.get(leaf.replace("_Value", "_Unit"), None)
-
-				target_value = Quantity(target_value, unit)
-
-			if 'Processed' not in dictionary[parsed_path[0]][parsed_path[1]] and print_processing_warning is True:
-				print('Warning: Unprocessed value is being used at "{0} > {1} > {2}" (by "{3} > {4}")'
+			if 'Processed' not in dictionary[parsed_path[0]][parsed_path[1]]:
+				raise ValueError ('Unprocessed value is being used at "{0} > {1} > {2}" (by "{3} > {4}")'
 					  .format(parsed_path[0], parsed_path[1], parsed_path[2], top_key, key))
 
-			if not isinstance(target_value, numbers.Number):
-				if isinstance(target_value, list) or type(target_value).__module__ == np.__name__:
-					pass
+			if isinstance(target_value, Quantity):
+				target_value = target_value.unit[unit]
 
-				# If target value is a Quantity object, its base value is retrieved for further calculations
-				elif isinstance(target_value, Quantity):
-					target_value = target_value.base_value
-
-				else:
-					print('Warning: Non-numerical value retrieved at "{0} > {1} > {2}" (by "{3} > {4}"), setting to 1'
-						  .format(parsed_path[0], parsed_path[1], parsed_path[2], top_key, key))
-					target_value = 1.
+			else:
+				print('Warning: Non-numerical (non-Quantity) value retrieved at "{0} > {1} > {2}" (by "{3} > {4}"), obtained value is {5}, setting to 1'
+						.format(parsed_path[0], parsed_path[1], parsed_path[2], top_key, key, target_value))
+				target_value = 1.
 
 		except KeyError:
 			print('Warning: Invalid path specified for "{0}" (at "{1} > {2} > {3}"), setting to 1'
@@ -642,8 +635,7 @@ def process_cell(dictionary, top_key, key, bottom_key, cell = None, print_proces
 		paths = parse_parameter(cell, delimiter = ';')
 
 		for path in paths:
-			target_value = process_path(dictionary, path, top_key, key, bottom_key, 
-								print_processing_warning = print_processing_warning)
+			target_value = process_path(dictionary, path, top_key, key, bottom_key)
 			value *= target_value
 
 		return value
@@ -969,7 +961,7 @@ def sum_all_tables_quantity(dictionary,
 			value = dictionary[key][middle_key_total_insertion][bottom_key_insertion]
 			total += value.base_value
 			contributions['Data'][key] = value.base_value
-
+				
 	total = Quantity(total, base_unit)				
 	contributions['Total'] = total
 
