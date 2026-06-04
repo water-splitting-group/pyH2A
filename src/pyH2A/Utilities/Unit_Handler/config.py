@@ -95,30 +95,30 @@ DIMENSIONS = {
             "m3": 1.0,
             "mm3": 1e-9,
             "cm3": 1e-6,
+            "km3": 1e9,
+            "uL": 1e-9,
+            "mL": 1e-6,
             "L": 1e-3,
             "liter": 1e-3,
-            "km3": 1e9,
-            "mL": 1e-6,
-            "uL": 1e-9
         }
     },
     "time": {
         "base": "s",
         "conversions": {
             "s": 1.0,
+            "ms": 1e-3,
             "minute": 60.0,
             "h": 3600.0,
             "day": 86400.0,
-            "year": 31536000.0, # Assuming 365 days in a year for simplicity
-            "ms": 1e-3,
             "week": 604800.0
+            "year": 31536000.0, # Assuming 365 days in a year for simplicity
         }
     },
     "currency": {
         "base": "USD",
         "conversions": {
             "USD": 1.0,
-            "EUR": 1.0  # Exchange rate should be adjusted via an API or manually when needed
+            "EUR": 0.8  # Exchange rate should be adjusted via an API or manually when needed
         }
     },
     "mass": {
@@ -143,8 +143,8 @@ DIMENSIONS = {
             "mol": 1.0,
             "umol": 1e-6,
             "mmol": 1e-3, 
-            "entity": 1/con.Avogadro, 
             "kmol": 1e3,
+            "entity": 1/con.Avogadro, 
             "Nm3": 44.6150334063, # reference 0°C, 1 atm
             "Sm3":  42.2925433799 # reference 15°C, 1 atm
         }
@@ -174,9 +174,9 @@ DIMENSIONS = {
         "conversions": {
             "Pa": 1.0,
             "hPa": 100.0,
+            "MPa": 1e6,
             "atm": 101325.0,
             "bar": 1e5,
-            "MPa": 1e6,
             "psi": 6894.757293168
         }
     },
@@ -200,8 +200,8 @@ DIMENSIONS = {
         "base": "C",
         "conversions": {
             "C": 1.0,
-            "F": 9.64853321233100184e4, # Faraday constant
             "mC": 1e-3,
+            "F": 9.64853321233100184e4, # Faraday constant
             "Ah": 3600.0,
             "mAh": 3.6, 
             "e": 1.602176634e-19
