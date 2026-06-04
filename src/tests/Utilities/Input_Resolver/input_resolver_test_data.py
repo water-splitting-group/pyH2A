@@ -36,7 +36,7 @@ class DummyDCF:
             'Water Supply': {
                 'Volume': {
                     'Value': 50, 
-                    'Unit': 'liters', 
+                    'Unit': 'liter', 
                     'Type': 'flexible'
                 }, 
                 'Purity': {
@@ -239,7 +239,7 @@ input_dict = {
                 'options': {'on_demand', 'flexible'}
             },            
             'optional': False,
-            'description': 'Total water volume in liters.'
+            'description': 'Total water volume.'
         }, 
         'Purity': {
             'Value': {
