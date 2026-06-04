@@ -1,5 +1,5 @@
 import pytest
-from tests.Utilities.Input_Resolver.input_resolver_test import check_dicts
+from tests.Utilities.check_dicts_for_testing import check_dicts
 from pyH2A.Utilities.input_modification import convert_input_to_dictionary
 
 
