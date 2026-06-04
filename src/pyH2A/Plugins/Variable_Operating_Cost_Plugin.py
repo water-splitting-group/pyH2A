@@ -116,8 +116,8 @@ output_dict = {
                 "Summed total": {
                     "Value": {
                         "type": {int, float},
+						"dimension": "currency"
                     },
-                    "optional": False,
                     "description": "Summed total of other variable operating costs in each table"
                 },
             },
@@ -125,16 +125,23 @@ output_dict = {
 				"Summed total": {
 					"Value": {
 						'type': {int, float},
+						"dimension": "currency"
 					},
-					"optional": False,
 					"description": "Summed total of other variable operating costs in this table."
 				},
                 "Summed group total": {
                     "Value": {
                         "type": {float},
+						"dimension": "currency"
                     },
-                    "optional": False,
                     "description": "Summed total of other variable operating costs across all tables"
+                },
+				'Contributions': {
+                    'Value': {
+                        'type': {dict},
+                        'dimension': 'currency',
+                    },
+                    'description': 'Contributions to the sum'
                 },
             },
 		},
