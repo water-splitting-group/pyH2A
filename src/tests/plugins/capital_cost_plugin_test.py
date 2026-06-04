@@ -80,8 +80,15 @@ class DummyDCF:
             },
             "expected": {
                 "direct": Quantity(9400000.0, "USD"),
+                "direct_inflated": Quantity(10340000.0, "USD"),
                 "indirect": Quantity(2000000.0, "USD"),
-                "non_depreciable": Quantity(251000.0, "USD")
+                "indirect_inflated": Quantity(2200000.0, "USD"),
+                "depreciable": Quantity(11400000.0, "USD"),
+                "depreciable_inflated": Quantity(12540000.0, "USD"),
+                "non_depreciable": Quantity(251000.0, "USD"),
+                "non_depreciable_inflated": Quantity(263550.0, "USD"),
+                "total": Quantity(11651000.0, "USD"),
+                "total_inflated": Quantity(12803550.0, "USD")
             },
         }
     ],
@@ -89,6 +96,7 @@ class DummyDCF:
         "Realistic case - Capital Cost"
     ]
 )
+
 def test_capital_cost_plugin(case):
     """Check plugin handles edge and real cases without errors and returns correct annualized costs."""
 
@@ -106,13 +114,48 @@ def test_capital_cost_plugin(case):
         expected["direct"].unit["USD"],
         abs=tolerance
     )
-    
+
+    assert plugin.direct_inflated.unit["USD"] == pytest.approx(
+        expected["direct_inflated"].unit["USD"],
+        abs=tolerance
+    )
+
     assert plugin.indirect.unit["USD"] == pytest.approx(
         expected["indirect"].unit["USD"],
         abs=tolerance
     )
-    
+
+    assert plugin.indirect_inflated.unit["USD"] == pytest.approx(
+        expected["indirect_inflated"].unit["USD"],
+        abs=tolerance
+    )
+
+    assert plugin.depreciable.unit["USD"] == pytest.approx(
+        expected["depreciable"].unit["USD"],
+        abs=tolerance 
+    )
+
+    assert plugin.depreciable_inflated.unit["USD"] == pytest.approx(
+        expected["depreciable_inflated"].unit["USD"],
+        abs=tolerance
+    )
+
     assert plugin.non_depreciable.unit["USD"] == pytest.approx(
         expected["non_depreciable"].unit["USD"],
         abs=tolerance
     )
+
+    assert plugin.non_depreciable_inflated.unit["USD"] == pytest.approx(
+        expected["non_depreciable_inflated"].unit["USD"],
+        abs=tolerance
+    )   
+    
+    assert plugin.total.unit["USD"] == pytest.approx(
+        expected["total"].unit["USD"],
+        abs=tolerance
+    )  
+
+    assert plugin.total_inflated.unit["USD"] == pytest.approx(
+        expected["total_inflated"].unit["USD"],
+        abs=tolerance
+    )   
