@@ -1,4 +1,5 @@
 import pytest
+from tests.Utilities.Input_Resolver.input_resolver_test import check_dicts
 from pyH2A.Utilities.input_modification import convert_input_to_dictionary
 
 
@@ -10,13 +11,40 @@ from pyH2A.Utilities.input_modification import convert_input_to_dictionary
                 "file_path": "src/tests/Utilities/Arbitrary_Input_Merger/arbitrary_input_merger_test_data/override_two.md"
             },
             "expected": {
-                "Process > Temperature > Value": 320,
-                "Process > Pressure > Value": 8,
-                "Process > Pressure > Unit": "bar",
-                "Process > Owner > Value": "LayerTwo",
-                "Process > Flow > Value": 25,
-                "Economics > CapEx > Value": 120,
-                "Economics > OpEx > Value": 55,
+                "Process": {
+                    "Temperature": {
+                        "Value": 320,
+                        "Unit": "K",
+                    },
+                    "Pressure": {
+                        "Value": 8,
+                        "Unit": "bar",
+                    },
+                    "Owner": {
+                        "Value": "LayerTwo",
+                        "Unit": "-",
+                    },
+                    "Flow": {
+                        "Value": 25,
+                        "Unit": "sccm",
+                    },
+                },
+                "Economics": {
+                    "CapEx": {
+                        "Value": 120,
+                    },
+                    "OpEx": {
+                        "Value": 55,
+                    },
+                },
+                "Input files to merge": {
+                    "0": {
+                        "Value": "src/tests/Utilities/Arbitrary_Input_Merger/arbitrary_input_merger_test_data/override_one.md",
+                    },
+                    "1": {
+                        "Value": "src/tests/Utilities/Arbitrary_Input_Merger/arbitrary_input_merger_test_data/base_file.md",
+                    },
+                },
             },
         },
         {
@@ -64,37 +92,4 @@ def test_arbitrary_input_merger(case, request):
     merged_result = convert_input_to_dictionary(file_path, merge_default=False)
 
     # Case 1: Full base-file merge
-    assert (
-        merged_result["Process"]["Temperature"]["Value"]
-        == expected_data["Process > Temperature > Value"]
-    )
-
-    assert (
-        merged_result["Process"]["Pressure"]["Value"]
-        == expected_data["Process > Pressure > Value"]
-    )
-
-    assert (
-        merged_result["Process"]["Pressure"]["Unit"]
-        == expected_data["Process > Pressure > Unit"]
-    )
-
-    assert (
-        merged_result["Process"]["Owner"]["Value"]
-        == expected_data["Process > Owner > Value"]
-    )
-
-    assert (
-        merged_result["Process"]["Flow"]["Value"]
-        == expected_data["Process > Flow > Value"]
-    )
-
-    assert (
-        merged_result["Economics"]["CapEx"]["Value"]
-        == expected_data["Economics > CapEx > Value"]
-    )
-
-    assert (
-        merged_result["Economics"]["OpEx"]["Value"]
-        == expected_data["Economics > OpEx > Value"]
-    )
+    check_dicts(merged_result, expected_data)
