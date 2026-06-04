@@ -112,16 +112,16 @@ class Other_Fixed_Operating_Cost_Plugin:
 
 		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Other_Fixed_Operating_Cost_Plugin')
 
-		self.total_fixed_operating_cost = self.calculate_total_fixed_operating_cost(self, dcf)
+		self.total_fixed_operating_cost = self.calculate_total_fixed_operating_cost(dcf)
 
 		output_inserter_function(output_dict, self, dcf, 'Other_Fixed_Operating_Cost_Plugin')  
 
 	def calculate_total_fixed_operating_cost(self, dcf):
 		'''Calculation of total fixed operating cost by summing total labor cost and total other fixed operating cost.'''
 
-		labor = self.input_dict_resolved['Fixed Operating Costs']['Labor cost']['Value']
+		labor = self.input_dict_resolved['Fixed Operating Costs']['Labor cost - inflated']['Value']
 		other = self.input_dict_resolved['Other Fixed Operating Cost']['Summed group total']['Value']
-		
+
 		other_inflated = Quantity(other.unit['USD'] 
 								  * dcf.combined_inflator, 
 						 'USD')
