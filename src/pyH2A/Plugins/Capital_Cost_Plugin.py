@@ -7,14 +7,14 @@ input_dict = {
 	"<...> Direct Capital Cost <...>": {
 		"<...>": {
 			"Value": {
-				"type": {float,},
+				"type": {int, float,},
 				"bounds": (0, None),
 			},
 			"Unit": {
 				"dimension": "currency",
 			},	
 			"optional": True,
-			"description": "Direct capital cost contribution, summed for each individual table in 'Direct Capital Cost' group."
+			"description": "Individual entry of direct capital cost."
 		},
         'sum_tables': {
             'mode': 'all',
@@ -30,14 +30,14 @@ input_dict = {
 	"<...> Indirect Capital Cost <...>": {
 		"<...>": {
 			"Value": {
-				"type": {float,},
+				"type": {int, float,},
 				"bounds": (0, None),
 			},	
 			"Unit": {
 				"dimension": "currency",
 			},		
 			"optional": True,
-			"description": "Indirect capital cost contribution, summed for each individual table in 'Indirect Capital Cost' group."
+			"description": "Individual entry of indirect capital cost."
 		},
         'sum_tables': {
             'mode': 'all',
@@ -53,7 +53,7 @@ input_dict = {
 	"Non-Depreciable Capital Costs": {
 		"Cost of land": {
 			"Value": {
-				"type": {float,},
+				"type": {int, float,},
 				"bounds": (0, None),
 			},	
 			"Unit": {
@@ -64,27 +64,27 @@ input_dict = {
 		},
 		"Land required": {
 			"Value": {
-				"type": {float,},
+				"type": {int, float,},
 				"bounds": (0, None),
 			},	
 			"Unit": {
 				"dimension": "area",
 			},		
 			"optional": False,
-			"description": "Total land Area are required."
+			"description": "Total land area are required."
 		},
 	},
 	"<...> Other Non-Depreciable Capital Cost <...>": {
 		"<...>": {
 			"Value": {
-				"type": {float,},
+				"type": {int, float,},
 				"bounds": (0, None),
 			},	
 			"Unit": {
 				"dimension": "currency",
 			},		
 			"optional": True,
-			"description": "Other non-depreciable capital cost contribution, summed for each individual table in 'Other Non-Depreciable Capital Cost' group."
+			"description": "Individual entry of other non-depreciable capital cost."
 		},
         'sum_tables': {
             'mode': 'all',
@@ -104,53 +104,48 @@ output_dict = {
 		"Inflated": {
 			"Value": {
 				"inserted_value": "direct_inflated",
-				"type": {float,},
+				"type": {int, float,},
 				"dimension": "currency",
 			},
 			"description": "Total direct capital costs multiplied by combined inflator.",
-			"optional": False,
 		},
 	},
 	"Indirect Capital Costs": {
 		"Inflated": {
 			"Value": {
 				"inserted_value": "indirect_inflated",
-				"type": {float,},
+				"type": {int,float,},
 				"dimension": "currency",
 			},
 			"description": "Total indirect capital costs multiplied by combined inflator.",
-			"optional": False,
 		},
 	},
 	"Non-Depreciable Capital Costs": {
 		"Total": {
 			"Value": {	
 				"inserted_value": "non_depreciable",
-				"type": {float,},
+				"type": {int, float,},
 				"dimension": "currency",		
 			},
 			"description": "Total non-depreciable capital costs.",
-			"optional": False,
 		},
 		"Inflated": {
 			"Value": {
 				"inserted_value": "non_depreciable_inflated",
-				"type": {float,},
+				"type": {int, float,},
 				"dimension": "currency",
 			},
 			"description": "Total non-depreciable capital costs multiplied by combined inflator.",
-			"optional": False,
 		},
 	},
 	"Depreciable Capital Costs": {
 		"Total": {
 			"Value": {
 				"inserted_value": "depreciable",
-				"type": {float,},
+				"type": {int, float,},
 				"dimension": "currency",
 			},	
-			"description": "Total depreciable capital costs.",
-			"optional": False,
+			"description": "Total depreciable capital costs (direct + indirect capital costs).",
 		},		
 		"Inflated": {
 			"Value": {
@@ -158,8 +153,7 @@ output_dict = {
 				"type": {float,},	
 				"dimension": "currency",
 			},	
-			"description": "Total depreciable capital costs multiplied by combined inflator.",
-			"optional": False,
+			"description": "Total depreciable capital costs (direct + indirect capital costs) multiplied by combined inflator.",
 		},
 	},
 	"Total Capital Costs": {
@@ -169,8 +163,7 @@ output_dict = {
 				"type": {float,},
 				"dimension": "currency",
 			},	
-			"description": "Total capital costs.",
-			"optional": False,
+			"description": "Total capital costs (depreciable + non-depreciable capital costs).",
 		},
 		"Inflated": {
 			"Value": {
@@ -178,8 +171,7 @@ output_dict = {
 				"type": {float,},
 				"dimension": "currency",
 			},
-			"description": "Total capital costs multiplied by combined inflator.",
-			"optional": False,	
+			"description": "Total capital costs (depreciable + non-depreciable capital costs) multiplied by combined inflator.",
 		},
 	},
 	"special_insertions":
@@ -187,55 +179,100 @@ output_dict = {
             "<...> Direct Capital Cost <...>": {
                 "Summed total": {
                     "Value": {
-                        "type": {float},
+                        "type": {int, float},
+						"dimension": "currency"
                     },
-                    "optional": False,
                     "description": "Summed total of direct capital costs for each table"
                 },
             },
             "<...> Indirect Capital Cost <...>": {
                 "Summed total": {
                     "Value": {
-                        "type": {float},
+                        "type": {int, float},
+						"dimension": "currency"
                     },
-                    "optional": False,
                     "description": "Summed total of indirect capital costs for each table"
                 },
             },
             "<...> Other Non-Depreciable Capital Cost <...>": {
                 "Summed total": {
                     "Value": {
-                        "type": {float},
+                        "type": {int, float},
+						"dimension": "currency"
                     },
-                    "optional": False,
                     "description": "Summed total of other non-depreciable capital costs for each table"
                 },
             },
             "Direct Capital Cost": {
+				"Summed total": {
+					"Value": {
+						"type": {int, float},
+						"dimension": "currency"
+					},
+					"description": "Summed total of this table."
+				},
                 "Summed group total": {
                     "Value": {
-                        "type": {float},
+                        "type": {int, float},
+						"dimension": "currency"
                     },
-                    "optional": False,
                     "description": "Summed total of direct capital costs across all tables"
+                },
+				'Contributions': {
+                    'Value': {
+                        'type': {dict},
+                        'dimension': 'currency',
+                    },
+                    'description': 'Contributions to the sum'
                 },
             },
             "Indirect Capital Cost": {
+				"Summed total": {
+					"Value": {
+						"type": {int, float},
+						"dimension": "currency"
+					},
+					"optional": False,
+					"description": "Summed total of this table."
+				},
                 "Summed group total": {
                     "Value": {
-                        "type": {float},
+                        "type": {int, float},
+						"dimension": "currency"
                     },
                     "optional": False,
                     "description": "Summed total of indirect capital costs across all tables"
                 },
+				'Contributions': {
+                    'Value': {
+                        'type': {dict},
+                        'dimension': 'currency',
+                    },
+                    'description': 'Contributions to the sum'
+                },
             },
             "Other Non-Depreciable Capital Cost": {
+				"Summed total": {
+					"Value": {
+						"type": {int, float},
+						"dimension": "currency"
+					},
+					"optional": False,
+					"description": "Summed total of this table."
+				},
                 "Summed group total": {
                     "Value": {
-                        "type": {float},
+                        "type": {int, float},
+                        "dimension": "currency"
                     },
-                    "optional": False,
                     "description": "Summed total of other non-depreciable capital costs across all tables"
+                },
+				'Contributions': {
+                    'Value': {
+                        'type': {dict},
+                        'dimension': 'currency',
+                    },
+                    'description': 'Contributions to the sum'
                 },
             },			
         },
@@ -294,47 +331,45 @@ class Capital_Cost_Plugin:
 	def __init__(self, dcf, print_info):
 		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Capital_Cost_Plugin')
 		
-		# Except for self.direct and self.indirect, which are natively Quantities as they are the results of sum_all_tables calls, 
-		# all the self.X variable are converted into Quantites just before their insertion, to avoid unnecessary complications
-		self.direct = self.input_dict_resolved['Direct Capital Cost']['Summed group total']['Value'] # Calculated during the call of sum_tables
-		direct_inflated = self.direct.unit['USD'] * dcf.combined_inflator		
-		self.indirect = self.input_dict_resolved['Indirect Capital Cost']['Summed group total']['Value'] # Calculated during the call of sum_tables
-		indirect_inflated = self.indirect.unit['USD'] * dcf.combined_inflator
-
-		depreciable = self.direct.unit['USD'] + self.indirect.unit['USD']
-		depreciable_inflated = direct_inflated + indirect_inflated
+		direct_capital_costs = self.input_dict_resolved['Direct Capital Cost']['Summed group total']['Value'] # Calculated during the call of sum_tables
+		indirect_capital_costs = self.input_dict_resolved['Indirect Capital Cost']['Summed group total']['Value'] # Calculated during the call of sum_tables
 		
-		non_depreciable = self.non_depreciable_capital_costs(dcf, print_info)
+		self.direct_inflated = Quantity(direct_capital_costs.unit['USD'] 
+								  		* dcf.combined_inflator, 
+								'USD')
+		self.indirect_inflated = Quantity(indirect_capital_costs.unit['USD'] 
+										  * dcf.combined_inflator, 
+								'USD')
 
-		non_depreciable_inflated = non_depreciable * dcf.ci_inflator
-		total = depreciable + non_depreciable
-		total_inflated = depreciable_inflated + non_depreciable_inflated
+		self.depreciable = Quantity(direct_capital_costs.unit['USD'] 
+							        + indirect_capital_costs.unit['USD'], 
+							'USD')
+		self.depreciable_inflated = Quantity(self.depreciable.unit['USD'] 
+										  * dcf.combined_inflator, 
+								    'USD')
 
-		# convert the values into Quantities
-		self.direct_inflated = Quantity(direct_inflated, 'USD')
-		self.indirect_inflated = Quantity(indirect_inflated, 'USD')
-		self.depreciable = Quantity(depreciable, 'USD')
-		self.depreciable_inflated = Quantity(depreciable_inflated, 'USD')
-		self.non_depreciable = Quantity(non_depreciable, 'USD')
-		self.non_depreciable_inflated = Quantity(non_depreciable_inflated, 'USD')        
-		self.total = Quantity(total, 'USD')
-		self.total_inflated = Quantity(total_inflated, 'USD')     
-
-		print(' direct', self.direct.unit['USD'])	
-		print(' indirect', self.indirect.unit['USD'])	
-		print(' dep', self.depreciable.unit['USD'])	
-		print(' nondep', self.non_depreciable.unit['USD'])			
-		print(' total', self.total.unit['USD'])			
+		self.non_depreciable = self.non_depreciable_capital_costs()
+		self.non_depreciable_inflated = Quantity(self.non_depreciable.unit['USD'] 
+										         * dcf.ci_inflator, 
+								         'USD')
+		
+		self.total = Quantity(self.depreciable.unit['USD'] 
+							  + self.non_depreciable.unit['USD'],
+					 'USD')
+		self.total_inflated = Quantity(self.depreciable_inflated.unit['USD'] 
+									 + self.non_depreciable_inflated.unit['USD'],
+							  'USD')
+		
 		output_inserter_function(output_dict, self, dcf, 'Capital_Cost_Plugin')
 
-
-	def non_depreciable_capital_costs(self, dcf, print_info):
+	def non_depreciable_capital_costs(self):
 		'''Calculation of non-depreciable capital costs by calculating cost of land and 
 			obtaining the total of the "Other Non-Depreciable Capital Cost" group.
 		'''
 
-		non_depreciable = self.input_dict_resolved['Non-Depreciable Capital Costs']
-		non_depreciable = non_depreciable['Cost of land']['Value'].unit['USD/m2'] * non_depreciable['Land required']['Value'].unit['m2']
-		non_depreciable += self.input_dict_resolved['Other Non-Depreciable Capital Cost']['Summed group total']['Value'].unit['USD']
+		non_depreciable_costs = (self.input_dict_resolved['Non-Depreciable Capital Costs']['Cost of land']['Value'].unit['USD/m2'] 
+						   		 * self.input_dict_resolved['Non-Depreciable Capital Costs']['Land required']['Value'].unit['m2'])
 
-		return non_depreciable
+		non_depreciable_costs += self.input_dict_resolved['Other Non-Depreciable Capital Cost']['Summed group total']['Value'].unit['USD']
+
+		return Quantity(non_depreciable_costs, 'USD')
