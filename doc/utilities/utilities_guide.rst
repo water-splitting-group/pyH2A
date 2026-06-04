@@ -24,17 +24,17 @@ How does it work?
 At a high level, the method performs these steps:
 
 1. The input file passed as the ``file`` argument is read and converted into a nested Python dictionary.
-2. This input file can contain a table named ``Base input file`` that references additional input files.
+2. This input file can contain a table named ``Input files to merge`` that references additional input files.
 3. Each referenced input file is also read and converted into a Python dictionary.
 4. The dictionaries are then merged according to the following priority rules:
 
    - The input file passed as the ``file`` argument has the highest priority.
    - Referenced input files have lower priority than the file that references them.
-   - Within the ``Base input file`` table, priority decreases from top to bottom.
+   - Within the ``Input files to merge`` table, priority decreases from top to bottom.
 
 5. When the same value is defined in multiple files, the value from the higher-priority input overrides the value from the lower-priority input.
 
-	Recursive references are not supported; referenced input files must not themselves contain ``Base input file`` tables. Finally, if ``merge_default=True``, 
+	Recursive references are not supported; referenced input files must not themselves contain ``Input files to merge`` tables. Finally, if ``merge_default=True``, 
 	the default input file is also merged. The default file always has the lowest priority, meaning that any values defined in the main input file or in referenced input files will override the default values.
 
 
@@ -128,14 +128,14 @@ Key format rules:
 4. Remaining columns become leaf keys (for example, ``Value``, ``Unit``).
 
 
-Base input file table format
+Input files to merge table format
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To merge additional files, include this table in your main input file:
 
 .. code-block:: text
 
-	# Base input file
+	# Input files to merge
 
 	Name | Value
 	--- | ---
