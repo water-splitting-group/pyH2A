@@ -19,10 +19,21 @@ from pyH2A.Utilities.input_modification import convert_input_to_dictionary
                 "Economics > OpEx > Value": 55,
             },
         },
+        {
+            "input": {
+                "file_path": "src/tests/Utilities/Arbitary_Input_Merger/arbitary_input_merger_test_data/missing_reference.md"
+            },
+            "expected": {
+                "Error": FileNotFoundError,
+            },
+        },
     ],
-    ids=["with_base_file"],
+    ids=[
+        "with_base_file",
+        "missing_reference",
+    ],
 )
-def test_arbitrary_input_merger(case):
+def test_arbitrary_input_merger(case, request):
     """
     Tests input merger functionality:
 
@@ -30,12 +41,24 @@ def test_arbitrary_input_merger(case):
         - Input contains a Base input file table
         - Multiple files are merged in priority order
         - Full Process + Economics structure is expected
+
+    "missing_reference"
+        - Input references a Base input file that is missing
     """
 
     input_data = case["input"]
     expected_data = case["expected"]
 
     file_path = input_data["file_path"]
+
+    # Get pytest case identifier (used for branching logic)
+    test_id = request.node.callspec.id
+
+    # Case 2: Full base-file merge
+    if test_id == "missing_reference":
+        with pytest.raises(expected_data["Error"]):
+            convert_input_to_dictionary(file_path, merge_default=False)
+        return
 
     # Run conversion on the selected input file
     merged_result = convert_input_to_dictionary(file_path, merge_default=False)
