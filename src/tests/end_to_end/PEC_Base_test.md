@@ -49,7 +49,7 @@ Array azimuth | 0. | deg |
 Nominal operating temperature | 45. | degC | Temperature is stabilized even under solar concentration through intrinsic water cooling. |
 Mismatch derating | 98% | - |
 Dirt derating | 98% | - | Values taken from Chang 2020, analogues to silicon PV. |
-Temperature coefficient | 1. | 1/delta_degC | No assumed efficiency loss with higher temperature. |
+Temperature coefficient | 0. | 1/delta_degC | No assumed efficiency loss with higher temperature. |
 
 # Solar Input
 

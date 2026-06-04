@@ -549,6 +549,22 @@ def process_path(dictionary, path, top_key, key, bottom_key, print_processing_wa
 		try:
 			target_value = get_by_path(dictionary, parsed_path)
 
+			# If reference is raw number → try to promote to Quantity
+			if not isinstance(target_value, Quantity):
+
+				parent = get_by_path(dictionary, parsed_path[:-1])
+				leaf = parsed_path[-1]
+
+				# Case 1: standard "Value / Unit" pattern
+				if leaf == "Value":
+					unit = parent.get("Unit", None)
+
+				# Case 2: suffix pattern (CAPEX_Value / CAPEX_Unit)
+				elif leaf.endswith("_Value"):
+					unit = parent.get(leaf.replace("_Value", "_Unit"), None)
+
+				target_value = Quantity(target_value, unit)
+
 			if 'Processed' not in dictionary[parsed_path[0]][parsed_path[1]] and print_processing_warning is True:
 				print('Warning: Unprocessed value is being used at "{0} > {1} > {2}" (by "{3} > {4}")'
 					  .format(parsed_path[0], parsed_path[1], parsed_path[2], top_key, key))

@@ -85,7 +85,7 @@ Fraction of stored power used for electrolysis | 0.95 | - | Additional electroly
 
 Name | Value | Path | Unit | Comment |
 --- | --- | --- | --- | --- |
-Nominal power | 1.5 | Electrolyzer > Nominal power > Value | kW | Optimal PV oversize ratio, same as Chang 2020 |
+Nominal power | 1.5 | Electrolyzer > Nominal power > Value | W | Optimal PV oversize ratio, same as Chang 2020 |
 CAPEX reference power | 1,000.0 | None | kW |
 Power loss per year | 0.5% | None | - | Based on Chang 2020 |
 Efficiency | 22% | None | - | Only used for area calculation. |
@@ -129,13 +129,13 @@ Battery CAPEX | 0. | Battery > Design capacity > Value | USD |
 
 Name | Value | Path | Unit | Comment |
 --- | --- | --- | --- | --- |
-PV CAPEX | 818. | Photovoltaic > Nominal power > Value ; Photovoltaic > Scaling factor > Value | USD | Based on Chang 2020, Chiesa 2021 Middle East PV installation cost, Shah 2021. |
+PV CAPEX | 0.818 | Photovoltaic > Nominal power > Value ; Photovoltaic > Scaling factor > Value | USD | Based on Chang 2020, Chiesa 2021 Middle East PV installation cost, Shah 2021. |
 
 # Direct Capital Costs - Electrolyzer
 
 Name | Value | Path | Unit | Comment |
 --- | --- | --- | --- | --- |
-Electrolyzer CAPEX | 784. | Electrolyzer > Nominal power > Value ; Electrolyzer > Scaling factor > Value | USD | Based on Chang 2020, IRENA 2020 Green Hydrogen (PEM System CAPEX 700 - 1400 USD/kg), Shah 2021. |
+Electrolyzer CAPEX | 0.784 | Electrolyzer > Nominal power > Value ; Electrolyzer > Scaling factor > Value | USD | Based on Chang 2020, IRENA 2020 Green Hydrogen (PEM System CAPEX 700 - 1400 USD/kg), Shah 2021. |
 
 # Non-Depreciable Capital Costs
 

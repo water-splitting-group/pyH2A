@@ -6,7 +6,7 @@ input_dict = {
 	"Technical Operating Parameters and Specifications": {
 		"Design output rate": {
 			"Value": {
-				"type": {float,},
+				"type": {float,int,},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -19,18 +19,18 @@ input_dict = {
 	"PEC Cells": {
 		"Cell cost": {
 			"Value": {
-				"type": {float,},
+				"type": {float,int,},
 				"bounds": (0, None),
 			},
 			"Unit": {
 				"dimension": "currency / area",
 			},
 			"optional": False,
-			"description": "Cost of PEC cells."
+			"description": "Cost of PEC cells per cell area."
 		},
 		"Lifetime": {
 			"Value": {
-				"type": {float,},
+				"type": {float,int,},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -41,7 +41,7 @@ input_dict = {
 		},
 		"Length": {
 			"Value": {
-				"type": {float,},
+				"type": {float,int,},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -52,7 +52,7 @@ input_dict = {
 		},
 		"Width": {
 			"Value": {
-				"type": {float,},
+				"type": {float,int,},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -65,7 +65,7 @@ input_dict = {
 	"Land Area Requirement": {
 		"Cell angle": {
 			"Value": {
-				"type": {float,},
+				"type": {float,int,},
 				"bounds": (0, np.pi / 2), 
 			},
 			"Unit": {
@@ -76,7 +76,7 @@ input_dict = {
 		},
 		"South spacing": {
 			"Value": {
-				"type": {float,},
+				"type": {float,int,},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -87,7 +87,7 @@ input_dict = {
 		},
 		"East/West spacing": {
 			"Value": {
-				"type": {float,},
+				"type": {float,int,},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -100,7 +100,7 @@ input_dict = {
 	"Solar-to-Hydrogen Efficiency": {
 		"STH": {
 			"Value": {
-				"type": {float,},
+				"type": {float,int,},
 				"bounds": (0, 1),
 			},
 			"Unit": {
@@ -110,30 +110,17 @@ input_dict = {
 			"description": "Solar-to-hydrogen efficiency in percentage or as a value between 0 and 1."
 		}
 	},
-	"Solar Concentrator": {
-		"Concentration factor": {
-			"Value": {
-				"type": {float,},
-				"bounds": (0, None),
-			},
-			"Unit": {
-				"dimension": "dimensionless",
-			},
-			"optional": True,
-			"description": "Concentration factor created by solar concentration module."
-		},
-	},
 	"Solar Input": {
 		"Mean solar input": {
 			"Value": {
-				"type": {float,},
+				"type": {float,int,},
 				"bounds": (0, None),
 			},
 			"Unit": {
 				"dimension": "power / area",
 			},
 			"optional": False,
-			"description": "Mean solar input in power / area and yearly average of solar input."
+			"description": "Mean solar input in power / area, yearly average of solar input."
 		}
 	}
 }
@@ -143,7 +130,7 @@ output_dict = {
 		"Land required": {
 			"Value": {
 				"inserted_value": "total_land_area", 
-				"type": {float,}, 
+				"type": {float,int,}, 
 				"dimension":"area",
         	},
 			"description": "Total land area required.",
@@ -152,7 +139,7 @@ output_dict = {
 		"Solar collection area": {
 			"Value": {
 				"inserted_value": "total_solar_collection_area",
-				"type": {float,},
+				"type": {float,int,},
 				"dimension":"area",
 			},
 			"description": "Solar collection area.",
@@ -163,23 +150,23 @@ output_dict = {
 		"Planned replacement PEC cells": {
 			"Cost_Value": {
 				"inserted_value": "cell_cost",
-				"type": {float,},
+				"type": {float,int,},
 				"dimension":"currency",
 			},
 			"Frequency_Value": {
 				"inserted_value": "cell_lifetime",
-				"type": {float,}, 
+				"type": {float,int,}, 
 				"dimension":"time",
 			},
 			"description": "Total cost of replacing all PEC cells once.",
 			"optional": False,		
 		}
 	},
- 	"Itemized Direct Capital Costs - PEC Cells": {
+ 	"Direct Capital Costs - PEC Cells": {
 		"PEC cell cost": {
 			"Value": {
 				"inserted_value": "cell_cost",
-				"type": {float,}, 
+				"type": {float,int,}, 
 				"dimension": "currency"
 			},
 			"description": "Total cost of all PEC cells.",
@@ -190,7 +177,7 @@ output_dict = {
 		"Number": {
 			"Value": {
 				"inserted_value": "cell_number",
-				"type": {float,}, 
+				"type": {float,int}, 
 				"dimension":"dimensionless",
 			},
 			"description": "Number of individual PEC cells required for design H2 output capacity.",
@@ -224,9 +211,6 @@ class PEC_Plugin:
 		Solar-to-hydrogen efficiency in percentage or as a value between 0 and 1.
 	Solar Input > Mean solar input > Value : float
 		Mean solar power per surface.
-	Solar Concentrator > Concentration Factor > Value : float, optional
-		Concentration factor created by solar concentration module, which is used in combination
-		with PEC cells. If "Solar Concentrator" is in dcf.inp, ``process_table()`` is used.		
 
 	Returns
 	-------
@@ -238,7 +222,7 @@ class PEC_Plugin:
 		Total cost of replacing all PEC cells once.
 	Planned Replacement > Planned replacement PEC Cells > Frequency_Value : float
 		Replacement frequency of PEC cells in years, identical to PEC cell lifetime.
-	Itemized Direct Capital Costs - PEC Cells > PEC cell cost > Value : float
+	Direct Capital Costs - PEC Cells > PEC cell cost > Value : float
 		Total cost of all PEC cells.
 	PEC Cells > Number > Value : float
 		Number of individual PEC cells required for design H2 output capacity.
@@ -246,11 +230,12 @@ class PEC_Plugin:
 
 	def __init__(self, dcf, print_info):
 		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'PEC_Plugin')
-		self.cell_lifetime = self.input_dict_resolved['PEC Cells']['Lifetime']['Value']
-
+		
 		self.hydrogen_production()
 		self.PEC_cost()
 		self.land_area()
+
+		self.cell_lifetime = self.input_dict_resolved['PEC Cells']['Lifetime']['Value']
 
 		output_inserter_function(output_dict, self, dcf, 'PEC_Plugin') 
 
@@ -260,21 +245,44 @@ class PEC_Plugin:
 
 		pec = self.input_dict_resolved['PEC Cells']
 
-		self.cell_area = Quantity(pec['Length']['Value'].unit['m'] * pec['Width']['Value'].unit['m'], 'm2')
-		cell_insolation = self.cell_area.unit['m2'] * self.input_dict_resolved['Solar Input']['Mean solar input']['Value'].unit['W/m2']
-		self.H2_molecule_energy = Quantity(2*1.229, 'eV/entity')
+		self.cell_area = Quantity(pec['Length']['Value'].unit['m'] 
+								  * pec['Width']['Value'].unit['m'], 
+						'm2')
+		cell_insolation = (self.cell_area.unit['m2'] 
+						   * self.input_dict_resolved['Solar Input']['Mean solar input']['Value'].unit['W/m2'])
+		
+		self.H2_molecule_energy = Quantity(2 * 1.229, 'eV/entity')
 		self.H2_molecular_weight = Quantity(2, 'g/mol')
-		mol_H2_per_cell_per_second = cell_insolation * self.input_dict_resolved['Solar-to-Hydrogen Efficiency']['STH']['Value'].unit['-'] / self.H2_molecule_energy.unit['J/mol']
-		self.mass_rate_H2_per_cell = Quantity(mol_H2_per_cell_per_second*self.H2_molecular_weight.unit['kg/mol'], 'kg/s')
-		self.mol_rate_H2_per_surface = Quantity(mol_H2_per_cell_per_second / self.cell_area.unit['m2'], 'mol/s/m2')
+		
+		mol_H2_per_cell_per_second = (cell_insolation 
+									  * self.input_dict_resolved['Solar-to-Hydrogen Efficiency']['STH']['Value'].unit['-']
+									  / self.H2_molecule_energy.unit['J/mol'])
+		
+		self.mass_rate_H2_per_cell = Quantity(mol_H2_per_cell_per_second 
+											  * self.H2_molecular_weight.unit['kg/mol'], 
+									 'kg/s')
+		self.mol_rate_H2_per_surface = Quantity(mol_H2_per_cell_per_second 
+												/ self.cell_area.unit['m2'], 
+									   'mol/s/m2')
 
 	def PEC_cost(self):
 		'''Calculation of cost per cell, number of required cells and total cell cost.
 		'''
 
-		cost_per_cell = self.cell_area.unit['m2'] * self.input_dict_resolved['PEC Cells']['Cell cost']['Value'].unit['USD/m2']
-		self.cell_number = Quantity(np.ceil(self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output rate']['Value'].unit['kg/day'] / self.mass_rate_H2_per_cell.unit['kg/day']), '-')
-		self.cell_cost = Quantity(self.cell_number.unit['-'] * cost_per_cell, 'USD')
+		cost_per_cell = (self.cell_area.unit['m2'] 
+						 * self.input_dict_resolved['PEC Cells']['Cell cost']['Value'].unit['USD/m2'])
+
+		
+
+		self.cell_number = Quantity(np.ceil(
+			   							self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output rate']['Value'].unit['kg/day'] 
+										/ self.mass_rate_H2_per_cell.unit['kg/day']
+										), 
+							'-')
+		
+		self.cell_cost = Quantity(self.cell_number.unit['-'] 
+								  * cost_per_cell, 
+						'USD')
 
 	def land_area(self):
 		'''Calculation of total required land area and solar collection area.
@@ -283,10 +291,15 @@ class PEC_Plugin:
 		self.land = self.input_dict_resolved['Land Area Requirement']
 		self.pec = self.input_dict_resolved['PEC Cells']
 
-		self.total_solar_collection_area = Quantity(self.cell_area.unit['m2'] * self.cell_number.unit['-'], 'm2')
+		self.total_solar_collection_area = Quantity(self.cell_area.unit['m2'] 
+													* self.cell_number.unit['-'], 
+										   'm2')
 
 		cell_plan_view = self.pec['Length']['Value'].unit['m'] * np.cos(self.land['Cell angle']['Value'].unit['rad'])
 		total_length = cell_plan_view + self.land['South spacing']['Value'].unit['m']	
 		total_width = self.pec['Width']['Value'].unit['m'] + self.land['East/West spacing']['Value'].unit['m']
 
-		self.total_land_area = Quantity(total_width * total_length * self.cell_number.unit['-'], 'm2')
+		self.total_land_area = Quantity(total_width 
+										* total_length 
+										* self.cell_number.unit['-'], 
+								'm2')

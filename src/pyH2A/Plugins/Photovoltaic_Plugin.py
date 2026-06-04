@@ -14,13 +14,13 @@ input_dict = {
 				"dimension": "energy / area",
 			},
 			"optional": False,
-			"description": "Hourly power ratio data for electricity production calculation. Either a path to a text file containing the data or ndarray. A suitable array can be retrieved from 'Hourly Irradiation > *type of tracking* > Value'."
+			"description": "Hourly energy / area data for electricity production calculation. Either a path to a text file containing the data (in this case, it is assumed that data is in kWh/m2 and that relevant data is in column 1) or ndarray. A suitable array can be retrieved from 'Hourly Irradiation > *type of tracking* > Value'."
 		},
 	},
 	"CAPEX Multiplier": {
 		"Multiplier": {
 			"Value": {
-				"type": {float,},
+				"type": {float,int,},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -42,11 +42,11 @@ input_dict = {
 			"optional": True,
 			"description": "Nominal power of electrolyzer; can be used to size the PV array."
 		},
-	},	
+	},		
 	"Photovoltaic": {
 		"Nominal power": {
 			"Value": {	
-				"type": {float,},
+				"type": {float,int,},
 				"bounds": (0, None),
 			},
 			"Unit": {	
@@ -57,7 +57,7 @@ input_dict = {
 		},
 		"CAPEX reference power": {	
 			"Value": {
-				"type": {float,},
+				"type": {float,int,},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -68,7 +68,7 @@ input_dict = {
 		},
 		"Power loss per year": {
 			"Value": {
-				"type": {float,},
+				"type": {float,int,},
 				"bounds": (0, 1),
 			},
 			"Unit": {
@@ -79,7 +79,7 @@ input_dict = {
 		},
 		"Efficiency": {
 			"Value": {
-				"type": {float,},
+				"type": {float,int,},
 				"bounds": (0, 1),
 			},
 			"Unit": {
@@ -124,7 +124,7 @@ output_dict = {
 		},
 		"Available energy (daily)": {
 			"Value": {
-				"inserted_value": "electric_energy_generation_yearly_data_daily_power",
+				"inserted_value": "electric_energy_generation_yearly_data_daily_energy",
 				"type": {dict,},
 				"dimension": "energy",
 			},
@@ -200,8 +200,8 @@ class Photovoltaic_Plugin:
 		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Photovoltaic_Plugin')
 
 		self.calculate_power_production(dcf)
-		self.calculate_scaling_factors(dcf)
-		self.calculate_area(dcf)
+		self.calculate_scaling_factors()
+		self.calculate_area()
 
 		output_inserter_function(output_dict, self, dcf, 'Photovoltaic_Plugin') 
 
@@ -211,22 +211,29 @@ class Photovoltaic_Plugin:
 		'''
 
 		if isinstance(self.input_dict_resolved['Irradiation Used']['Data']['Value'], str):
-			data = Quantity(read_textfile(self.input_dict_resolved['Irradiation Used']['Data']['Value'], delimiter = '	')[:,1], 'kWh/m2').unit['J/m2']
+			data = read_textfile(self.input_dict_resolved['Irradiation Used']['Data']['Value'], delimiter = '	')[:,1]
+			data = Quantity(data, 'kWh/m2').unit['J/m2']
 		else:
 			data = self.input_dict_resolved['Irradiation Used']['Data']['Value'].unit['J/m2']
 
 		yearly_data = {}
-		yearly_data_daily_power = {}
+		yearly_data_daily_energy = {}
 
 		for year in dcf.operation_years:
 			data_loss_corrected = self.calculate_photovoltaic_loss_correction(data, year)
-			electric_energy_generation = data_loss_corrected * self.input_dict_resolved['Photovoltaic']['Nominal power']['Value'].unit['kW']
+
+			# Multiplying irradiance data (J/m2) by nominal power in kW 
+			# to obtain electrical energy generated in J, since peak irradiance is 1 kW/m2
+			# (which is used to define nominal power
+			# nominal power is essentially just the 1/m2 multiplier, to convert J/m2 to J
+			electric_energy_generation = (data_loss_corrected  
+										  * self.input_dict_resolved['Photovoltaic']['Nominal power']['Value'].unit['kW'])
 
 			yearly_data[year] = Quantity(electric_energy_generation, 'J') 
-			yearly_data_daily_power[year] = Quantity(hourly_to_daily_power(electric_energy_generation), 'J')			
+			yearly_data_daily_energy[year] = Quantity(hourly_to_daily_power(electric_energy_generation), 'J')			
 
 		self.electric_energy_generation_yearly_data = yearly_data
-		self.electric_energy_generation_yearly_data_daily_power = yearly_data_daily_power
+		self.electric_energy_generation_yearly_data_daily_energy = yearly_data_daily_energy
 
 	def calculate_photovoltaic_loss_correction(self, data, year):
 		'''Calculation of yearly reduction in electricity production by PV array.
@@ -234,11 +241,13 @@ class Photovoltaic_Plugin:
 
 		return data * (1. - self.input_dict_resolved['Photovoltaic']['Power loss per year']['Value'].unit['-']) ** year
 
-	def calculate_scaling_factors(self, dcf):
+	def calculate_scaling_factors(self):
 		'''Calculation of PV CAPEX scaling factors.
 		'''
-
-		self.pv_scaling_factor = Quantity(self.scaling_factor(self.input_dict_resolved['Photovoltaic']['Nominal power']['Value'].unit['W'], self.input_dict_resolved['Photovoltaic']['CAPEX reference power']['Value'].unit['W']), '-')
+		scaling_factor = self.scaling_factor(self.input_dict_resolved['Photovoltaic']['Nominal power']['Value'].unit['W'], 
+											 self.input_dict_resolved['Photovoltaic']['CAPEX reference power']['Value'].unit['W'])
+		
+		self.pv_scaling_factor = Quantity(scaling_factor, '-')
 		
 	def scaling_factor(self, power, reference):
 		'''Calculation of CAPEX scaling factor based on nominal and reference power.
@@ -248,8 +257,15 @@ class Photovoltaic_Plugin:
 
 		return self.input_dict_resolved['CAPEX Multiplier']['Multiplier']['Value'].unit['-'] ** number_of_tenfold_increases
 
-	def calculate_area(self, dcf):
+	def calculate_area(self):
 		'''Area requirement calculation assuming 1000 W/m2 peak power.'''
 
-		peak_kW_per_m2 = self.input_dict_resolved['Photovoltaic']['Efficiency']['Value'].unit['-'] * 1.
-		self.area = Quantity(self.input_dict_resolved['Photovoltaic']['Nominal power']['Value'].unit['kW'] / peak_kW_per_m2, 'm2')
+		# Efficiency automatically converts 1 kW/m2 to actual usuable power per m2
+		peak_kW_per_m2 = self.input_dict_resolved['Photovoltaic']['Efficiency']['Value'].unit['-']
+		
+		self.area = Quantity(self.input_dict_resolved['Photovoltaic']['Nominal power']['Value'].unit['kW'] 
+							 / peak_kW_per_m2, 
+					'm2')
+
+
+

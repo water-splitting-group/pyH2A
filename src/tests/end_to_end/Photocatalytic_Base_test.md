@@ -26,7 +26,7 @@ Name | Value | Path | Unit | Full Name |
 --- | --- | --- | --- | --- |
 Operating capacity factor | 90% | None | - |
 Plant design capacity | 1,111. | None | kg/day |
-Maximum output rate at gate | 90% | Technical Operating Parameters and Specifications > Plant design capacity > Value | kg/day | % of plant design capacity, reduction due to loss in H2/O2 separation. |
+Maximum output rate at gate | 90% | Technical Operating Parameters and Specifications > Plant design capacity > Value | kg/s | % of plant design capacity, reduction due to loss in H2/O2 separation. |
 Plant modules | 10 | None | - | 10 identical modules, only affects labor requirement calculation. |
 
 # Construction

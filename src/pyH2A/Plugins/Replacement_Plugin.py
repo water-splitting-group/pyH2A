@@ -180,8 +180,3 @@ class Planned_Replacement:
 		self.years_idx = fn.find_nearest(dcf.plant_years, self.years)
 
 		self.total_cost = np.sum(np.ones_like(self.years) * self.cost)
-
-		print('replacement_frequency', replacement_frequency)
-		print('raw_replacement_cost', raw_replacement_cost)
-		print('self.cost', self.cost)
-		print('self.total_cost', self.total_cost)
