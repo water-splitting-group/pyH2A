@@ -16,7 +16,7 @@ Color | darkred
 Name | Value | Unit |
 --- | --- | --- |
 Operating capacity factor | 90% | - |
-Plant design capacity | 1,000.0 | kg/day |
+Plant design capacity | 1,000. | kg/day |
 
 # Construction
 
@@ -26,7 +26,7 @@ Capital perc 1st | Capital Spent in 1st Year of Construction | 100% | - |
 
 # Solar Input
 
-Name | Value | Unit | Comment |
+Name             | Value | Unit          | Comment                                                  |
 --- | --- | --- | --- |
 Mean solar input | 6.8 | kWh_per_day/m2 | Typical value in Dagget, CA, USA, with two axis tracking |
 
@@ -40,7 +40,7 @@ STH | 20% | - | Based on DOE Technical Targets for Hydrogen Production from Ther
 
 Name | Value | Unit | Comment |
 --- | --- | --- | --- |
-Chemical tower | 2,300,000.0 | USD | Equipment costs based on DOE Technical Targets for Hydrogen Production from Thermochemical Water Splitting - 2020 Target |
+Chemical tower | 2,300,000. | USD | Equipment costs based on DOE Technical Targets for Hydrogen Production from Thermochemical Water Splitting - 2020 Target |
 
 # Direct Capital Costs - Gas Processing
 
@@ -53,23 +53,23 @@ Intercooler-2 | 15,552.0  | USD |
 
 # Non-Depreciable Capital Costs
 
-Name | Value | Unit | Comment |
+Name | Value | Unit   | Comment                         |
 --- | --- | --- | --- |
 Cost of land | 500.0 | USD/acre | Land cost based on Pinaud 2013. |
-Additional land area | 30% | - | Additional land area required. |
+Additional land area | 30%   | - | Additional land area required.  |
 
 # Planned Replacement
 
 Name | Frequency_Value | Frequency_Unit | Cost_Value | Cost_Unit | Comment |
 --- | --- | --- | --- | --- | --- |
-Reaction material | 1.0 | year | 89,000.0 | USD | Based on DOE Technical targets for Hydrogen Production from Thermochemical Water Splitting - 2020 Target |
+Reaction material | 1. | year | 89,000. | USD | Based on DOE Technical targets for Hydrogen Production from Thermochemical Water Splitting - 2020 Target |
 
 # Fixed Operating Costs
 
 Name | Full Name | Value | Unit |
 --- | --- | --- | --- |
-Staff | Number of staff | 7.0 | - |
-Hourly labor cost | Burdened labor cost, including overhead | 50.0 | USD/h |
+Staff | Number of staff | 7. | - |
+Hourly labor cost | Burdened labor cost, including overhead | 50.0  | USD/h |
 
 # Utilities
 
