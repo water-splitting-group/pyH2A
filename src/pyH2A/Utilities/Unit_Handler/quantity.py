@@ -9,8 +9,34 @@ TOKEN_PATTERN = re.compile(r'([*/()])|\s+')
 
 def parse_composite_unit(unit_str):
     """
-    Parses a composite unit string like 'kWh / cm2' or '(kWh * m)/m2'.
-    Returns the conversion multiplier, the resulting composite base unit, and the composite dimension.
+    Parse a composite unit (like 'kWh / cm2' or '(kWh * m)/m2') string into conversion multiplier, 
+    resulting composite base unit, and composite dimension.
+
+    This function expands user-facing units (e.g., `kWh / cm2` or
+    `(kWh * m)/m2`) into:
+    - a numerical multiplier to convert to base units,
+    - a composite base-unit expression, and
+    - a composite dimension expression.
+
+    Parameters
+    ----------
+    unit_str : str
+        Unit expression that may include `*`, `/`, and parentheses.
+
+    Returns
+    -------
+    combined_multiplier : float
+        Multiplier that converts `unit_str` into its composite base unit.
+    combined_base_str : str
+        Composite base unit expression (e.g., `J / m2`).
+    combined_dim_str : str
+        Composite dimension expression in the same operator layout.
+
+    Raises
+    ------
+    ValueError
+        If an unknown unit token is encountered or the expression cannot
+        be evaluated.
     """
     tokens = TOKEN_PATTERN.split(unit_str)
     # Remove empty/whitespace tokens
@@ -62,6 +88,19 @@ class UnitDictionary(dict):
     Guarantees that the 'base_unit' and 'supplied_unit' values are immediately present.
     """
     def __init__(self, quantity):
+        """
+        Create a lazy unit dictionary for a given `Quantity`.
+
+        Parameters
+        ----------
+        quantity : Quantity
+            Quantity instance providing base/supplied values and dimension.
+
+        Returns
+        -------
+        None : None
+            This initializer populates the dictionary in-place.
+        """
         super().__init__()
         self._quantity = quantity
         
@@ -71,7 +110,26 @@ class UnitDictionary(dict):
         
     def __missing__(self, target_unit):
         """
-        Calculates requested unit value lazily when dict[target_unit] is called.
+        Lazily compute a unit value when dict[target_unit] is accessed.
+
+        Parameters
+        ----------
+        target_unit : str
+            Unit expression requested by the caller.
+
+        Returns
+        -------
+        value : float or np.ndarray
+            Value expressed in `target_unit`, cached in the dictionary.
+
+        Raises
+        ------
+        KeyError
+            If an absolute temperature conversion is requested for an
+            unsupported unit.
+        ValueError
+            If the requested unit has a mismatched dimension.
+
         """
         # 1. Absolute Temperature Handling Path
         if self._quantity.is_absolute_temp:
@@ -102,11 +160,36 @@ class UnitDictionary(dict):
 class Quantity:
     """
     Lightweight computational replacement for Pint in pyH2A.
-    Immediate parsing and instantiation with lazy unit value retrieval.
+
+    The constructor parses the supplied unit into base units and a
+    dimension string. Unit conversion is provided lazily through a
+    `UnitDictionary` stored on `self.unit`.
     """
-    __slots__ = ['supplied_value', 'supplied_unit', 'base_value', 'base_unit', 'dimension', 'unit', 'is_absolute_temp']
+    __slots__ = ['supplied_value', 
+                 'supplied_unit', 
+                 'base_value', 
+                 'base_unit', 
+                 'dimension', 
+                 'unit', 
+                 'is_absolute_temp']
     
     def __init__(self, value, unit_str):
+        '''
+        Create a `Quantity` from a numeric value and unit expression.
+
+        Parameters
+        ----------
+        value : float, int, or np.ndarray
+            Supplied numeric value.
+        unit_str : str
+            Unit expression compatible with the unit handler configuration.
+
+        Returns
+        -------
+        None : None
+            The instance is initialized in-place.
+        '''
+
         self.supplied_value = value
         self.supplied_unit = unit_str.strip()
         self.is_absolute_temp = False
@@ -129,11 +212,27 @@ class Quantity:
         self.unit = UnitDictionary(self)
         
     def __repr__(self):
+        """
+        Provide a compact representation using base units.
+
+        Returns
+        -------
+        representation : str
+            String form `Quantity(<base_value>, '<base_unit>')`.
+        """
         return f"Quantity({self.base_value}, '{self.base_unit}')"
 
 
 
 def test_quantity():
+    """
+    Run a simple, manual sanity check of quantity parsing and conversion.
+
+    Returns
+    -------
+    None : None
+        Prints example outputs to stdout.
+    """
 
     array_test = np.array([[1.0, 2.0, 3.0],
                            [4.0, 5.0, 6.0]])
