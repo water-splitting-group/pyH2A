@@ -17,13 +17,21 @@ class DummyDCF:
     ):  
         self.inp = {
             "Technical Operating Parameters and Specifications": {
-                "Output per year": {"Value": plant_output_per_year, "Unit":"kg"}
+                "Output per year": {
+                    "Value": plant_output_per_year, 
+                    "Unit":"kg"
+                    }
             },
             "Utilities": {
                 key: {
-                    "Cost_Value": value["Cost"], "Cost_Unit":"USD", "Cost_Path": "",
-                    "Usage_Value": value["Usage"], "Usage_Unit":"1/kg", "Usage_Path": "",
-                    "Price_Conversion_Factor_Value": value.get("Conversion", 1.0), "Price_Conversion_Factor_Unit": "-",
+                    "Cost_Value": value["Cost"], 
+                    "Cost_Unit": "USD", 
+                    "Cost_Path": "None",
+                    "Usage_Value": value["Usage"], 
+                    "Usage_Unit": "1/kg", 
+                    "Usage_Path": "None",
+                    "Price_Conversion_Factor_Value": value.get("Conversion", 1.0),
+                    "Price_Conversion_Factor_Unit": "-",
                 } 
                 for key, value in utilities.items()
             },
@@ -49,8 +57,13 @@ class DummyDCF:
             "input": {
                 "plant_output_per_year": 100_000.0,  
                 "utilities": {
-                    "Electricity": {"Cost": 0.05, "Usage": 50.0, "Conversion": 2.0}, 
-                    "Water": {"Cost": 0.01, "Usage": 10.0}          
+                    "Electricity": {
+                        "Cost": 0.05, 
+                        "Usage": 50.0, 
+                        "Conversion": 2.0}, 
+                    "Water": {
+                        "Cost": 0.01, 
+                        "Usage": 10.0}          
                 },
                 "other_variable_costs": {
                     "Maintenance": {
@@ -66,8 +79,17 @@ class DummyDCF:
                 "chemical_inflator": 1.0
             },
             "expected": {
-                "utilities": Quantity(np.array([612000.0, 612000.0, 612000.0, 612000.0, 612000.0, 612000.0, 612000.0,
-              612000.0, 612000.0, 612000.0]), "USD"),
+                "utilities": Quantity(np.array([612000.0, 
+                                                612000.0, 
+                                                612000.0, 
+                                                612000.0, 
+                                                612000.0, 
+                                                612000.0, 
+                                                612000.0,
+                                                612000.0, 
+                                                612000.0, 
+                                                612000.0]), 
+                                        "USD"),
                 "other": Quantity(np.array(1500.), "USD")                                      
             }
         }
