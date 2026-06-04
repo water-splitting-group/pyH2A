@@ -24,12 +24,19 @@ How does it work?
 
 At a high level, the method performs these steps:
 
-1. Read the main (highest priority) Markdown input file and parse it into a dictionary.
-2. If ``merge_default=True``, read the default input file and merge it first.
-3. Let values in the main input file override default values.
-4. Look for a table named ``Base input file`` in the merged dictionary.
-5. For each row in that table, read the file path stored in the ``Value`` column and merge that (md) file into the current dictionary.
-6. Earlier files listed in ``Base input file`` have higher priority than later files.
+1. The input file passed as the ``file`` argument is read and converted into a nested Python dictionary.
+2. This input file can contain a table named ``Base input file`` that references additional input files.
+3. Each referenced input file is also read and converted into a Python dictionary.
+4. The dictionaries are then merged according to the following priority rules:
+
+   - The input file passed as the ``file`` argument has the highest priority.
+   - Referenced input files have lower priority than the file that references them.
+   - Within the ``Base input file`` table, priority decreases from top to bottom.
+
+5. When the same value is defined in multiple files, the value from the higher-priority input overrides the value from the lower-priority input.
+
+	Recursive references are not supported; referenced input files must not themselves contain ``Base input file`` tables. Finally, if ``merge_default=True``, 
+	the default input file is also merged. The default file always has the lowest priority, meaning that any values defined in the main input file or in referenced input files will override the default values.
 
 
 Method signature
