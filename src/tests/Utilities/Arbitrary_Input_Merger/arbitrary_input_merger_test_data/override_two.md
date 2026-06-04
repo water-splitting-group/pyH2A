@@ -1,4 +1,4 @@
-# Base input file
+# Input files to merge
 
 Name | Value
 --- | ---
