@@ -9,7 +9,6 @@ What is this method?
 
 ``convert_input_to_dictionary`` is a utility function that reads a Markdown
 input file and converts it into a nested Python dictionary used by pyH2A.
-It can also merge:
 
 
 Why do we need it?
