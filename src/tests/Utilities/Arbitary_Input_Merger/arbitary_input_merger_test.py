@@ -54,7 +54,7 @@ def test_arbitrary_input_merger(case, request):
     # Get pytest case identifier (used for branching logic)
     test_id = request.node.callspec.id
 
-    # Case 2: Full base-file merge
+    # Case 2: Missing reference merges should raise FileNotFoundError
     if test_id == "missing_reference":
         with pytest.raises(expected_data["Error"]):
             convert_input_to_dictionary(file_path, merge_default=False)
@@ -63,6 +63,7 @@ def test_arbitrary_input_merger(case, request):
     # Run conversion on the selected input file
     merged_result = convert_input_to_dictionary(file_path, merge_default=False)
 
+    # Case 1: Full base-file merge
     assert (
         merged_result["Process"]["Temperature"]["Value"]
         == expected_data["Process > Temperature > Value"]
