@@ -40,6 +40,10 @@ def _identify_bottom_keys(row_dict):
     '''
     Identify the bottom keys relevant for processing (value-unit pairs and standalone keys)
 
+    This is used to decide whether a row entry should be resolved as a
+    `Quantity` (value + unit) or as a plain value (for categorical strings
+    or non-quantity values).
+
     Example
     -------
     For a row_dict like this:
@@ -94,8 +98,35 @@ def _get_specification_and_retrieved_value(top_key,
                                            row_dict,
                                            dcf_class):
     '''
-    Helper function to retrieve specification and retrieved value for a given key combination
-    Raises KeyError if key combination is not found in dcf_class.inp
+    Fetch the value specification and the corresponding value from `dcf_class.inp`.
+
+    This keeps lookups centralized so errors can be reported with a
+    consistent location string.
+
+    Parameters
+    ----------
+    top_key : str
+        Table name in `dcf_class.inp`.
+    middle_key : str
+        Row name in `dcf_class.inp[top_key]`.
+    bottom_key : str
+        Column key in `dcf_class.inp[top_key][middle_key]`.
+    row_dict : dict
+        Row specification dictionary used to retrieve the specification.
+    dcf_class : object
+        DCF-like object that provides `inp` with nested dictionaries.
+
+    Returns
+    -------
+    result : tuple
+        `(specification, retrieved_value)` where `specification` is the
+        bottom-level spec from `row_dict` and `retrieved_value` is the
+        value stored in `dcf_class.inp`.
+
+    Raises
+    ------
+    KeyError
+        If the value is missing from `dcf_class.inp` at the specified path.
     '''
 
     specification = row_dict[bottom_key]
@@ -113,6 +144,29 @@ def _perform_checks_on_quantity(quantity,
                                 top_key,
                                 middle_key,
                                 bottom_key):
+    """
+    Validate a `Quantity` against dimension and optional bounds rules.
+
+    Parameters
+    ----------
+    quantity : Quantity
+        Quantity to validate.
+    value_specification : dict
+        Value specification containing optional bounds.
+    unit_specification : dict
+        Unit specification containing required dimension metadata.
+    top_key : str
+        Table name in `dcf_class.inp`.
+    middle_key : str
+        Row name in `dcf_class.inp[top_key]`.
+    bottom_key : str
+        Column key in `dcf_class.inp[top_key][middle_key]`.
+
+    Returns
+    -------
+    None
+        This function mutates nothing and raises if checks fail.
+    """
     
     # 1. Always check dimension match (DIMENSION_KEY must be present in unit_specification)
     check_dimension(top_key, 
@@ -142,6 +196,35 @@ def _create_quantity_and_validate(value_retrieved,
     Recursively processes a retrieved value (float, int, np.ndarray, or dict) and its retrieved unit, 
     creates Quantity objects, checks dimensions, and validates bounds.
     Returns the parsed structure with Quantity objects at the bottom level.
+
+    Notes
+    ---------------
+    Inputs can be scalars, arrays, or nested dictionaries. This function
+    normalizes numeric values into `Quantity` objects and validates each
+    leaf so downstream code can rely on consistent types and units.
+
+    Parameters
+    ----------
+    value_retrieved : float , int , np.ndarray , dict , Quantity
+        Value pulled from `dcf_class.inp`.
+    unit_retrieved : str | None
+        Unit string (if present) from `dcf_class.inp`.
+    value_specification : dict
+        Specifications that include type and optional bounds.
+    unit_specification : dict
+        Specifications that include required dimension metadata.
+    top_key : str
+        Table name in `dcf_class.inp`.
+    middle_key : str
+        Row name in `dcf_class.inp[top_key]`.
+    bottom_key : str
+        Column key in `dcf_class.inp[top_key][middle_key]`.
+
+    Returns
+    -------
+    resolved_value : Quantity or dict
+        The same structure as `value_retrieved`, with numeric leaves
+        converted to `Quantity` instances.
     """
 
     # Recursively traverse nested dictionaries
@@ -204,9 +287,31 @@ def value_resolver_function(top_key,
                             dcf_class,
                             return_specification = True):
     '''
-    Retrieve value specification and value.
-    Perform checks if retrieved value is of specified type
-    (and if applicable, within specified options).
+    Resolve a single value and validate it against its specification.
+
+    This runs process_input(), type checks, and optional categorical
+    option checks before returning the raw value or `(spec, value)`.
+
+    Parameters
+    ----------
+    top_key : str
+        Table name in `dcf_class.inp`.
+    middle_key : str
+        Row name in `dcf_class.inp[top_key]`.
+    bottom_key : str
+        Column key in `dcf_class.inp[top_key][middle_key]`.
+    row_dict : dict
+        Row specification containing the bottom-level spec.
+    dcf_class : object
+        DCF-like object with `inp` nested dictionaries.
+    return_specification : bool, default True
+        When True, return `(spec, value)`. When False, return only `value`.
+
+    Returns
+    -------
+    result : tuple or Any
+        `(specification, retrieved_value)` when `return_specification` is
+        True, otherwise just the retrieved value.
     '''
 
     # Get specific_path_key from value specifications (if not present, default to 'Path')
@@ -260,10 +365,31 @@ def value_with_unit_resolver_function(top_key,
                                       row_dict, 
                                       dcf_class):
     '''
-    Resolve value with unit 
-    Decision between directly getting Quantity object (if retrieved value is already a Quantity) or
-    creating Quantity object from retrieved value and unit (if retrieved value is numerical).
+    Resolve a value that may have an associated unit into a `Quantity`.
+
+    If the retrieved value is already a `Quantity`, it is validated and
+    returned. If the value is numeric (or nested dict of numerics), it is
+    combined with the unit and converted to `Quantity` objects. Strings are
+    returned as-is after type validation. 
     Throws error if retrieved value is of unsupported type (not Quantity, numerical or string).
+
+    Parameters
+    ----------
+    top_key : str
+        Table name in `dcf_class.inp`.
+    middle_key : str
+        Row name in `dcf_class.inp[top_key]`.
+    bottom_key_group : list[str]
+        A two-element list: `[value_key, unit_key]`.
+    row_dict : dict
+        Row specification dictionary.
+    dcf_class : object
+        DCF-like object with `inp` nested dictionaries.
+
+    Returns
+    -------
+    resolved_value : Quantity, dict, or str
+        Resolved quantity (or dict of quantities) or a string value.
     '''
 
     value_specification, value_retrieved = value_resolver_function(top_key, 
@@ -325,8 +451,29 @@ def value_with_unit_resolver_function(top_key,
 ## Row-level (middle_key) resolver functions
 def row_resolver_function(top_key, middle_key, row_dict, dcf_class):
     '''
-    Regular row resolver function, 
-    decision between resolving values with units or simply values
+    Resolve a single row in a table using its specification.
+
+    This function handles optional rows, resolves each bottom-level entry,
+    and marks the row as processed in `dcf_class.inp`. 
+    Decision between resolving values with units or simply values
+
+    Parameters
+    ----------
+    top_key : str
+        Table name in `dcf_class.inp`.
+    middle_key : str
+        Row name in the table.
+    row_dict : dict
+        Row specification dict describing expected values and units.
+    dcf_class : object
+        DCF-like object with `inp` nested dictionaries.
+
+    Returns
+    -------
+    resolved_row : dict or None
+        Resolved row dictionary, or None when the row is optional and
+        missing from `dcf_class.inp`.
+
     '''
 
     is_optional = row_dict.get(OPTIONAL_KEY, False)
@@ -376,7 +523,22 @@ def row_resolver_function(top_key, middle_key, row_dict, dcf_class):
 
 def wildcard_row_resolver_function(top_key, row_dict, dcf_class):
     '''
-    Resolver function for wildcard rows (going through all rows in dcf_class.inp[top_key])
+    Resolve all rows in a table using a wildcard row specification 
+    (going through all rows in dcf_class.inp[top_key]).
+
+    Parameters
+    ----------
+    top_key : str
+        Table name in `dcf_class.inp`.
+    row_dict : dict
+        Row specification applied to every row in the table.
+    dcf_class : object
+        DCF-like object with `inp` nested dictionaries.
+
+    Returns
+    -------
+    resolved_rows : dict
+        Mapping of each row key to its resolved row dictionary.
     '''
 
     resolved_rows = {}
@@ -392,9 +554,28 @@ def wildcard_row_resolver_function(top_key, row_dict, dcf_class):
 ## Table-level (top_key) resolver functions
 def table_resolver_function(top_key, table_dict, dcf_class):
     '''
-    Regular table resolver function, 
-    decision between regular rows and wildcard rows 
+    Resolve a single table (top-level key) using its row specifications.
+    Decision between regular rows and wildcard rows 
     (indicated by WILDCARD_MARKER in middle_key)
+
+    Supports optional tables, regular rows, and wildcard rows.
+    Also handles sum tables if specified in table_dict (sum of values across multiple rows,
+    with specifications provided in table_dict under middle key SUM_TABLES_KEY).
+
+    Parameters
+    ----------
+    top_key : str
+        Table name in `dcf_class.inp`.
+    table_dict : dict
+        Table specification mapping row keys to row specifications.
+    dcf_class : object
+        DCF-like object with `inp` nested dictionaries.
+
+    Returns
+    -------
+    resolved_table : dict or None
+        Resolved table dictionary, or None when the table is optional and
+        missing from `dcf_class.inp`.
     '''
     
     # Check if there is at least one non-optional row in table_dict
@@ -454,7 +635,24 @@ def table_resolver_function(top_key, table_dict, dcf_class):
 
 def table_group_resolver_function(table_group_top_key, table_group_dict, dcf_class):
     '''
-    Resolver function for table groups
+    Resolve a group of tables that share a common prefix.
+
+    The wildcard marker in `table_group_top_key` is removed to form a
+    prefix used to find matching tables in `dcf_class.inp`.
+
+    Parameters
+    ----------
+    table_group_top_key : str
+        Table-group key containing the wildcard marker.
+    table_group_dict : dict
+        Table specification applied to each matched table.
+    dcf_class : object
+        DCF-like object with `inp` nested dictionaries.
+
+    Returns
+    -------
+    resolved_table_group : dict
+        Mapping of each matched table key to its resolved table data.
     '''
 
     resolved_table_group = {}
@@ -502,8 +700,28 @@ def table_group_resolver_function(table_group_top_key, table_group_dict, dcf_cla
 ## Top level resolver function
 def input_resolver_function(input_dict, dcf_class, plugin_name):
     '''
-    Top level resolver function, decision between table groups 
-    (indicated by WILDCARD_MARKER) or regular tables 
+    Resolve the full input specification against `dcf_class.inp`.
+
+    This is the top-level entry point used by plugins. It dispatches to
+    table-group resolvers (wildcard top keys) or regular table resolvers,
+    returning a fully resolved dictionary with validated values.
+
+    Parameters
+    ----------
+    input_dict : dict
+        Plugin input specification. Top-level keys are tables or table
+        groups; middle-level keys are rows; bottom-level keys are value and
+        unit specs.
+    dcf_class : object
+        DCF-like object containing `inp` input data.
+    plugin_name : str
+        Name of the plugin used to prefix error messages.
+
+    Returns
+    -------
+    input_dict_resolved : dict
+        Fully resolved input dictionary with `Quantity` objects where
+        appropriate.
     '''
 
     try:
