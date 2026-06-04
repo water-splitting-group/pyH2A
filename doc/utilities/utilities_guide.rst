@@ -11,21 +11,12 @@ What is this method?
 input file and converts it into a nested Python dictionary used by pyH2A.
 It can also merge:
 
-1. A default configuration file.
-2. One level of additional input files listed in the ``Base input file`` table.
-
 
 Why do we need it?
 ~~~~~~~~~~~~~~~~~~
 
-This function is the entry point for turning user-facing text input into a
-machine-usable configuration object.
-
-It helps by:
-
-1. Keeping inputs human-readable and version-control-friendly.
-2. Allowing shared defaults and scenario-specific overrides.
-3. Supporting layered input design without requiring users to write Python code.
+This function is the entry point for turning user-facing text input (md file) into a
+machine-usable configuration object and merge additional input files.
 
 
 How does it work?
@@ -37,11 +28,8 @@ At a high level, the method performs these steps:
 2. If ``merge_default=True``, read the default input file and merge it first.
 3. Let values in the main input file override default values.
 4. Look for a table named ``Base input file`` in the merged dictionary.
-5. For each row in that table, read the file path stored in the ``Value`` column and merge that file into the current dictionary.
+5. For each row in that table, read the file path stored in the ``Value`` column and merge that (md) file into the current dictionary.
 6. Earlier files listed in ``Base input file`` have higher priority than later files.
-
-Steps 4 to 6 are recursive: nested base references inside referenced files are followed.
-In other words, if a ``Base input file`` table is included in the main (highest priority) file, the lower priority files that are pointed by this table can contain their own ``Base input file`` table pointing to other input files.
 
 
 Method signature
@@ -84,7 +72,7 @@ Basic usage:
 
 	from pyH2A.Utilities.input_modification import convert_input_to_dictionary
 
-	inp = convert_input_to_dictionary('data/PV_E/Base/your_case.md')
+	inp = convert_input_to_dictionary('data/PV_E/Base/file_name.md')
 
 
 Without merging default values:
@@ -94,7 +82,7 @@ Without merging default values:
 	from pyH2A.Utilities.input_modification import convert_input_to_dictionary
 
 	inp = convert_input_to_dictionary(
-		 'data/PV_E/Base/your_case.md',
+		 'data/PV_E/Base/file_name.md',
 		 merge_default=False,
 	)
 
@@ -106,7 +94,7 @@ With a custom defaults file:
 	from pyH2A.Utilities.input_modification import convert_input_to_dictionary
 
 	inp = convert_input_to_dictionary(
-		 file='data/PV_E/Base/your_case.md',
+		 file='data/PV_E/Base/file_name.md',
 		 default='data/custom_defaults.md',
 		 merge_default=True,
 	)
@@ -115,7 +103,7 @@ With a custom defaults file:
 Input file specification
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-The parser expects GitHub-flavored Markdown-style tables in this pattern:
+The parser expects Markdown-style tables in this pattern:
 
 .. code-block:: text
 
@@ -132,8 +120,6 @@ Key format rules:
 2. Each section is a table.
 3. The first column becomes the middle key in the nested dictionary.
 4. Remaining columns become leaf keys (for example, ``Value``, ``Unit``).
-5. Empty cells are interpreted as ``n/a``.
-6. Numeric strings are converted to ``int`` or ``float`` when possible.
 
 
 Base input file table format
@@ -179,6 +165,6 @@ When to use this method
 
 Use ``convert_input_to_dictionary`` when:
 
-1. You want to load pyH2A Markdown inputs into Python.
+1. You want to convert pyH2A Markdown inputs into Python Dictionaries.
 2. You need default + case-specific overrides.
-3. You want a simple layered configuration approach using ``Base input file``.
+3. You want to manage multiple layers of input files with clear priority rules.
