@@ -26,10 +26,8 @@ class DummyDCF:
                 key: {
                     "Cost_Value": value["Cost"], 
                     "Cost_Unit": "USD", 
-                    "Cost_Path": "None",
                     "Usage_Value": value["Usage"], 
                     "Usage_Unit": "1/kg", 
-                    "Usage_Path": "None",
                     "Price_Conversion_Factor_Value": value.get("Conversion", 1.0),
                     "Price_Conversion_Factor_Unit": "-",
                 } 
