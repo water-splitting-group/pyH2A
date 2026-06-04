@@ -357,12 +357,12 @@ def convert_input_to_dictionary(file, default = 'pyH2A.Config~Defaults.md', merg
 	If ``merge_default`` is ``True``, the default file is merged first and the
 	main input file overrides those values.
 
-	If a ``Base input file`` table exists, each row's ``Value`` is treated as a
+	If a ``Input files to merge`` table exists, each row's ``Value`` is treated as a
 	referenced file path. Referenced files are loaded in listed order and merged
 	into the current dictionary, so later listed files have higher priority.
 
 	Only first-level references from the main input file are resolved. Nested
-	``Base input file`` tables inside referenced files are not followed.
+	``Input files to merge`` tables inside referenced files are not followed.
  	'''
  
 
@@ -373,9 +373,9 @@ def convert_input_to_dictionary(file, default = 'pyH2A.Config~Defaults.md', merg
 		inp_default = convert_file_to_dictionary(file_import(default, mode = 'r'))
 		inp = merge(inp_default, inp)
 
-	if 'Base input file' in inp:
+	if 'Input files to merge' in inp:
 
-		for _, row in inp['Base input file'].items():
+		for _, row in inp['Input files to merge'].items():
 			raw_file = row['Value']
 			inp_file = convert_file_to_dictionary(file_import(raw_file, mode = 'r'))
 			inp = merge(inp_file, inp)
