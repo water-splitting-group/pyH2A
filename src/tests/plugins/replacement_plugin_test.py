@@ -16,11 +16,16 @@ class DummyDCF:
     ):
         self.inp = {
             "Planned Replacement": {
-                key: {"Cost_Value": value["cost"],"Cost_Unit": "USD", "Frequency_Value": value["frequency"],"Frequency_Unit": "year"}
+                key: {"Cost_Value": value["cost"],
+                      "Cost_Unit": "USD", 
+                      "Frequency_Value": value["frequency"],
+                      "Frequency_Unit": "year"}
                 for key, value in planned_replacement.items()
             },
             "Dummy Left Unplanned Replacement Dummy Right": {
-                key: {"Value": value, "Unit":"USD"} for key, value in unplanned_replacement.items()
+                key: {"Value": value, 
+                      "Unit":"USD"} 
+                for key, value in unplanned_replacement.items()
             }
         }
         
@@ -28,7 +33,6 @@ class DummyDCF:
         self.combined_inflator = combined_inflator
         self.inflation_correction = inflation_correction
         self.inflation_factor = inflation_factor
-
 
 @pytest.mark.parametrize(
     "case",
