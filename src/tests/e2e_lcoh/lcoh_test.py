@@ -1,7 +1,6 @@
 import pytest
 from pyH2A.run_pyH2A import pyH2A
 
-
 @pytest.mark.parametrize(
     "case",
     [
@@ -41,12 +40,22 @@ from pyH2A.run_pyH2A import pyH2A
                 "lcoh": 3.270581409704611
             },
         },
+        {
+            "input": {
+                "input_file": "src/tests/end_to_end/Thermal_Base_Merge.md",
+                "output_directory": "src/tests/end_to_end/",
+            },
+            "expected": {
+                "lcoh": 3.0993930498121895
+            },
+        },
     ],
     ids=[
         "PEC_Base",
         "Photocatalytic_Base",
         "PV_E_Base",
         "Thermal_Base",
+        "Thermal_Base_Merge"
     ]
 )
 def test_e2e_lcoh(case):

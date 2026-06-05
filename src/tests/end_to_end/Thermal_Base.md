@@ -2,7 +2,7 @@
 
 Name | Type | Description | Position
 --- | --- | --- | ---
-Solar_Thermal_Plugin | plugin | Computes land area required for thermal process | 1
+Solar_Thermal_Plugin | plugin | Computes land area required for thermal process | 2
 
 # Display Parameters
 

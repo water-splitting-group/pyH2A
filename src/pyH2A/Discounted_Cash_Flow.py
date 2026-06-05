@@ -729,7 +729,10 @@ class Discounted_Cash_Flow:
 
 		'''
 
-		exceptions = ['Workflow', 'Display Parameters', 'Life Cycle Assessment']
+		exceptions = ['Workflow', 
+					  'Display Parameters', 
+					  'Life Cycle Assessment',
+					  'Input files to merge']
 
 		for top_key in self.inp:
 			if top_key not in exceptions and 'Analysis' not in top_key:
