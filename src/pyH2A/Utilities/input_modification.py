@@ -1040,3 +1040,16 @@ def retrieve_base_unit(table_dictionary):
 					dimension = value.get("dimension")
 					return DIMENSIONS[dimension]["base"]
 
+
+
+def daily_to_yearly_power_quantity(dictionary):
+	'''Convert dictionary with daily power values to array with yearly power values.
+	(when values are Quantity objects)
+	'''
+
+	stacked_array = np.vstack([entry.base_value for entry in dictionary.values()])
+
+	yearly_power = stacked_array.sum(axis = 1)
+	base_unit = dictionary[list(dictionary.keys())[0]].base_unit
+
+	return Quantity(yearly_power, base_unit)

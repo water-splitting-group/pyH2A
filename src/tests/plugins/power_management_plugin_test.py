@@ -72,7 +72,7 @@ class DummyDCF:
                     "type": "flexible"
                 },
                 "grid_cost": 100000.12,
-                "construction_time": 1,
+                "construction_time": Quantity(1, 'year'),
             },
             "expected": {
                 "remaining_flexible": Quantity(np.array([0., 0.]), 'kWh'),
@@ -96,7 +96,7 @@ class DummyDCF:
                     "type": "on_demand"
                 },
                 "grid_cost": 100000.12,
-                "construction_time": 1,
+                "construction_time": Quantity(1, 'year'),
             },
             "expected": {
                 "remaining_flexible": Quantity(np.array([36000000.0, 36000000.0]), 'kWh'),
