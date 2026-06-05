@@ -331,9 +331,11 @@ def merge(a, b, path=None, update=True):
 			a[key] = b[key]
 	return a
 
+
 def convert_input_to_dictionary(file, default = 'pyH2A.Config~Defaults.md', merge_default = True):
-	'''Reads provided input file (file) and default file, converting both to dictionaries.
-	The dictionaries are merged, with the input file having priority.
+	'''
+	Read markdown input file into dictionary and optionally merge defaults and
+	one level of external base-input files.
 
 	Parameters
 	----------
@@ -342,22 +344,43 @@ def convert_input_to_dictionary(file, default = 'pyH2A.Config~Defaults.md', merg
 	default : str, optional
 		Path to default file.
 	merge_default : bool
-		Flag to control if input is merged with default file.
+		If ``True``, defaults are merged first and the main input file overrides
+		the default values.
 
 	Returns
 	-------
 	inp : dict
 		Input dictionary.
-	'''
 
-	inp_file = convert_file_to_dictionary(file_import(file, mode = 'r'))
+	Notes
+	-----
+	If ``merge_default`` is ``True``, the default file is merged first and the
+	main input file overrides those values.
 
-	if merge_default is False:
-		return inp_file
+	If a ``Input files to merge`` table exists, each row's ``Value`` is treated as a
+	referenced file path. Referenced files are loaded in listed order and merged
+	into the current dictionary, so later listed files have higher priority.
 
-	else:
+	Only first-level references from the main input file are resolved. Nested
+	``Input files to merge`` tables inside referenced files are not followed.
+ 	'''
+ 
+
+	inp = convert_file_to_dictionary(file_import(file, mode = 'r'))
+
+	if merge_default is True:
+
 		inp_default = convert_file_to_dictionary(file_import(default, mode = 'r'))
-		return merge(inp_default, inp_file)
+		inp = merge(inp_default, inp)
+
+	if 'Input files to merge' in inp:
+
+		for _, row in inp['Input files to merge'].items():
+			raw_file = row['Value']
+			inp_file = convert_file_to_dictionary(file_import(raw_file, mode = 'r'))
+			inp = merge(inp_file, inp)
+
+	return inp
 
 def get_by_path(root, items):
 	'''Access a nested object in `root` by item sequence.'''
