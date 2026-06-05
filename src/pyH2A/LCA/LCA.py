@@ -1,32 +1,35 @@
-'''Life cycle assessment core workflow for pyH2A.
+'''Life cycle assessment workflow for openLCA matrix exports.
 
-This module defines :class:`LCA`, which loads openLCA-exported matrices,
-applies scenario-specific technosphere column updates, builds scaling vectors
-via Sherman-Morrison updates, and computes LCIA indicator results.
-Base artifacts are cached in both process-local RAM and shared on-disk
-storage, while solver/factorization objects are kept in-memory only.
-Component basis vectors are cached in process-local RAM and on disk.
-In worker-based execution, factorization is used to generate the reusable
-base scaling vector and basis vectors. After that, scaling vectors are
-computed through the basis-correction route without repeated full-matrix
-factorization, because A^{-1} e_i has already been computed during the
-first Discounted_Cash_Flow call in run_pyH2A (which in turn calls the 
-LCA class once) and created all the artifacts and stored on disk for all
-workers before multiprocessing Monte Carlo begins.
+This module provides :class:`LCA`, which loads matrices exported from openLCA,
+applies scenario-specific updates to the first technosphere column, computes
+the activity scaling vector, and evaluates life cycle impact assessment (LCIA)
+indicator results.
+
+Scaling vectors are built via Sherman-Morrison rank-1 updates rather than
+repeated full factorizations. The base scaling vector and component basis
+vectors, ``A^{-1} e_i``, are cached so Monte Carlo workers can reconstruct
+scenario-specific scaling vectors without re-factorizing the technosphere
+matrix.
+
+Notes
+-----
+Cache entries are split across three tiers:
+
+* Base artifacts: process-local RAM and disk.
+* Component basis vectors: process-local RAM and disk.
+* Solver/factorization objects: process-local RAM only.
 '''
 
-import hashlib
 import os
 from functools import lru_cache
 from pathlib import Path
 import numpy as np
-import scipy.sparse
+
 from pyH2A import Discounted_Cash_Flow
 from pyH2A.Utilities.input_modification import process_table
 from pyH2A.Utilities.lca_utils import (
     ExportFolder,
     Matrix,
-    build_matrix_cache_key,
     factorize,
     get_disk_cache_dir,
 )
@@ -40,39 +43,67 @@ class LCA:
         Path to the openLCA matrix export folder containing the technosphere
         (A), intervention (B), characterization (C), and demand (f) matrices.
     dcf : pyH2A.Discounted_Cash_Flow
-        Discounted cash flow object containing model inputs used to build LCA
-        component updates and the final scaling vector.
+        Discounted cash flow object containing the parsed model inputs. Tables
+        whose names start with ``"LCA"`` are used to update technosphere
+        component values.
 
     Attributes
     ----------
-    folder : ExportFolder
-        Loaded openLCA export folder.
-    tech_index_dict : dict
-        Mapping from process UUID to technosphere index metadata.
-    A : ndarray or scipy.sparse matrix
-        Technosphere matrix.
-    B : ndarray or scipy.sparse matrix
-        Intervention matrix.
-    C : ndarray or scipy.sparse matrix
-        Characterization matrix.
-    f : ndarray
-        Demand vector.
-    _updated_col0 : ndarray
-        Scenario-specific first technosphere column after applying LCA
-        component updates.
-    scaling_vector : ndarray
+    export_folder : ExportFolder
+        Loaded openLCA export folder. Stored as a class attribute.
+    tech_index : numpy.ndarray
+        Two-column object array containing technosphere row indices and process
+        UUIDs for nonzero entries in the first technosphere column. Stored as a
+        class attribute.
+    A : numpy.ndarray or scipy.sparse.spmatrix
+        Technosphere matrix. Stored as a class attribute.
+    B : numpy.ndarray or scipy.sparse.spmatrix
+        Intervention matrix. Stored as a class attribute.
+    C : numpy.ndarray or scipy.sparse.spmatrix
+        Characterization matrix. Stored as a class attribute.
+    f : numpy.ndarray
+        Demand vector. Stored as a class attribute.
+    scaling_vector : numpy.ndarray
         Scenario-specific activity scaling vector.
     lca_results : dict
-        LCIA results keyed by impact name, each with value and unit.
+        LCIA results keyed by impact name. Each value is a dictionary with
+        ``"value"`` and ``"unit"`` entries.
+
+    Raises
+    ------
+    ValueError
+        Raised when no LCA input tables are found, an LCA component is missing
+        required fields, or a component UUID is absent from the technosphere
+        index.
+    ZeroDivisionError
+        Raised when the Sherman-Morrison denominator is too small for a stable
+        rank-1 update.
+
+    Notes
+    -----
+    Matrix and artifact caches are class-level and process-local unless noted
+    otherwise. Disk artifacts are stored next to the matrix export through
+    :func:`pyH2A.Utilities.lca_utils.get_disk_cache_dir`.
+
+    The following private attributes are populated during initialization:
+
+    matrix_folder : str
+        Path to the openLCA matrix export folder, also used as the RAM cache key.
+    _component_indices : numpy.ndarray
+        Technosphere row indices updated by LCA input components.
+    _component_values : numpy.ndarray
+        Signed scenario component values aligned with ``_component_indices``.
     '''
 
     _SM_TOL = 1e-12
-    _base_solver_cache = {}  # {matrix_key: (_A_factor, _base_scaling_vector, _A_col0)} a class level dictionary cached in RAM for the base A matrix
-    _component_basis_cache = {}  # {basis_cache_path: basis_matrix} cached in RAM for component basis vectors
+    _base_solver_cache = {}  # {matrix_key: (_base_scaling_vector, _A_col0)} cached in RAM
+    _component_basis_cache = {}  # {matrix_key: basis_matrix} cached in RAM for component basis vectors
+    _uuid_index_cache = {}  # {matrix_key: {uuid: tech_index}} cached in RAM
+    _impact_index_cache = {}  # {matrix_key: [ImpactEntry, ...]} cached in RAM
+    _matrix_bc_cache = {}  # {matrix_key: (B, C)} cached in RAM
       
     def __init__(self, matrix_folder: str, dcf: Discounted_Cash_Flow):
-        '''
-        Initialize the LCA object and perform the full LCA calculation workflow.
+        '''Initialize and run the LCA calculation workflow.
 
         This constructor loads all matrices, prepares solver and cache state, updates
         the first column of the technosphere matrix with scenario-specific values,
@@ -83,29 +114,27 @@ class LCA:
         matrix_folder : str
             Path to the openLCA matrix export folder.
         dcf : pyH2A.Discounted_Cash_Flow
-            Discounted_Cash_Flow object containing model inputs used to construct the scaling vector.
+            Discounted cash flow object containing model inputs used to
+            construct the scaling vector.
+
+        Raises
+        ------
+        ValueError
+            Raised when LCA component input is missing or invalid.
+        ZeroDivisionError
+            Raised when the Sherman-Morrison update is numerically singular.
         '''
-        (
-            self.folder,
-            self.tech_index_dict,
-            self.A,
-            self.B,
-            self.C,
-            self.f,
-        ) = self.load_matrices_from_folder(matrix_folder)
-        self.initialize_base_solver_and_artifacts(matrix_folder)
+        self.matrix_folder = matrix_folder
+        self.initialize_base_solver_and_artifacts()
         self.update_technosphere_column_with_components(dcf)
         self.build_scaling_vector()
         self.perform_lca()
     
-    @staticmethod      
+      
+    @classmethod
     @lru_cache(maxsize=None)
-    def load_matrices_from_folder(matrix_folder: str):
-        '''Load and cache openLCA folder metadata and matrices.
-           This method is decorated with lru_cache to enable reuse of loaded matrices across multiple LCA instances
-           with the same matrix_folder argument. However, it is repeated for each process worker and do not get 
-           shared across the workers in multi-processing environments. As it is not very expensive to load matrices
-           from disk, it is considered acceptable.
+    def load_matrices_from_folder(cls, matrix_folder: str):
+        '''Load openLCA folder metadata and matrices.
 
         Parameters
         ----------
@@ -114,48 +143,43 @@ class LCA:
 
         Returns
         -------
-        folder : ExportFolder or None
-            Loaded export folder when impact data are available.
-            Returns ``None`` when impacts are missing.
-        tech_index_dict : dict
-            Dictionary mapping process UUIDs to technosphere index entries.
-        A : ndarray or scipy.sparse matrix
+        export_folder : ExportFolder
+            Loaded export folder.
+        tech_index : numpy.ndarray
+            Two-column array with ``[index, uuid]`` per row.
+        A : numpy.ndarray or scipy.sparse.spmatrix
             Technosphere matrix.
-        B : ndarray or scipy.sparse matrix
+        B : numpy.ndarray or scipy.sparse.spmatrix
             Intervention matrix.
-        C : ndarray or scipy.sparse matrix
+        C : numpy.ndarray or scipy.sparse.spmatrix
             Characterization matrix.
-        f : ndarray
+        f : numpy.ndarray
             Demand vector.
 
         Notes
         -----
-        This method is ``lru_cache``-backed so repeated calls with the same
-        ``matrix_folder`` reuse loaded objects.
+        This method is backed by :func:`functools.lru_cache`, so repeated calls
+        with the same ``matrix_folder`` reuse loaded objects within a process.
+        The cache is not shared across multiprocessing workers.
         '''
+        print(f"Loading matrices from folder:")
         loaded_folder = ExportFolder(matrix_folder)
-        if not loaded_folder.has_impacts():
-            print('error: no impacts in your export')
-            export_folder = None
-        else:
-            export_folder = loaded_folder
+        cls.export_folder = loaded_folder
+        cls.A = loaded_folder.load(Matrix.A)
+        # Load technosphere index with UUIDs and first column values of A for nonzero first-column entries with the order of indeces
+        cls.techno_index_uuid = loaded_folder.tech_process_indices(matrix_a=cls.A) 
+        cls.B = loaded_folder.load(Matrix.B)
+        cls.C = loaded_folder.load(Matrix.C)
+        cls.f = loaded_folder.load(Matrix.f)
+        return cls.export_folder, cls.techno_index_uuid, cls.A, cls.B, cls.C, cls.f
 
-        tech_index_dict = loaded_folder.tech_index()
-        A = loaded_folder.load(Matrix.A)
-        B = loaded_folder.load(Matrix.B)
-        C = loaded_folder.load(Matrix.C)
-        f = loaded_folder.load(Matrix.f)
-        return export_folder, tech_index_dict, A, B, C, f
+    def initialize_base_solver_and_artifacts(self):
+        '''Prepare base matrix artifacts and component basis vectors.
 
-    def initialize_base_solver_and_artifacts(self, matrix_folder: str):
-        '''
-        Prepare and cache the base solver and artifacts for the LCA calculation.
-
-        This method initializes the matrix cache key, attempts to reuse process-local
-        cached data, and if not available, loads artifacts from disk or computes them.
-        Artifact cache entries include the base scaling vector and original first
-        A-column, and are stored on both disk and in RAM. Solver/factorization
-        objects are in-memory only and are never written to disk.
+        Initializes the matrix cache key, then fills the class-level RAM caches
+        from disk if available, or computes and writes them if not. Solver and
+        factorization objects are kept in RAM only; all other artifacts are also
+        written to disk atomically for reuse by worker processes.
 
         Parameters
         ----------
@@ -164,45 +188,65 @@ class LCA:
 
         Notes
         -----
-        - Initializes self._matrix_cache_key, self._A_factor, self._base_scaling_vector, and self._A_col0.
-        - Uses atomic file replacement for cache writes (no locking, single-writer assumed).
+        Populates ``self.matrix_folder`` and the class-level caches for the
+        base scaling vector, original first A-column, B/C matrices, and component
+        basis vectors. Disk writes use ``os.replace`` for atomic file replacement
+        with no explicit locking.
         '''
-        if scipy.sparse.issparse(self.A):
-            shape = self.A.shape
-            nnz = self.A.nnz
-        else:
-            shape = np.asarray(self.A).shape
-            nnz = int(np.count_nonzero(self.A))
+        if not all(hasattr(LCA, attr) for attr in ('export_folder', 'techno_index_uuid', 'A', 'B', 'C', 'f')):
+            (
+                LCA.export_folder,
+                LCA.techno_index_uuid,
+                LCA.A,
+                LCA.B,
+                LCA.C,
+                LCA.f,
+            ) = self.load_matrices_from_folder(self.matrix_folder)
 
-        self._matrix_cache_key = build_matrix_cache_key(matrix_folder, shape, nnz)
+        LCA._matrix_bc_cache[self.matrix_folder] = (LCA.B, LCA.C)
+
         # Try to load solver and artifacts from RAM (process-local cache)
-        cached = LCA._base_solver_cache.get(self._matrix_cache_key)
-        if cached is not None:
-            self._A_factor, self._base_scaling_vector, self._A_col0 = cached
+        base_cached = LCA._base_solver_cache.get(self.matrix_folder)
+        component_basis_cached = LCA._component_basis_cache.get(self.matrix_folder)
+
+        if (base_cached is not None) and (component_basis_cached is not None):
             return
+
         # Not in RAM: try to load artifacts from disk cache (solver is not stored on disk).
-        self._A_factor = None
-        base_cache_path = get_disk_cache_dir(self.folder.folder) / f"base_{self._matrix_cache_key}.npz"
-        if self.load_solver_from_disk_to_ram(base_cache_path):
+        cache_path = get_disk_cache_dir(self.matrix_folder)
+        base_cache_path = cache_path / "scalingvector.npz"
+        basis_cache_path = cache_path / "basis_component.npz"
+        base_loaded = self.load_artifacts_from_disk_to_ram(base_cache_path)
+        basis_loaded = self.load_basis_vectors_from_disk_to_ram(basis_cache_path)
+        if base_loaded is True and basis_loaded is True:
             return
-        # Not in disk: compute solver and artifacts 
-        self._A_factor = factorize(self.A)  # Only stored in RAM
-        f_vector = np.asarray(self.f).reshape(-1)
-        self._base_scaling_vector = self._A_factor.solve(f_vector)
-        if scipy.sparse.issparse(self.A):
-            self._A_col0 = np.asarray(self.A[:, 0].toarray()).reshape(-1)
-        else:
-            self._A_col0 = np.asarray(self.A[:, 0]).reshape(-1)
+        # Not in RAM or disk: compute artifacts/compute basis vectors and cache to disk and RAM for future reuse.
+        solver = factorize(LCA.A)  # Only stored in RAM
+        f_vector = np.asarray(LCA.f).reshape(-1)
+        _base_scaling_vector = solver.solve(f_vector)
+
         # Write only the artifacts to disk cache (not the solver)
         tmp_path = Path(str(base_cache_path) + f".{os.getpid()}.tmp.npz")
-        np.savez(tmp_path, base_scaling_vector=self._base_scaling_vector, A_col0=self._A_col0)
+        np.savez(tmp_path, base_scaling_vector=_base_scaling_vector)
         os.replace(tmp_path, base_cache_path)
-        # Store in-process artifacts and solver state in RAM for fast reuse.
-        self.store_solver_and_artifacts_in_ram()
 
-    def load_solver_from_disk_to_ram(self, base_cache_path) -> bool:
-        '''
-        Load base artifacts from shared disk cache into process-local state.
+        # Store in-process artifacts in RAM for fast reuse.
+        LCA._base_solver_cache[self.matrix_folder] = _base_scaling_vector
+
+        nonzero_indices = np.asarray(LCA.techno_index_uuid[:, 0], dtype=int)
+        n_rows = LCA.A.shape[0]
+        n_cols = len(nonzero_indices)
+
+        eye_subset = np.zeros((n_rows, n_cols), dtype=float)
+        eye_subset[nonzero_indices, np.arange(n_cols)] = 1.0
+        basis = np.asarray(solver.solve(eye_subset))
+        tmp_path = Path(str(basis_cache_path) + f".{os.getpid()}.tmp.npz")
+        np.savez(tmp_path, basis=basis)
+        os.replace(tmp_path, basis_cache_path)
+        LCA._component_basis_cache[self.matrix_folder] = basis
+
+    def load_artifacts_from_disk_to_ram(self, base_cache_path) -> bool:
+        '''Load base artifacts from disk into process-local RAM.
 
         The disk cache contains only artifacts (base scaling vector and first
         A-column). Solver/factorization objects are reconstructed in memory
@@ -211,12 +255,19 @@ class LCA:
         Parameters
         ----------
         base_cache_path : pathlib.Path
-            Path to base solver cache file.
+            Path to the ``.npz`` file containing the base scaling vector and
+            original first technosphere column.
 
         Returns
         -------
         bool
-            True if cache data were loaded, otherwise False.
+            ``True`` if cache data were loaded successfully, otherwise
+            ``False``.
+
+        Notes
+        -----
+        On success, ``LCA._base_solver_cache`` is updated for the current
+        matrix cache key.
         '''
 
         if not base_cache_path.exists():
@@ -224,30 +275,60 @@ class LCA:
 
         try:
             with np.load(base_cache_path) as data:
-                self._base_scaling_vector = data['base_scaling_vector']
-                self._A_col0 = data['A_col0']
-            self.store_solver_and_artifacts_in_ram()
+                LCA._base_solver_cache[self.matrix_folder] = np.asarray(data['base_scaling_vector'])
             return True
         except Exception:
             return False
 
-    def store_solver_and_artifacts_in_ram(self):
-        '''
-        Store process-local solver state and base artifacts in RAM cache.
+    def load_basis_vectors_from_disk_to_ram(self, basis_cache_path):
+        '''Load cached component basis vectors from disk into RAM.
 
-        The RAM cache stores the in-process factorization object together with
-        base artifacts for reuse within the same process. Disk cache remains
-        artifact-only.
+        Parameters
+        ----------
+        basis_cache_path : pathlib.Path
+            Path to the component basis cache .npz file.
+
+        Returns
+        -------
+        bool
+            ``True`` if basis vectors were loaded successfully, ``False``
+            when the cache file is missing or cannot be read.
+
+        Notes
+        -----
+        On success, ``LCA._component_basis_cache`` is updated for the current
+        matrix cache key. The basis matrix columns are ``A^{-1} e_i`` for the
+        nonzero rows of the original first technosphere column.
         '''
-        LCA._base_solver_cache[self._matrix_cache_key] = (
-            self._A_factor,
-            self._base_scaling_vector,
-            self._A_col0,
-        )
-    
+
+        if not basis_cache_path.exists():
+            return False
+
+        try:
+            with np.load(basis_cache_path) as data:
+                LCA._component_basis_cache[self.matrix_folder] = np.asarray(data['basis'], dtype=float)
+            return True
+        except Exception:
+            return False
+        
+    def _uuid_index_map(self) -> dict:
+        '''Return the cached UUID-to-technosphere-index mapping.
+
+        Returns
+        -------
+        dict
+            Mapping from process UUID strings to technosphere row indices for
+            the current matrix cache key.
+        '''
+        mapping = LCA._uuid_index_cache.get(self.matrix_folder)
+        if mapping is None:
+            mapping = {str(uuid): int(index) for index, uuid, _ in LCA.techno_index_uuid}
+            LCA._uuid_index_cache[self.matrix_folder] = mapping
+        return mapping
+ 
     def update_technosphere_column_with_components(self, dcf):
-        '''
-        Build an updated first-column vector for A from LCA component values.
+
+        '''Build an updated first technosphere column from LCA inputs.
 
         For each LCA component defined in dcf.inp with a UUID, this method finds
         the corresponding index in the technosphere matrix and sets that row in a
@@ -257,17 +338,25 @@ class LCA:
         Parameters
         ----------
         dcf : pyH2A.Discounted_Cash_Flow
-            Discounted_Cash_Flow object containing LCA components table.
+            Discounted cash flow object containing one or more LCA component
+            tables. Table names must start with ``"LCA"``.
 
         Returns
         -------
         None
-            Updates self._updated_col0 and component index/value arrays in place.
+
+        Raises
+        ------
+        ValueError
+            Raised when no LCA tables are present, no components are resolved,
+            a component is missing required fields, or a component UUID is not
+            present in the technosphere index.
 
         Notes
         -----
-        The first discovered component is treated as the positive reference contribution;
-        subsequent components are signed negatively.
+        Updates ``self._component_indices`` and ``self._component_values`` in
+        place. The first discovered component is treated as the positive
+        reference contribution; subsequent components are signed negatively.
         '''
 
         lca_table_names = [table_name for table_name in dcf.inp if table_name.lower().startswith('lca')]
@@ -283,41 +372,53 @@ class LCA:
 
         self._component_indices = np.asarray(list(component_map.keys()), dtype=int)
         self._component_values = np.asarray(list(component_map.values()), dtype=float)
-
-        updated_col0 = np.array(self._A_col0, copy=True)
-
-        for row_index, signed_value in component_map.items():
-            updated_col0[row_index] = signed_value
-        self._updated_col0 = updated_col0  
+        sort_order = np.argsort(self._component_indices)
+        self._component_indices = self._component_indices[sort_order]
+        self._component_values = self._component_values[sort_order]
     
     def apply_component_updates(self, dcf, lca_table_names):
-        '''
-        Apply all component updates to the first technosphere column.
+        '''Resolve LCA component rows and signed values.
 
         Parameters
         ----------
         dcf : pyH2A.Discounted_Cash_Flow
-            DCF object containing the parsed input dictionary.
+            Discounted cash flow object containing the parsed input dictionary.
         lca_table_names : list of str
-            LCA table names to read components from.
+            Names of LCA tables to read components from.
 
         Returns
         -------
         dict
-            Mapping {row_index: signed_value} for all component updates.
+            Mapping from technosphere row index to signed component value.
+
+        Raises
+        ------
+        ValueError
+            Raised when a component is missing required fields or when its UUID
+            is absent from the technosphere index.
+
+        Notes
+        -----
+        Array-like component values are summed before signing. The first
+        component encountered is positive and all later components are negative.
         '''
         component_map = {}
-        for component_position, component in enumerate(
-            (item for lca_table_name in lca_table_names for item in dcf.inp[lca_table_name].items())
-        ):
+        component_items = enumerate(
+            item
+            for lca_table_name in lca_table_names
+            for item in dcf.inp[lca_table_name].items()
+        )
+        uuid_map = self._uuid_index_map()
+
+        for component_position, component in component_items:
             component_name, component_data = component
             uuid, raw_value = self.extract_component_uuid_and_value(component_name, component_data)
-            if uuid not in self.tech_index_dict:
+            if uuid not in uuid_map:
                 raise ValueError(
                     f"LCA component '{component_name}' has UUID '{uuid}' "
                     f"which was not found in the technosphere matrix index."
                 )
-            tech_index = self.tech_index_dict[uuid].index
+            tech_index = uuid_map[uuid]
             scalar_value = float(np.sum(raw_value) if isinstance(raw_value, (np.ndarray, list, tuple)) else raw_value)
             signed_value = scalar_value if component_position == 0 else -scalar_value
             component_map[tech_index] = signed_value
@@ -325,8 +426,7 @@ class LCA:
         return component_map
         
     def extract_component_uuid_and_value(self, component_name, component_data):
-        '''
-        Extract required UUID and Value fields from a component.
+        '''Extract required UUID and value fields from a component.
 
         Parameters
         ----------
@@ -338,12 +438,12 @@ class LCA:
         Returns
         -------
         tuple
-            Pair (uuid, value) extracted from component_data.
+            Pair ``(uuid, value)`` extracted from ``component_data``.
 
         Raises
         ------
         ValueError
-            Raised when required fields are missing.
+            Raised when ``"UUID"`` or ``"Value"`` is missing.
         '''
         missing_fields = [
             key
@@ -359,199 +459,95 @@ class LCA:
         return component_data['UUID'], component_data['Value']
     
     def build_scaling_vector(self):
-        '''
-        Compute scaling vector from a Sherman-Morrison correction term.
+        '''Compute the scenario scaling vector.
 
-        The scaling vector is computed for the LCA calculation using a Sherman-Morrison rank-1 update.
-        The scenario change is represented by the updated first-column vector self._updated_col0.
-        This is possible because only the first column of A is changed in
-        update_technosphere_column_with_components().
-
-        Returns
-        -------
-        None
-            The computed scaling vector is stored on self.scaling_vector.
+        The scaling vector is computed with a Sherman-Morrison rank-1 update.
+        The scenario change is represented by the updated first technosphere
+        column created in :meth:`update_technosphere_column_with_components`.
 
         Raises
         ------
         ZeroDivisionError
-            Raised when |1 + z[0]| is below self._SM_TOL. In this implementation, no direct-solve fallback is used.
+            Raised when ``abs(1 + z[0])`` is below ``self._SM_TOL``. In this
+            implementation, no direct-solve fallback is used.
 
         Notes
         -----
-        Uses x' = y - z * (y[0] / (1 + z[0])) where y is the base scaling vector and z is the correction vector (A^{-1} u) used in the rank-1 update.
-        The basis matrix columns are A^{-1} e_i for changed rows. This avoids solving a full system for every Monte Carlo sample.
-        With shared disk basis artifacts, worker processes pay the
-        factorization cost once during artifact generation, then reuse the
-        basis-correction route for subsequent scaling-vector evaluations.
-        '''
-        component_indices = self._component_indices
+        Stores the computed vector on ``self.scaling_vector``.
 
-        basis = self.get_basis_vectors_from_ram_or_disk(self._matrix_cache_key, component_indices)
+        The update uses
+        ``x' = y - z * (y[0] / (1 + z[0]))``, where ``y`` is the base scaling
+        vector and ``z = A^{-1} u`` is the correction vector. Basis matrix
+        columns are ``A^{-1} e_i`` for changed rows, avoiding a full linear
+        solve for each Monte Carlo sample.
+        '''
+
+        basis = LCA._component_basis_cache[self.matrix_folder]
         if basis is None:
             return None
 
-        base_values = self._A_col0[component_indices]
-        delta_coeff = self._component_values - base_values
-        correction = basis @ delta_coeff
-        correction = np.asarray(correction).reshape(-1)
-        numerator = self._base_scaling_vector[0]
+        base_scaling_vector = LCA._base_solver_cache[self.matrix_folder]
+        delta_coeff = self._component_values - np.array(LCA.techno_index_uuid[:, 2], dtype=float)
+        correction = np.asarray(basis @ delta_coeff).reshape(-1)
+        numerator = base_scaling_vector[0]
         denominator = 1.0 + correction[0]
-
         if abs(denominator) <= self._SM_TOL:
             raise ZeroDivisionError(
                 "Sherman-Morrison denominator is too small; "
                 "fallback direct solve is disabled."
             )
 
-        self.scaling_vector = self._base_scaling_vector - correction * (numerator / denominator)
-
-    def get_basis_vectors_from_ram_or_disk(self, matrix_key: str, component_indices: np.ndarray):
-        '''
-        Retrieve or compute-and-cache basis vectors for the given component indices.
-
-        Checks in-process cache, then disk cache, and computes if not found.
-
-        Parameters
-        ----------
-        matrix_key : str
-            Key for the matrix cache.
-        component_indices : numpy.ndarray
-            Row indices of modified A-column components.
-
-        Returns
-        -------
-        numpy.ndarray or None
-            Basis matrix whose columns are A^{-1} e_i for each component index, or None if cache cannot be loaded/generated.
-
-        Notes
-        -----
-        Uses in-process cache first, then shared on-disk cache.
-        '''
-        idx_key = ','.join(str(int(i)) for i in component_indices)
-        idx_hash = hashlib.sha1(idx_key.encode('ascii')).hexdigest()[:16]
-        cache_path = get_disk_cache_dir(self.folder.folder) / f"basis_{matrix_key}_{idx_hash}.npz" 
-        cache_key = str(cache_path)
-
-        in_process_cached = LCA._component_basis_cache.get(cache_key)
-        if in_process_cached is not None:
-            return in_process_cached
-
-        loaded = self.load_basis_vectors_from_disk(cache_path, component_indices)
-        if loaded is None:
-           return self.compute_and_store_basis_vectors(cache_path, component_indices, cache_key)
-        
-        LCA._component_basis_cache[cache_key] = loaded
-
-        return loaded
-    
-    def load_basis_vectors_from_disk(self, cache_path, component_indices: np.ndarray):
-        '''
-        Load cached component basis vectors from disk and validate indices.
-
-        Parameters
-        ----------
-        cache_path : pathlib.Path
-            Path to the component basis cache .npz file.
-        component_indices : numpy.ndarray
-            Expected component row indices for cache validation.
-
-        Returns
-        -------
-        numpy.ndarray or None
-            Basis matrix with columns A^{-1} e_i for each component index, or None if cache is missing/invalid.
-        '''
-
-        if not cache_path.exists():
-            return None
-
-        try:
-            with np.load(cache_path) as data:
-                stored_indices = np.asarray(data['component_indices'], dtype=int)
-                if not np.array_equal(stored_indices, component_indices):
-                    return None
-
-                basis = np.asarray(data['basis'])
-                if basis.ndim == 1:
-                    basis = basis.reshape(-1, 1)
-
-                return basis
-        except Exception:
-            return None
-
-    def compute_and_store_basis_vectors(self, cache_path, component_indices: np.ndarray, cache_key: str):
-        '''
-        Compute, persist, and cache component basis vectors for given indices.
-
-        Parameters
-        ----------
-        cache_path : pathlib.Path
-            Path where basis cache is written.
-        component_indices : numpy.ndarray
-            Row indices for basis construction.
-        cache_key : str
-            In-process cache key used in _component_basis_cache.
-
-        Returns
-        -------
-        numpy.ndarray
-            Computed and cached basis matrix.
-
-        Notes
-        -----
-        - Computes basis vectors A^{-1} e_i for specified row indices.
-        - Saves the basis matrix atomically by first writing to a temporary file and then moving it into place.
-        - No locking is used; single-writer is assumed.
-        '''
-        if self._A_factor is None:
-            self._A_factor = factorize(self.A)
-            LCA._base_solver_cache[self._matrix_cache_key] = (
-                self._A_factor,
-                self._base_scaling_vector,
-                self._A_col0,
-            )
-        
-        solver = self._A_factor
-        n_rows = self.A.shape[0]
-        n_cols = len(component_indices)
-
-        eye_subset = np.zeros((n_rows, n_cols), dtype=float)
-        eye_subset[component_indices, np.arange(n_cols)] = 1.0
-
-        basis = np.asarray(solver.solve(eye_subset))
-        if basis.ndim == 1:
-            basis = basis.reshape(-1, 1)
-        
-        tmp_path = Path(str(cache_path) + f".{os.getpid()}.tmp.npz")
-        np.savez(tmp_path, component_indices=np.asarray(component_indices, dtype=int), basis=basis)
-        os.replace(tmp_path, cache_path)
-        LCA._component_basis_cache[cache_key] = basis
-        return basis
+        self.scaling_vector = base_scaling_vector - correction * (numerator / denominator)
     
     def perform_lca(self):
-        '''
-        Perform the Life Cycle Impact Assessment (LCIA) calculation.
+        '''Perform the life cycle impact assessment calculation.
 
         Computes intermediate flows and final impact results using the intervention
         and characterization matrices. Results are stored in the class instance.
 
-        Returns
-        -------
-        None
-            Results are stored on self.lca_results as a dictionary mapping impact names to values and units.
-
         Notes
         -----
-        Final results are stored in the attribute lca_results as a dictionary mapping impact names to values and units.
+        Stores results on ``self.lca_results`` as a dictionary mapping impact
+        names to dictionaries with ``"value"`` and ``"unit"`` entries.
         '''
 
-        g = self.B @ self.scaling_vector
-        h = self.C @ g
+        matrix_b, matrix_c = self._matrix_bc_entries()
+        g = matrix_b @ self.scaling_vector
+        h = matrix_c @ g
 
         # Store LCIA results on the instance for downstream use.
         self.lca_results = {}
-        for i in self.folder.impact_index():
+        for i in self._impact_index_entries():
             self.lca_results[i.impact_name] = {
                 'value': h[i.index],
                 'unit': i.impact_unit
             }
+
+    def _impact_index_entries(self):
+        '''Return cached impact-index entries.
+
+        Returns
+        -------
+        list of ImpactEntry
+            Ordered impact entries loaded from the current export folder.
+        '''
+        entries = LCA._impact_index_cache.get(self.matrix_folder)
+        if entries is None:
+            entries = list(LCA.export_folder.impact_index())
+            LCA._impact_index_cache[self.matrix_folder] = entries
+        return entries
+
+    def _matrix_bc_entries(self):
+        '''Return cached intervention and characterization matrices.
+
+        Returns
+        -------
+        tuple
+            Pair ``(B, C)`` containing the intervention and characterization
+            matrices for the current matrix cache key.
+        '''
+        entries = LCA._matrix_bc_cache.get(self.matrix_folder)
+        if entries is None:
+            entries = (LCA.B, LCA.C)
+            LCA._matrix_bc_cache[self.matrix_folder] = entries
+        return entries

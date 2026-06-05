@@ -61,9 +61,9 @@ class pyH2A:
         # Print all impact results for base case (if available, meaning that LCA was performed)
 		try:
 			impact_results = self.base_case.lca.lca_results
-		    for impact_name, result in impact_results.items():
+			for impact_name, result in impact_results.items():
 			   print(f"Impact: {impact_name}, Value: {result['value']}, Unit: {result['unit']}")
-        except AttributeError:
+		except AttributeError:
 			pass
 	def meta_workflow(self, meta_dict):
 		'''Meta modules (analysis modules) are identified and executed
