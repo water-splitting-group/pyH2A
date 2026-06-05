@@ -19,7 +19,6 @@ import numpy
 import scipy.linalg
 import scipy.sparse
 import scipy.sparse.linalg
-import hashlib
 from pathlib import Path
 
 try:
@@ -396,6 +395,36 @@ class ExportFolder:
             return matrix_of(p)
         return None
 
+    def tech_process_indices(self, matrix_a=None) -> numpy.ndarray:
+        '''
+        Extract technosphere indices and UUIDs for nonzero entries in ``A[:, 0]``.
+
+        Parameters
+        ----------
+        matrix_a : ndarray or scipy.sparse.spmatrix, optional
+            Pre-loaded technosphere matrix. When ``None``, the matrix is loaded
+            from disk via :meth:`load`.
+
+        Returns
+        -------
+        numpy.ndarray
+            Three-column object array with ``[index, uuid, value]`` per row for
+            nonzero components of the first technosphere column.
+        '''
+        if matrix_a is None:
+            matrix_a = self.load(Matrix.A)
+
+        col0 = matrix_a[:, 0]
+        a_col0 = numpy.asarray(col0.toarray() if scipy.sparse.issparse(matrix_a) else col0).reshape(-1)
+        nonzero = set(numpy.flatnonzero(a_col0).tolist())
+
+        rows = [
+            (entry.index, uuid, a_col0[entry.index])
+            for uuid, entry in self.tech_index().items()
+            if entry.index in nonzero
+        ]
+
+        return numpy.array(rows, dtype=object)
 
 class Matrix:
     '''
@@ -502,84 +531,6 @@ def factorize(matrix):
     lu, piv = scipy.linalg.lu_factor(matrix)
     return _FactorizedSolver(lambda rhs: scipy.linalg.lu_solve((lu, piv), rhs))
 
-@lru_cache(maxsize=None)
-def matrix_folder_metadata_signature(matrix_folder: str) -> str:
-    """
-    Build a stable digest of matrix file paths, sizes, and mtimes.
-
-    Parameters
-    ----------
-    matrix_folder : str
-        Path to the matrix export folder.
-
-    Returns
-    -------
-    str
-        SHA-1 digest derived from each file's relative path, size, and
-        nanosecond modification time. Returns 'missing-folder' if the folder does not exist,
-        or 'empty-folder' if no files are found.
-    """
-    folder = Path(matrix_folder)
-    if not folder.exists():
-        return 'missing-folder'
-
-    metadata_lines = []
-    # Only include matrix and index files in the cache key
-    INCLUDE_FILES = {
-        'A', 'A.npy', 'A.npz',
-        'B', 'B.npy', 'B.npz',
-        'C', 'C.npy', 'C.npz',
-        'f', 'f.npy', 'f.npz',
-        'index_A.csv', 'index_C.csv',
-    }
-    for file_path in sorted(p for p in folder.rglob('*') if p.is_file()):
-        rel_path = file_path.relative_to(folder).as_posix()
-        # Only include files at the top level with allowed names
-        if '/' in rel_path:
-            continue
-        if rel_path not in INCLUDE_FILES:
-            continue
-        try:
-            stat = file_path.stat()
-        except OSError:
-            continue
-        metadata_lines.append(
-            f"{rel_path}|size={stat.st_size}|mtime_ns={stat.st_mtime_ns}"
-        )
-
-    if not metadata_lines:
-        return 'empty-folder'
-
-    metadata_blob = '\n'.join(metadata_lines)
-    return hashlib.sha1(metadata_blob.encode('utf-8')).hexdigest()
-
-@lru_cache(maxsize=None)
-def build_matrix_cache_key(matrix_folder: str, matrix_shape: tuple, matrix_nnz: int, cache_version: int = 1) -> str:
-    """
-    Build a stable cache key for matrix-dependent shared artifacts.
-
-    Parameters
-    ----------
-    matrix_folder : str
-        Path to the matrix export folder.
-    matrix_shape : tuple
-        Shape of the matrix (rows, columns).
-    matrix_nnz : int
-        Number of non-zero elements in the matrix.
-    cache_version : int, optional
-        Version number for cache key (default is 1).
-
-    Returns
-    -------
-    str
-        SHA-1 digest string derived from cache version, export folder path, matrix structure, and matrix file metadata.
-    """
-    folder_signature = matrix_folder_metadata_signature(matrix_folder)
-    raw_key = (
-        f"v{cache_version}|{matrix_folder}|"
-        f"shape={matrix_shape}|nnz={matrix_nnz}|filesig={folder_signature}"
-    )
-    return hashlib.sha1(raw_key.encode('utf-8')).hexdigest()
 
 @lru_cache(maxsize=None)
 def get_disk_cache_dir(output_directory: str) -> Path:
