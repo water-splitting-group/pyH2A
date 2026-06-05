@@ -1,6 +1,7 @@
 import pytest
 import numpy as np
 from pyH2A.Plugins.Power_Management_Plugin import Power_Management_Plugin
+from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
 
 class DummyDCF:
@@ -17,25 +18,36 @@ class DummyDCF:
 
         self.inp = {
             "Power Generation": {
-                "Available Power (daily, kWh)": {
+                "Available energy (daily)": {
                     "Value": available_daily,
+                    "Unit": "kWh",
                     "Processed": "Yes",
                 },
-                "Stored Power (daily, kWh)": {
+                "Stored energy (daily)": {
                     "Value": stored_daily,
+                    "Unit": "kWh",
                     "Processed": "Yes",
                 },
             },
             "Power Consumption": {
-                "Test Consumer": {
+                "Test consumer": {
                     "Value": power_consumption["value"],
                     "Type": power_consumption["type"],
+                    "Unit": "kWh",
                     "Processed": "Yes",
                 },
             },
-            "Grid Electricity": {"Cost ($/kWh)": {"Value": grid_cost}},
+            "Grid Electricity": {
+                "Cost": {
+                    "Value": grid_cost,
+                    "Unit": "USD / kWh",
+                }
+            },
             "Financial Input Values": {
-                "construction time": {"Value": construction_time}
+                "Construction time": {
+                    "Value": construction_time,
+                    "Unit": "year"
+                }
             },
         }
 
@@ -60,13 +72,13 @@ class DummyDCF:
                     "type": "flexible"
                 },
                 "grid_cost": 100000.12,
-                "construction_time": 1,
+                "construction_time": Quantity(1, 'year'),
             },
             "expected": {
-                "remaining_flexible": np.array([0., 0.]),
-                "remaining_stored": np.array([0.0, 0.0]),
-                "total_unfulfilled": np.array([35000000.0, 34630000.0]),
-                "electricity_cost": np.array([0.0, 3.5000042e12, 3.4630041556e12]),
+                "remaining_flexible": Quantity(np.array([0., 0.]), 'kWh'),
+                "remaining_stored": Quantity(np.array([0.0, 0.0]), 'kWh'),
+                "total_unfulfilled": Quantity(np.array([35000000.0, 34630000.0]), 'kWh'),
+                "electricity_cost": Quantity(np.array([0.0, 3.5000042e12, 3.4630041556e12]), 'USD'),
             },
         },
         {
@@ -84,13 +96,13 @@ class DummyDCF:
                     "type": "on_demand"
                 },
                 "grid_cost": 100000.12,
-                "construction_time": 1,
+                "construction_time": Quantity(1, 'year'),
             },
             "expected": {
-                "remaining_flexible": np.array([36000000.0, 36000000.0]),
-                "remaining_stored": np.array([23975000.0, 23975000.0]),
-                "total_unfulfilled": np.array([0.0, 0.0]),
-                "electricity_cost": np.array([0.0, 0.0, 0.0]),
+                "remaining_flexible": Quantity(np.array([36000000.0, 36000000.0]), 'kWh'),
+                "remaining_stored": Quantity(np.array([23975000.0, 23975000.0]), 'kWh'),
+                "total_unfulfilled": Quantity(np.array([0.0, 0.0]), 'kWh'),
+                "electricity_cost": Quantity(np.array([0.0, 0.0, 0.0]), 'USD'),
             },
         }
     ],
@@ -109,32 +121,29 @@ def test_power_management_plugin(case):
     tolerance = 1e-12
 
     np.testing.assert_allclose(
-        plugin.remaining_flexible,
-        expected["remaining_flexible"],
+        plugin.remaining_flexible.unit['J'],
+        expected["remaining_flexible"].unit['J'],
         rtol=tolerance,
         atol=tolerance,
     )
 
     np.testing.assert_allclose(
-        plugin.remaining_stored,
-        expected["remaining_stored"],
+        plugin.remaining_stored.unit['J'],
+        expected["remaining_stored"].unit['J'],
         rtol=tolerance,
         atol=tolerance,
     )
 
     np.testing.assert_allclose(
-        plugin.total_unfulfilled,
-        expected["total_unfulfilled"],
+        plugin.total_unfulfilled.unit['J'],
+        expected["total_unfulfilled"].unit['J'],
         rtol=tolerance,
         atol=tolerance,
     )
 
-    for v in plugin.electricity_cost:
-        print(f"{v:.12f}")
-
     np.testing.assert_allclose(
-        plugin.electricity_cost,
-        expected["electricity_cost"],
+        plugin.electricity_cost.unit['USD'],
+        expected["electricity_cost"].unit['USD'],
         rtol=tolerance,
         atol=tolerance,
     )
