@@ -8,14 +8,15 @@ input_dict = {
 	"Planned Replacement": {
 		"<...>": {
 			"Frequency_Value": {
-				"type": {float,},
+				"type": {int, float,},
 				"bounds": (0, None),
+				"path": "Frequency_Path"
 			},
 			"Frequency_Unit": {
 				"dimension": "time",
 			},
 			"Cost_Value": {
-				"type": {float,},
+				"type": {int, float,},
 				"bounds": (0, None),
 				"path": "Cost_Path"
 			},		
@@ -23,13 +24,13 @@ input_dict = {
 				"dimension": "currency",
 			},
    			"optional": True,
-			"description": "One-time replacement cost of <...>. Iteration over all entries in `Planned Replacement` table. Path key is 'Path'."
+			"description": "Replacement frequency and one-time replacement cost of <...>. ."
 		},		
 	},
 	"<...> Unplanned Replacement <...>": {
 		"<...>": {
 			"Value": {
-				"type": {float,},
+				"type": {int, float,},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -60,7 +61,9 @@ output_dict = {
 				"dimension": "currency",
 			},
 			"optional": False,
-			"description": "Total replacement costs for each year, including both planned and unplanned replacement costs, and corrected for inflation."
+			"description": "Total replacement costs for each year, "
+						   "including both planned and unplanned replacement costs, "
+						   "and corrected for inflation."
 		},
 	},
 	"special_insertions":
@@ -69,21 +72,38 @@ output_dict = {
                 "Summed total": {
                     "Value": {
                         "type": {float},
+						"dimension": "currency"
                     },
                     "optional": False,
                     "description": "Summed total of unplanned replacement in each table"
                 },		
             },
             "Unplanned Replacement": {
+				"Summed total" : {
+					"Value": {
+						"type": {float},
+						"dimension": "currency"
+					},
+					"optional": False,
+					"description": "Summed total of unplanned replacement costs for this table"
+				},
                 "Summed group total": {
                     "Value": {
                         "type": {float},
+						"dimension": "currency"
                     },
                     "optional": False,
                     "description": "Summed total of unplanned replacement across all tables"
                 },
+				"Contributions": {
+					"Value": {
+						"type": {dict,},
+						"dimension": "currency",
+					},
+					"description": "Contributions of each table to the summed total of unplanned replacement costs."
+				},
             },
-		}
+		},
 	},
 }	
 
@@ -94,12 +114,10 @@ class Replacement_Plugin:
 	----------
 	Planned Replacement > [...] > Frequency : float
 		Replacement frequency of [...]. 
-		Iteration over all entries in `Planned Replacement` table. No path key
-		available.
+		Iteration over all entries in `Planned Replacement` table. 
 	Planned Replacement > [...] > Cost : float
 		One-time replacement cost of [...].
-		Iteration over all entries in `Planned Replacement` table. Path key
-		is 'Path'.
+		Iteration over all entries in `Planned Replacement` table. 
 	[...] Unplanned Replacement [...] >> Value : float
 		``sum_all_tables()`` is used.
 
@@ -117,48 +135,47 @@ class Replacement_Plugin:
 	def __init__(self, dcf, print_info):
 		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Replacement_Plugin')
 		
-		self.initialize_yearly_costs(dcf)
-		self.initialize_contributions()
-		self.calculate_planned_replacement(dcf)
-		self.unplanned_replacement()
-		# contrary to the general rule of having self.* as Quantity objects, in the present plugin, only self.yearly_inflated, self.unplanned and self.contributions['Total'] are Quantity objects 
-		# to avoid the unnecessary complication of having in each look "self.X = Quantity(self.X.unit[] + ...) ".
-		self.contributions['Total'] = Quantity(np.sum(self.yearly), 'USD')
-		
-		self.yearly_inflated = Quantity(self.yearly * dcf.inflation_correction * dcf.inflation_factor, 'USD')
-		output_inserter_function(output_dict, self, dcf, 'Replacement_Plugin') 
-	
-	def initialize_yearly_costs(self, dcf):
-		'''Initializes ndarray filled with zeros with same length as dcf.inflation_factor.
-		'''
-
+		# Initialize self.yearly as an array of zeros with the same length as the number of plant years to store yearly replacement costs.
 		self.yearly = np.zeros(len(dcf.inflation_factor))
 
-	def initialize_contributions(self):
-		'''Initializes contributions to replacement costs.
-		'''
+		# Initialize contributions
 		self.contributions = {}
 		self.contributions['Data'] = {}
 		self.contributions['Table Group'] = 'Replacement Costs'
 
+		self.calculate_planned_replacement(dcf)
+		self.unplanned_replacement()
+		self.calculate_total(dcf)
+
+		output_inserter_function(output_dict, self, dcf, 'Replacement_Plugin') 
+	
 	def calculate_planned_replacement(self, dcf):
 		'''Calculation of yearly replacement costs by iterating over all entries of 
 		`Planned Replacement`.
 		'''
 
-		for key in dcf.inp['Planned Replacement']:
+		for key in self.input_dict_resolved['Planned Replacement']:
 			planned_replacement = Planned_Replacement(self.input_dict_resolved['Planned Replacement'][key], dcf)
-			self.yearly[planned_replacement.years_idx] += planned_replacement.cost
+			self.yearly[planned_replacement.years_idx] += planned_replacement.cost.unit['USD']
 			self.contributions['Data'][key] = planned_replacement.total_cost
 
 	def unplanned_replacement(self):
-		'''Calculating unplanned replacement costs by appling ``sum_all_tables()`` to 
-		"Unplanned Replacement" group.
+		'''Calculating unplanned replacement costs 
 		'''
 
 		self.unplanned = self.input_dict_resolved['Unplanned Replacement']['Summed group total']['Value'] # Calculated by sum_tables
 		self.yearly += self.unplanned.unit['USD']
 		self.contributions['Data']['Unplanned Replacement'] = np.sum(np.ones_like(self.yearly) * self.unplanned.unit['USD'])
+	
+	def calculate_total(self, dcf):
+		'''Calculating total replacement costs
+		'''
+
+		self.contributions['Total'] = Quantity(np.sum(self.yearly), 'USD')
+		self.yearly_inflated = Quantity(self.yearly 
+								  		* dcf.inflation_correction
+										* dcf.inflation_factor, 
+								'USD')
 
 class Planned_Replacement:
 	'''
@@ -182,12 +199,17 @@ class Planned_Replacement:
 
 		replacement_frequency = int(np.ceil(dictionary['Frequency_Value'].unit['year']))
 		non_integer_correction = replacement_frequency / dictionary['Frequency_Value'].unit['year']
-
-		raw_replacement_cost = dictionary['Cost_Value'].unit['USD'] 
+ 
 		initial_replacement_year_idx = fn.find_nearest(dcf.plant_years, replacement_frequency)[0]
 
-		self.cost = raw_replacement_cost * non_integer_correction * dcf.combined_inflator
+		self.cost = Quantity(dictionary['Cost_Value'].unit['USD'] 
+					   		 * non_integer_correction 
+							 * dcf.combined_inflator, 
+					'USD')
+
 		self.years = dcf.plant_years[initial_replacement_year_idx:][0::replacement_frequency]
 		self.years_idx = fn.find_nearest(dcf.plant_years, self.years)
 
-		self.total_cost = np.sum(np.ones_like(self.years) * self.cost)
+		self.total_cost = Quantity(np.sum(np.ones_like(self.years) 
+								    * self.cost.unit['USD']), 
+						  'USD')
