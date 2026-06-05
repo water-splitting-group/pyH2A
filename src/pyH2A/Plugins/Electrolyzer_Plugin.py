@@ -336,7 +336,7 @@ class Electrolyzer_Plugin:
         self.yearly_data_duration = Quantity(np.asarray(yearly_data_duration), 'h')
 
         self.h2_production = np.concatenate([
-                                   np.zeros(dcf.inp['Financial Input Values']['Construction time']['Value']), 
+                                   np.zeros(int(round(dcf.inp['Financial Input Values']['Construction time']['Value'].unit['year']))), 
                                    self.yearly_data_production.unit['kg']
                                     ])
         self.h2_production = Quantity(self.h2_production, 'kg/year') # needs to be expressed as a flowrate, as it ultimately serves as the plant design capacity etc
