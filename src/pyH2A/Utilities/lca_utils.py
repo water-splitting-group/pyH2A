@@ -5,9 +5,9 @@ is licensed under the Mozilla Public License 2.0 (MPL 2.0; see
 https://github.com/GreenDelta/olca-app).
 
 It has been extensively modified to prioritize sparse-matrix calculations to
-speed up LCA-based Monte Carlo analysis. Several helper classes and functions
-have been added to facilitate loading matrices, caching results, and performing
-repeated solves with the same coefficient matrix.
+speed up LCA-based Monte Carlo analysis. Helper classes and functions have been
+added to load matrices, parse index CSV files, locate matrix files, and perform
+repeated solves against a shared coefficient matrix without re-factorizing.
 '''
 from __future__ import annotations
 import csv
@@ -30,8 +30,6 @@ try:
     scikit_umfpack = importlib.import_module('scikits.umfpack')
 except ImportError:
     scikit_umfpack = None
-
-
 
 
 class TechEntry:
@@ -70,32 +68,6 @@ class TechEntry:
     '''
 
     def __init__(self):
-        '''
-        Initialize a TechEntry with empty/default attribute values.
-
-        Attributes
-        ----------
-        index : int
-            Row/column index in the technosphere matrix A. Default is ``-1``.
-        process_id : str
-            Unique identifier of the process.
-        process_name : str
-            Human-readable name of the process.
-        process_category : str
-            Category of the process.
-        process_location : str
-            Geographic location of the process.
-        flow_id : str
-            Unique identifier of the reference flow.
-        flow_name : str
-            Human-readable name of the reference flow.
-        flow_category : str
-            Category of the reference flow.
-        flow_unit : str
-            Unit of the reference flow.
-        flow_type : str
-            Type of the reference flow (e.g., product, waste).
-        '''
         self.index = -1
         self.process_id = ''
         self.process_name = ''
@@ -183,20 +155,6 @@ class ImpactEntry:
     '''
 
     def __init__(self):
-        '''
-        Initialize an ImpactEntry with empty/default attribute values.
-
-        Attributes
-        ----------
-        index : int
-            Row index in the characterization matrix C. Default is ``-1``.
-        impact_id : str
-            Unique identifier of the impact category.
-        impact_name : str
-            Human-readable name of the impact category.
-        impact_unit : str
-            Unit of the impact category (e.g., ``kg CO2 eq``).
-        '''
         self.index = -1
         self.impact_id = ''
         self.impact_name = ''
@@ -244,6 +202,29 @@ class ImpactEntry:
         for row in _csv_rows_of(file_path):
             index.append(ImpactEntry._from_csv(row))
         return index
+
+
+def find_matrix_path(folder: str, name: str):
+    '''Return the path of a matrix file in a folder, or ``None`` if absent.
+
+    Parameters
+    ----------
+    folder : str
+        Directory to search in.
+    name : str
+        Base matrix name (e.g. ``'B'`` or ``'C'``). Tried with ``.npz``,
+        then ``.npy``, then without extension.
+
+    Returns
+    -------
+    str or None
+        Full path to the first matching file, or ``None`` if none found.
+    '''
+    for suffix in ('.npz', '.npy', ''):
+        p = os.path.join(folder, name + suffix)
+        if os.path.exists(p):
+            return p
+    return None
 
 
 def matrix_of(file_path: str):
@@ -313,15 +294,6 @@ class ExportFolder:
     '''
 
     def __init__(self, folder: str):
-        '''
-        Initialize an ExportFolder.
-
-        Parameters
-        ----------
-        folder : str
-            Path to the openLCA matrix-export directory containing
-            ``index_A.csv``, ``index_C.csv``, and the matrix files.
-        '''
         self.folder = folder
 
     def tech_index(self) -> dict[str, TechEntry]:
@@ -371,8 +343,8 @@ class ExportFolder:
         '''
         Load a named matrix file from the export folder.
 
-        Searches for the file in order: exact path, then with a ``.npy``
-        extension, then with a ``.npz`` extension.
+        File lookup is delegated to :func:`find_matrix_path`, which tries
+        ``.npz``, ``.npy``, and no extension in that order.
 
         Parameters
         ----------
@@ -384,16 +356,8 @@ class ExportFolder:
         scipy.sparse.spmatrix, numpy.ndarray, or None
             The loaded matrix, or ``None`` if no matching file is found.
         '''
-        path = os.path.join(self.folder, name)
-        if os.path.exists(path):
-            return matrix_of(path)
-        p = path + '.npy'
-        if os.path.exists(p):
-            return matrix_of(p)
-        p = path + '.npz'
-        if os.path.exists(p):
-            return matrix_of(p)
-        return None
+        path = find_matrix_path(self.folder, name)
+        return matrix_of(path) if path is not None else None
 
     def tech_process_indices(self, matrix_a=None) -> numpy.ndarray:
         '''
@@ -449,28 +413,24 @@ class Matrix:
 
 
 class _FactorizedSolver:
-    """
-    Holds a pre-factorized matrix for repeated right-hand-side solves.
+    '''Holds a pre-factorized matrix for repeated right-hand-side solves.
 
-    This class stores a matrix factorization and provides a method to solve
-    for one or more right-hand sides efficiently, reusing the factorization.
+    Wraps a solver callable produced by :func:`factorize` and exposes a
+    uniform ``.solve(rhs)`` interface regardless of the underlying solver
+    (pypardiso, UMFPACK, splu, or dense LU).
 
     Parameters
     ----------
     _solve_fn : callable
-        Function that solves the linear system for a given right-hand side.
-
-    Methods
-    -------
-    solve(rhs)
-        Solve for one or many right-hand sides using the stored factorization.
-    """
+        Callable that accepts an array of shape ``(n,)`` or ``(n, k)`` and
+        returns the solution with the same shape.
+    '''
 
     def __init__(self, _solve_fn):
         self._solve_fn = _solve_fn
 
     def solve(self, rhs):
-        """Solve for one or many right-hand sides.
+        '''Solve for one or many right-hand sides.
 
         Parameters
         ----------
@@ -481,25 +441,16 @@ class _FactorizedSolver:
         -------
         ndarray, shape (n,) or (n, k)
             Solution vector(s). Shape matches input.
-        """
-        rhs = numpy.asarray(rhs)
-        if rhs.ndim == 1:
-            return self._solve_fn(rhs)
-        # 2-D: solve each column; underlying solvers (splu, pypardiso) accept 2-D directly
-        return self._solve_fn(rhs)
+        '''
+        return self._solve_fn(numpy.asarray(rhs))
 
 def factorize(matrix):
-    """
-    Factorize a matrix and return a solver for repeated solves.
+    '''Factorize a matrix and return a solver for repeated solves.
 
-    This function performs the (potentially expensive) factorization and
-    returns a reusable solver object with a ``.solve(rhs)`` method. Reusing
-    this object avoids repeated factorization when solving the same coefficient
-    matrix against multiple right-hand sides.
-
-    Note: this stores the sparse LU factors (L and U), not the dense inverse.
-    The inverse of a sparse matrix is generally dense and should never be
-    formed explicitly.
+    Performs the (potentially expensive) factorization once and returns a
+    :class:`_FactorizedSolver` whose ``.solve(rhs)`` method reuses the stored
+    factors. The solver backend is selected in priority order: pypardiso →
+    scikit-umfpack → scipy splu (sparse), or scipy dense LU (dense).
 
     Parameters
     ----------
@@ -509,8 +460,13 @@ def factorize(matrix):
     Returns
     -------
     _FactorizedSolver
-        Object with a `.solve(rhs)` method that reuses the stored factors.
-    """
+        Object with a ``.solve(rhs)`` method that reuses the stored factors.
+
+    Notes
+    -----
+    Stores sparse LU factors (L and U), not the dense inverse. The explicit
+    inverse of a sparse matrix is generally dense and should never be formed.
+    '''
     if scipy.sparse.issparse(matrix):
         # pypardiso: spsolve handles factorization internally and is the fastest option
         if pypardiso is not None:
@@ -533,20 +489,23 @@ def factorize(matrix):
 
 
 @lru_cache(maxsize=None)
-def get_disk_cache_dir(output_directory: str) -> Path:
-    """
-    Return the shared on-disk cache directory (now set to the output directory).
+def get_disk_cache_dir(matrix_folder: str) -> Path:
+    '''Return the ``Initial_Artifacts`` cache directory for a matrix export folder.
+
+    Creates the directory if it does not already exist. Results are cached by
+    :func:`functools.lru_cache` so the directory is created at most once per
+    process per ``matrix_folder`` path.
 
     Parameters
     ----------
-    output_directory : str
-        Path to the output directory where the cache directory will be created.
+    matrix_folder : str
+        Path to the openLCA matrix export folder.
 
     Returns
     -------
     pathlib.Path
-        Directory path used to store shared cache artifacts. The directory is created if it does not already exist.
-    """
-    cache_dir = Path(output_directory) / 'Initial_Artifacts'
+        Path to the ``Initial_Artifacts`` subdirectory inside ``matrix_folder``.
+    '''
+    cache_dir = Path(matrix_folder) / 'Initial_Artifacts'
     cache_dir.mkdir(parents=True, exist_ok=True)
     return cache_dir
