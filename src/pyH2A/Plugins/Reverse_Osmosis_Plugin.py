@@ -3,31 +3,29 @@ from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import numpy as np
 
 input_dict = {
-    "Financial Input Values": {
-        "Construction time": {
-            "Value": {
-                "type": {int,},
-                "bounds": (0, 40*365*86400),
-            },
-            "Unit": {
-                "dimension": "time",
-            },
-            "optional": False,
-            "description": "Construction time of hydrogen production plant."
-        },
-    },
     "Technical Operating Parameters and Specifications": {
-        "Output per year": {
+        "Design output by year": {
             "Value": {
-                "type": {float, np.ndarray},
+                "type": {np.ndarray},
                 "bounds": (0, None),
             },
             "Unit": {
                 "dimension": "mass",
             },
             "optional": False,
-            "description": "Yearly output taking operating capacity factor into account."
+            "description": "Yearly output ignoring capacity factor."
         },
+		"Operating capacity factor": { 
+			"Value": {
+				"type": {float, int},
+				"bounds": (0, 1),
+    },
+			"Unit": {
+				"dimension": "dimensionless",
+			},
+			"optional": False,
+			"description": "Operating capacity factor value between 0 and 1 or percentage value."
+		},	        
     },
     "Reverse Osmosis": {
         "Power demand": {
@@ -102,8 +100,10 @@ class Reverse_Osmosis_Plugin:
     ----------
     Financial Input Values > Construction time > Value : int
         Construction time of hydrogen production plant in years.
-	Technical Operating Parameters and Specifications > Output per year > Value : float
-		Yearly output taking operating capacity factor into account.
+	Technical Operating Parameters and Specifications > Design output by year > Value : nd.array
+		Yearly output ignoring operating capacity factor.
+	Technical Operating Parameters and Specifications > Operating capacity factor > Value : float, int
+		Operating capacity factor value between 0 and 1 or percentage value.        
     Reverse Osmosis > Power demand > Value : float
         Power demand of reverse osmosis plant of sea water.
     Reverse Osmosis > Average daily operating hours > Value : float
@@ -138,12 +138,18 @@ class Reverse_Osmosis_Plugin:
         MOLAR_RATIO_WATER = 18.01528 / 2.016
         DENSITY_WATER_KG_PER_M3 = 997
 
-        output_per_year_kg_H2 = self.input_dict_resolved['Technical Operating Parameters and Specifications']['Output per year']['Value'].unit['kg']
+        output_per_year_kg_H2 = (self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output by year']['Value'].unit['kg'] 
+                                 *
+                                 self.input_dict_resolved['Technical Operating Parameters and Specifications']['Operating capacity factor']['Value'].unit['-']
+                                 )
 
         fresh_water_demand_kg = output_per_year_kg_H2 * MOLAR_RATIO_WATER
         fresh_water_demand_m3 = fresh_water_demand_kg / DENSITY_WATER_KG_PER_M3
 
-        self.sea_water_demand = Quantity(fresh_water_demand_m3 / self.input_dict_resolved['Reverse Osmosis']['Recovery rate']['Value'].unit['-'], 'm3')
+        self.sea_water_demand = Quantity(
+                                        fresh_water_demand_m3 
+                                         / self.input_dict_resolved['Reverse Osmosis']['Recovery rate']['Value'].unit['-'], 
+                                         'm3')
 
         electricity_demand_J = self.sea_water_demand.unit['m3'] * self.input_dict_resolved['Reverse Osmosis']['Power demand']['Value'].unit['J/m3']
         self.electricity_demand = Quantity(electricity_demand_J[dcf.inp['Financial Input Values']['Construction time']['Value']:], 'J')
@@ -154,14 +160,14 @@ class Reverse_Osmosis_Plugin:
         yearly sea water demand and average daily operating hours.
         '''
 
-        HOURS_IN_A_YEAR = 365*24
-
         average_operating_time_fraction = self.input_dict_resolved['Reverse Osmosis']['Average operating time fraction']['Value'].unit['-']
-        yearly_operating_hours = average_operating_time_fraction * HOURS_IN_A_YEAR
         
         try:
             maximum_yearly_sea_water_demand_m3 = max(self.sea_water_demand.unit['m3'])
         except TypeError:
             maximum_yearly_sea_water_demand_m3 = self.sea_water_demand.unit['m3']
 
-        self.maximum_sea_water_processing_flowrate = Quantity(maximum_yearly_sea_water_demand_m3 / yearly_operating_hours, 'm3/h')
+        self.maximum_sea_water_processing_flowrate = Quantity(
+                                                            maximum_yearly_sea_water_demand_m3 
+                                                            / average_operating_time_fraction, 
+                                                            'm3/year')

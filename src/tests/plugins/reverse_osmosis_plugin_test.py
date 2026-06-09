@@ -10,7 +10,8 @@ class DummyDCF:
     def __init__(
         self, 
         construction_time,
-        plant_output_per_year, 
+        design_output_by_year, 
+        operating_capacity_factor,
         power_demand_kWh_per_m3, 
         operating_time_fraction, 
         recovery_rate
@@ -23,11 +24,15 @@ class DummyDCF:
                 }
             },
             "Technical Operating Parameters and Specifications": {
-                "Output per year": {
-                    "Value": plant_output_per_year, 
+                "Design output by year": {
+                    "Value": design_output_by_year, 
                     "Unit": "kg",
                     "Processed": "Yes"
-                }
+                }, 
+                "Operating capacity factor": {
+                    "Value": operating_capacity_factor, 
+                    "Unit": "-",
+                }                
             },
             "Reverse Osmosis": {
                 "Power demand": {
@@ -51,14 +56,17 @@ class DummyDCF:
     [
         {
             "input": {
-                "plant_output_per_year": np.array([0.0, 1800.0, 1900.0]),      
+                "design_output_by_year": np.array([0.0, 2250.0, 2375.0]),
+                "operating_capacity_factor": 0.8,
                 "construction_time": 1,                   
                 "power_demand_kWh_per_m3": 10.0,          
                 "operating_time_fraction": 1.,                  
                 "recovery_rate": 0.1,                    
             },
             "expected": {
-                "electricity_demand_kWh": Quantity(np.array([1613.3471844103742, 1702.977583544284]), "kWh"),
+                "electricity_demand_kWh": Quantity(
+                                                    np.array([1613.3471844103742, 1702.977583544284]), 
+                                                    "kWh"),
                 "max_capacity_m3_per_hour": Quantity(0.019440383373793193, "m3/h")
             },
         }
