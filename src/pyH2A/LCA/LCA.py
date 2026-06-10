@@ -171,7 +171,7 @@ class LCA:
         if all(LCA._cache[k] is not None for k in LCA._cache):
             return
 
-        # Not in RAM: try to load artifacts from disk cache (solver is not stored on disk).
+        # Not in RAM: try to load artifacts from disk cache
         cache_path = get_disk_cache_dir(self.matrix_folder)
         paths = {
             'scalingvector':   cache_path / "scalingvector.npz",
@@ -224,7 +224,19 @@ class LCA:
         return True
     
     def compute_all_artifacts_from_scratch(self, paths: dict):
-        # Not in RAM or disk: compute artifacts and cache to disk and RAM for future reuse.
+        '''Compute all LCA artifacts from source matrices and populate the RAM cache.
+
+        Loads matrices from the export folder, factorizes the technosphere matrix,
+        solves for the base scaling vector, precomputes Sherman-Morrison basis columns,
+        and stores all results in ``LCA._cache``. Does not write anything to disk.
+
+        Parameters
+        ----------
+        paths : dict
+            Mapping from each ``LCA._cache`` key to its ``.npz`` file path,
+            as built in :meth:`initialize_all_artifacts`. Used only to copy the
+            sparse B and C matrix files into the artifact directory.
+        '''
         (   LCA.export_folder,
             LCA.techno_index_uuid,
             LCA.A,
@@ -252,16 +264,9 @@ class LCA:
         eye_subset[nonzero_indices, np.arange(n_cols)] = 1.0
         basis_component = np.asarray(solver.solve(eye_subset))
         LCA._cache['basis_component'] = basis_component
-         # Copy the original sparse B and C files to disk (Initial_Artifacts) and load them to RAM.
-        mat_b = find_matrix_path(self.matrix_folder, Matrix.B)
-        mat_c = find_matrix_path(self.matrix_folder, Matrix.C)
-        shutil.copy2(mat_b, str(paths['matrix_b']))
-        shutil.copy2(mat_c, str(paths['matrix_c']))
+        LCA._cache['impact_index'] = list(LCA.export_folder.impact_index()) 
         LCA._cache['matrix_b'] = LCA.B
         LCA._cache['matrix_c'] = LCA.C 
-        # Store impact index to disk and RAM for later use in result assembly.
-        impact_index_list = list(LCA.export_folder.impact_index()) 
-        LCA._cache['impact_index'] = impact_index_list
         
     
     def save_all_to_disk(self, paths: dict):
@@ -290,10 +295,14 @@ class LCA:
         tmp_path = Path(str(paths['basis_component']) + f".{os.getpid()}.tmp.npz")
         np.savez(tmp_path, basis_component=LCA._cache['basis_component'])
         os.replace(tmp_path, paths['basis_component'])
-        # B and C are already saved during initialization if they were not present, so we skip them here.
         tmp_path = Path(str(paths['impact_index']) + f".{os.getpid()}.tmp.npz")
         np.savez(tmp_path, impact_index=np.array(LCA._cache['impact_index'], dtype=object))
         os.replace(tmp_path, paths['impact_index'])
+        # Copy the original sparse B and C files to disk (Initial_Artifacts)
+        mat_b = find_matrix_path(self.matrix_folder, Matrix.B)
+        mat_c = find_matrix_path(self.matrix_folder, Matrix.C)
+        shutil.copy2(mat_b, str(paths['matrix_b']))
+        shutil.copy2(mat_c, str(paths['matrix_c']))
         
     def apply_component_updates(self, dcf):
         '''Resolve LCA input values and store them aligned to the technosphere column.
