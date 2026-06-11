@@ -188,7 +188,6 @@ class LCA:
 
             self.compute_all_artifacts_from_scratch()
             self.save_all_to_disk(paths)
-            self.load_all_from_disk_to_ram(paths) 
 
     def load_all_from_disk_to_ram(self, paths: dict):
         '''Load all cached artifacts from disk into process-local RAM.
