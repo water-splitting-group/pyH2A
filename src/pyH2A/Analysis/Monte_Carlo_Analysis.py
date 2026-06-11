@@ -1,6 +1,7 @@
 import multiprocessing
 import concurrent.futures
 import copy
+import sys
 from pathlib import Path
 from timeit import default_timer as timer
 import numpy as np
@@ -17,49 +18,68 @@ from pyH2A.Discounted_Cash_Flow import Discounted_Cash_Flow
 from pyH2A.Utilities.output_utilities import make_bold, format_scientific, dynamic_value_formatting, insert_image, Figure_Lean
 
 
-def _mc_response_worker(value_batch, inp, parameters, dependent_variable):
+_worker_state = {}  # Per-worker-process state; populated by _init_worker before any task runs.
+
+
+def _init_worker(inp, parameters, dependent_variable):
+	'''Initializer for ProcessPoolExecutor workers.
+
+	Deserializes ``inp``, ``parameters``, and ``dependent_variable`` once per
+	worker process rather than once per submitted future, eliminating the
+	dominant IPC cost when the input dictionary is large.
+
+	Parameters
+	----------
+	inp : dict
+		Full input dictionary template.
+	parameters : dict
+		Parameter metadata containing path, type, and index mappings.
+	dependent_variable : str
+		Response key to evaluate in every sample.
+	'''
+	_worker_state['inp'] = inp
+	_worker_state['parameters'] = parameters
+	_worker_state['dependent_variable'] = dependent_variable
+
+
+def _mc_response_worker(value_batch):
 	'''Module-level worker for parallel Monte Carlo execution.
 
 	Parameters
 	----------
 	value_batch : ndarray
 		Batch of Monte Carlo parameter sets, one sample per row.
-	inp : dict
-		Input dictionary template copied and modified per sample.
-	parameters : dict
-		Parameter metadata containing path, type, and index mappings.
-	dependent_variable : str
-		Response key to evaluate (``h2_cost`` or an LCA impact name).
 
 	Returns
 	-------
-	tuple[list[float], str or None]
-		Pair ``(response_values, units)``. ``units`` is ``None`` for
-		``h2_cost`` and otherwise the LCA unit string from the first sample.
+	list[float]
+		Response values for each sample in the batch.
 
 	Notes
 	-----
 	The function is module-level (not a bound method), which makes it
-	picklable for ``ProcessPoolExecutor``. Within each worker process, the
-	LCA class-level cache reuses factorization work across samples in the
-	batch through the Sherman-Morrison update path.
+	picklable for ``ProcessPoolExecutor``. Shared state (``inp``,
+	``parameters``, ``dependent_variable``) is read from the process-local
+	``_worker_state`` dict populated by :func:`_init_worker`. Within each
+	worker process the LCA class-level cache reuses factorization work across
+	samples in the batch through the Sherman-Morrison update path.
 	'''
+	inp = _worker_state['inp']
+	parameters = _worker_state['parameters']
+	dependent_variable = _worker_state['dependent_variable']
+
 	response_values = []
-	units = None
 	for value_set in value_batch:
 		input_dict = copy.deepcopy(inp)
-		for key, parameter in parameters.items():
+		for parameter in parameters.values():
 			set_by_path(input_dict, parameter['Parameter'], value_set[parameter['Index']],
 						value_type=parameter['Type'])
 		dcf = Discounted_Cash_Flow(input_dict, print_info=False)
 		if dependent_variable == 'h2_cost':
 			response_values.append(dcf.h2_cost)
 		else:
-			lca_entry = dcf.lca.lca_results[dependent_variable]
-			response_values.append(lca_entry['value'])
-			if units is None:
-				units = lca_entry['unit']
-	return response_values, units
+			response_values.append(dcf.lca.lca_results[dependent_variable]['value'])
+	return response_values
 
 
 def select_non_reference_value(reference, values):
@@ -85,18 +105,61 @@ def divide_into_batches(array, batch_size):
 		List of ndarrays where each entry is a batch.
 	'''
 
-	number_of_divisions = np.floor(len(array)/batch_size)
-	idx = int(number_of_divisions * batch_size)
+	if batch_size <= 0:
+		raise ValueError('batch_size must be larger than zero')
 
-	first_part = array[:idx]
-	second_part = array[idx:]
+	if len(array) == 0:
+		return []
 
-	batches = np.split(first_part, number_of_divisions)
+	return [array[start:start + batch_size] for start in range(0, len(array), batch_size)]
 
-	if second_part.size != 0:
-		batches.append(second_part)
+def render_progress_bar(completed, total, prefix = 'Monte Carlo', bar_width = 40):
+	'''Render an in-place terminal progress bar.
 
-	return batches
+	Parameters
+	----------
+	completed : int
+		Number of completed samples.
+	total : int
+		Total number of samples.
+	prefix : str, optional
+		Progress bar prefix text.
+	bar_width : int, optional
+		Character width of the progress bar.
+	'''
+
+	if total <= 0:
+		return
+
+	fraction = min(max(completed / total, 0), 1)
+	filled = int(bar_width * fraction)
+	empty = bar_width - filled
+
+	# Use solid block glyphs whenever stdout encoding supports them (including pytest capture).
+	stdout_encoding = getattr(sys.stdout, 'encoding', None) or 'utf-8'
+	try:
+		'█░'.encode(stdout_encoding)
+		filled_char = '█'
+		empty_char = '░'
+	except (UnicodeEncodeError, LookupError):
+		filled_char = '='
+		empty_char = '-'
+
+	# Use ANSI green for the completed part when writing to an interactive terminal.
+	if sys.stdout.isatty():
+		green = '\033[92m'
+		reset = '\033[0m'
+		bar = f'{green}{filled_char * filled}{reset}{empty_char * empty}'
+	else:
+		bar = filled_char * filled + empty_char * empty
+
+	percentage = fraction * 100
+
+	print(f'\r{prefix}: [{bar}] {percentage:6.2f}% ({completed}/{total})',
+		  end = '', flush = True)
+
+	if completed >= total:
+		print()
 
 def normalize_parameter(parameter, base, limit, log_normalize = False):
 	'''Normalize parameter values using linear or logarithmic scaling.
@@ -463,7 +526,9 @@ class Monte_Carlo_Analysis:
 
 		return np.asarray(response_values)
 
-	def perform_monte_carlo_multiprocessing(self, values, return_full_array = True):
+	def perform_monte_carlo_multiprocessing(self, values, return_full_array = True,
+										show_progress = False,
+										progress_label = 'Monte Carlo'):
 		'''Monte Carlo analysis is performed with multiprocessing parallelization across
 		all available CPUs.
 
@@ -475,6 +540,10 @@ class Monte_Carlo_Analysis:
 			If `return_full_array` is True, the full 2D array containing parameter
 			variations and target response values is returned. Otherwise, a 1D array containing only
 			target response values is returned.
+		show_progress : bool, optional
+			If `True`, render a progress bar during Monte Carlo execution.
+		progress_label : str, optional
+			Prefix label for the progress bar output.
 
 		Returns
 		-------
@@ -484,26 +553,53 @@ class Monte_Carlo_Analysis:
 			1D array containing dependent-response values.
 		'''
 
+		total_samples = len(values)
+
+		if total_samples == 0:
+			if return_full_array is True:
+				return np.c_[values, np.asarray([])]
+			return np.asarray([])
+
 		num_cpus = multiprocessing.cpu_count()
-		value_batches = divide_into_batches(values, int(np.ceil(len(values) / num_cpus)))
+		# 4× batches per worker 
+		batch_size = max(1, int(np.ceil(total_samples / (num_cpus * 4))))
+		value_batches = divide_into_batches(values, batch_size)
+		batch_results = [None] * len(value_batches)
 
-		with concurrent.futures.ProcessPoolExecutor(max_workers=num_cpus) as executor:
-			futures = [
-				executor.submit(
-					_mc_response_worker,
-					batch,
-					self.inp,
-					self.parameters,
-					self.dependent_variable,
-				)
-				for batch in value_batches
-			]
-			results = [f.result() for f in futures]
+		if show_progress:
+			render_progress_bar(0, total_samples, prefix = progress_label)
+			batch_sizes = [len(b) for b in value_batches]
 
-		response_values = np.concatenate([r[0] for r in results])
+		completed_samples = 0
+		max_workers = min(num_cpus, len(value_batches))
+
+		try:
+			with concurrent.futures.ProcessPoolExecutor(
+				max_workers = max_workers,
+				initializer = _init_worker,
+				initargs = (self.inp, self.parameters, self.dependent_variable),
+			) as executor:
+				future_to_batch_index = {
+					executor.submit(_mc_response_worker, batch): batch_index
+					for batch_index, batch in enumerate(value_batches)
+				}
+
+				for future in concurrent.futures.as_completed(future_to_batch_index):
+					batch_index = future_to_batch_index[future]
+					batch_results[batch_index] = future.result()
+
+					if show_progress:
+						completed_samples += batch_sizes[batch_index]
+						render_progress_bar(completed_samples, total_samples,
+											prefix = progress_label)
+		finally:
+			if show_progress and completed_samples < total_samples:
+				render_progress_bar(total_samples, total_samples, prefix = progress_label)
+
+		response_values = np.concatenate(batch_results)
 
 		if return_full_array is True:
-			return np.c_[self.values, response_values]
+			return np.c_[values, response_values]
 		else:
 			return response_values
 
@@ -514,7 +610,9 @@ class Monte_Carlo_Analysis:
 
 		start = timer()
 
-		self.results = self.perform_monte_carlo_multiprocessing(self.values)
+		self.results = self.perform_monte_carlo_multiprocessing(self.values,
+											show_progress = True,
+											progress_label = 'Monte Carlo')
 
 		end = timer()
 		print('Time Monte Carlo Multi:', end - start)
