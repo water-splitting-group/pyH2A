@@ -1,7 +1,4 @@
-import os
 import shutil
-from functools import lru_cache
-from pathlib import Path
 import numpy as np
 
 from pyH2A import Discounted_Cash_Flow
@@ -9,6 +6,7 @@ from pyH2A.Utilities.input_modification import process_table
 from pyH2A.Utilities.lca_utils import (
     ExportFolder,
     Matrix,
+    atomic_savez,
     factorize,
     find_matrix_path,
     get_disk_cache_dir,
@@ -164,7 +162,7 @@ class LCA:
         (nonzero first-column entries as UUIDs and values), ``basis_component``
         (precomputed ``A^{-1} e_i`` basis vectors), ``matrix_b`` and
         ``matrix_c`` (sparse originals), and ``impact_index``. Disk writes use
-        ``os.replace`` for atomic file replacement with no explicit locking.
+        :func:`~pyH2A.Utilities.lca_utils.atomic_savez` for atomic file replacement.
         '''
 
         # Try to load artifacts from RAM (process-local cache).
@@ -188,11 +186,11 @@ class LCA:
 
         except FileNotFoundError:
 
-            self.compute_all_artifacts_from_scratch(paths)
+            self.compute_all_artifacts_from_scratch()
             self.save_all_to_disk(paths)
             self.load_all_from_disk_to_ram(paths) 
 
-    def load_all_from_disk_to_ram(self, paths: dict) -> bool:
+    def load_all_from_disk_to_ram(self, paths: dict):
         '''Load all cached artifacts from disk into process-local RAM.
 
         Parameters
@@ -204,38 +202,24 @@ class LCA:
         Raises
         ------
         FileNotFoundError
-            Raised when one or more cache files are absent from disk.
-
-        Notes
-        -----
-        Populates all six ``LCA._cache`` keys: ``scalingvector``,
-        ``a0_column``, ``basis_component``, ``matrix_b``, ``matrix_c``, and
-        ``impact_index``. Solver/factorization objects are not stored on disk
-        and must be recomputed when needed.
+            Propagated from :func:`numpy.load` or :func:`~pyH2A.Utilities.lca_utils.matrix_of`
+            when a cache file is absent from disk.
         '''
  
         LCA._cache['scalingvector']   = np.asarray(np.load(paths['scalingvector'])['base_scaling_vector'])
-        LCA._cache['a0_column']       = (np.asarray(np.load(paths['a0_column'])['uuids'], dtype=str), 
-                                         np.asarray(np.load(paths['a0_column'])['values']))
+        a0 = np.load(paths['a0_column'])
+        LCA._cache['a0_column']       = (np.asarray(a0['uuids'], dtype=str), np.asarray(a0['values']))
         LCA._cache['basis_component'] = np.asarray(np.load(paths['basis_component'])['basis_component'])
         LCA._cache['matrix_b']        = matrix_of(str(paths['matrix_b']))
         LCA._cache['matrix_c']        = matrix_of(str(paths['matrix_c']))
         LCA._cache['impact_index']    = list(np.load(str(paths['impact_index']), allow_pickle=True)['impact_index'])
-        return True
     
-    def compute_all_artifacts_from_scratch(self, paths: dict):
+    def compute_all_artifacts_from_scratch(self):
         '''Compute all LCA artifacts from source matrices and populate the RAM cache.
 
         Loads matrices from the export folder, factorizes the technosphere matrix,
         solves for the base scaling vector, precomputes Sherman-Morrison basis columns,
         and stores all results in ``LCA._cache``. Does not write anything to disk.
-
-        Parameters
-        ----------
-        paths : dict
-            Mapping from each ``LCA._cache`` key to its ``.npz`` file path,
-            as built in :meth:`initialize_all_artifacts`. Used only to copy the
-            sparse B and C matrix files into the artifact directory.
         '''
         (   LCA.export_folder,
             LCA.techno_index_uuid,
@@ -265,6 +249,7 @@ class LCA:
         basis_component = np.asarray(solver.solve(eye_subset))
         LCA._cache['basis_component'] = basis_component
         LCA._cache['impact_index'] = list(LCA.export_folder.impact_index()) 
+        # Cache the original sparse B and C matrices for reuse by worker processes 
         LCA._cache['matrix_b'] = LCA.B
         LCA._cache['matrix_c'] = LCA.C 
         
@@ -285,19 +270,11 @@ class LCA:
         recompute any artifacts; it simply writes the current RAM cache state to
         disk using atomic file replacement.
         '''
-        tmp_path = Path(str(paths['scalingvector']) + f".{os.getpid()}.tmp.npz")
-        np.savez(tmp_path, base_scaling_vector=LCA._cache['scalingvector'])
-        os.replace(tmp_path, paths['scalingvector'])
-        tmp_path = Path(str(paths['a0_column']) + f".{os.getpid()}.tmp.npz")
-        np.savez(tmp_path, uuids=np.asarray(LCA._cache['a0_column'][0], dtype=str),
-                 values=np.asarray(LCA._cache['a0_column'][1], dtype=float))
-        os.replace(tmp_path, paths['a0_column'])
-        tmp_path = Path(str(paths['basis_component']) + f".{os.getpid()}.tmp.npz")
-        np.savez(tmp_path, basis_component=LCA._cache['basis_component'])
-        os.replace(tmp_path, paths['basis_component'])
-        tmp_path = Path(str(paths['impact_index']) + f".{os.getpid()}.tmp.npz")
-        np.savez(tmp_path, impact_index=np.array(LCA._cache['impact_index'], dtype=object))
-        os.replace(tmp_path, paths['impact_index'])
+        atomic_savez(paths['scalingvector'],   base_scaling_vector=LCA._cache['scalingvector'])
+        atomic_savez(paths['a0_column'],       uuids=np.asarray(LCA._cache['a0_column'][0], dtype=str),
+                                               values=np.asarray(LCA._cache['a0_column'][1], dtype=float))
+        atomic_savez(paths['basis_component'], basis_component=LCA._cache['basis_component'])
+        atomic_savez(paths['impact_index'],    impact_index=np.array(LCA._cache['impact_index'], dtype=object))
         # Copy the original sparse B and C files to disk (Initial_Artifacts)
         mat_b = find_matrix_path(self.matrix_folder, Matrix.B)
         mat_c = find_matrix_path(self.matrix_folder, Matrix.C)
