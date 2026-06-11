@@ -249,6 +249,21 @@ def matrix_of(file_path: str):
         return numpy.load(file_path)
 
 
+def atomic_savez(path: Path, **kwargs):
+    '''Save arrays to a ``.npz`` file atomically using a temporary file.
+
+    Parameters
+    ----------
+    path : Path
+        Destination ``.npz`` file path.
+    **kwargs
+        Named arrays passed directly to :func:`numpy.savez`.
+    '''
+    tmp = Path(str(path) + f".{os.getpid()}.tmp.npz")
+    numpy.savez(tmp, **kwargs)
+    os.replace(tmp, path)
+
+
 def _csv_rows_of(f: str) -> List[List[str]]:
     '''
     Read all data rows from a CSV file, skipping the header.
