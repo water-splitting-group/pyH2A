@@ -13,7 +13,18 @@ input_dict = {
 				"dimension": "mass/time",
 			},
 			"optional": True,
-			"description": "Plant design capacity in mass of H2 / time."
+			"description": "Plant design capacity in mass of product / time."
+		},
+		"Design output by year": { 
+			"Value": {
+				"type": {np.ndarray},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "mass",
+			},
+			"optional": True,
+			"description": "Yearly production of product, ignoring the capacity factor"
 		},
 		"Operating capacity factor": { 
 			"Value": {
@@ -25,17 +36,6 @@ input_dict = {
 			},
 			"optional": False,
 			"description": "Operating capacity factor value between 0 and 1."
-		},
-		"Design output by year": { 
-			"Value": {
-				"type": {np.ndarray},
-				"bounds": (0, None),
-			},
-			"Unit": {
-				"dimension": "mass",
-			},
-			"optional": True,
-			"description": "Yearly production of hydrogen, ignoring the capacity factor"
 		},
 		"Fraction of output that reaches gate": { 
 			"Value": {
@@ -62,7 +62,7 @@ output_dict = {
 			"optional": False,
 			"description": "Yearly output, ignoring the capacity factor."
 		},
-		"Sum of design output": { 
+		"Total design output": { 
 			"Value": {
 				"inserted_value": "sum_design_output",
 				"type": {float, int},
@@ -78,9 +78,9 @@ output_dict = {
 				"dimension": "mass",
 			},
 			"optional": False,
-			"description": "Actual yearly output at gate."
+			"description": "Actual output at gate by year."
 		},
-		"Sum of output at gate": { 
+		"Total output at gate": { 
 			"Value": {
 				"inserted_value": "sum_output_gate",
 				"type": {float, int},
@@ -99,10 +99,10 @@ class Production_Plugin:
 	----------
 	Technical Operating Parameters and Specifications > Plant design capacity > Value : float or int
 		Plant design capacity in mass per time.
-	Technical Operating Parameters and Specifications > Operating capacity factor > Value : float
-		Operating capacity factor value between 0 and 1.
 	Technical Operating Parameters and Specifications > Design output by year > Value : np.ndarray
 		Yearly production of hydrogen, ignoring the capacity factor.
+	Technical Operating Parameters and Specifications > Operating capacity factor > Value : float
+		Operating capacity factor value between 0 and 1.
 	Technical Operating Parameters and Specifications > Fraction of output that reaches gate > Value : float
 		Ratio between the gate production and the raw production.
 		
@@ -110,57 +110,49 @@ class Production_Plugin:
 	-------
 	Technical Operating Parameters and Specifications > Design output by year > Value : np.ndarray
 		Yearly production of hydrogen, ignoring the capacity factor.
-	Technical Operating Parameters and Specifications > Sum of design output > Value : float, int
+	Technical Operating Parameters and Specifications > Total design output > Value : float, int
 		Cumulated output during plant lifetime, ignoring the capacity factor
 	Technical Operating Parameters and Specifications > Output at gate by year > Value : np.ndarray
 		Actual yearly output at gate.
-	Technical Operating Parameters and Specifications > Sum of output at gate > Value : float
+	Technical Operating Parameters and Specifications > Total output at gate > Value : float
 		Cumulated output at gate during plant lifetime.
 
 	'''
 
 	def __init__(self, dcf, print_info):
 		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Production_Plugin')
-		self.dictionary = self.input_dict_resolved['Technical Operating Parameters and Specifications']
 
 		self.calculate_output(dcf)
 
 		output_inserter_function(output_dict, self, dcf, 'Production_Plugin')     
 
 	def calculate_output(self, dcf):
-		'''Calculation of yearly output and yearly output at gate, as well as their sum over the plant lifetime.
+		'''Calculation of yearly output and yearly output at gate, 
+		as well as their sum over the plant lifetime.
 		'''
 
-		if 'Plant design capacity' in self.dictionary and 'Design output by year' not in self.dictionary:
-			design_output_kg_by_year = (self.dictionary['Plant design capacity']['Value'].unit['kg/year'] 
-											* np.ones(len(dcf.inflation_factor))
-										)
-			
-			design_output_kg_by_year[0:dcf.inp['Financial Input Values']['Construction time']['Value']] = 0.0
+		operating_parameters = self.input_dict_resolved['Technical Operating Parameters and Specifications']
 
-		elif 'Plant design capacity' not in self.dictionary and 'Design output by year' in self.dictionary:
-			if len(dcf.inflation_factor) == len(self.dictionary['Design output by year']['Value'].unit['kg']):
-				design_output_kg_by_year = self.dictionary['Design output by year']['Value'].unit['kg']  
-			else:
-				raise ValueError(
-					f"Production plugin: Design output by year, of length "
-					f"{len(self.dictionary['Design output by year']['Value'].unit['kg'])} "
-					f", differs from the number of operation years {len(dcf.inflation_factor)}."
-				)
+		# Use design output by year array, if available
+		if 'Design output by year' in operating_parameters:
+			self.design_output_by_year = operating_parameters['Design output by year']['Value']
 
+		# Otherwise fall back to plant design capacity
 		else:
-			raise ValueError (f"Production plugin: either the Plant design capacity, or the Design output by year, must be specified.")
+			# Horrible ugly mess, which will be fixed with time plugin
+			design_output_by_year_kg = (operating_parameters['Plant design capacity']['Value'].unit['kg/year']
+							   			* np.ones(len(dcf.inflation_factor)))
+			design_output_by_year_kg[:dcf.inp['Financial Input Values']['Construction time']['Value']] = 0.0
+			self.design_output_by_year = Quantity(design_output_by_year_kg, 'kg')
 
-		self.design_output_by_year = Quantity(design_output_kg_by_year, "kg")
+		# Calculation of output at gate by year array,
+		# by multiplying design output with operating capacity factor (what fraction of time is the plant operating)
+		# and with the fraction of output that reaches the gate (what fraction of the raw production reaches the gate after losses)
+		self.output_per_year_at_gate = Quantity(self.design_output_by_year.unit['kg']
+										        * operating_parameters['Operating capacity factor']['Value'].unit['-']
+										        * operating_parameters['Fraction of output that reaches gate']['Value'].unit['-'],
+												'kg')
 
-		output_kg_per_year_at_gate = (design_output_kg_by_year 
-										* self.dictionary['Operating capacity factor']['Value'].unit['-'] 
-										* self.dictionary['Fraction of output that reaches gate']['Value'].unit['-'])
-		
-		self.output_per_year_at_gate = Quantity(output_kg_per_year_at_gate, "kg")
-
-		self.sum_design_output = Quantity(np.sum(design_output_kg_by_year), "kg")
-		self.sum_output_gate = Quantity(np.sum(output_kg_per_year_at_gate), "kg")
-
-
-
+		# Computing sum of design output and output at gate
+		self.sum_design_output = Quantity(np.sum(self.design_output_by_year.unit['kg']), 'kg')
+		self.sum_output_gate = Quantity(np.sum(self.output_per_year_at_gate.unit['kg']), 'kg')
