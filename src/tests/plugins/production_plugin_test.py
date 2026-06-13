@@ -41,17 +41,21 @@ class DummyDCF:
                 "Technical Operating Parameters and Specifications": {
                     "Operating capacity factor": {
                         "Value": operating_capacity_factor, 
-                        "Unit":"-"
+                        "Unit": "-"
                     },
                     "Design output by year": {
                         "Value": design_output_by_year, 
-                        "Unit":"kg",
+                        "Unit": "kg",
                         "Processed": "Yes",
                     },
-                    "Fraction of output that reaches gate": {"Value": fraction_of_output_that_reaches_gate, "Unit":"-"},
+                    "Fraction of output that reaches gate": {
+                        "Value": fraction_of_output_that_reaches_gate,
+                        "Unit": "-"
+                    },
                 }, 
                 "Financial Input Values": {
-                    "Construction time": {"Value": construction_duration},
+                    "Construction time": {
+                        "Value": construction_duration},
                 },             
             }    
 
