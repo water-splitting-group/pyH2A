@@ -214,7 +214,19 @@ def test_plugin_IO():
             'Summed Total': {
                 'Value': Quantity(100.0, 'USD')
                 },
-            }
+            },
+        'Absent Table Testing': {
+            'Contributions': {
+                'Value': {
+                    'Data': {},
+                    'Table Group': 'Absent Table Testing',
+                    'Total': Quantity(0.0, 'kg')
+                    }
+                },
+            'Summed Group Total': {
+                'Value': Quantity(0.0, 'kg')
+                }
+            }, 
         }
 
     expected_plugin_a_output = {
