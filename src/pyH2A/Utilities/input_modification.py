@@ -8,6 +8,7 @@ import operator
 import numpy as np
 
 from pyH2A.Utilities.Unit_Handler import Quantity
+from pyH2A.Utilities.Unit_Handler.config import DIMENSIONS
 
 def import_plugin(plugin_name, plugin_module):
 	'''Importing module.
@@ -865,6 +866,7 @@ def sum_all_tables(dictionary, table_group, bottom_key, insert_total = False,
 def sum_table_quantity(dictionary, 
 					   top_key, 
 					   bottom_key,
+			   		   base_unit = None,
 					   insert_total = False,
 					   middle_key_total_insertion = 'Summed Total',
 					   bottom_key_insertion = 'Value',
@@ -880,6 +882,8 @@ def sum_table_quantity(dictionary,
 		Top key.
 	bottom_key : str, ndarray or list
 		Bottom key.
+	base_unit : str, optional
+		Base unit which is used for the creation of the output quantity object.	
 	insert_total : bool, optional
 		If `insert_total` is True, the total of each table is inserted in the
 		respective table.
@@ -904,7 +908,7 @@ def sum_table_quantity(dictionary,
 		quantity = dictionary[top_key][key][bottom_key]
 		value += quantity.base_value
 
-	value = Quantity(value, quantity.base_unit)
+	value = Quantity(value, base_unit)
 
 	if insert_total is True:
 		insert(class_object, top_key, middle_key_total_insertion, bottom_key_insertion, 
@@ -916,6 +920,7 @@ def sum_all_tables_quantity(dictionary,
 							table_group, 
 							insert_total_table_group = False,
 				   			class_object = None, 
+							base_unit = None,
 							middle_key_total_insertion = 'Summed Total', 
 							middle_key_total_group_insertion = 'Summed Group Total',
 							middle_key_contributions_insertion = 'Contributions',
@@ -939,6 +944,8 @@ def sum_all_tables_quantity(dictionary,
 		is inserted in class_object.inp at table_group > middle_key_total_group_insertion > bottom_key_insertion.
 	class_object : Discounted_Cash_Flow object
 		Discounted_Cash_Flow object whose .inp attribute is modified.
+	base_unit : str, optional
+		Base unit which is used for the creation of the output quantity object.
 	middle_key_total_insertion : str, optional
 		Middle key, in which the total of each table was previously inserted by ``sum_table_quantity()``.
 	middle_key_total_group_insertion : str, optional
@@ -974,8 +981,8 @@ def sum_all_tables_quantity(dictionary,
 			value = dictionary[key][middle_key_total_insertion][bottom_key_insertion]
 			total += value.base_value
 			contributions['Data'][key] = value.base_value
-				
-	total = Quantity(total, value.base_unit)
+
+	total = Quantity(total, base_unit)
 	contributions['Total'] = total
 
 	# Inserting total sum across all tables in table group
@@ -1011,3 +1018,17 @@ def daily_to_yearly_power(dictionary):
 	yearly_power = stacked_array.sum(axis = 1)
 
 	return yearly_power
+
+def retrieve_base_unit(table_dictionary):
+	'''Retrieve dimension of unit from input dictionary.
+	Return base unit of retrieved dimension using DIMENSIONS from unit handler.
+	'''
+
+	for row in table_dictionary.values():
+		if isinstance(row, dict):
+			for key, value in row.items():
+				if "Unit" in key and isinstance(value, dict):
+
+					dimension = value.get("dimension")
+					return DIMENSIONS[dimension]["base"]
+

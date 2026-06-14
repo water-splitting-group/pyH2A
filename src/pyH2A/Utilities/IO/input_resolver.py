@@ -1,9 +1,15 @@
 import pprint as pp
 import numpy as np
 
-from pyH2A.Utilities.check_functions import check_type, check_if_in_options, check_dimension, check_bounds
+from pyH2A.Utilities.check_functions import (check_type, 
+                                             check_if_in_options, 
+                                             check_dimension, 
+                                             check_bounds)
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
-from pyH2A.Utilities.input_modification import process_input, sum_table_quantity, sum_all_tables_quantity
+from pyH2A.Utilities.input_modification import (process_input,
+                                                sum_table_quantity, 
+                                                sum_all_tables_quantity, 
+                                                retrieve_base_unit)
 
 from tests.Utilities.Input_Resolver.input_resolver_test_data import DummyDCF, input_dict, input_dict_resolved
 
@@ -620,12 +626,15 @@ def table_resolver_function(top_key, table_dict, dcf_class):
         sum_table_arguments.pop('middle_key_contributions_insertion', None)
         sum_table_arguments.pop('middle_key_total_group_insertion', None)
 
+        base_unit = retrieve_base_unit(table_dict)
+
         table_sum = sum_table_quantity(
             dictionary = {top_key: resolved_table},
             top_key = top_key,
             insert_total = True,
             class_object = dcf_class,
             print_info = False,
+            base_unit = base_unit,
             **sum_table_arguments)
 
         resolved_table[sum_table_arguments['middle_key_total_insertion']] = {sum_table_arguments['bottom_key_insertion']: table_sum}     
@@ -674,6 +683,8 @@ def table_group_resolver_function(table_group_top_key, table_group_dict, dcf_cla
         
         sum_table_arguments = dict(table_group_dict[SUM_TABLES_KEY]['arguments'])
         sum_table_arguments.pop('bottom_key', None)
+        
+        base_unit = retrieve_base_unit(table_group_dict)
 
         sum, contributions = sum_all_tables_quantity(
                     dictionary = resolved_table_group,
@@ -682,6 +693,7 @@ def table_group_resolver_function(table_group_top_key, table_group_dict, dcf_cla
                     class_object = dcf_class,
                     print_info = False,
                     return_contributions = True,
+                    base_unit = base_unit,
                     **sum_table_arguments)
         
         # Updating resolved_table_group with total sum and contributions across all tables in the group 
