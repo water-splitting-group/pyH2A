@@ -21,7 +21,3 @@ dependencies = [
     "pytest>=8.4.2",
     "scipy>=1.13.1",
 ]
-
-[tool.pytest.ini_options]
-testpaths = ["src/tests/plugins"]
-addopts = "-v"
