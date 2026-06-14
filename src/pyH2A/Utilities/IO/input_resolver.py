@@ -9,7 +9,8 @@ from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 from pyH2A.Utilities.input_modification import (process_input,
                                                 sum_table_quantity, 
                                                 sum_all_tables_quantity, 
-                                                retrieve_base_unit)
+                                                retrieve_base_unit,
+                                                insert)
 
 from tests.Utilities.Input_Resolver.input_resolver_test_data import DummyDCF, input_dict, input_dict_resolved
 
