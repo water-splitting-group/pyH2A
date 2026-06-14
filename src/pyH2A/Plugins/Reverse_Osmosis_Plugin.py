@@ -19,7 +19,7 @@ input_dict = {
 			"Value": {
 				"type": {float, int},
 				"bounds": (0, 1),
-    },
+            },
 			"Unit": {
 				"dimension": "dimensionless",
 			},
@@ -37,7 +37,7 @@ input_dict = {
                 "dimension": "energy / volume",
             },
             "optional": False,
-            "description": "Power demand of reverse osmosis plant of sea water in energy demand of reverse osmosis in energy / volume (of feed water)."
+            "description": "Power demand of reverse osmosis plant of sea water in energy / volume (of feed water)."
         },
         "Average operating time fraction": {
             "Value": {
@@ -48,7 +48,8 @@ input_dict = {
                 "dimension": "dimensionless",
             },
             "optional": False,
-            "description": "Fraction of time during which reverse osmosis plant is operating, a value of 1 (100%) is corresponding to 24/7 operation."
+            "description": "Fraction of time during which reverse osmosis plant is operating, "
+                           "a value of 1 (100%) is corresponding to 24/7 (continuous) operation."
         },
         "Recovery rate": {
             "Value": {
@@ -68,7 +69,7 @@ output_dict = {
     "Power Consumption": {
         "Reverse osmosis consumption (yearly)": {
             "Value": {
-                "inserted_value": "electricity_demand",
+                "inserted_value": "electricity_demand_by_year",
                 "type": {np.ndarray,}, 
                 "dimension": "energy",
             },
@@ -84,8 +85,8 @@ output_dict = {
         "Capacity": {
             "Value": {
                 "inserted_value": "maximum_sea_water_processing_flowrate",
-                "type": {float,}, 
-                "dimension": "volume/time",
+                "type": {float,int,}, 
+                "dimension": "volume / time",
             },
             "description": "Maximum sea water processing capacity per hour of reverse osmosis plant.",
             "optional": False,
@@ -139,20 +140,18 @@ class Reverse_Osmosis_Plugin:
         DENSITY_WATER_KG_PER_M3 = 997
 
         output_per_year_kg_H2 = (self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output by year']['Value'].unit['kg'] 
-                                 *
-                                 self.input_dict_resolved['Technical Operating Parameters and Specifications']['Operating capacity factor']['Value'].unit['-']
-                                 )
+                                 * self.input_dict_resolved['Technical Operating Parameters and Specifications']['Operating capacity factor']['Value'].unit['-'])
 
-        fresh_water_demand_kg = output_per_year_kg_H2 * MOLAR_RATIO_WATER
-        fresh_water_demand_m3 = fresh_water_demand_kg / DENSITY_WATER_KG_PER_M3
+        fresh_water_demand_kg_by_year = output_per_year_kg_H2 * MOLAR_RATIO_WATER
+        fresh_water_demand_m3_by_year = fresh_water_demand_kg_by_year / DENSITY_WATER_KG_PER_M3
 
-        self.sea_water_demand = Quantity(
-                                        fresh_water_demand_m3 
+        self.sea_water_demand_by_year = Quantity(fresh_water_demand_m3_by_year 
                                          / self.input_dict_resolved['Reverse Osmosis']['Recovery rate']['Value'].unit['-'], 
                                          'm3')
 
-        electricity_demand_J = self.sea_water_demand.unit['m3'] * self.input_dict_resolved['Reverse Osmosis']['Power demand']['Value'].unit['J/m3']
-        self.electricity_demand = Quantity(electricity_demand_J[dcf.inp['Financial Input Values']['Construction time']['Value']:], 'J')
+        # Fixing the array slicing with time plugin
+        electricity_demand_J_by_year = self.sea_water_demand_by_year.unit['m3'] * self.input_dict_resolved['Reverse Osmosis']['Power demand']['Value'].unit['J/m3']
+        self.electricity_demand_by_year = Quantity(electricity_demand_J_by_year[dcf.inp['Financial Input Values']['Construction time']['Value']:], 'J')
 
     def calculate_reverse_osmosis_scaling(self):
         '''
@@ -160,14 +159,7 @@ class Reverse_Osmosis_Plugin:
         yearly sea water demand and average daily operating hours.
         '''
 
-        average_operating_time_fraction = self.input_dict_resolved['Reverse Osmosis']['Average operating time fraction']['Value'].unit['-']
-        
-        try:
-            maximum_yearly_sea_water_demand_m3 = max(self.sea_water_demand.unit['m3'])
-        except TypeError:
-            maximum_yearly_sea_water_demand_m3 = self.sea_water_demand.unit['m3']
-
-        self.maximum_sea_water_processing_flowrate = Quantity(
-                                                            maximum_yearly_sea_water_demand_m3 
-                                                            / average_operating_time_fraction, 
-                                                            'm3/year')
+        maximum_yearly_sea_water_demand_m3 = max(self.sea_water_demand_by_year.unit['m3'])
+        self.maximum_sea_water_processing_flowrate = Quantity(maximum_yearly_sea_water_demand_m3 
+                                                              / self.input_dict_resolved['Reverse Osmosis']['Average operating time fraction']['Value'].unit['-'], 
+                                                     'm3/year')

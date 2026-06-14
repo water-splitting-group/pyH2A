@@ -64,9 +64,8 @@ class DummyDCF:
                 "recovery_rate": 0.1,                    
             },
             "expected": {
-                "electricity_demand_kWh": Quantity(
-                                                    np.array([1613.3471844103742, 1702.977583544284]), 
-                                                    "kWh"),
+                "electricity_demand_kWh": Quantity(np.array([1613.3471844103742, 1702.977583544284]), 
+                                                   "kWh"),
                 "max_capacity_m3_per_hour": Quantity(0.019440383373793193, "m3/h")
             },
         }
@@ -86,7 +85,7 @@ def test_reverse_osmosis_plugin(case):
     tolerance = 1e-12
 
     np.testing.assert_allclose(
-        plugin.electricity_demand.unit["J"],
+        plugin.electricity_demand_by_year.unit["J"],
         expected["electricity_demand_kWh"].unit["J"],
         rtol=tolerance, 
         atol=tolerance
