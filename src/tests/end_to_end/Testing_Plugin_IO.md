@@ -71,16 +71,17 @@ Color | darkblue
 
 # Technical Operating Parameters and Specifications
 
-Name | Value | Comment
---- | --- | ---
-Plant Design Capacity (kg of H2/day) | 1000 | Placeholder
-Operating Capacity Factor (%) | 100% | Placeholder
+Name | Value | Unit | Comment
+--- | --- | --- | ---
+Plant design capacity | 1000 | kg/day | Placeholder
+Operating capacity factor | 100% | - | Placeholder
+Fraction of output that reaches gate | 100% | - | Placeholder
 
 # Construction
 
-Name | Full Name | Value
---- | --- | ---
-capital perc 1st | % of capital spent in 1st year of construction | 100%
+Name | Full Name | Value | Unit
+--- | --- | --- | ---
+capital perc 1st | % of capital spent in 1st year of construction | 100% | -
 
 # Non-Depreciable Capital Costs
 

@@ -2,7 +2,7 @@
 
 Name | Type | Position | Description
 --- | --- | --- | ---
-Production_Scaling_Plugin | plugin | 1 | Computes plant output and scaling factors (if scaling is requested)
+Production_Plugin | plugin | 1 | Computes plant output
 production_scaling | function | 2 | core function to process yearly plant output
 Capital_Cost_Plugin | plugin | 3 | Calculation of direct, indirect and non-depreciable capital costs
 initial_equity_depreciable_capital | function | 4 | core function to process depreciable capital costs

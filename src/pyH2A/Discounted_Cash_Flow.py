@@ -459,7 +459,7 @@ class Discounted_Cash_Flow:
 
 		self.output_per_year_at_gate = process_input(self.inp, 
 										'Technical Operating Parameters and Specifications', 
-										'Output per year at gate', 
+										'Output at gate by year', 
 										'Value')
 
 		return 0.
