@@ -1,14 +1,3 @@
-'''Utilities for working with openLCA matrix exports in pyH2A.
-
-This module was originally generated based on the openLCA source code, which
-is licensed under the Mozilla Public License 2.0 (MPL 2.0; see
-https://github.com/GreenDelta/olca-app).
-
-It has been extensively modified to prioritize sparse-matrix calculations to
-speed up LCA-based Monte Carlo analysis. Functions load matrices, parse
-index CSV files, locate matrix files, and perform repeated solves against a
-shared coefficient matrix without re-factorizing.
-'''
 from __future__ import annotations
 import csv
 from functools import lru_cache
