@@ -5,9 +5,9 @@ is licensed under the Mozilla Public License 2.0 (MPL 2.0; see
 https://github.com/GreenDelta/olca-app).
 
 It has been extensively modified to prioritize sparse-matrix calculations to
-speed up LCA-based Monte Carlo analysis. Helper classes and functions have been
-added to load matrices, parse index CSV files, locate matrix files, and perform
-repeated solves against a shared coefficient matrix without re-factorizing.
+speed up LCA-based Monte Carlo analysis. Functions load matrices, parse
+index CSV files, locate matrix files, and perform repeated solves against a
+shared coefficient matrix without re-factorizing.
 '''
 from __future__ import annotations
 import csv
@@ -32,176 +32,65 @@ except ImportError:
     scikit_umfpack = None
 
 
-class TechEntry:
-    '''
-    Meta data for a single row or column of the technosphere matrix A.
+def _csv_rows(path: str) -> List[List[str]]:
+    '''Read all data rows from a CSV file, skipping the header.
 
-    Instances are typically constructed via :meth:`_from_csv` rather than
-    directly, and collected into a dictionary by :meth:`dict_of`.
-
-    Attributes
+    Parameters
     ----------
-    index : int
-        Row/column index in the technosphere matrix A. Default is ``-1``.
-    process_id : str
-        Unique identifier of the process.
-    process_name : str
-        Human-readable name of the process.
-    process_category : str
-        Category of the process.
-    process_location : str
-        Geographic location of the process.
-    flow_id : str
-        Unique identifier of the reference flow.
-    flow_name : str
-        Human-readable name of the reference flow.
-    flow_category : str
-        Category of the reference flow.
-    flow_unit : str
-        Unit of the reference flow.
-    flow_type : str
-        Type of the reference flow (e.g., product, waste).
+    path : str
+        Path to the UTF-8 encoded CSV file.
 
-    See Also
-    --------
-    ImpactEntry : Equivalent structure for characterization-matrix rows.
+    Returns
+    -------
+    List[List[str]]
+        All rows after the header, where each row is a list of string fields.
     '''
-
-    def __init__(self):
-        self.index = -1
-        self.process_id = ''
-        self.process_name = ''
-        self.process_category = ''
-        self.process_location = ''
-        self.flow_id = ''
-        self.flow_name = ''
-        self.flow_category = ''
-        self.flow_unit = ''
-        self.flow_type = ''
-
-    @staticmethod
-    def _from_csv(row: List[str]) -> TechEntry:
-        '''
-        Construct a TechEntry from a CSV row.
-
-        Parameters
-        ----------
-        row : List[str]
-            A row from ``index_A.csv`` with columns: index, process_id,
-            process_name, process_category, process_location, flow_id,
-            flow_name, flow_category, flow_unit, flow_type.
-
-        Returns
-        -------
-        TechEntry
-            Populated TechEntry instance.
-        '''
-        e = TechEntry()
-        e.index = int(row[0])
-        e.process_id = row[1]
-        e.process_name = row[2]
-        e.process_category = row[3]
-        e.process_location = row[4]
-        e.flow_id = row[5]
-        e.flow_name = row[6]
-        e.flow_category = row[7]
-        e.flow_unit = row[8]
-        e.flow_type = row[9]
-        return e
-
-    @staticmethod
-    def dict_of(file_path: str) -> dict:
-        '''
-        Build a dictionary of TechEntry objects keyed by process ID.
-
-        Parameters
-        ----------
-        file_path : str
-            Path to the ``index_A.csv`` file.
-
-        Returns
-        -------
-        dict
-            Mapping from ``process_id`` (str) to :class:`TechEntry`.
-        '''
-        dict_index = {}
-        for row in _csv_rows_of(file_path):
-            entry = TechEntry._from_csv(row)
-            dict_index[entry.process_id] = entry
-        return dict_index
+    with open(path, 'r', encoding='utf-8') as stream:
+        reader = csv.reader(stream)
+        next(reader)
+        return list(reader)
 
 
-class ImpactEntry:
-    '''
-    Meta data for a single row of the characterization matrix C.
+def _load_tech_index(folder: str) -> dict:
+    '''Load technosphere index from ``index_A.csv`` as ``{process_id: row_index}``.
 
-    Instances are typically constructed via :meth:`_from_csv` rather than
-    directly, and collected into an ordered list by :meth:`index_of`.
-
-    Attributes
+    Parameters
     ----------
-    index : int
-        Row index in the characterization matrix C. Default is ``-1``.
-    impact_id : str
-        Unique identifier of the impact category.
-    impact_name : str
-        Human-readable name of the impact category (e.g., ``'Global Warming'``).
-    impact_unit : str
-        Unit of the impact category (e.g., ``'kg CO2 eq'``).
+    folder : str
+        Path to the openLCA matrix export directory.
 
-    See Also
-    --------
-    TechEntry : Equivalent structure for technosphere-matrix rows/columns.
+    Returns
+    -------
+    dict
+        Mapping from process UUID (str) to integer row/column index in A.
+        Returns an empty dict if ``index_A.csv`` does not exist.
     '''
+    path = os.path.join(folder, 'index_A.csv')
+    if not os.path.exists(path):
+        return {}
+    return {row[1]: int(row[0]) for row in _csv_rows(path)}
 
-    def __init__(self):
-        self.index = -1
-        self.impact_id = ''
-        self.impact_name = ''
-        self.impact_unit = ''
 
-    @staticmethod
-    def _from_csv(row: List[str]) -> ImpactEntry:
-        '''
-        Construct an ImpactEntry from a CSV row.
+def _load_impact_index(folder: str) -> List[dict]:
+    '''Load impact category index from ``index_C.csv``.
 
-        Parameters
-        ----------
-        row : List[str]
-            A row from ``index_C.csv`` with columns:
-            index, impact_id, impact_name, impact_unit.
+    Parameters
+    ----------
+    folder : str
+        Path to the openLCA matrix export directory.
 
-        Returns
-        -------
-        ImpactEntry
-            Populated ImpactEntry instance.
-        '''
-        e = ImpactEntry()
-        e.index = int(row[0])
-        e.impact_id = row[1]
-        e.impact_name = row[2]
-        e.impact_unit = row[3]
-        return e
-
-    @staticmethod
-    def index_of(file_path: str) -> List[ImpactEntry]:
-        '''
-        Build an ordered list of ImpactEntry objects from a CSV file.
-
-        Parameters
-        ----------
-        file_path : str
-            Path to the ``index_C.csv`` file.
-
-        Returns
-        -------
-        List[ImpactEntry]
-            List of :class:`ImpactEntry` objects in row order.
-        '''
-        index = []
-        for row in _csv_rows_of(file_path):
-            index.append(ImpactEntry._from_csv(row))
-        return index
+    Returns
+    -------
+    List[dict]
+        Ordered list of dicts with keys ``index`` (int), ``impact_name`` (str),
+        and ``impact_unit`` (str). Returns an empty list if ``index_C.csv``
+        does not exist.
+    '''
+    path = os.path.join(folder, 'index_C.csv')
+    if not os.path.exists(path):
+        return []
+    return [{'index': int(row[0]), 'impact_name': row[2], 'impact_unit': row[3]}
+            for row in _csv_rows(path)]
 
 
 def find_matrix_path(folder: str, name: str):
@@ -228,8 +117,7 @@ def find_matrix_path(folder: str, name: str):
 
 
 def matrix_of(file_path: str):
-    '''
-    Load a matrix from a file.
+    '''Load a matrix from a file.
 
     Parameters
     ----------
@@ -245,8 +133,7 @@ def matrix_of(file_path: str):
     '''
     if file_path.endswith('.npz'):
         return scipy.sparse.load_npz(file_path)
-    else:
-        return numpy.load(file_path)
+    return numpy.load(file_path)
 
 
 def atomic_savez(path: Path, **kwargs):
@@ -264,208 +151,13 @@ def atomic_savez(path: Path, **kwargs):
     os.replace(tmp, path)
 
 
-def _csv_rows_of(f: str) -> List[List[str]]:
-    '''
-    Read all data rows from a CSV file, skipping the header.
-
-    Parameters
-    ----------
-    f : str
-        Path to the UTF-8 encoded CSV file.
-
-    Returns
-    -------
-    List[List[str]]
-        All rows after the header, where each row is a list of string fields.
-    '''
-    with open(f, 'r', encoding='utf-8') as stream:
-        reader = csv.reader(stream)
-        next(reader)  # skip header
-        return list(reader)
-
-
-class ExportFolder:
-    '''
-    Interface to an openLCA matrix-export directory.
-
-    Provides methods to load the technosphere index, impact index, and
-    individual matrix files (A, B, C, f) from a directory produced by the
-    openLCA matrix-export feature.
-
-    Parameters
-    ----------
-    folder : str
-        Path to the openLCA matrix-export directory containing
-        ``index_A.csv``, ``index_C.csv``, and the matrix files.
-
-    Attributes
-    ----------
-    folder : str
-        The directory path supplied at construction.
-
-    See Also
-    --------
-    Matrix : String constants for standard matrix file names.
-    '''
-
-    def __init__(self, folder: str):
-        self.folder = folder
-
-    def tech_index(self) -> dict[str, TechEntry]:
-        '''
-        Load the technosphere index from ``index_A.csv``.
-
-        Returns
-        -------
-        dict[str, TechEntry]
-            Mapping from ``process_id`` (str) to :class:`TechEntry`.
-            Returns an empty dict if ``index_A.csv`` does not exist.
-        '''
-        path = os.path.join(self.folder, 'index_A.csv')
-        if not os.path.exists(path):
-            return {}
-        return TechEntry.dict_of(path)
-
-    def impact_index(self) -> List[ImpactEntry]:
-        '''
-        Load the impact category index from ``index_C.csv``.
-
-        Returns
-        -------
-        List[ImpactEntry]
-            Ordered list of :class:`ImpactEntry` objects.
-            Returns an empty list if ``index_C.csv`` does not exist.
-        '''
-        path = os.path.join(self.folder, 'index_C.csv')
-        if not os.path.exists(path):
-            return []
-        return ImpactEntry.index_of(path)
-
-    def has_impacts(self):
-        '''
-        Check whether the export folder contains an impact index.
-
-        Returns
-        -------
-        bool
-            ``True`` if ``index_C.csv`` exists in the folder,
-            ``False`` otherwise.
-        '''
-        path = os.path.join(self.folder, 'index_C.csv')
-        return os.path.exists(path)
-
-    def load(self, name: str):
-        '''
-        Load a named matrix file from the export folder.
-
-        File lookup is delegated to :func:`find_matrix_path`, which tries
-        ``.npz``, ``.npy``, and no extension in that order.
-
-        Parameters
-        ----------
-        name : str
-            Base name of the matrix file (e.g., ``'A'``, ``'B'``, ``'C'``).
-
-        Returns
-        -------
-        scipy.sparse.spmatrix, numpy.ndarray, or None
-            The loaded matrix, or ``None`` if no matching file is found.
-        '''
-        path = find_matrix_path(self.folder, name)
-        return matrix_of(path) if path is not None else None
-
-    def tech_process_indices(self, matrix_a=None) -> numpy.ndarray:
-        '''
-        Extract technosphere indices and UUIDs for nonzero entries in ``A[:, 0]``.
-
-        Parameters
-        ----------
-        matrix_a : ndarray or scipy.sparse.spmatrix, optional
-            Pre-loaded technosphere matrix. When ``None``, the matrix is loaded
-            from disk via :meth:`load`.
-
-        Returns
-        -------
-        numpy.ndarray
-            Three-column object array with ``[index, uuid, value]`` per row for
-            nonzero components of the first technosphere column.
-        '''
-        if matrix_a is None:
-            matrix_a = self.load(Matrix.A)
-
-        col0 = matrix_a[:, 0]
-        a_col0 = numpy.asarray(col0.toarray() if scipy.sparse.issparse(matrix_a) else col0).reshape(-1)
-        nonzero = set(numpy.flatnonzero(a_col0).tolist())
-
-        rows = [
-            (entry.index, uuid, a_col0[entry.index])
-            for uuid, entry in self.tech_index().items()
-            if entry.index in nonzero
-        ]
-
-        return numpy.array(rows, dtype=object)
-
-class Matrix:
-    '''
-    String constants for the standard openLCA matrix file names.
-
-    Attributes
-    ----------
-    A : str
-        Technosphere matrix file name (``'A'``).
-    B : str
-        Intervention matrix file name (``'B'``).
-    C : str
-        Characterization matrix file name (``'C'``).
-    f : str
-        Final-demand vector file name (``'f'``).
-    '''
-
-    A = 'A'
-    B = 'B'
-    C = 'C'
-    f = 'f'
-
-
-class _FactorizedSolver:
-    '''Holds a pre-factorized matrix for repeated right-hand-side solves.
-
-    Wraps a solver callable produced by :func:`factorize` and exposes a
-    uniform ``.solve(rhs)`` interface regardless of the underlying solver
-    (pypardiso, UMFPACK, splu, or dense LU).
-
-    Parameters
-    ----------
-    _solve_fn : callable
-        Callable that accepts an array of shape ``(n,)`` or ``(n, k)`` and
-        returns the solution with the same shape.
-    '''
-
-    def __init__(self, _solve_fn):
-        self._solve_fn = _solve_fn
-
-    def solve(self, rhs):
-        '''Solve for one or many right-hand sides.
-
-        Parameters
-        ----------
-        rhs : array-like, shape (n,) or (n, k)
-            A single RHS vector or a matrix of k RHS column vectors.
-
-        Returns
-        -------
-        ndarray, shape (n,) or (n, k)
-            Solution vector(s). Shape matches input.
-        '''
-        return self._solve_fn(numpy.asarray(rhs))
-
 def factorize(matrix):
-    '''Factorize a matrix and return a solver for repeated solves.
+    '''Factorize a matrix and return a callable for repeated solves.
 
     Performs the (potentially expensive) factorization once and returns a
-    :class:`_FactorizedSolver` whose ``.solve(rhs)`` method reuses the stored
-    factors. The solver backend is selected in priority order: pypardiso →
-    scikit-umfpack → scipy splu (sparse), or scipy dense LU (dense).
+    callable ``solver(rhs)`` that reuses the stored factors. The backend is
+    selected in priority order: pypardiso → scikit-umfpack → scipy splu
+    (sparse), or scipy dense LU (dense).
 
     Parameters
     ----------
@@ -474,8 +166,8 @@ def factorize(matrix):
 
     Returns
     -------
-    _FactorizedSolver
-        Object with a ``.solve(rhs)`` method that reuses the stored factors.
+    callable
+        A function ``solver(rhs)`` that solves ``matrix @ x = rhs`` for ``x``.
 
     Notes
     -----
@@ -483,24 +175,93 @@ def factorize(matrix):
     inverse of a sparse matrix is generally dense and should never be formed.
     '''
     if scipy.sparse.issparse(matrix):
-        # pypardiso: spsolve handles factorization internally and is the fastest option
         if pypardiso is not None:
-            return _FactorizedSolver(lambda rhs: pypardiso.spsolve(matrix, rhs))
-
-        # scikit-umfpack: if available, use for sparse LU
-        if scikit_umfpack is not None:
-            csc = matrix.tocsc() if not scipy.sparse.isspmatrix_csc(matrix) else matrix
-            solver = scikit_umfpack.UmfpackLU(csc)
-            return _FactorizedSolver(solver.solve)
-
-        # splu: factorize once, reuse sparse LU factors for each rhs
+            return lambda rhs: pypardiso.spsolve(matrix, numpy.asarray(rhs))
         csc = matrix.tocsc() if not scipy.sparse.isspmatrix_csc(matrix) else matrix
+        if scikit_umfpack is not None:
+            lu = scikit_umfpack.UmfpackLU(csc)
+            return lambda rhs: lu.solve(numpy.asarray(rhs))
         lu = scipy.sparse.linalg.splu(csc)
-        return _FactorizedSolver(lu.solve)
-
-    # Dense matrix: LU factorization with partial pivoting
+        return lambda rhs: lu.solve(numpy.asarray(rhs))
     lu, piv = scipy.linalg.lu_factor(matrix)
-    return _FactorizedSolver(lambda rhs: scipy.linalg.lu_solve((lu, piv), rhs))
+    return lambda rhs: scipy.linalg.lu_solve((lu, piv), numpy.asarray(rhs))
+
+
+def tech_process_indices(matrix_folder: str, matrix_a) -> numpy.ndarray:
+    '''Extract technosphere indices and UUIDs for nonzero entries in ``A[:, 0]``.
+
+    Parameters
+    ----------
+    matrix_folder : str
+        Path to the openLCA matrix export directory, used to load ``index_A.csv``.
+    matrix_a : ndarray or scipy.sparse.spmatrix
+        Technosphere matrix.
+
+    Returns
+    -------
+    numpy.ndarray
+        Three-column object array with ``[index, uuid, value]`` per row for
+        nonzero components of the first technosphere column.
+    '''
+    col0 = matrix_a[:, 0]
+    a_col0 = numpy.asarray(col0.toarray() if scipy.sparse.issparse(matrix_a) else col0).reshape(-1)
+    nonzero = set(numpy.flatnonzero(a_col0).tolist())
+    rows = [
+        (idx, uuid, a_col0[idx])
+        for uuid, idx in _load_tech_index(matrix_folder).items()
+        if idx in nonzero
+    ]
+    return numpy.array(rows, dtype=object)
+
+
+def load_matrices_from_folder(matrix_folder: str):
+    '''Load openLCA folder metadata and matrices.
+
+    Parameters
+    ----------
+    matrix_folder : str
+        Path to the openLCA matrix export folder.
+
+    Returns
+    -------
+    impact_index : List[dict]
+        Ordered list of dicts with keys ``index``, ``impact_name``, and
+        ``impact_unit``, loaded from ``index_C.csv``.
+    techno_index_uuid : numpy.ndarray
+        Three-column object array with ``[index, uuid, value]`` per row
+        for each nonzero entry in the first technosphere column.
+    A : numpy.ndarray or scipy.sparse.spmatrix
+        Technosphere matrix.
+    B : numpy.ndarray or scipy.sparse.spmatrix
+        Intervention matrix.
+    C : numpy.ndarray or scipy.sparse.spmatrix
+        Characterization matrix.
+    f : numpy.ndarray
+        Demand vector.
+
+    Raises
+    ------
+    ValueError
+        If any required matrix or index file could not be loaded.
+    '''
+    print("Loading matrices from folder:")
+
+    def _load(name):
+        path = find_matrix_path(matrix_folder, name)
+        return matrix_of(path) if path is not None else None
+
+    A = _load('A')
+    techno_index_uuid = tech_process_indices(matrix_folder, A) if A is not None else None
+    B = _load('B')
+    C = _load('C')
+    f = _load('f')
+    impact_index = _load_impact_index(matrix_folder)
+    missing = [name for name, m in zip(('A', 'B', 'C', 'f', 'index_A.csv'),
+                                       (A, B, C, f, techno_index_uuid))
+               if m is None]
+    if missing:
+        raise ValueError(f"{', '.join(missing)} could not be loaded from the specified folder.")
+    return impact_index, techno_index_uuid, A, B, C, f
 
 
 @lru_cache(maxsize=None)
