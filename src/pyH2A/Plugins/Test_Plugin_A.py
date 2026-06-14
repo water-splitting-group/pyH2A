@@ -41,6 +41,31 @@ input_dict = {
             }
         },
     },
+    '<...> Absent Table Testing <...>': {
+        '<...>': {
+            'Value': {
+                'type': {float, int},
+                'bounds': (0, None),
+                'path': 'Sum Path'
+            },
+            'Unit': {
+                'dimension': 'mass'
+            },
+            'optional': True,
+            'description': 'Testing for applying sum_all_tables to non-existent table group.'
+        },
+        'sum_tables': {
+            'mode': 'all',
+            'arguments': {
+                'bottom_key': 'Value',
+                'middle_key_total_insertion': 'Summed Total',
+                'middle_key_total_group_insertion': 'Summed Group Total',
+                'middle_key_contributions_insertion': 'Contributions',
+                'bottom_key_insertion': 'Value'
+            }
+        },
+    },    
+
     '<...> Indirect Testing <...>': {
         '<...>': {
             'Value': {
