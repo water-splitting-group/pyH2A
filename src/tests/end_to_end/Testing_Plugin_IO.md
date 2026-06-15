@@ -94,9 +94,6 @@ Cost of land | 500.0 | USD/acre | Same as PEC and Photocatalytic model, based on
 
 Name | Full Name | Value | Unit | Comment
 --- | --- | --- | ---
-area | Area per staff (m2) | 405,000 | Same as photocatalytic model, solar collection area that can be overseen by one staff member.
-supervisor | Shift supervisor | 1 | Same as PEC and photocatalytic model, number of shift supervisors.
-shifts | Shifts | 3 | Same as PEC and photocatalytic model, number of shifts per day.
 Hourly labor cost | Burdened labor cost, including overhead ($ per man-hr) | 50.0 | USD/h | Same as PEC and photocatalytic model.
 Staff | Staff needed | 3 | - |Placeholder
 
