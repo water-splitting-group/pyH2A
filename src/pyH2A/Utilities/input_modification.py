@@ -988,7 +988,7 @@ def sum_all_tables_quantity(dictionary,
 		if table_group in key:
 			value = dictionary[key][middle_key_total_insertion][bottom_key_insertion]
 			total += value.base_value
-			contributions['Data'][key] = value.base_value
+			contributions['Data'][key] = value
 
 	total = Quantity(total, base_unit)
 	contributions['Total'] = total

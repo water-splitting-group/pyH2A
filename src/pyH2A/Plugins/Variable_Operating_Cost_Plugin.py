@@ -6,9 +6,9 @@ import numpy as np
 
 input_dict = {	
 	"Technical Operating Parameters and Specifications": {
-		"Output per year": {
+		"Design output by year": {
 			"Value": {
-				"type": {float, np.ndarray},
+				"type": {np.ndarray},
 				"bounds": (0, None)
 			},
 			"Unit": {
@@ -16,7 +16,18 @@ input_dict = {
 			},
 			"optional": False,
 			"description": "Yearly output taking operating capacity factor into account"
-		}
+		},
+		"Operating capacity factor": { 
+			"Value": {
+				"type": {float, int},
+				"bounds": (0, 1),
+			},
+			"Unit": {
+				"dimension": "dimensionless",
+			},
+			"optional": False,
+			"description": "Operating capacity factor value between 0 and 1."
+		},	
 	},
 	"Utilities": {
 		"<...>": {
@@ -153,8 +164,10 @@ class Variable_Operating_Cost_Plugin:
 
 	Parameters
 	----------
-	Technical Operating Parameters and Specifications > Output per year > Value : float
-		Yearly output taking operating capacity factor into account, in (kg of H2).
+	Technical Operating Parameters and Specifications > Design output by year > Value : nd.array
+		Yearly output ignoring capacity factor, in (kg of H2).
+	Technical Operating Parameters and Specifications > Operating capacity factor > Value : float or int
+		Operating capacity factor value between 0 and 1.
 	Utilities > [...] > Cost : float, ndarray or str
 		Cost of utility (e.g. $/kWh for electricity). May be either a float, a ndarray with the
 		same length as `dcf.inflation_correction` or a textfile containing cost values (cost values 
@@ -209,7 +222,8 @@ class Variable_Operating_Cost_Plugin:
 			self.utilities += utility.cost_per_unit_of_product.unit['USD/kg']
 
 		self.utilities = (self.utilities 
-						  * self.input_dict_resolved['Technical Operating Parameters and Specifications']['Output per year']['Value'].unit['kg'])
+						  * self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output by year']['Value'].unit['kg']
+						  * self.input_dict_resolved['Technical Operating Parameters and Specifications']['Operating capacity factor']['Value'].unit['-'])
 		self.utilities = Quantity(self.utilities, 'USD')
 
 	def other_variable_costs(self, dcf):
