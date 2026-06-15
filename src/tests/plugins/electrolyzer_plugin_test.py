@@ -118,7 +118,7 @@ class DummyDCF:
                 },
             },
             "expected": {
-                "h2_production": Quantity(np.array([0.0, 0.0, 2035.0, 2035.0]), 'kg/year'),
+                "h2_production": Quantity(np.array([0.0, 0.0, 2035.0, 2035.0]), 'kg'),
                 "scaling_factor": Quantity(0.9249598065992481, '-'),
                 "replacement_frequency": Quantity(2.0, 'year'),
                 "yearly_data_year": Quantity(np.array([2026.0, 2027.0]),'-'),
@@ -210,8 +210,8 @@ def test_electrolyzer_plugin(case):
     tolerance = 1e-12
 
     np.testing.assert_allclose(
-        plugin.h2_production.unit['kg/s'],
-        expected["h2_production"].unit['kg/s'],
+        plugin.h2_production.unit['kg'],
+        expected["h2_production"].unit['kg'],
         rtol=tolerance,
         atol=tolerance,
     )

@@ -448,18 +448,18 @@ class Discounted_Cash_Flow:
 		self.labor_inflator = labor_price[:,1][labor_idx[0]]/labor_price[:,1][labor_idx[1]]
 		self.chemical_inflator = chemical_price[:,1][chemical_idx[0]]/chemical_price[:,1][chemical_idx[1]]
 
-	def production_scaling(self):
-		'''Get plant output per year at gate.
+	def production(self):
+		'''Get plant Output at gate by year.
 
 		Parameters
 		----------
-		Technical Operating Parameters and Specifications > Output per year at gate > Value : float
-			Output per year at gate in mass.
+		Technical Operating Parameters and Specifications > Output at gate by year > Value : float
+			Output at gate by year in mass.
 		'''
 
 		self.output_per_year_at_gate = process_input(self.inp, 
 										'Technical Operating Parameters and Specifications', 
-										'Output per year at gate', 
+										'Output at gate by year', 
 										'Value')
 
 		return 0.
@@ -634,7 +634,7 @@ class Discounted_Cash_Flow:
 		'''Calculate H2 sales.
 		'''
 
-		self.annual_sales = np.ones(len(self.inflation_factor)) * self.output_per_year_at_gate.unit['kg']
+		self.annual_sales = self.output_per_year_at_gate.unit['kg']
 		self.annual_sales[:self.start_up_time_idx] = self.annual_sales[:self.start_up_time_idx] * self.fin['startup revenues']['Value']
 		self.annual_sales[:self.start_idx] = 0
 

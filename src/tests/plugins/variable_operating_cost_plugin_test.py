@@ -10,6 +10,7 @@ class DummyDCF:
     def __init__(
         self, 
         plant_output_per_year, 
+        capacity_factor,
         utilities, 
         other_variable_costs, 
         inflation_correction,
@@ -17,10 +18,15 @@ class DummyDCF:
     ):  
         self.inp = {
             "Technical Operating Parameters and Specifications": {
-                "Output per year": {
+                "Design output by year": {
                     "Value": plant_output_per_year, 
-                    "Unit":"kg"
-                    }
+                    "Unit":"kg", 
+                    "Processed": "Yes",
+                    },
+                "Operating capacity factor": {
+                    "Value": capacity_factor, 
+                    "Unit":"-"
+                    }                    
             },
             "Utilities": {
                 key: {
@@ -53,7 +59,8 @@ class DummyDCF:
     [
         {
             "input": {
-                "plant_output_per_year": 100_000.0,  
+                "plant_output_per_year": np.array([125_000.0]),
+                "capacity_factor": 0.8,  
                 "utilities": {
                     "Electricity": {
                         "Cost": 0.05, 

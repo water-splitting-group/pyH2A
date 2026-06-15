@@ -120,14 +120,14 @@ input_dict = {
 
 output_dict = {
     "Technical Operating Parameters and Specifications": {
-        "Plant design capacity": {
+        "Design output by year": {
             "Value": {
                 "inserted_value": "h2_production",
-                "type": {np.ndarray,float,},
-                "dimension": "mass / time",
+                "type": {np.ndarray,},
+                "dimension": "mass",
             },
             "optional": False,
-            "description": "Plant design capacity calculated from installed \
+            "description": "Design output by year calculated from installed \
                             electrolysis power capacity and hourly power generation data."
         },
         "Operating capacity factor": {
@@ -184,11 +184,11 @@ output_dict = {
             "optional": False,
             "description": "Yearly operation data of electrolyzer: year, H2 produced, duration of operation."
         },
-        "H2 production (yearly)": {
+        "H2 production (yearly)": { # this will be removed as part of PR117: identical to Design output by year
             "Value": {
                 "inserted_value": "h2_production",
                 "type": {np.ndarray,},
-                "dimension": "mass / time",
+                "dimension": "mass",
             },
             "optional": False,
             "description": "Yearly hydrogen production."
@@ -246,8 +246,8 @@ class Electrolyzer_Plugin:
 
     Returns
     -------
-    Technical Operating Parameters and Specifications > Plant design capacity > Value : nd.array
-        Plant design capacity calculated from installed 
+    Technical Operating Parameters and Specifications > Design output by year > Value : nd.array
+        Design output by year calculated from installed 
         electrolysis power capacity and hourly power generation data.
     Technical Operating Parameters and Specifications >	Operating capacity factor > Value : float
         Operating capacity factor is set to 1.
@@ -263,7 +263,7 @@ class Electrolyzer_Plugin:
         Yearly operation data of electrolyzer : H2 produced during the year.
     Electrolyzer > Yearly operation data > Duration_Value : nd.array
         Yearly operation data of electrolyzer : duration of operation during the year.                
-    Electrolyzer > H2 production (yearly) > Value : nd.array
+    Electrolyzer > H2 production (yearly) > Value : nd.array                        # This will be removed in PR117
         Yearly hydrogen production.
     Power Generation > Available energy (hourly) > Value : dict
         Available energy (hourly) after subtracting power consumed by electrolyzer. 
@@ -339,7 +339,7 @@ class Electrolyzer_Plugin:
                                    np.zeros(int(round(dcf.inp['Financial Input Values']['Construction time']['Value'].unit['year']))), 
                                    self.yearly_data_production.unit['kg']
                                     ])
-        self.h2_production = Quantity(self.h2_production, 'kg/year') # needs to be expressed as a flowrate, as it ultimately serves as the plant design capacity etc
+        self.h2_production = Quantity(self.h2_production, 'kg') 
         
         self.yearly_data_unused_energy = yearly_data_unused_energy
         self.yearly_data_unused_energy_daily = yearly_data_unused_energy_daily
