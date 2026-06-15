@@ -18,6 +18,7 @@ class DummyDCF:
         yearly_operation_data_year, 
         yearly_operation_data_production, 
         yearly_operation_data_duration, 
+        design_output,
         stored_power_daily_kWh,
     ):
 
@@ -63,6 +64,13 @@ class DummyDCF:
                     "Processed": "Yes"
                     },
             },
+            "Technical Operating Parameters and Specifications": {
+                "Design output by year": {
+                    "Value": design_output,
+                    "Unit": "kg",
+                    "Processed": "yes"
+                }
+            },
             "Power Generation": {
                 "Stored energy (daily)": {
                     "Value": stored_power_daily_kWh, 
@@ -89,7 +97,8 @@ class DummyDCF:
                 "electrolyzer_yearly_H2_production_kg": np.array([1.0, 8.0]),
                 "yearly_operation_data_year": np.array([2026, 2027]),
                 "yearly_operation_data_production": np.array([1., 8.]),
-                "yearly_operation_data_duration": np.array([10., 80.]),             
+                "yearly_operation_data_duration": np.array([10., 80.]),
+                "design_output": np.array([0.0, 2250.0, 2375.0]),             
                 "stored_power_daily_kWh": {
                     2026: np.array([1000.0, 1200.0, 0]),
                     2027: np.array([900.0, 0, 700.0]),
@@ -97,8 +106,8 @@ class DummyDCF:
             },
             "expected": {
                 "energy_consumption": Quantity(np.array([1760.0, 1280.0]), "kWh"),
-                "replacement_frequency": Quantity(2.0, "year"),
-                "new_h2_production": Quantity(np.array([1.0, 8.0]), "kg/year"),
+                "stack_lifetime": Quantity(2.0, "year"),
+                "new_h2_production": Quantity(np.array([0., 2250., 2375.]), "kg"),
             },
         }
     ],
@@ -123,14 +132,14 @@ def test_stored_power_electrolysis_plugin(case):
         atol=tolerance,
     )
     
-    assert plugin.replacement_frequency.unit['s'] == pytest.approx(
-        expected["replacement_frequency"].unit['s'],
+    assert plugin.stack_lifetime.unit['s'] == pytest.approx(
+        expected["stack_lifetime"].unit['s'],
         abs=tolerance,
     )
     
     np.testing.assert_allclose(
-        plugin.new_h2_production.unit['kg/s'],
-        expected["new_h2_production"].unit['kg/s'],
+        plugin.new_h2_production.unit['kg'],
+        expected["new_h2_production"].unit['kg'],
         rtol=tolerance,
         atol=tolerance,
     )
