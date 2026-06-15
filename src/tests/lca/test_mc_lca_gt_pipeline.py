@@ -8,6 +8,7 @@ while keeping the scenario inputs fully explicit and auditable.
 Input files:  src/tests/lca/input_files/PVE_GT_S{1..5}.md
 Matrix:       data/LCA/LCA_Test_PVE_GT
 """
+import shutil
 from pathlib import Path
 
 import numpy as np
@@ -19,6 +20,7 @@ import pytest
 import pyH2A.Discounted_Cash_Flow  # noqa: F401  (import for side-effect only)
 from pyH2A.LCA.LCA import LCA
 from pyH2A.Discounted_Cash_Flow import Discounted_Cash_Flow
+from pyH2A.Utilities.lca_utils import get_disk_cache_dir
 
 
 # ── Paths ──────────────────────────────────────────────────────────────────
@@ -26,6 +28,7 @@ from pyH2A.Discounted_Cash_Flow import Discounted_Cash_Flow
 _HERE = Path(__file__).parent
 _PROJECT_ROOT = _HERE.parents[2]
 _E2E_DIR = _PROJECT_ROOT / 'src' / 'tests' / 'lca' / 'input_files'
+_DISK_CACHE_DIR = _PROJECT_ROOT / 'data' / 'LCA' / 'LCA_Test_PVE_GT' / 'Initial_Artifacts'
 
 _GWP100_KEY = 'Climate change no LT - Global warming potential (GWP100) no LT'
 
@@ -44,16 +47,20 @@ _SCENARIOS = [
 
 # ── Cache management ───────────────────────────────────────────────────────
 
+def _clear_caches():
+    for k in LCA._cache:
+        LCA._cache[k] = None
+    get_disk_cache_dir.cache_clear()
+    if _DISK_CACHE_DIR.exists():
+        shutil.rmtree(_DISK_CACHE_DIR)
+
+
 @pytest.fixture(scope='module', autouse=True)
-def _manage_lca_caches():
+def _manage_lca_caches():  # noqa: F841
     """Clear LCA caches at module boundaries; let the cache warm within."""
-    LCA._base_solver_cache.clear()
-    LCA._component_basis_cache.clear()
-    LCA.load_matrices_from_folder.cache_clear()
+    _clear_caches()
     yield
-    LCA._base_solver_cache.clear()
-    LCA._component_basis_cache.clear()
-    LCA.load_matrices_from_folder.cache_clear()
+    _clear_caches()
 
 
 # ── Tests ──────────────────────────────────────────────────────────────────
