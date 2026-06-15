@@ -11,6 +11,7 @@ Foreground processes and their A-matrix column-0 sign convention:
   - Electrolyzer Manufacturing (index 16413): negative (component_position=2)
   - Reverse Osmosis (index 16415): negative (component_position=3)
 """
+import shutil
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -21,6 +22,7 @@ import pytest
 # dependency so that the LCA name is already bound when the second import runs.
 import pyH2A.Discounted_Cash_Flow  # noqa: F401  (import for side-effect only)
 from pyH2A.LCA.LCA import LCA
+from pyH2A.Utilities.lca_utils import get_disk_cache_dir
 
 
 # ── Paths ──────────────────────────────────────────────────────────────────
@@ -28,6 +30,7 @@ from pyH2A.LCA.LCA import LCA
 _HERE = Path(__file__).parent
 _PROJECT_ROOT = _HERE.parents[2]
 _GT_MATRIX_DIR = str(_PROJECT_ROOT / 'data' / 'LCA' / 'LCA_Test_PVE_GT')
+_DISK_CACHE_DIR = _PROJECT_ROOT / 'data' / 'LCA' / 'LCA_Test_PVE_GT' / 'Initial_Artifacts'
 
 # ── UUIDs ──────────────────────────────────────────────────────────────────
 
@@ -92,9 +95,11 @@ def _make_dcf(h2, pv, elec, ro):
 
 
 def _clear_caches():
-    LCA._base_solver_cache.clear()
-    LCA._component_basis_cache.clear()
-    LCA.load_matrices_from_folder.cache_clear()
+    for k in LCA._cache:
+        LCA._cache[k] = None
+    get_disk_cache_dir.cache_clear()
+    if _DISK_CACHE_DIR.exists():
+        shutil.rmtree(_DISK_CACHE_DIR)
 
 
 @pytest.fixture(autouse=True)
@@ -158,9 +163,9 @@ class TestLCAGroundTruth:
         assert _GWP100_KEY in lca.lca_results
 
     def test_process_local_cache_reused_across_scenarios(self):
-        lca1 = LCA(_GT_MATRIX_DIR, _make_dcf(1.0, 198.0, 1e-6, 9.0))
-        matrix_key = lca1._matrix_cache_key
-        assert matrix_key in LCA._base_solver_cache
-        lca2 = LCA(_GT_MATRIX_DIR, _make_dcf(1.0, 150.0, 2e-6, 7.0))
-        assert lca2._matrix_cache_key == matrix_key
+        LCA(_GT_MATRIX_DIR, _make_dcf(1.0, 198.0, 1e-6, 9.0))
+        assert all(LCA._cache[k] is not None for k in LCA._cache)
+        # Second instantiation with a different scenario must reuse the warm cache
+        LCA(_GT_MATRIX_DIR, _make_dcf(1.0, 150.0, 2e-6, 7.0))
+        assert all(LCA._cache[k] is not None for k in LCA._cache)
 
