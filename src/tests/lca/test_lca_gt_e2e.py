@@ -11,7 +11,6 @@ Foreground processes and their A-matrix column-0 sign convention:
   - Electrolyzer Manufacturing (index 16413): negative (component_position=2)
   - Reverse Osmosis (index 16415): negative (component_position=3)
 """
-import shutil
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -22,7 +21,6 @@ import pytest
 # dependency so that the LCA name is already bound when the second import runs.
 import pyH2A.Discounted_Cash_Flow  # noqa: F401  (import for side-effect only)
 from pyH2A.LCA.LCA import LCA
-from pyH2A.Utilities.lca_utils import get_disk_cache_dir
 
 
 # ── Paths ──────────────────────────────────────────────────────────────────
@@ -30,7 +28,6 @@ from pyH2A.Utilities.lca_utils import get_disk_cache_dir
 _HERE = Path(__file__).parent
 _PROJECT_ROOT = _HERE.parents[2]
 _GT_MATRIX_DIR = str(_PROJECT_ROOT / 'data' / 'LCA' / 'LCA_Test_PVE_GT')
-_DISK_CACHE_DIR = _PROJECT_ROOT / 'data' / 'LCA' / 'LCA_Test_PVE_GT' / 'Initial_Artifacts'
 
 # ── UUIDs ──────────────────────────────────────────────────────────────────
 
@@ -95,16 +92,15 @@ def _make_dcf(h2, pv, elec, ro):
 
 
 def _clear_caches():
+    """Clear only the in-memory cache. Disk artifacts survive for reuse."""
     for k in LCA._cache:
         LCA._cache[k] = None
-    get_disk_cache_dir.cache_clear()
-    if _DISK_CACHE_DIR.exists():
-        shutil.rmtree(_DISK_CACHE_DIR)
+
 
 
 @pytest.fixture(autouse=True)
-def _reset_lca_caches():
-    """Isolate every test: clear all process-local and LRU caches."""
+def _reset_lca_caches():  # noqa: F841
+    """Isolate every test by clearing only the RAM cache."""
     _clear_caches()
     yield
     _clear_caches()
