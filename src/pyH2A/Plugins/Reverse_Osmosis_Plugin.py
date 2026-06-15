@@ -32,7 +32,7 @@ input_dict = {
 			"Value": {
 				"type": {float, int},
 				"bounds": (0, 1),
-    },
+            },
 			"Unit": {
 				"dimension": "dimensionless",
 			},
