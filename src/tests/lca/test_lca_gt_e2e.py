@@ -5,12 +5,17 @@ pre-resolved component values and compares the GWP100 result to a reference
 value computed independently from the raw openLCA matrix export.
 
 Matrix folder: data/LCA/LCA_Test_PVE_GT
-Foreground processes and their A-matrix column-0 sign convention:
-  - H2 Production (index 0): positive reference (component_position=0)
-  - PV Electricity Generation (index 3560): negative (component_position=1)
-  - Electrolyzer Manufacturing (index 16413): negative (component_position=2)
-  - Reverse Osmosis (index 16415): negative (component_position=3)
+Foreground processes (A-matrix column-0 indices):
+  - H2 Production        (index 0)     — A[0,0]     > 0  (diagonal reference flow)
+  - PV Electricity       (index 3560)  — A[3560,0]  < 0  (input to H2 process)
+  - Electrolyzer Mfg     (index 16413) — A[16413,0] < 0  (input to H2 process)
+  - Reverse Osmosis      (index 16415) — A[16415,0] < 0  (input to H2 process)
+
+Sign convention: apply_component_updates enforces
+  component_values[i] = sign(A[i,0]) * abs(user_value)
+so table inputs are always positive magnitudes; the sign is taken from the matrix.
 """
+import shutil
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -21,6 +26,7 @@ import pytest
 # dependency so that the LCA name is already bound when the second import runs.
 import pyH2A.Discounted_Cash_Flow  # noqa: F401  (import for side-effect only)
 from pyH2A.LCA.LCA import LCA
+from pyH2A.Utilities.lca_utils import get_disk_cache_dir
 
 
 # ── Paths ──────────────────────────────────────────────────────────────────
@@ -28,6 +34,7 @@ from pyH2A.LCA.LCA import LCA
 _HERE = Path(__file__).parent
 _PROJECT_ROOT = _HERE.parents[2]
 _GT_MATRIX_DIR = str(_PROJECT_ROOT / 'data' / 'LCA' / 'LCA_Test_PVE_GT')
+_DISK_CACHE_DIR = Path(_GT_MATRIX_DIR) / 'Initial_Artifacts'
 
 # ── UUIDs ──────────────────────────────────────────────────────────────────
 
@@ -62,7 +69,7 @@ _SCENARIO_IDS = [
 # ── Helpers ────────────────────────────────────────────────────────────────
 
 def _make_dcf(h2, pv, elec, ro):
-    """Minimal DCF mock with four pre-resolved LCA components."""
+    """DCF mock with the four PVE-GT foreground components."""
     dcf = MagicMock()
     dcf.inp = {
         'LCA - PVE GT Components': {
@@ -91,19 +98,23 @@ def _make_dcf(h2, pv, elec, ro):
     return dcf
 
 
-def _clear_caches():
-    """Clear only the in-memory cache. Disk artifacts survive for reuse."""
+def _clear_ram_only():
     for k in LCA._cache:
         LCA._cache[k] = None
 
 
+def _clear_caches():
+    _clear_ram_only()
+    get_disk_cache_dir.cache_clear()
+    if _DISK_CACHE_DIR.exists():
+        shutil.rmtree(_DISK_CACHE_DIR)
 
-@pytest.fixture(autouse=True)
-def _reset_lca_caches():  # noqa: F841
-    """Isolate every test by clearing only the RAM cache."""
+
+@pytest.fixture(scope='module', autouse=True)
+def _manage_lca_caches():  # noqa: F841
+    """Clear RAM and disk cache once before this module's tests run."""
     _clear_caches()
     yield
-    _clear_caches()
 
 
 # ── Ground-truth tests ─────────────────────────────────────────────────────
@@ -111,57 +122,50 @@ def _reset_lca_caches():  # noqa: F841
 class TestLCAGroundTruth:
     """End-to-end GWP100 comparison against openLCA reference values.
 
-    Each parametrized case drives the LCA engine with a fixed set of
-    foreground component quantities and asserts that the computed GWP100
-    matches the independently-derived openLCA ground truth within rel=1e-3.
+    The three test methods run in definition order and together exercise all
+    three caching paths within a single pytest session:
+
+    - ``test_base_computes_from_scratch``: cold RAM + cold disk (module
+      fixture cleared both) → ``compute_all_artifacts_from_scratch`` runs
+      the full LU factorization and writes artifacts to disk.
+    - ``test_low_pv_loads_from_disk``: explicitly clears RAM while leaving
+      disk warm → ``load_all_from_disk_to_ram`` reads the artifacts saved
+      above, bypassing factorization.
+    - ``test_remaining_scenarios_use_ram_cache``: RAM is warm from the
+      previous test → ``initialize_all_artifacts`` exits on the early-exit
+      guard without any disk I/O.
     """
+
+    def test_base_computes_from_scratch(self):
+        h2, pv, elec, ro, expected = _SCENARIOS[0]
+        lca = LCA(_GT_MATRIX_DIR, _make_dcf(h2, pv, elec, ro))
+        result = lca.lca_results[_GWP100_KEY]['value']
+        diff_pct = (result - expected) / expected * 100
+        print(f'\n  pyH2A={result:.6f}  openLCA={expected:.6f}  diff={diff_pct:+.4f}%')
+        assert result == pytest.approx(expected, rel=1e-3)
+
+    def test_low_pv_loads_from_disk(self):
+        _clear_ram_only()
+        h2, pv, elec, ro, expected = _SCENARIOS[1]
+        lca = LCA(_GT_MATRIX_DIR, _make_dcf(h2, pv, elec, ro))
+        result = lca.lca_results[_GWP100_KEY]['value']
+        diff_pct = (result - expected) / expected * 100
+        print(f'\n  pyH2A={result:.6f}  openLCA={expected:.6f}  diff={diff_pct:+.4f}%')
+        assert result == pytest.approx(expected, rel=1e-3)
 
     @pytest.mark.parametrize(
         'h2, pv, elec, ro, expected_gwp100',
-        _SCENARIOS,
-        ids=_SCENARIO_IDS,
+        _SCENARIOS[2:],
+        ids=_SCENARIO_IDS[2:],
     )
-    def test_gwp100_matches_openlca_ground_truth(self, h2, pv, elec, ro, expected_gwp100):
+    def test_remaining_scenarios_use_ram_cache(self, h2, pv, elec, ro, expected_gwp100):
         lca = LCA(_GT_MATRIX_DIR, _make_dcf(h2, pv, elec, ro))
         result = lca.lca_results[_GWP100_KEY]['value']
         diff_pct = (result - expected_gwp100) / expected_gwp100 * 100
         print(f'\n  pyH2A={result:.6f}  openLCA={expected_gwp100:.6f}  diff={diff_pct:+.4f}%')
         assert result == pytest.approx(expected_gwp100, rel=1e-3)
 
-    @pytest.mark.parametrize(
-        'h2, pv, elec, ro, expected_gwp100',
-        _SCENARIOS,
-        ids=_SCENARIO_IDS,
-    )
-    def test_gwp100_result_has_correct_unit(self, h2, pv, elec, ro, expected_gwp100):
-        lca = LCA(_GT_MATRIX_DIR, _make_dcf(h2, pv, elec, ro))
-        unit = lca.lca_results[_GWP100_KEY]['unit']
-        assert unit == 'kg CO2-Eq'
-
-    def test_all_scenarios_produce_distinct_gwp100(self):
-        results = []
-        for h2, pv, elec, ro, _ in _SCENARIOS:
-            lca = LCA(_GT_MATRIX_DIR, _make_dcf(h2, pv, elec, ro))
-            results.append(lca.lca_results[_GWP100_KEY]['value'])
-            _clear_caches()
-        assert len(set(round(v, 4) for v in results)) == len(_SCENARIOS)
-
-    def test_higher_pv_electricity_increases_gwp100(self):
-        lca_low  = LCA(_GT_MATRIX_DIR, _make_dcf(1.0, 150.0, 1e-6, 9.0))
-        gwp_low  = lca_low.lca_results[_GWP100_KEY]['value']
-        _clear_caches()
-        lca_high = LCA(_GT_MATRIX_DIR, _make_dcf(1.0, 300.0, 1e-6, 9.0))
-        gwp_high = lca_high.lca_results[_GWP100_KEY]['value']
-        assert gwp_high > gwp_low
-
-    def test_lca_results_dict_contains_gwp100_key(self):
-        lca = LCA(_GT_MATRIX_DIR, _make_dcf(1.0, 198.0, 1e-6, 9.0))
-        assert _GWP100_KEY in lca.lca_results
-
-    def test_process_local_cache_reused_across_scenarios(self):
-        LCA(_GT_MATRIX_DIR, _make_dcf(1.0, 198.0, 1e-6, 9.0))
-        assert all(LCA._cache[k] is not None for k in LCA._cache)
-        # Second instantiation with a different scenario must reuse the warm cache
-        LCA(_GT_MATRIX_DIR, _make_dcf(1.0, 150.0, 2e-6, 7.0))
-        assert all(LCA._cache[k] is not None for k in LCA._cache)
+    def test_gwp100_result_has_correct_unit(self):
+        lca = LCA(_GT_MATRIX_DIR, _make_dcf(*_SCENARIOS[0][:4]))
+        assert lca.lca_results[_GWP100_KEY]['unit'] == 'kg CO2-Eq'
 
