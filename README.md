@@ -1,4 +1,4 @@
-<img align="right" src="https://github.com/water-splitting-group/pyH2A/blob/chore/logo_update/src/pyH2A/Other/pyH2A.svg?raw=true"/>
+<img align="right" src="src/pyH2A/Other/pyH2A.svg"/>
 
 [![Documentation Status](https://readthedocs.org/projects/pyh2a/badge/?version=latest)](https://pyh2a.readthedocs.io/en/latest/?badge=latest)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6365958.svg)](https://doi.org/10.5281/zenodo.6365958)
