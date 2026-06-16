@@ -2,6 +2,7 @@
 
 [![Documentation Status](https://readthedocs.org/projects/pyh2a/badge/?version=latest)](https://pyh2a.readthedocs.io/en/latest/?badge=latest)
 [![DOI](https://zenodo.org/badge/332826132.svg)](https://zenodo.org/badge/latestdoi/332826132)
+[![Coverage](src/pyH2A/Other/badges/coverage_badge.svg)](src/pyH2A/Other/badges/coverage_badge.svg)
 
 # pyH2A
 
