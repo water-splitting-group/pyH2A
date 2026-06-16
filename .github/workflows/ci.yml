@@ -28,6 +28,24 @@ jobs:
         run: |
           uv pip install --system -e .
 
-      - name: Run tests
+      - name: Run tests with coverage
         run: |
+<<<<<<< HEAD
           uv run pytest
+=======
+          uv run pytest --cov=pyH2A --cov-report=xml --cov-report=term-missing src/tests/ -v
+
+      - name: Create badge directory
+        run: mkdir -p src/pyH2A/Other/badges
+
+      - name: Generate coverage badge
+        uses: tj-actions/coverage-badge-py@v2
+        with:
+          output: src/pyH2A/Other/badges/coverage_badge.svg
+
+      - name: Commit badge
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: update coverage badge"
+          file_pattern: src/pyH2A/Other/badges/coverage_badge.svg
+>>>>>>> 34d2ac7 (feat: add test coverage badge)
