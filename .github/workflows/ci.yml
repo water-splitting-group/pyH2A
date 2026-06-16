@@ -1,7 +1,6 @@
 name: CI/CD Pipeline
 
 on:
-  workflow_dispatch:
   push:
     branches: [master, feat/plugin_refactor]
   pull_request:
@@ -31,9 +30,6 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-<<<<<<< HEAD
-          uv run pytest
-=======
           uv run pytest --cov=pyH2A --cov-report=xml --cov-report=term-missing src/tests/ -v
 
       - name: Create badge directory
@@ -49,4 +45,3 @@ jobs:
         with:
           commit_message: "chore: update coverage badge"
           file_pattern: src/pyH2A/Other/badges/coverage_badge.svg
->>>>>>> 34d2ac7 (feat: add test coverage badge)
