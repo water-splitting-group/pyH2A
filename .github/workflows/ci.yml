@@ -2,7 +2,8 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [master, feat/plugin_refactor]
+    branches: 
+      - master
   pull_request:
     branches: [master, feat/plugin_refactor]
 
