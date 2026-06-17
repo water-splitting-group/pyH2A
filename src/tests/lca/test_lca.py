@@ -1,8 +1,6 @@
 """Unit tests for pyH2A.LCA.LCA."""
 import shutil
 from pathlib import Path
-from unittest.mock import MagicMock
-
 import numpy as np
 import pytest
 import scipy.sparse
@@ -29,21 +27,24 @@ _NH4OH_UUID = '83cae1ae-4cd2-3b5e-8c06-4001a3f38ab7'
 
 # ── Helpers ────────────────────────────────────────────────────────────────
 
+class DummyDCF:
+    def __init__(self, inp):
+        self.inp = inp
+
+
 def _full_dcf(h2_value, hdpe_value=20.0, nh4oh_value=5.2):
     """DCF mock with all 3 test-data components pre-resolved.
 
     All three column-0 entries of A are nonzero, so apply_component_updates
     requires all three UUIDs to be present.
     """
-    dcf = MagicMock()
-    dcf.inp = {
+    return DummyDCF({
         'LCA Components': {
             'H2':    {'UUID': _H2_UUID,    'Value': h2_value,    'Processed': 'Yes'},
             'HDPE':  {'UUID': _HDPE_UUID,  'Value': hdpe_value,  'Processed': 'Yes'},
             'NH4OH': {'UUID': _NH4OH_UUID, 'Value': nh4oh_value, 'Processed': 'Yes'},
         }
-    }
-    return dcf
+    })
 
 
 _DISK_CACHE_DIR = Path(_TEST_DATA_DIR) / 'Initial_Artifacts'
@@ -80,14 +81,12 @@ class TestApplyComponentUpdates:
 
     def _make_dcf(self, table_name, components):
         """components: {comp_name: (uuid, value)}"""
-        dcf = MagicMock()
-        dcf.inp = {
+        return DummyDCF({
             table_name: {
                 name: {'UUID': uuid, 'Value': val, 'Processed': 'Yes'}
                 for name, (uuid, val) in components.items()
             }
-        }
-        return dcf
+        })
 
     def test_single_component_correct_value(self):
         self._seed_cache([('uuid-0', 5.0)])
@@ -111,8 +110,7 @@ class TestApplyComponentUpdates:
     def test_array_value_is_summed(self):
         self._seed_cache([('uuid-0', 1.0)])
         lca = self._make_lca()
-        dcf = MagicMock()
-        dcf.inp = {'LCA T': {'A': {'UUID': 'uuid-0', 'Value': np.array([2.0, 3.0, 5.0]), 'Processed': 'Yes'}}}
+        dcf = DummyDCF({'LCA T': {'A': {'UUID': 'uuid-0', 'Value': np.array([2.0, 3.0, 5.0]), 'Processed': 'Yes'}}})
         lca.apply_component_updates(dcf)
         assert lca.component_values[0] == pytest.approx(10.0)
 
@@ -123,11 +121,17 @@ class TestApplyComponentUpdates:
         assert lca.component_values[0] == pytest.approx(4.0)
         assert lca.component_values[1] == pytest.approx(-2.0)
 
-    def test_sets_component_values_as_ndarray(self):
+    def test_table_name_matching_is_case_insensitive(self):
         self._seed_cache([('uuid-0', 1.0)])
         lca = self._make_lca()
-        lca.apply_component_updates(self._make_dcf('LCA T', {'A': ('uuid-0', 1.0)}))
-        assert isinstance(lca.component_values, np.ndarray)
+        lca.apply_component_updates(self._make_dcf('lca lowercase', {'A': ('uuid-0', 3.0)}))
+        assert lca.component_values[0] == pytest.approx(3.0)
+
+    def test_wrong_component_count_raises_value_error(self):
+        self._seed_cache([('uuid-0', 1.0)])
+        lca = self._make_lca()
+        with pytest.raises(ValueError, match='Expected 1'):
+            lca.apply_component_updates(self._make_dcf('LCA T', {'A': ('uuid-0', 1.0), 'B': ('uuid-1', 1.0)}))
 
     def test_unknown_uuid_raises_value_error(self):
         self._seed_cache([('uuid-known', 1.0)])
@@ -138,20 +142,16 @@ class TestApplyComponentUpdates:
     def test_no_lca_tables_raises_value_error(self):
         self._seed_cache([('uuid-0', 1.0)])
         lca = self._make_lca()
-        dcf = MagicMock()
-        dcf.inp = {'NotLCA': {}}
         with pytest.raises(ValueError, match='LCA'):
-            lca.apply_component_updates(dcf)
+            lca.apply_component_updates(DummyDCF({'NotLCA': {}}))
 
     def test_multiple_tables_combined(self):
         self._seed_cache([('uuid-0', 1.0), ('uuid-1', 1.0)])
         lca = self._make_lca()
-        dcf = MagicMock()
-        dcf.inp = {
+        lca.apply_component_updates(DummyDCF({
             'LCA Table A': {'C1': {'UUID': 'uuid-0', 'Value': 3.0, 'Processed': 'Yes'}},
             'LCA Table B': {'C2': {'UUID': 'uuid-1', 'Value': 7.0, 'Processed': 'Yes'}},
-        }
-        lca.apply_component_updates(dcf)
+        }))
         assert lca.component_values[0] == pytest.approx(3.0)
         assert lca.component_values[1] == pytest.approx(7.0)
 
@@ -226,15 +226,6 @@ class TestPerformLca:
         lca.scaling_vector = np.asarray(scaling_vector, dtype=float)
         return lca
 
-    def test_results_dict_populated(self):
-        lca = self._make_lca(
-            B=[[1, 0], [0, 1]], C=[[1, 0]], scaling_vector=[2.0, 3.0],
-            impacts=[{'index': 0, 'impact_name': 'GWP', 'impact_unit': 'kg CO2-eq'}],
-        )
-        lca.perform_lca()
-        assert isinstance(lca.lca_results, dict)
-        assert len(lca.lca_results) == 1
-
     def test_result_value_computed_correctly(self):
         # g = [[2,0],[0,3]] @ [1,2] = [2,6]; h = [[1,1]] @ [2,6] = [8]
         lca = self._make_lca(
@@ -243,15 +234,6 @@ class TestPerformLca:
         )
         lca.perform_lca()
         assert lca.lca_results['GWP']['value'] == pytest.approx(8.0)
-
-    def test_result_has_value_and_unit_keys(self):
-        lca = self._make_lca(
-            B=[[1]], C=[[1]], scaling_vector=[1.0],
-            impacts=[{'index': 0, 'impact_name': 'AP', 'impact_unit': 'mol H+-eq'}],
-        )
-        lca.perform_lca()
-        assert 'value' in lca.lca_results['AP']
-        assert 'unit' in lca.lca_results['AP']
 
     def test_result_unit_stored_correctly(self):
         lca = self._make_lca(
@@ -429,10 +411,8 @@ class TestLCAIntegration:
             assert np.isfinite(float(result['value']))
 
     def test_no_lca_tables_raises_value_error(self):
-        dcf = MagicMock()
-        dcf.inp = {'NotLCA': {}}
         with pytest.raises(ValueError, match='LCA'):
-            LCA(_TEST_DATA_DIR, dcf)
+            LCA(_TEST_DATA_DIR, DummyDCF({'NotLCA': {}}))
 
     def test_unknown_uuid_raises_value_error(self):
         dcf = _full_dcf(1000.0)
@@ -456,6 +436,15 @@ class TestLCAIntegration:
         _clear_caches()
         lca_scalar = LCA(_TEST_DATA_DIR, _full_dcf(1000.0))
         np.testing.assert_allclose(lca_arr.scaling_vector, lca_scalar.scaling_vector, rtol=1e-10)
+
+    def test_disk_artifacts_created_after_first_run(self):
+        LCA(_TEST_DATA_DIR, _full_dcf(1000.0))
+        expected = [
+            'base_scaling_vector.npz', 'A0_column.npz', 'basis_component.npz',
+            'matrix_B.npz', 'matrix_C.npz', 'impact_index.npz',
+        ]
+        for fname in expected:
+            assert (_DISK_CACHE_DIR / fname).exists(), f'missing: {fname}'
 
     def test_process_local_cache_reused(self):
         LCA(_TEST_DATA_DIR, _full_dcf(1000.0))
