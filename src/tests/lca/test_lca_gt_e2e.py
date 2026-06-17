@@ -127,13 +127,17 @@ class TestLCAGroundTruth:
 
     - ``test_base_computes_from_scratch``: cold RAM + cold disk (module
       fixture cleared both) → ``compute_all_artifacts_from_scratch`` runs
-      the full LU factorization and writes artifacts to disk.
-    - ``test_low_pv_loads_from_disk``: explicitly clears RAM while leaving
+      the full LU factorization and writes artifacts to disk and RAM. This corresponds
+      to the first-ever run of a given matrix export.
+    - ``test_warm_disk_path_loads_correctly``: explicitly clears RAM while leaving
       disk warm → ``load_all_from_disk_to_ram`` reads the artifacts saved
-      above, bypassing factorization.
+      above, bypassing factorization and artifacts initialization. This corresponds
+      to a subsequent run of the same scenario after restarting the Python process.
     - ``test_remaining_scenarios_use_ram_cache``: RAM is warm from the
       previous test → ``initialize_all_artifacts`` exits on the early-exit
-      guard without any disk I/O.
+      guard without any disk I/O. This corresponds to multiple runs of different
+      scenarios within the same Python session, e.g. Monte Carlo analysis within one 
+      worker or interactive use.
     """
 
     def test_base_computes_from_scratch(self):
@@ -144,7 +148,7 @@ class TestLCAGroundTruth:
         print(f'\n  pyH2A={result:.6f}  openLCA={expected:.6f}  diff={diff_pct:+.4f}%')
         assert result == pytest.approx(expected, rel=1e-3)
 
-    def test_low_pv_loads_from_disk(self):
+    def test_warm_disk_path_loads_correctly(self):
         _clear_ram_only()
         h2, pv, elec, ro, expected = _SCENARIOS[1]
         lca = LCA(_GT_MATRIX_DIR, _make_dcf(h2, pv, elec, ro))
