@@ -120,7 +120,9 @@ def _manage_lca_caches():  # noqa: F841
 # ── Ground-truth tests ─────────────────────────────────────────────────────
 
 class TestLCAGroundTruth:
-    """End-to-end GWP100 comparison against openLCA reference values.
+    """End-to-end GWP100 comparison against openLCA reference values, validated
+    against the independently-computed openLCA ground truth. Also exercises the
+    Sherman-Morrison rank-1 update used in place of a full matrix solve.
 
     The three test methods run in definition order and together exercise all
     three caching paths within a single pytest session:
@@ -137,7 +139,7 @@ class TestLCAGroundTruth:
       previous test → ``initialize_all_artifacts`` exits on the early-exit
       guard without any disk I/O. This corresponds to multiple runs of different
       scenarios within the same Python session, e.g. Monte Carlo analysis within one 
-      worker or interactive use.
+      worker or interactive use. 
     """
 
     def test_base_computes_from_scratch(self):
