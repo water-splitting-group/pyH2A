@@ -9,7 +9,7 @@ class DummyDCF:
 
     def __init__(
         self,
-        design_output,
+        design_capacity,
         top_cost,
         bottom_cost,
         ports,
@@ -33,7 +33,7 @@ class DummyDCF:
 
         self.inp = {
             "Technical Operating Parameters and Specifications": {
-                "Design output flowrate": {"Value": design_output, "Unit":"kg/day"},
+                "Plant design capacity": {"Value": design_capacity, "Unit":"kg/day"},
             },
             "Reactor Baggies": {
                 "Cost material top": {"Value": top_cost, "Unit":"USD/m2"},
@@ -70,7 +70,7 @@ class DummyDCF:
     [
         {
             "input": {
-                "design_output": 1111.,
+                "design_capacity": 1111.,
                 "top_cost": 0.54,
                 "bottom_cost": 0.47,
                 "ports": 12,

@@ -1,5 +1,4 @@
 import pytest
-import numpy as np
 from pyH2A.Plugins.PEC_Plugin import PEC_Plugin
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
@@ -9,7 +8,7 @@ class DummyDCF:
 
     def __init__(
         self,
-        design_output,
+        plant_design,
         cell_cost,
         lifetime,
         length,
@@ -22,8 +21,8 @@ class DummyDCF:
     ):
         self.inp = {
             "Technical Operating Parameters and Specifications": {
-                "Design output flowrate": {
-                    "Value": design_output,
+                "Plant design capacity": {
+                    "Value": plant_design,
                     "Unit": "kg/day",
                 },
             },
@@ -79,7 +78,7 @@ class DummyDCF:
     [
         {
             "input": {
-                "design_output": 1000.0,
+                "plant_design": 1000.0,
                 "cell_cost": 21000.0,
                 "lifetime": 0.33,
                 "length": 6.0,
@@ -94,7 +93,7 @@ class DummyDCF:
                 "total_solar_collection_area": Quantity(47057.399999999994, 'm2'),
                 "cell_cost": Quantity(988205399.9999998, 'USD'),
                 "cell_number": Quantity(26143.0, '-'),
-                "mol_H2_per_m2_per_day": Quantity(10.6256954979, 'mol/day/m2'),
+                "mol_H2_per_m2_per_day": Quantity(10.625699702590028, 'mol/day/m2'),
                 "flowrate_H2_per_cell": Quantity(0.0382525189293241, 'kg/day'),
                 "total_land_area": Quantity(5348817.431990256, 'm2'),
             },
@@ -128,7 +127,7 @@ def test_pec_plugin(case):
         expected["cell_number"].unit['-'],
         abs=tolerance
     )
-    
+        
     assert plugin.mol_rate_H2_per_surface.unit['mol/s/m2'] == pytest.approx(
         expected["mol_H2_per_m2_per_day"].unit['mol/s/m2'],
         abs=tolerance
@@ -143,4 +142,3 @@ def test_pec_plugin(case):
         expected["total_land_area"].unit['m2'],
         abs=tolerance
     )
-    

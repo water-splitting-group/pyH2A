@@ -118,9 +118,9 @@ class DummyDCF:
                 },
             },
             "expected": {
-                "h2_production": Quantity(np.array([0.0, 0.0, 2035.0, 2035.0]), 'kg/year'),
+                "h2_production": Quantity(np.array([0.0, 0.0, 2035.0, 2035.0]), 'kg'),
                 "scaling_factor": Quantity(0.9249598065992481, '-'),
-                "replacement_frequency": Quantity(2.0, 'year'),
+                "stack_lifetime": Quantity(2.0, 'year'),
                 "yearly_data_year": Quantity(np.array([2026.0, 2027.0]),'-'),
                 "yearly_data_production": Quantity(np.array([2035.0, 2035.0]),'kg'),
                 "yearly_data_duration": Quantity(np.array([20.0, 20.0]),'h'),                                
@@ -210,8 +210,8 @@ def test_electrolyzer_plugin(case):
     tolerance = 1e-12
 
     np.testing.assert_allclose(
-        plugin.h2_production.unit['kg/s'],
-        expected["h2_production"].unit['kg/s'],
+        plugin.h2_production.unit['kg'],
+        expected["h2_production"].unit['kg'],
         rtol=tolerance,
         atol=tolerance,
     )
@@ -221,8 +221,8 @@ def test_electrolyzer_plugin(case):
         abs=tolerance
     )
     
-    assert plugin.replacement_frequency.unit['year'] == pytest.approx(
-        expected["replacement_frequency"].unit['year'],
+    assert plugin.stack_lifetime.unit['year'] == pytest.approx(
+        expected["stack_lifetime"].unit['year'],
         abs=tolerance
     )
 

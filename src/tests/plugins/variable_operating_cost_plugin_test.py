@@ -1,6 +1,14 @@
 import pytest
 import numpy as np
+from pyH2A import functional_unit as fu
+
+fu.set_FU({
+    "Unit of measurement": "kg",
+    "Reference": "H2"
+})
+
 from pyH2A.Plugins.Variable_Operating_Cost_Plugin import Variable_Operating_Cost_Plugin
+from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
 
 class DummyDCF:
@@ -8,7 +16,8 @@ class DummyDCF:
 
     def __init__(
         self, 
-        plant_output_per_year, 
+        design_output_per_year, 
+        operating_capacity,
         utilities, 
         other_variable_costs, 
         inflation_correction,
@@ -16,17 +25,33 @@ class DummyDCF:
     ):  
         self.inp = {
             "Technical Operating Parameters and Specifications": {
-                "Output per Year": {"Value": plant_output_per_year}
+                "Design output by year": {
+                    "Value": design_output_per_year,
+                    "Unit": "kg",
+                    "Processed": "Yes"
+                },
+                "Operating capacity factor": {
+                    "Value": operating_capacity,
+                    "Unit": "-"
+                },
             },
             "Utilities": {
                 key: {
-                    "Cost": value["Cost"],
-                    "Usage per kg H2": value["Usage"],
-                    "Price Conversion Factor": value.get("Conversion", 1.0)
-                } for key, value in utilities.items()
+                    "Cost_Value": value["Cost"], 
+                    "Cost_Unit": "USD", 
+                    "Usage_Value": value["Usage"], 
+                    "Usage_Unit": "1/kg", 
+                    "Price_Conversion_Factor_Value": value.get("Conversion", 1.0),
+                    "Price_Conversion_Factor_Unit": "-",
+                } 
+                for key, value in utilities.items()
             },
             "Dummy Left Other Variable Operating Cost Dummy Right": {
-                key: {"Value": value} for key, value in other_variable_costs.items()
+                key: {
+                    "Value": value["Cost_Value"],
+                    "Unit": "USD"
+                }
+                for key, value in other_variable_costs.items()
             }
         }
         
@@ -41,22 +66,58 @@ class DummyDCF:
     [
         {
             "input": {
-                "plant_output_per_year": 100_000.0,  
+                "design_output_per_year": np.array([
+                    0.0,
+                    2250.0,
+                    2375.0,
+                    2375.0,
+                    2375.0,
+                    2375.0,
+                    2375.0,
+                    2375.0,
+                    2375.0,
+                    2375.0,
+                ]),  
+                "operating_capacity": 1.0,
                 "utilities": {
-                    "Electricity": {"Cost": 0.05, "Usage": 50.0, "Conversion": 2.0}, 
-                    "Water": {"Cost": 0.01, "Usage": 10.0}          
+                    "Electricity": {
+                        "Cost": 0.05, 
+                        "Usage": 50.0, 
+                        "Conversion": 2.0}, 
+                    "Water": {
+                        "Cost": 0.01, 
+                        "Usage": 10.0}          
                 },
                 "other_variable_costs": {
-                    "Maintenance": 1000.0,
-                    "Chemicals": 500.0
+                    "Maintenance": {
+                        "Cost_Value": 1000.0,
+                        "Cost_Unit": "USD"
+                    },
+                    "Chemicals": {
+                        "Cost_Value": 500.0,
+                        "Cost_Unit": "USD"
+                    }
                 },
                 "inflation_correction": 1.2,
                 "chemical_inflator": 1.0
             },
             "expected": {
-                "utilities": np.array([612000.0, 612000.0, 612000.0, 612000.0, 612000.0, 612000.0, 612000.0,
-              612000.0, 612000.0, 612000.0]), 
-                "other": np.array(1500.),                                      
+                "utilities": Quantity(
+                    np.array([
+                        0.0,
+                        13770.0,
+                        14535.0,
+                        14535.0,
+                        14535.0,
+                        14535.0,
+                        14535.0,
+                        14535.0,
+                        14535.0,
+                        14535.0,
+                    ]),
+                    "USD"
+                ),
+                "other": Quantity(np.array(1500.), "USD")                                      
             }
         }
     ]
@@ -75,13 +136,13 @@ def test_variable_operating_cost_plugin(case):
     tolerance = 1e-12
 
     np.testing.assert_allclose(
-        plugin.utilities, 
-        expected["utilities"], 
+        plugin.utilities.unit["USD"], 
+        expected["utilities"].unit["USD"], 
         rtol=tolerance
     )
     
     np.testing.assert_allclose(
-        plugin.other, 
-        expected["other"], 
+        plugin.other.unit["USD"], 
+        expected["other"].unit["USD"], 
         rtol=tolerance
     )
