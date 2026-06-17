@@ -4,7 +4,7 @@ Each test drives the LCA calculation engine directly via a MagicMock DCF with
 pre-resolved component values and compares the GWP100 result to a reference
 value computed independently from the raw openLCA matrix export.
 
-Matrix folder: data/LCA/LCA_Test_PVE_GT
+Matrix folder: src/tests/lca/LCA_Test_PVE_GT
 Foreground processes (A-matrix column-0 indices):
   - H2 Production        (index 0)     — A[0,0]     > 0  (diagonal reference flow)
   - PV Electricity       (index 3560)  — A[3560,0]  < 0  (input to H2 process)
@@ -32,8 +32,7 @@ from pyH2A.Utilities.lca_utils import get_disk_cache_dir
 # ── Paths ──────────────────────────────────────────────────────────────────
 
 _HERE = Path(__file__).parent
-_PROJECT_ROOT = _HERE.parents[2]
-_GT_MATRIX_DIR = str(_PROJECT_ROOT / 'data' / 'LCA' / 'LCA_Test_PVE_GT')
+_GT_MATRIX_DIR = str(_HERE / 'LCA_Test_PVE_GT')
 _DISK_CACHE_DIR = Path(_GT_MATRIX_DIR) / 'Initial_Artifacts'
 
 # ── UUIDs ──────────────────────────────────────────────────────────────────

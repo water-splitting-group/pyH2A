@@ -2,7 +2,7 @@
 
 Name | Value
 --- | ---
-Matrix Folder | data/LCA/LCA_Test_PVE_GT
+Matrix Folder | src/tests/lca/LCA_Test_PVE_GT
 
 # LCA - PVE GT Components
 

@@ -6,7 +6,7 @@ mirrors what an individual MC worker does (read file → DCF → LCA result)
 while keeping the scenario inputs fully explicit and auditable.
 
 Input files:  src/tests/lca/input_files/PVE_GT_S{1..5}.md
-Matrix:       data/LCA/LCA_Test_PVE_GT
+Matrix:       src/tests/lca/LCA_Test_PVE_GT
 """
 import shutil
 from pathlib import Path
@@ -26,9 +26,8 @@ from pyH2A.Utilities.lca_utils import get_disk_cache_dir
 # ── Paths ──────────────────────────────────────────────────────────────────
 
 _HERE = Path(__file__).parent
-_PROJECT_ROOT = _HERE.parents[2]
-_E2E_DIR = _PROJECT_ROOT / 'src' / 'tests' / 'lca' / 'input_files'
-_DISK_CACHE_DIR = _PROJECT_ROOT / 'data' / 'LCA' / 'LCA_Test_PVE_GT' / 'Initial_Artifacts'
+_E2E_DIR = _HERE / 'input_files'
+_DISK_CACHE_DIR = _HERE / 'LCA_Test_PVE_GT' / 'Initial_Artifacts'
 
 _GWP100_KEY = 'Climate change no LT - Global warming potential (GWP100) no LT'
 
