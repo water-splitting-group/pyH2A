@@ -277,6 +277,11 @@ class LCA:
 
         A0_uuids = LCA._cache['A0_column'][0]
         A0_values = LCA._cache['A0_column'][1]
+        if len(rows) > len(A0_uuids):
+            raise ValueError(
+                f"Expected {len(A0_uuids)} LCA components (one per nonzero column-0 entry), "
+                f"but got {len(rows)}."
+            )
         uuid_to_value = {str(uuid): float(val) for uuid, val in rows}
         self.component_values = A0_values.copy()
         for i, uuid in enumerate(A0_uuids):
