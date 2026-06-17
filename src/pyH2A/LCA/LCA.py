@@ -41,8 +41,10 @@ class LCA:
     Raises
     ------
     ValueError
-        Raised when no LCA input tables are found in the input, or when a UUID
-        present in the technosphere matrix is absent from the LCA input tables.
+        Raised when no LCA input tables are found in the input, when the
+        number of input components exceeds the number of nonzero entries in
+        the technosphere matrix, or when a UUID present in the
+        technosphere matrix is absent from the LCA input tables.
     ZeroDivisionError
         Raised when the Sherman-Morrison denominator is too small for a stable
         rank-1 update.
@@ -248,9 +250,10 @@ class LCA:
         Raises
         ------
         ValueError
-            Raised when no LCA tables are found in ``dcf.inp``, or when a
-            UUID present in the cached technosphere column is absent from the
-            input tables (every nonzero entry must be explicitly specified).
+            Raised when no LCA tables are found in ``dcf.inp``, when the
+            number of input components exceeds the number of nonzero entries
+            in the technosphere matrix, or when a UUID present in the
+            technosphere matrix is absent from the input tables.
 
         Notes
         -----
@@ -277,6 +280,11 @@ class LCA:
 
         A0_uuids = LCA._cache['A0_column'][0]
         A0_values = LCA._cache['A0_column'][1]
+        if len(rows) > len(A0_uuids):
+            raise ValueError(
+                f"Expected {len(A0_uuids)} LCA components (one per nonzero column-0 entry), "
+                f"but got {len(rows)}."
+            )
         uuid_to_value = {str(uuid): float(val) for uuid, val in rows}
         self.component_values = A0_values.copy()
         for i, uuid in enumerate(A0_uuids):
