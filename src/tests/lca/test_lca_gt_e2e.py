@@ -1,6 +1,6 @@
 """Ground-truth end-to-end tests for pyH2A.LCA.LCA using the PVE toy model.
 
-Each test drives the LCA calculation engine directly via a MagicMock DCF with
+Each test drives the LCA calculation engine directly via a DummyDCF with
 pre-resolved component values and compares the GWP100 result to a reference
 value computed independently from the raw openLCA matrix export.
 
@@ -17,8 +17,6 @@ so table inputs are always positive magnitudes; the sign is taken from the matri
 """
 import shutil
 from pathlib import Path
-from unittest.mock import MagicMock
-
 import pytest
 
 # pyH2A.LCA.LCA imports pyH2A.Discounted_Cash_Flow, which in turn re-imports
@@ -67,10 +65,14 @@ _SCENARIO_IDS = [
 
 # ── Helpers ────────────────────────────────────────────────────────────────
 
+class DummyDCF:
+    def __init__(self, inp):
+        self.inp = inp
+
+
 def _make_dcf(h2, pv, elec, ro):
-    """DCF mock with the four PVE-GT foreground components."""
-    dcf = MagicMock()
-    dcf.inp = {
+    """DummyDCF with the four PVE-GT foreground components."""
+    return DummyDCF({
         'LCA - PVE GT Components': {
             'H2 Production': {
                 'UUID': _UUID_H2_PRODUCTION,
@@ -93,8 +95,7 @@ def _make_dcf(h2, pv, elec, ro):
                 'Processed': 'Yes',
             },
         }
-    }
-    return dcf
+    })
 
 
 def _clear_ram_only():
