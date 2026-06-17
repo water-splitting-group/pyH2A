@@ -400,20 +400,21 @@ class Discounted_Cash_Flow:
 	def time(self):
 		'''Creating time scale information for discounted cash flow analysis.
 		'''
+		# XXX temporary to make the code work
+		self.construction_time_years = len(self.inp['Construction'])
 
 		insert(self, 'Financial Input Values', 'Construction time', 'Value', 
-			   len(self.inp['Construction']), __name__, print_info = self.print_info)
+			   self.construction_time_years, __name__, print_info = self.print_info)
 		insert(self, 'Financial Input Values', 'Construction time', 'Unit',
 		 'year', __name__, print_info = self.print_info)
 
-		construction_start = self.fin['startup year']['Value'] - self.fin['Construction time']['Value']
+		construction_start = self.fin['startup year']['Value'] - self.construction_time_years
 		end_of_life = self.fin['startup year']['Value'] + self.fin['plant life']['Value']
-		# XXX temporary to make the code work
-		self.construction_time_years = self.fin['Construction time']['Value']
+
 		self.years = np.arange(construction_start, end_of_life)
-		self.analysis_years = np.arange(0, self.fin['Construction time']['Value'] + 
+		self.analysis_years = np.arange(0, self.construction_time_years + 
 										   self.fin['plant life']['Value'])
-		self.plant_years = np.arange(-self.fin['Construction time']['Value'], 
+		self.plant_years = np.arange(-self.construction_time_years, 
 									  self.fin['plant life']['Value'])
 		self.operation_years = np.arange(0, self.fin['plant life']['Value'])
 
@@ -495,7 +496,7 @@ class Discounted_Cash_Flow:
 
 		self.annual_initial_depreciable_capital[:self.construction_time_years] = construction_years
 
-		self.after_tax_nominal_irr = (1 + self.fin['irr']['Value']) * (1 + self.fin['inflation']['Value']) - 1
+		self.after_tax_nominal_irr = (1 + self.fin['irr']['Value']) * (1 + self.fin['inflation']['Value'].unit['-']) - 1
 
 		return numpy_npv(self.after_tax_nominal_irr, construction_years)
 
@@ -655,7 +656,7 @@ class Discounted_Cash_Flow:
 		lcoe_operating_costs = (-self.npv_dict['salvage'] + self.npv_dict['decomissioning'] + self.npv_dict['fixed_operating_costs'] + self.npv_dict['variable_operating_costs'] + self.npv_dict['interest']) * (1. - self.total_tax_rate)
 		lcoe_final_product_sales = self.npv_dict['final_product_sales'] * (1. - self.total_tax_rate)
 
-		self.final_product_cost_nominal = (lcoe_capital_costs + lcoe_depreciation + lcoe_principal_payment + lcoe_operating_costs)/lcoe_final_product_sales * (1. + self.fin['inflation']['Value']) ** self.construction_time_years
+		self.final_product_cost_nominal = (lcoe_capital_costs + lcoe_depreciation + lcoe_principal_payment + lcoe_operating_costs)/lcoe_final_product_sales * (1. + self.fin['inflation']['Value'].unit['-']) ** self.construction_time_years
 		self.final_product_cost = self.final_product_cost_nominal/self.inflation_correction
 
 	def final_product_revenue(self):
@@ -719,7 +720,7 @@ class Discounted_Cash_Flow:
 		'''Calculate expenses per functional unit of final product
 		'''
 
-		return value/self.npv_dict['final_product_sales'] * (1. + self.fin['inflation']['Value']) ** self.construction_time_years / self.inflation_correction
+		return value/self.npv_dict['final_product_sales'] * (1. + self.fin['inflation']['Value'].unit['-']) ** self.construction_time_years / self.inflation_correction
 
 	def check_processing(self):
 		'''Check whether all tables in input file were used.

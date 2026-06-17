@@ -48,7 +48,55 @@ input_dict = {
                 'bottom_key_insertion': 'Value'
             }
         },			
-	}
+	}, 
+	"Inflation": {
+		"Inflation correction": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "dimensionless",
+			},
+   			"optional": False,
+			"description": "Inflation correction accounting for startup year offset"
+		},	
+		"Inflation factor full": {
+			"Value": {
+				"type": {np.ndarray,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "dimensionless",
+			},
+   			"optional": False,
+			"description": "Inflation factor of each year"
+		},	
+		"Combined inflator": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "dimensionless",
+			},
+   			"optional": False,
+			"description": "Combined inflation factor"
+		},					
+	},	
+    "Time": {
+        "Plant years": {
+            "Value": {
+                "type": {np.ndarray},
+                "bounds": (None, None),
+            },
+            "Unit": {
+                "dimension": "dimensionless",
+            },
+            "optional": False,
+            "description": "array whose values correspond to the year, with 0 being the first year of production"
+        },
+	},
 }	
 
 output_dict = {
@@ -106,22 +154,22 @@ class Replacement_Plugin:
 	def __init__(self, dcf, print_info):
 		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Replacement_Plugin')
 		
-		self.initialize_yearly_costs(dcf)
+		self.initialize_yearly_costs()
 		self.initialize_contributions()
-		self.calculate_planned_replacement(dcf)
+		self.calculate_planned_replacement()
 		self.unplanned_replacement()
 		# contrary to the general rule of having self.* as Quantity objects, in the present plugin, only self.yearly_inflated, self.unplanned and self.contributions['Total'] are Quantity objects 
 		# to avoid the unnecessary complication of having in each look "self.X = Quantity(self.X.unit[] + ...) ".
 		self.contributions['Total'] = Quantity(np.sum(self.yearly), 'USD')
 		
-		self.yearly_inflated = Quantity(self.yearly * dcf.inflation_correction * dcf.inflation_factor, 'USD')
+		self.yearly_inflated = Quantity(self.yearly * self.input_dict_resolved['Inflation']['Inflation correction']['Value'].unit['-'] * self.input_dict_resolved['Inflation']['Inflation factor full']['Value'].unit['-'], 'USD')
 		output_inserter_function(output_dict, self, dcf, 'Replacement_Plugin') 
 	
-	def initialize_yearly_costs(self, dcf):
-		'''Initializes ndarray filled with zeros with same length as dcf.inflation_factor.
+	def initialize_yearly_costs(self):
+		'''Initializes ndarray filled with zeros with same length as the plant years.
 		'''
 
-		self.yearly = np.zeros(len(dcf.inflation_factor))
+		self.yearly = 0.0*self.input_dict_resolved['Time']['Plant years']['Value'].unit['-']
 
 	def initialize_contributions(self):
 		'''Initializes contributions to replacement costs.
@@ -130,13 +178,13 @@ class Replacement_Plugin:
 		self.contributions['Data'] = {}
 		self.contributions['Table Group'] = 'Replacement Costs'
 
-	def calculate_planned_replacement(self, dcf):
+	def calculate_planned_replacement(self):
 		'''Calculation of yearly replacement costs by iterating over all entries of 
 		`Planned Replacement`.
 		'''
 
-		for key in dcf.inp['Planned Replacement']:
-			planned_replacement = Planned_Replacement(self.input_dict_resolved['Planned Replacement'][key], dcf)
+		for key in self.input_dict_resolved['Planned Replacement']:
+			planned_replacement = Planned_Replacement(self.input_dict_resolved['Planned Replacement'][key], self.input_dict_resolved['Time']['Plant years']['Value'].unit['-'], self.input_dict_resolved['Inflation']['Combined inflator']['Value'].unit['-'])
 			self.yearly[planned_replacement.years_idx] += planned_replacement.cost
 			self.contributions['Data'][key] = planned_replacement.total_cost
 
@@ -159,10 +207,10 @@ class Planned_Replacement:
 		Calculation of yearly costs from one-time cost and replacement frequency.
 	'''
 
-	def __init__(self, dictionary, dcf):
-		self.calculate_yearly_cost(dictionary, dcf)
+	def __init__(self, dictionary, plant_years, combined_inflator):
+		self.calculate_yearly_cost(dictionary, plant_years, combined_inflator)
 		
-	def calculate_yearly_cost(self, dictionary, dcf):
+	def calculate_yearly_cost(self, dictionary, plant_years, combined_inflator):
 		'''Calculation of yearly replacement costs.
 
 		Replacement costs are billed annually, replacements which are performed at a non-integer rate 
@@ -173,10 +221,10 @@ class Planned_Replacement:
 		non_integer_correction = replacement_frequency / dictionary['Frequency_Value'].unit['year']
 
 		raw_replacement_cost = dictionary['Cost_Value'].unit['USD'] 
-		initial_replacement_year_idx = fn.find_nearest(dcf.plant_years, replacement_frequency)[0]
+		initial_replacement_year_idx = fn.find_nearest(plant_years, replacement_frequency)[0]
 
-		self.cost = raw_replacement_cost * non_integer_correction * dcf.combined_inflator
-		self.years = dcf.plant_years[initial_replacement_year_idx:][0::replacement_frequency]
-		self.years_idx = fn.find_nearest(dcf.plant_years, self.years)
+		self.cost = raw_replacement_cost * non_integer_correction * combined_inflator
+		self.years = plant_years[initial_replacement_year_idx:][0::replacement_frequency]
+		self.years_idx = fn.find_nearest(plant_years, self.years)
 
 		self.total_cost = np.sum(np.ones_like(self.years) * self.cost)

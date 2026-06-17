@@ -3,6 +3,19 @@ from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import numpy as np
 
 input_dict = {    
+    "Time": {
+        "Operation years": {
+            "Value": {
+                "type": {np.ndarray,},
+                "bounds": (0, None),
+            },
+            "Unit": {
+                "dimension": "dimensionless",
+            },
+            "optional": False,
+            "description": "Array ranging from 0 to number of operation years (excluded)."
+        }, 
+    },   
     "Power Generation": {
         "Available energy (daily)": {
             "Value": {
@@ -146,7 +159,7 @@ class Battery_Plugin:
         self.yearly_recovered_energy = {}
         self.yearly_unstored_energy = {}
 
-        for year in dcf.operation_years:
+        for year in self.input_dict_resolved['Time']['Operation years']['Value'].unit['-']:
             daily_available_energy = available_energy_yearly[year].unit['J'] # array of floats
 
             capacity, capacity_decrease = self.calculate_battery_capacity(year) # floats

@@ -24,7 +24,7 @@ input_dict = {
 			"Unit": {
 				"dimension": "dimensionless",
 			},
-			"optional": True,
+			"optional": False,
 			"description": "Operating capacity factor value between 0 and 1 or percentage value."
 		},
 		"Design output by year": { 
@@ -50,6 +50,19 @@ input_dict = {
 			"description": "Ratio between the gate production and the raw production"
 		},
 	},
+	"Time": {
+		"Total years ones": { 
+			"Value": {
+				"type": {np.ndarray}, 
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "dimensionless",
+			},
+			"optional": False,
+			"description": "Array of ones, of length equal to the number of operation years."
+		},
+	}
 }
 
 output_dict = {
@@ -143,29 +156,40 @@ class Production_Plugin:
 		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Production_Plugin')
 		self.dictionary = self.input_dict_resolved['Technical Operating Parameters and Specifications']
 
-		self.calculate_output(dcf)
+		self.calculate_output()
 
-		output_inserter_function(output_dict, self, dcf, 'Production_Scaling_Plugin')     
+		output_inserter_function(output_dict, self, dcf, 'Production_Plugin')     
 
 
 
-	def calculate_output(self, dcf):
+	def calculate_output(self):
 		'''Calculation of yearly output and yearly output at gate.
 		'''
 
 		if 'Plant design capacity' in self.dictionary and 'Design output by year' not in self.dictionary:
-			self.design_output_by_year = np.ones(len(dcf.inflation_factor)) * self.dictionary['Plant design capacity']['Value'].unit[fu.FU_per_year] 
+			design_output_FU_by_year = (self.dictionary['Plant design capacity']['Value'].unit[fu.FU_per_year] 
+								 			* self.input_dict_resolved['Time']['Total years ones']['Value'].unit['-'])
 
 		elif 'Plant design capacity' not in self.dictionary and 'Design output by year' in self.dictionary:
-			self.design_output_by_year = self.dictionary['Design output by year']['Value'].unit[fu.FU]  # update the value to account for the operating capacity factor
+			if len(self.input_dict_resolved['Time']['Total years ones']['Value'].unit['-']) == len(self.dictionary['Design output by year']['Value'].unit[fu.FU]):
+				design_output_FU_by_year = self.dictionary['Design output by year']['Value'].unit[fu.FU]  
+			else:
+				raise ValueError(
+					f"Production plugin: Design output by year, of length "
+					f"{len(self.dictionary['Design output by year']['Value'].unit[fu.FU])} "
+					f", differs from the number of operation years {len(self.input_dict_resolved['Time']['Operation years ones']['Value'].unit['-'])}."
+				)
 
 		else:
 			raise ValueError (f"Production plugin: either the Plant design capacity, or the Design output by year, must be specified.")
 
-		self.output_per_year_at_gate = self.design_output_by_year * self.dictionary['Operating capacity factor']['Value'].unit['-'] * self.dictionary['Fraction of output that reaches gate']['Value'].unit['-'] 		
-		self.sum_design_output = np.sum(self.design_output_by_year) 
-		self.sum_output_gate = np.sum(self.output_per_year_at_gate)	
-		self.design_output_by_year = Quantity(self.design_output_by_year, fu.FU)
-		self.output_per_year_at_gate = Quantity(self.output_per_year_at_gate, fu.FU)
-		self.sum_design_output = Quantity(self.sum_design_output, fu.FU)
-		self.sum_output_gate = Quantity(self.sum_output_gate, fu.FU)
+		self.design_output_by_year = Quantity(design_output_FU_by_year, fu.FU)
+
+		output_FU_per_year_at_gate = (design_output_FU_by_year 
+										* self.dictionary['Operating capacity factor']['Value'].unit['-'] 
+										* self.dictionary['Fraction of output that reaches gate']['Value'].unit['-'])
+		
+		self.output_per_year_at_gate = Quantity(output_FU_per_year_at_gate, fu.FU)
+
+		self.sum_design_output = Quantity(np.sum(design_output_FU_by_year), fu.FU)
+		self.sum_output_gate = Quantity(np.sum(output_FU_per_year_at_gate), fu.FU)

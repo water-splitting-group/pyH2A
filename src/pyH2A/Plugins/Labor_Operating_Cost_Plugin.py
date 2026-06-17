@@ -2,6 +2,19 @@ from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
 input_dict = {
+	"Inflation":{
+		"Labor inflator": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "dimensionless",
+			},	
+			"optional": False,
+			"description": "Labor inflator."
+		},
+	},	
 	"Fixed Operating Costs": {
 		"Staff": {
 			"Value": {
@@ -85,7 +98,7 @@ class Labor_Operating_Cost_Plugin:
 		'''Calculation of yearly labor costs by multiplying number of staff times hourly labor cost.'''
 		work_hours_per_year = 2080.
 		labor_uninflated = self.input_dict_resolved['Fixed Operating Costs']['Staff']['Value'].unit['-'] * self.input_dict_resolved['Fixed Operating Costs']['Hourly labor cost']['Value'].unit['USD/h']*work_hours_per_year
-		labor = labor_uninflated * dcf.labor_inflator 
+		labor = labor_uninflated * self.input_dict_resolved['Inflation']['Labor inflator']['Value'].unit['-'] 
 
 		return labor_uninflated, labor
 	

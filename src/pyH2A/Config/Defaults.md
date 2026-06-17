@@ -2,7 +2,9 @@
 
 Name | Type | Position | Description
 --- | --- | --- | ---
-Production_Plugin | plugin | 1 | Computes plant output and scaling factors (if scaling is requested)
+Time_Plugin | plugin | 0 | Creates arrays corresponding to the life of the plant (construction, operation)
+Inflation_Plugin | plugin | 0 | Inflation-related arrays and variables
+Production_Plugin | plugin | 1 | Computes plant output 
 production | function | 2 | core function to process yearly plant output
 Capital_Cost_Plugin | plugin | 3 | Calculation of direct, indirect and non-depreciable capital costs
 initial_equity_depreciable_capital | function | 4 | core function to process depreciable capital costs
@@ -17,26 +19,26 @@ variable_operating_costs | function | 12 | core function to process variable ope
 
 # Financial Input Values
 
-Name | Full Name | Value
+Name | Full Name | Value | Unit
 --- | --- | ---
-ref year | Reference year | 2016
-startup year | Assumed start-up year | 2020
-basis year | Basis year | 2016
-current year capital costs | Current year for capital costs | 2016
-startup time | Start-up Time (years) | 1
-plant life | Plant life (years) | 20
-depreciation length | Depreciation Schedule Length (years) | 20
-depreciation type | Depreciation Type | MACRS
-equity | % Equity Financing | 40%
-interest | Interest rate on debt (%) | 3.7%
-debt | Debt period | Constant
-startup cost fixed | % of Fixed Operating Costs During Start-up | 100%
-startup revenues | % of Revenues During Start-up | 75%
-startup cost variable | % of Variable Operating Costs During Start-up | 75%
-decommissioning | Decommissioning costs (% of depreciable capital investment) | 10%
-salvage | Salvage value (% of total capital investment) | 10%
-inflation | Inflation rate (%) | 1.9%
-irr | After-tax Real IRR (%) | 8.0%
-state tax | State Taxes (%) | 6.0%
-federal tax | Federal Taxes (%) | 21.0%
-working capital | Working Capital (% of yearly change in operating costs) | 15.0%
+ref year | Reference year | 2016 | -
+startup year | Assumed start-up year | 2020 | -
+basis year | Basis year | 2016 | -
+current year capital costs | Current year for capital costs | 2016 | -
+startup time | Start-up Time (years) | 1 | year
+plant life | Plant life (years) | 20 | year
+depreciation length | Depreciation Schedule Length (years) | 20 | year
+depreciation type | Depreciation Type | MACRS | -
+equity | % Equity Financing | 40% | -
+interest | Interest rate on debt (%) | 3.7% | -
+debt | Debt period | Constant | -
+startup cost fixed | % of Fixed Operating Costs During Start-up | 100% | -
+startup revenues | % of Revenues During Start-up | 75% | -
+startup cost variable | % of Variable Operating Costs During Start-up | 75% | -
+decommissioning | Decommissioning costs (% of depreciable capital investment) | 10% | -
+salvage | Salvage value (% of total capital investment) | 10% | -
+inflation | Inflation rate (%) | 1.9% | -
+irr | After-tax Real IRR (%) | 8.0% | -
+state tax | State Taxes (%) | 6.0% | -
+federal tax | Federal Taxes (%) | 21.0% | -
+working capital | Working Capital (% of yearly change in operating costs) | 15.0% | - 

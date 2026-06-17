@@ -26,7 +26,7 @@ input_dict = {
                 "dimension": "mass",
             },
             "optional": False,
-            "description": "Yearly output taking operating capacity factor into account."
+            "description": "Yearly output ignoring capacity factor."
         },
 		"Operating capacity factor": { 
 			"Value": {
@@ -36,7 +36,7 @@ input_dict = {
 			"Unit": {
 				"dimension": "dimensionless",
 			},
-			"optional": True,
+			"optional": False,
 			"description": "Operating capacity factor value between 0 and 1 or percentage value."
 		},	        
     },
@@ -75,6 +75,19 @@ input_dict = {
             "description": "Fraction of fresh water obtained from given volume of sea water."
         },
     },
+    "Time":{
+        "Construction years ones": {
+            "Value": {
+                "type": {np.ndarray,},
+                "bounds": (0, None),
+            },
+            "Unit": {
+                "dimension": "dimensionless",
+            },
+            "optional": False,
+            "description": "Array of ones, of length equal to construciton time in years."
+        },
+    }
 }
 
 output_dict = {
@@ -161,9 +174,7 @@ class Reverse_Osmosis_Plugin:
 
         electricity_demand_J = self.sea_water_demand.unit['m3'] * self.input_dict_resolved['Reverse Osmosis']['Power demand']['Value'].unit['J/m3']
 
-        # XXX temporary : introduce a construction time variable to make the plugin run
-        construction_time_years = int(round(dcf.inp['Financial Input Values']['Construction time']['Value'].unit['year']))        
-        self.electricity_demand = Quantity(electricity_demand_J[construction_time_years:], 'J')
+        self.electricity_demand = Quantity(electricity_demand_J[len(self.input_dict_resolved['Time']['Construction years ones']['Value'].unit['-']):], 'J')
 
     def calculate_reverse_osmosis_scaling(self):
         '''
@@ -171,14 +182,14 @@ class Reverse_Osmosis_Plugin:
         yearly sea water demand and average daily operating hours.
         '''
 
-        HOURS_IN_A_YEAR = 365*24
-
         average_operating_time_fraction = self.input_dict_resolved['Reverse Osmosis']['Average operating time fraction']['Value'].unit['-']
-        yearly_operating_hours = average_operating_time_fraction * HOURS_IN_A_YEAR
         
         try:
             maximum_yearly_sea_water_demand_m3 = max(self.sea_water_demand.unit['m3'])
         except TypeError:
             maximum_yearly_sea_water_demand_m3 = self.sea_water_demand.unit['m3']
 
-        self.maximum_sea_water_processing_flowrate = Quantity(maximum_yearly_sea_water_demand_m3 / yearly_operating_hours, 'm3/h')
+        self.maximum_sea_water_processing_flowrate = Quantity(
+                                                            maximum_yearly_sea_water_demand_m3 
+                                                            / average_operating_time_fraction, 
+                                                            'm3/year')

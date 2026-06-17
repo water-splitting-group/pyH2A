@@ -5,6 +5,19 @@ from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import numpy as np
 
 input_dict = {
+    "Time": {
+        "Operation years": {
+            "Value": {
+                "type": {np.ndarray,},
+                "bounds": (0, None),
+            },
+            "Unit": {
+                "dimension": "dimensionless",
+            },
+            "optional": False,
+            "description": "Array ranging from 0 to number of operation years (excluded)."
+        },    
+    },
     "Electrolysis Using Stored Power": {
         "Fraction of stored power used for electrolysis": {
             "Value": {
@@ -234,12 +247,12 @@ class Stored_Power_Electrolysis_Plugin:
                power_increase_ratio) = calculate_electrolyzer_power_demand(
                                                 self.input_dict_resolved['Electrolyzer']['Power requirement increase per year']['Value'].unit['-'],
                                                 self.input_dict_resolved['Electrolyzer']['Nominal power']['Value'].unit['W'],
-                                                dcf.operation_years)
+                                                self.input_dict_resolved['Time']['Operation years']['Value'].unit['-'])
 
         maximum_consumable_energy = remaining_run_time_per_year_in_seconds * electrolyzer_power_demand # result in Joules
         
         stored_energy = {}
-        for year in dcf.operation_years:
+        for year in self.input_dict_resolved['Time']['Operation years']['Value'].unit['-']:
             stored_energy[year] = self.input_dict_resolved['Power Generation']['Stored energy (daily)']['Value'][year].unit['J']
             
         stored_energy_yearly = daily_to_yearly_power(stored_energy)

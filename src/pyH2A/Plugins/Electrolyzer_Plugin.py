@@ -7,7 +7,7 @@ input_dict = {
     "Financial Input Values": {
         "Construction time": {
             "Value": {
-                "type": {int,},
+                "type": {int, float},
                 "bounds": (0, 40*365*86400),
             },
             "Unit": {
@@ -115,6 +115,30 @@ input_dict = {
             "optional": False,
             "description": "Available energy, hourly basis, dictionary of years in (energy)."
         },
+    },
+    "Time": {
+        "Construction years ones": {
+            "Value": {
+                "type": {np.ndarray,},
+                "bounds": (0, None),
+            },
+            "Unit": {
+                "dimension": "dimensionless",
+            },
+            "optional": False,
+            "description": "Array of ones, of length equal to construction years."
+        },
+        "Operation years": {
+            "Value": {
+                "type": {np.ndarray,},
+                "bounds": (0, None),
+            },
+            "Unit": {
+                "dimension": "dimensionless",
+            },
+            "optional": False,
+            "description": "Array ranging from 0 to number of operation years (excluded)."
+        },        
     },
 }
 
@@ -281,7 +305,7 @@ class Electrolyzer_Plugin:
         yearly_data_unused_energy = {}
         yearly_data_unused_energy_daily = {}
 
-        for year in dcf.operation_years:
+        for year in self.input_dict_resolved['Time']['Operation years']['Value'].unit['-']:
 
             energy_generation = energy_generation_yearly_data[year].unit['J']
 
@@ -320,10 +344,8 @@ class Electrolyzer_Plugin:
         self.yearly_data_production = Quantity(np.asarray(yearly_data_production), 'kg')
         self.yearly_data_duration = Quantity(np.asarray(yearly_data_duration), 'h')
 
-        # XXX temporary : introduce a construction time variable to make the plugin run
-        construction_time_years = int(round(dcf.inp['Financial Input Values']['Construction time']['Value'].unit['year']))
         self.h2_production = np.concatenate([
-                                   np.zeros(construction_time_years), 
+                                   0.0 * self.input_dict_resolved['Time']['Construction years ones']['Value'].unit['-'],
                                    self.yearly_data_production.unit['kg']
                                     ])
         self.h2_production = Quantity(self.h2_production, 'kg') # needs to be expressed as a flowrate, as it ultimately serves as the plant design capacity etc

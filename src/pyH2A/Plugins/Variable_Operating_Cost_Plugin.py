@@ -30,6 +30,54 @@ input_dict = {
 			"description": "Operating capacity factor value between 0 and 1 or percentage value."
 		},		
 	},
+	"Inflation": {
+		"Inflation correction": {
+			"Value": {
+				"type": {float},
+				"bounds": (0, None)
+			},
+			"Unit": {
+				"dimension": "dimensionless"
+			},
+			"optional": False,
+			"description": "Inflation correction accounting for startup year offset"
+		}, 
+		"Chemical inflator": {
+			"Value": {
+				"type": {float},
+				"bounds": (0, None)
+			},
+			"Unit": {
+				"dimension": "dimensionless"
+			},
+			"optional": False,
+			"description": "Inflation factor for chemicals"
+		}, 		
+	},
+    "Time": {
+        "Total years ones": {
+            "Value": {
+                "type": {np.ndarray},
+                "bounds": (None, None),
+            },
+            "Unit": {
+                "dimension": "dimensionless",
+            },
+            "optional": False,
+            "description": "array whose values correspond to the year, with 0 being the first year of production"
+        },
+        "Years": {
+            "Value": {
+                "type": {np.ndarray},
+                "bounds": (None, None),
+            },
+            "Unit": {
+                "dimension": "dimensionless",
+            },
+            "optional": False,
+            "description": "array whose values correspond to the year from construction to end of life included"
+        },		
+	},
 	"Utilities": {
 		"<...>": {
 			"Cost_Value": {
@@ -169,31 +217,31 @@ class Variable_Operating_Cost_Plugin:
 
 		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Variable_Operating_Cost_Plugin')
 
-		self.calculate_utilities_cost(dcf)
-		self.other_variable_costs(dcf)
+		self.calculate_utilities_cost()
+		self.other_variable_costs()
 		self.total_variable_costs = Quantity(self.utilities.unit['USD'] + self.other.unit['USD'], 'USD')	
 		output_inserter_function(output_dict, self, dcf, 'Variable_Operating_Cost_Plugin')   
 
 
-	def calculate_utilities_cost(self, dcf):
+	def calculate_utilities_cost(self):
 		'''Iterating over all utilities and computing summed yearly costs.
 		'''
 
 		self.utilities = 0.
 
 		for key in self.input_dict_resolved['Utilities']:
-			utility = Utility(self.input_dict_resolved['Utilities'][key], dcf)
+			utility = Utility(self.input_dict_resolved['Utilities'][key], self.input_dict_resolved)
 			self.utilities += utility.cost_per_functional_unit.unit['USD/'+fu.FU]
 
 		self.utilities = self.utilities * self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output by year']['Value'].unit[fu.FU]
 		self.utilities = self.utilities * self.input_dict_resolved['Technical Operating Parameters and Specifications']['Operating capacity factor']['Value'].unit['-'] # Utilities are consumed only during operation
 		self.utilities = Quantity(self.utilities, 'USD')
 
-	def other_variable_costs(self, dcf):
+	def other_variable_costs(self):
 		'''Applying ``sum_all_tables()`` to "Other Variable Operating Cost" group.
 		'''
 		self.Other_variable_operating_cost_total = self.input_dict_resolved['Other Variable Operating Cost']['Summed group total']['Value'] # Calculated by sum_tables
-		self.other = dcf.chemical_inflator * self.Other_variable_operating_cost_total.unit['USD'] 
+		self.other = self.input_dict_resolved['Inflation']['Chemical inflator']['Value'].unit['-'] * self.Other_variable_operating_cost_total.unit['USD'] 
 		self.other = Quantity(self.other, 'USD')
 
 class Utility:
@@ -205,20 +253,20 @@ class Utility:
 		Calculation of utility cost per functional unit with inflation correction.
 	'''
 
-	def __init__(self, dictionary, dcf):
-		self.calculate_cost_per_functional_unit(dictionary, dcf)
+	def __init__(self, dictionary_utility, dictionary):
+		self.calculate_cost_per_functional_unit(dictionary_utility, dictionary)
 
-	def calculate_cost_per_functional_unit(self, dictionary, dcf):
+	def calculate_cost_per_functional_unit(self, dictionary_utility, dictionary):
 		'''Calculation of utility cost per kg of H2 with inflation correction.
 		'''
 		
-		if isinstance(dictionary['Cost_Value'], str):
-			prices = read_textfile(dictionary['Cost_Value'], delimiter = '	')
-			years_idx = fn.find_nearest(prices, dcf.years)
+		if isinstance(dictionary_utility['Cost_Value'], str):
+			prices = read_textfile(dictionary_utility['Cost_Value'], delimiter = '	')
+			years_idx = fn.find_nearest(prices, dictionary['Time']['Years']['Value'].unit['-'])
 			prices = prices[years_idx]
 
-			self.cost_per_functional_unit = Quantity(prices[:,1] * dcf.inflation_correction * dictionary['Price_Conversion_Factor_Value'].unit['-'] * dictionary['Usage_Value'].unit['1/'+fu.FU], 'USD/'+fu.FU) 
+			self.cost_per_functional_unit = Quantity(prices[:,1] * dictionary['Inflation']['Inflation correction']['Value'].unit['-'] * dictionary_utility['Price_Conversion_Factor_Value'].unit['-'] * dictionary_utility['Usage_Value'].unit['1/'+fu.FU], 'USD/'+fu.FU) 
 
 		else:
-			annual_cost_per_functional_unit = dcf.inflation_correction * dictionary['Cost_Value'].unit['USD'] * dictionary['Usage_Value'].unit['1/'+fu.FU] * dictionary['Price_Conversion_Factor_Value'].unit['-']
-			self.cost_per_functional_unit = Quantity(np.ones(len(dcf.inflation_factor)) * annual_cost_per_functional_unit, 'USD/'+fu.FU)
+			annual_cost_per_functional_unit = dictionary['Inflation']['Inflation correction']['Value'].unit['-'] * dictionary_utility['Cost_Value'].unit['USD'] * dictionary_utility['Usage_Value'].unit['1/'+fu.FU] * dictionary_utility['Price_Conversion_Factor_Value'].unit['-']
+			self.cost_per_functional_unit = Quantity(dictionary['Time']['Total years ones']['Value'].unit['-'] * annual_cost_per_functional_unit, 'USD/'+fu.FU)

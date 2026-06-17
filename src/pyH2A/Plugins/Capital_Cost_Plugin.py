@@ -4,6 +4,30 @@ from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import numpy as np
 
 input_dict = {
+	"Inflation":{
+		"Combined inflator": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "dimensionless",
+			},	
+			"optional": False,
+			"description": "Combined inflator."
+		},
+		"CI inflator": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "dimensionless",
+			},	
+			"optional": False,
+			"description": "CI inflator."
+		},		
+	},
 	"<...> Direct Capital Cost <...>": {
 		"<...>": {
 			"Value": {
@@ -268,16 +292,16 @@ class Capital_Cost_Plugin:
 		# Except for self.direct and self.indirect, which are natively Quantities as they are the results of sum_all_tables calls, 
 		# all the self.X variable are converted into Quantites just before their insertion, to avoid unnecessary complications
 		self.direct = self.input_dict_resolved['Direct Capital Cost']['Summed group total']['Value'] # Calculated during the call of sum_tables
-		direct_inflated = self.direct.unit['USD'] * dcf.combined_inflator		
+		direct_inflated = self.direct.unit['USD'] * self.input_dict_resolved['Inflation']['Combined inflator']['Value'].unit['-']
 		self.indirect = self.input_dict_resolved['Indirect Capital Cost']['Summed group total']['Value'] # Calculated during the call of sum_tables
-		indirect_inflated = self.indirect.unit['USD'] * dcf.combined_inflator
+		indirect_inflated = self.indirect.unit['USD'] * self.input_dict_resolved['Inflation']['Combined inflator']['Value'].unit['-']
 
 		depreciable = self.direct.unit['USD'] + self.indirect.unit['USD']
 		depreciable_inflated = direct_inflated + indirect_inflated
 		
 		non_depreciable = self.non_depreciable_capital_costs(dcf, print_info)
 
-		non_depreciable_inflated = non_depreciable * dcf.ci_inflator
+		non_depreciable_inflated = non_depreciable * self.input_dict_resolved['Inflation']['CI inflator']['Value'].unit['-']
 		total = depreciable + non_depreciable
 		total_inflated = depreciable_inflated + non_depreciable_inflated
 

@@ -38,6 +38,19 @@ input_dict = {
 			}
 		},			
 	},
+	"Inflation": {
+		"Combined inflator": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "dimensionless",
+			},
+   			"optional": False,
+			"description": "Combined inflation factor"
+		},					
+	},		
 }
 
 output_dict = {
@@ -89,16 +102,16 @@ class Other_Fixed_Operating_Cost_Plugin:
 		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Other_Fixed_Operating_Cost_Plugin')
 
 		labor = self.input_dict_resolved['Fixed Operating Costs']['Labor cost']['Value'].unit['USD']
-		other = self.other_cost(dcf)	
+		other = self.other_cost()	
 		self.total_fixed_operating_cost = Quantity(labor + other, 'USD')		
 
 		output_inserter_function(output_dict, self, dcf, 'Other_Fixed_Operating_Cost_Plugin')  
 
 	
-	def other_cost(self, dcf):
+	def other_cost(self):
 		'''Calculation of yearly other fixed operating costs by applying ``sum_all_tables()`` 
 		to "Other Fixed Operating Cost" group.'''
-		other = self.input_dict_resolved['Other Fixed Operating Cost']['Summed group total']['Value'].unit['USD'] * dcf.combined_inflator
+		other = self.input_dict_resolved['Other Fixed Operating Cost']['Summed group total']['Value'].unit['USD'] * self.input_dict_resolved['Inflation']['Combined inflator']['Value'].unit['-']
 
 		return other 
 
