@@ -7,7 +7,7 @@ from pyH2A.Utilities.lca_utils import (
     atomic_savez,
     factorize,
     find_matrix_path,
-    get_disk_cache_dir,
+    get_cache_paths,
     load_matrices_from_folder,
     matrix_of,
 )
@@ -51,7 +51,7 @@ class LCA:
     -----
     All caches are class-level and process-local. Disk artifacts are stored
     inside an ``Initial_Artifacts`` subdirectory of the matrix export folder,
-    managed by :func:`pyH2A.Utilities.lca_utils.get_disk_cache_dir`.
+    managed by :func:`pyH2A.Utilities.lca_utils.get_cache_paths`.
     '''
 
     _SM_TOL = 1e-12  # Tolerance for detecting numerical singularity in the Sherman-Morrison update denominator.
@@ -105,8 +105,11 @@ class LCA:
         Populates ``LCA._cache`` with keys ``base_scaling_vector``, ``A0_column``
         (nonzero first-column entries as UUIDs and values), ``basis_component``
         (precomputed ``A^{-1} e_i`` basis vectors), ``matrix_B`` and
-        ``matrix_C`` (sparse originals), and ``impact_index``. Disk writes use
-        :func:`~pyH2A.Utilities.lca_utils.atomic_savez` for atomic file replacement.
+        ``matrix_C`` (sparse originals), and ``impact_index``. Disk paths are
+        resolved by :func:`~pyH2A.Utilities.lca_utils.get_cache_paths`, which
+        also creates the ``Initial_Artifacts`` subdirectory on first call. Disk
+        writes use :func:`~pyH2A.Utilities.lca_utils.atomic_savez` for atomic
+        file replacement.
         '''
 
         # Try to load artifacts from RAM (process-local cache).
@@ -114,15 +117,7 @@ class LCA:
             return
 
         # Not in RAM: try to load artifacts from disk cache
-        cache_path = get_disk_cache_dir(self.matrix_folder)
-        paths = {
-            'base_scaling_vector':   cache_path / "base_scaling_vector.npz",
-            'A0_column':       cache_path / "A0_column.npz",
-            'basis_component': cache_path / "basis_component.npz",
-            'matrix_B':        cache_path / "matrix_B.npz",
-            'matrix_C':        cache_path / "matrix_C.npz",
-            'impact_index':    cache_path / "impact_index.npz",
-        }
+        paths = get_cache_paths(self.matrix_folder)
         
         try:
                      
