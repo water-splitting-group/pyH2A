@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import streamlit.components.v1 as components
 
 st.set_page_config(layout="wide", page_title="Workflow Builder")
 
@@ -8,6 +9,9 @@ st.title("pyH2A Workflow Builder")
 # -----------------------------
 # Session state
 # -----------------------------
+if "new_user_columns" not in st.session_state:
+    st.session_state.new_user_columns = []
+
 if "tables" not in st.session_state:
     st.session_state.tables = [
         {
@@ -70,7 +74,26 @@ if "tables" not in st.session_state:
                 },
             ],
         },
+         {
+            "title": "Construction - 1",
+            "rendered": True,
+            "columns": [
+                {"name": "Name", "type": "text", "disabled": True},
+                {"name": "Full Name", "type": "text", "disabled": True},
+                {"name": "Value", "type": "number"},
+                {"name": "Path", "type": "text"},
+            ],
+            "rows": [
+                {
+                    "Name": "capital perc 1st",
+                    "Full Name": "% of Capital Spent in 1st Year of Construction",
+                    "Value": 0.0,
+                    "Path": "",
+                },
+            ],
+        },
     ]
+
 
 # -----------------------------
 # Helpers
@@ -92,7 +115,7 @@ def render_cell(table_idx, row_idx, col):
     col_name = col["name"]
     col_type = col["type"]
     disabled = col.get("disabled", False)
-    
+
     key = f"cell_{table_idx}_{row_idx}_{col_name}"
 
     current_value = st.session_state.tables[table_idx]["rows"][row_idx].get(
@@ -105,17 +128,13 @@ def render_cell(table_idx, row_idx, col):
             col_name,
             value=float(current_value or 0),
             key=key,
-            label_visibility="collapsed",
             disabled=disabled,
+            label_visibility="collapsed",
         )
 
     elif col_type == "dropdown":
         options = col.get("options", [])
-
-        if current_value in options:
-            index = options.index(current_value)
-        else:
-            index = 0
+        index = options.index(current_value) if current_value in options else 0
 
         value = st.selectbox(
             col_name,
@@ -150,6 +169,136 @@ def table_to_markdown(tbl):
     return df.fillna("").to_markdown(index=False)
 
 
+def inject_equal_click_js():
+    components.html(
+        """
+        <script>
+        const doc = window.parent.document;
+
+        if (!window.parent.__equalClickInstalled) {
+            window.parent.__equalClickInstalled = true;
+            window.parent.__activePathInput = null;
+
+            function cleanText(text) {
+                return (text || "")
+                    .replace("keyboard_arrow_down", "")
+                    .replace("keyboard_arrow_right", "")
+                    .replace("— rendered/template", "")
+                    .replace("— user added", "")
+                    .replace(/\s+/g, " ")
+                    .trim();
+            }
+
+            function getTableName(el) {
+                const details = el.closest("details");
+                if (!details) return "";
+
+                const summary = details.querySelector("summary");
+                if (!summary) return "";
+
+                return cleanText(summary.innerText);
+            }
+
+            function getColName(el) {
+                return el.getAttribute("aria-label") || "";
+            }
+
+            function getRowName(el) {
+                const row = el.closest('[data-testid="stHorizontalBlock"]');
+                if (!row) return "";
+
+                const inputs = row.querySelectorAll("input");
+
+                for (const input of inputs) {
+                    const label = input.getAttribute("aria-label") || "";
+
+                    if (label.toLowerCase() === "name") {
+                        return input.value || "";
+                    }
+                }
+
+                return "";
+            }
+
+            function getFullPath(el) {
+                const tableName = getTableName(el);
+                const rowName = getRowName(el);
+                const colName = getColName(el);
+
+                return `(${tableName} > ${rowName} > ${colName}, )`;
+            }
+
+            function setNativeValue(input, value) {
+                const nativeInputValueSetter =
+                    Object.getOwnPropertyDescriptor(
+                        window.HTMLInputElement.prototype,
+                        "value"
+                    ).set;
+
+                nativeInputValueSetter.call(input, value);
+
+                input.dispatchEvent(new Event("input", { bubbles: true }));
+                input.dispatchEvent(new Event("change", { bubbles: true }));
+                input.dispatchEvent(new Event("blur", { bubbles: true }));
+            }
+            
+            doc.addEventListener("input", function(e) {
+                const el = e.target;
+
+                if (el.tagName !== "INPUT") return;
+
+                const label = el.getAttribute("aria-label") || "";
+
+                if (label.toLowerCase() === "path" && el.value.trim() === "=") {
+                    window.parent.__activePathInput = el;
+                }
+            });
+
+            doc.addEventListener("change", function(e) {
+                const el = e.target;
+
+                if (el.tagName !== "INPUT") return;
+
+                const label = el.getAttribute("aria-label") || "";
+
+                if (label.toLowerCase() === "path" && el.value.trim() === "=") {
+                    window.parent.__activePathInput = el;
+                }
+            });
+
+            doc.addEventListener("focusin", function(e) {
+                const el = e.target;
+
+                if (el.tagName !== "INPUT") return;
+
+                const label = el.getAttribute("aria-label") || "";
+
+                if (label.toLowerCase() === "path" && el.value.trim() === "=") {
+                    window.parent.__activePathInput = el;
+                }
+            });
+
+            doc.addEventListener("mousedown", function(e) {
+                const el = e.target;
+
+                if (!window.parent.__activePathInput) return;
+                if (el.tagName !== "INPUT") return;
+                if (el === window.parent.__activePathInput) return;
+
+                const sourceTableName = getFullPath(el);
+
+                if (sourceTableName) {
+                    setNativeValue(window.parent.__activePathInput, sourceTableName);
+                    window.parent.__activePathInput = null;
+                }
+            });
+        }
+        </script>
+        """,
+        height=0,
+    )
+
+
 # -----------------------------
 # Render tables
 # -----------------------------
@@ -162,8 +311,6 @@ for table_idx, tbl in enumerate(st.session_state.tables):
         label += " — user added"
 
     with st.expander(label, expanded=True):
-
-        # Header row
         header_cols = st.columns(len(tbl["columns"]) + 1)
 
         for col_idx, col in enumerate(tbl["columns"]):
@@ -171,7 +318,6 @@ for table_idx, tbl in enumerate(st.session_state.tables):
 
         header_cols[-1].markdown("**Actions**")
 
-        # Data rows
         for row_idx, row in enumerate(tbl["rows"]):
             row_cols = st.columns(len(tbl["columns"]) + 1)
 
@@ -186,7 +332,6 @@ for table_idx, tbl in enumerate(st.session_state.tables):
 
         st.markdown("---")
 
-        # Add row
         if st.button("Add row", key=f"add_row_{table_idx}"):
             new_row = {
                 col["name"]: default_value(col)
@@ -196,7 +341,52 @@ for table_idx, tbl in enumerate(st.session_state.tables):
             st.session_state.tables[table_idx]["rows"].append(new_row)
             st.rerun()
 
-        # Delete whole user-added table only
+        with st.expander("Add column"):
+            new_col_name = st.text_input(
+                "Column name",
+                key=f"new_col_name_{table_idx}",
+            )
+
+            new_col_type = st.selectbox(
+                "Column type",
+                ["text", "number", "dropdown"],
+                key=f"new_col_type_{table_idx}",
+            )
+
+            dropdown_options = []
+
+            if new_col_type == "dropdown":
+                options_text = st.text_input(
+                    "Dropdown options, comma-separated",
+                    placeholder="Option 1, Option 2, Option 3",
+                    key=f"new_dropdown_options_{table_idx}",
+                )
+
+                dropdown_options = [
+                    option.strip()
+                    for option in options_text.split(",")
+                    if option.strip()
+                ]
+
+            if st.button("Create column", key=f"create_col_{table_idx}"):
+                if new_col_name.strip():
+                    col_name = new_col_name.strip()
+
+                    new_col = {
+                        "name": col_name,
+                        "type": new_col_type,
+                    }
+
+                    if new_col_type == "dropdown":
+                        new_col["options"] = dropdown_options or ["Option 1"]
+
+                    st.session_state.tables[table_idx]["columns"].append(new_col)
+
+                    for row in st.session_state.tables[table_idx]["rows"]:
+                        row[col_name] = default_value(new_col)
+
+                    st.rerun()
+
         if not tbl.get("rendered"):
             if st.button("Delete table", key=f"delete_table_{table_idx}"):
                 st.session_state.tables.pop(table_idx)
@@ -212,9 +402,6 @@ with st.expander("Add additional user table"):
     table_title = st.text_input("Table name", key="new_table_title")
 
     st.markdown("#### Columns")
-
-    if "new_user_columns" not in st.session_state:
-        st.session_state.new_user_columns = []
 
     col_name_input, col_type_input, col_options_input, col_btn = st.columns([2, 1.5, 3, 1])
 
@@ -296,6 +483,7 @@ with st.expander("Add additional user table"):
             st.session_state.new_user_columns = []
             st.rerun()
 
+
 # -----------------------------
 # Markdown export
 # -----------------------------
@@ -310,3 +498,8 @@ for tbl in st.session_state.tables:
     md_output += "\n\n"
 
 st.code(md_output, language="markdown")
+
+# -----------------------------
+# Custom JS
+# -----------------------------
+inject_equal_click_js()
