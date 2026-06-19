@@ -62,18 +62,7 @@ input_dict = {
             },
             "optional": False,
             "description": "array whose values correspond to the year, with 0 being the first year of production"
-        },
-        "Operation years": {
-            "Value": {
-                "type": {np.ndarray},
-                "bounds": (0, None),
-            },
-            "Unit": {
-                "dimension": "dimensionless",
-            },
-            "optional": False,
-            "description": "array whose values correspond to the year or production"
-        },        
+        },    
         "Startup time offset": {
             "Value": {
                 "type": {int, float},
@@ -97,15 +86,7 @@ output_dict = {
 				"dimension": "dimensionless",                     
             },
             "optional": False,
-        },     
-        "Inflation factor operation": {
-            "Value": {
-                "inserted_value": "inflation_factor_operation",
-                "type": {np.ndarray},
-				"dimension": "dimensionless",                     
-            },
-            "optional": False,
-        },             
+        },                 
         "Inflation correction": {
             "Value": {
                 "inserted_value": "inflation_correction",
@@ -174,8 +155,6 @@ class Inflation_Plugin:
         inflation_rate = 1 + dictionary['inflation']['Value'].unit['-']
 
         self.inflation_factor_full = Quantity(inflation_rate ** self.input_dict_resolved['Time']['Plant years']['Value'].unit['-'], '-')
-
-        self.inflation_factor_operation = Quantity(inflation_rate ** self.input_dict_resolved['Time']['Operation years']['Value'].unit['-'], '-')
 
         self.inflation_correction = Quantity(inflation_rate ** self.input_dict_resolved['Time']['Startup time offset']['Value'].unit['year'], '-')
 

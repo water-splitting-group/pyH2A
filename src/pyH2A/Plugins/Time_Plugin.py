@@ -85,6 +85,14 @@ output_dict = {
             },
             "optional": False,
         },
+        "Operation years relative": {
+            "Value": {
+                "inserted_value": "operation_years_relative",
+                "type": {np.ndarray},
+				"dimension": "dimensionless",                     
+            },
+            "optional": False,
+        },        
         "Operation years ones": {
             "Value": {
                 "inserted_value": "operation_years_ones",
@@ -167,7 +175,9 @@ class Time_Plugin:
 
         self.plant_years = Quantity(np.arange(-construction_time_years, plant_life_years), '-')
 
-        self.operation_years = Quantity(np.arange(0, plant_life_years), '-')
+        self.operation_years = Quantity(np.arange(startup_year, end_of_life), '-')
+
+        self.operation_years_relative = Quantity(np.arange(0, plant_life_years), '-')
 
         # arrays of "ones"
         self.operation_years_ones = Quantity(np.ones(plant_life_years), '-')

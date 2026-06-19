@@ -51,7 +51,7 @@ input_dict = {
 		},
 	},
 	"Time": {
-		"Total years ones": { 
+		"Operation years ones": { 
 			"Value": {
 				"type": {np.ndarray}, 
 				"bounds": (0, None),
@@ -60,20 +60,9 @@ input_dict = {
 				"dimension": "dimensionless",
 			},
 			"optional": False,
-			"description": "Array of ones, of length equal to the number of operation years."
-		},
-		"Construction years ones": { 
-			"Value": {
-				"type": {np.ndarray}, 
-				"bounds": (0, None),
-			},
-			"Unit": {
-				"dimension": "dimensionless",
-			},
-			"optional": False,
-			"description": "Array of ones, of length equal to the number of construction years."
-		},
-	},    
+			"description": "Array of zeros during construction years, followed by ones during operation years."
+		},  
+	}
 }
 
 output_dict = {
@@ -165,8 +154,8 @@ class Production_Plugin:
 		# Otherwise fall back to plant design capacity
 		else:
 			design_output_by_year_fu = (operating_parameters['Plant design capacity']['Value'].unit[fu.FU_per_year]
-							   			* self.input_dict_resolved['Time']['Total years ones']['Value'].unit['-'])
-			design_output_by_year_fu[:len(self.input_dict_resolved['Time']['Construction years ones']['Value'].unit['-'])] = 0.0
+							   			* self.input_dict_resolved['Time']['Operation years ones']['Value'].unit['-'])
+
 			self.design_output_by_year = Quantity(design_output_by_year_fu, fu.FU)
 
 		# Calculation of output at gate by year array,

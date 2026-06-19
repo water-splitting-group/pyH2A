@@ -128,7 +128,7 @@ input_dict = {
             "optional": False,
             "description": "Array of ones, of length equal to construction years."
         },
-        "Operation years": {
+        "Operation years relative": {
             "Value": {
                 "type": {np.ndarray,},
                 "bounds": (0, None),
@@ -305,7 +305,7 @@ class Electrolyzer_Plugin:
         yearly_data_unused_energy = {}
         yearly_data_unused_energy_daily = {}
 
-        for year in self.input_dict_resolved['Time']['Operation years']['Value'].unit['-']:
+        for year in self.input_dict_resolved['Time']['Operation years relative']['Value'].unit['-']:
 
             energy_generation = energy_generation_yearly_data[year].unit['J']
 
@@ -344,11 +344,8 @@ class Electrolyzer_Plugin:
         self.yearly_data_production = Quantity(np.asarray(yearly_data_production), 'kg')
         self.yearly_data_duration = Quantity(np.asarray(yearly_data_duration), 'h')
 
-        self.h2_production = np.concatenate([
-                                   0.0 * self.input_dict_resolved['Time']['Construction years ones']['Value'].unit['-'],
-                                   self.yearly_data_production.unit['kg']
-                                    ])
-        self.h2_production = Quantity(self.h2_production, 'kg') # needs to be expressed as a flowrate, as it ultimately serves as the plant design capacity etc
+        self.h2_production = self.yearly_data_production.unit['kg']
+        self.h2_production = Quantity(self.h2_production, 'kg')
         
         self.yearly_data_unused_energy = yearly_data_unused_energy
         self.yearly_data_unused_energy_daily = yearly_data_unused_energy_daily

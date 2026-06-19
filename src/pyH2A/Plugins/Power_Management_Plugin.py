@@ -226,8 +226,7 @@ class Power_Management_Plugin:
 
         electricity_cost = self.total_unfulfilled.unit['J'] * cost_per_J
 
-        self.electricity_cost = np.concatenate([0.0 * self.input_dict_resolved['Time']['Construction years ones']['Value'].unit['-'], 
-                                                electricity_cost])
+        self.electricity_cost = electricity_cost
         
         self.electricity_cost = Quantity(self.electricity_cost, 'USD')
     

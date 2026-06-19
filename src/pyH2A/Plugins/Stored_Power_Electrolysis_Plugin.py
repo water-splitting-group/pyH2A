@@ -6,7 +6,7 @@ import numpy as np
 
 input_dict = {
     "Time": {
-        "Operation years": {
+        "Operation years relative": {
             "Value": {
                 "type": {np.ndarray,},
                 "bounds": (0, None),
@@ -247,12 +247,12 @@ class Stored_Power_Electrolysis_Plugin:
                power_increase_ratio) = calculate_electrolyzer_power_demand(
                                                 self.input_dict_resolved['Electrolyzer']['Power requirement increase per year']['Value'].unit['-'],
                                                 self.input_dict_resolved['Electrolyzer']['Nominal power']['Value'].unit['W'],
-                                                self.input_dict_resolved['Time']['Operation years']['Value'].unit['-'])
+                                                self.input_dict_resolved['Time']['Operation years relative']['Value'].unit['-'])
 
         maximum_consumable_energy = remaining_run_time_per_year_in_seconds * electrolyzer_power_demand # result in Joules
         
         stored_energy = {}
-        for year in self.input_dict_resolved['Time']['Operation years']['Value'].unit['-']:
+        for year in self.input_dict_resolved['Time']['Operation years relative']['Value'].unit['-']:
             stored_energy[year] = self.input_dict_resolved['Power Generation']['Stored energy (daily)']['Value'][year].unit['J']
             
         stored_energy_yearly = daily_to_yearly_power(stored_energy)

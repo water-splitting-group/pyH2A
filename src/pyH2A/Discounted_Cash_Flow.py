@@ -5,6 +5,7 @@ import numpy as np
 from pyH2A.Utilities.input_modification import convert_input_to_dictionary, process_input, process_table, insert, read_textfile, set_by_path, execute_plugin
 from pyH2A.LCA.LCA import LCA
 import pyH2A.Utilities.find_nearest as fn
+from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 from pyH2A import functional_unit as fu
 
 def numpy_npv(rate, values):
@@ -451,6 +452,11 @@ class Discounted_Cash_Flow:
 		self.labor_inflator = labor_price[:,1][labor_idx[0]]/labor_price[:,1][labor_idx[1]]
 		self.chemical_inflator = chemical_price[:,1][chemical_idx[0]]/chemical_price[:,1][chemical_idx[1]]
 
+	def expand_to_analysis_years(self, operation_array):
+		full = np.zeros(len(self.analysis_years))
+		full[fn.find_nearest(self.plant_years, 0)[0]:] = operation_array
+		return full
+
 	def production(self):
 		'''Get plant Output at gate by year.
 
@@ -464,6 +470,9 @@ class Discounted_Cash_Flow:
 										'Technical Operating Parameters and Specifications', 
 										'Output at gate by year', 
 										'Value')
+		self.output_per_year_at_gate = Quantity(
+											self.expand_to_analysis_years(self.output_per_year_at_gate.unit[fu.FU]), 
+											fu.FU)
 
 		return 0.
 
@@ -549,6 +558,7 @@ class Discounted_Cash_Flow:
 		'''
 
 		fixed_operating = process_input(self.inp, 'Fixed Operating Costs', 'Total', 'Value')
+		fixed_operating = Quantity(self.expand_to_analysis_years(fixed_operating.unit['USD']), 'USD')
 		fixed_operating_inflated = fixed_operating.unit['USD'] * self.inflation_correction
 
 		self.start_up_time_idx = self.start_idx + self.fin['startup time']['Value']
@@ -572,7 +582,7 @@ class Discounted_Cash_Flow:
 			Total variable operating costs.
 		'''
 
-		variable_operating_costs = self.inflation_factor * self.inp['Variable Operating Costs']['Total']['Value'].unit['USD']
+		variable_operating_costs = self.inflation_factor * self.expand_to_analysis_years(self.inp['Variable Operating Costs']['Total']['Value'].unit['USD'])
 		variable_operating_costs[:self.start_up_time_idx] = variable_operating_costs[:self.start_up_time_idx] * self.fin['startup cost variable']['Value']
 		variable_operating_costs[:self.start_idx] = 0
 

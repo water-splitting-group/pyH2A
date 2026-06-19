@@ -4,7 +4,7 @@ import numpy as np
 
 input_dict = {    
     "Time": {
-        "Operation years": {
+        "Operation years relative": {
             "Value": {
                 "type": {np.ndarray,},
                 "bounds": (0, None),
@@ -159,7 +159,7 @@ class Battery_Plugin:
         self.yearly_recovered_energy = {}
         self.yearly_unstored_energy = {}
 
-        for year in self.input_dict_resolved['Time']['Operation years']['Value'].unit['-']:
+        for year in self.input_dict_resolved['Time']['Operation years relative']['Value'].unit['-']:
             daily_available_energy = available_energy_yearly[year].unit['J'] # array of floats
 
             capacity, capacity_decrease = self.calculate_battery_capacity(year) # floats

@@ -32,7 +32,7 @@ input_dict = {
 			"Value": {
 				"type": {float, int},
 				"bounds": (0, 1),
-            },
+    },
 			"Unit": {
 				"dimension": "dimensionless",
 			},
@@ -75,19 +75,7 @@ input_dict = {
             "description": "Fraction of fresh water obtained from given volume of sea water."
         },
     },
-    "Time":{
-        "Construction years ones": {
-            "Value": {
-                "type": {np.ndarray,},
-                "bounds": (0, None),
-            },
-            "Unit": {
-                "dimension": "dimensionless",
-            },
-            "optional": False,
-            "description": "Array of ones, of length equal to construciton time in years."
-        },
-    }
+
 }
 
 output_dict = {
@@ -174,7 +162,7 @@ class Reverse_Osmosis_Plugin:
 
         electricity_demand_J = self.sea_water_demand.unit['m3'] * self.input_dict_resolved['Reverse Osmosis']['Power demand']['Value'].unit['J/m3']
 
-        self.electricity_demand = Quantity(electricity_demand_J[len(self.input_dict_resolved['Time']['Construction years ones']['Value'].unit['-']):], 'J')
+        self.electricity_demand = Quantity(electricity_demand_J, 'J')
 
     def calculate_reverse_osmosis_scaling(self):
         '''
