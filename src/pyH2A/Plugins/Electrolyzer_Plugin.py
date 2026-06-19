@@ -333,8 +333,7 @@ class Electrolyzer_Plugin:
         self.yearly_data_production = Quantity(np.asarray(yearly_data_production), 'kg')
         self.yearly_data_duration = Quantity(np.asarray(yearly_data_duration), 'h')
 
-        self.h2_production = self.yearly_data_production.unit['kg']
-        self.h2_production = Quantity(self.h2_production, 'kg')
+        self.h2_production = self.yearly_data_production # redundant, maybe remove one
         
         self.yearly_data_unused_energy = yearly_data_unused_energy
         self.yearly_data_unused_energy_daily = yearly_data_unused_energy_daily

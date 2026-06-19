@@ -401,7 +401,6 @@ class Discounted_Cash_Flow:
 	def time(self):
 		'''Creating time scale information for discounted cash flow analysis.
 		'''
-		# XXX temporary to make the code work
 		self.construction_time_years = len(self.inp['Construction'])
 
 		insert(self, 'Financial Input Values', 'Construction time', 'Value', 
@@ -409,22 +408,18 @@ class Discounted_Cash_Flow:
 		insert(self, 'Financial Input Values', 'Construction time', 'Unit',
 		 'year', __name__, print_info = self.print_info)
 
-		construction_start = self.fin['startup year']['Value'] - self.construction_time_years
-		end_of_life = self.fin['startup year']['Value'] + self.fin['plant life']['Value']
-
-		self.years = np.arange(construction_start, end_of_life)
-		self.analysis_years = np.arange(0, self.construction_time_years + 
-										   self.fin['plant life']['Value'])
-		self.plant_years = np.arange(-self.construction_time_years, 
+		self.nb_analysis_years = self.construction_time_years + self.fin['plant life']['Value']
+		self.plant_years_relative = np.arange(-self.construction_time_years, 
 									  self.fin['plant life']['Value'])
-		self.operation_years = np.arange(0, self.fin['plant life']['Value'])
+
+		self.start_idx = fn.find_nearest(self.plant_years_relative, 0)[0]
 
 	def inflation(self):
 		'''Calculate inflation correction and inflators for specific commodities.
 		'''
 
 		inflation_rate = 1 + self.fin['inflation']['Value']
-		self.inflation_factor = inflation_rate ** self.plant_years
+		self.inflation_factor = inflation_rate ** self.plant_years_relative
 		self.inflation_correction = inflation_rate ** (self.fin['startup year']['Value'] - 
 			      									   self.fin['ref year']['Value'])
 
@@ -453,8 +448,8 @@ class Discounted_Cash_Flow:
 		self.chemical_inflator = chemical_price[:,1][chemical_idx[0]]/chemical_price[:,1][chemical_idx[1]]
 
 	def expand_to_analysis_years(self, operation_array):
-		full = np.zeros(len(self.analysis_years))
-		full[fn.find_nearest(self.plant_years, 0)[0]:] = operation_array
+		full = np.zeros(self.nb_analysis_years)
+		full[self.start_idx:] = operation_array
 		return full
 
 	def production(self):
@@ -538,7 +533,6 @@ class Discounted_Cash_Flow:
 	
 		yearly_costs = self.inp['Replacement']['Total']['Value'].unit['USD']
 
-		self.start_idx = fn.find_nearest(self.plant_years, 0)[0]
 		yearly_costs[:self.start_idx] = 0
 		self.annual_replacement_costs = yearly_costs	
 
@@ -599,10 +593,10 @@ class Discounted_Cash_Flow:
 		decommissioning = self.depreciable_capital_inflation * self.fin['decommissioning']['Value']
 		salvage = self.total_capital_inflated * self.fin['salvage']['Value']
 
-		self.decommissioning_costs = np.zeros(len(self.plant_years))
+		self.decommissioning_costs = np.zeros(len(self.plant_years_relative))
 		self.decommissioning_costs[-1] = decommissioning * self.inflation_factor[-1]
 
-		self.salvage_income = np.zeros(len(self.plant_years))
+		self.salvage_income = np.zeros(len(self.plant_years_relative))
 		self.salvage_income[-1] = salvage * self.inflation_factor[-1]
 
 		return numpy_npv(self.after_tax_nominal_irr, self.salvage_income), numpy_npv(self.after_tax_nominal_irr, self.decommissioning_costs)
@@ -640,7 +634,7 @@ class Discounted_Cash_Flow:
 		annual_depreciable_capital = np.copy(self.annual_replacement_costs)
 		annual_depreciable_capital[self.start_idx] += total_initial_depreciable_capital
 
-		self.annual_charge = MACRS_depreciation(self.plant_years, self.fin['depreciation length']['Value'], annual_depreciable_capital)		
+		self.annual_charge = MACRS_depreciation(self.plant_years_relative, self.fin['depreciation length']['Value'], annual_depreciable_capital)		
 
 		return numpy_npv(self.after_tax_nominal_irr, self.annual_charge)
 
