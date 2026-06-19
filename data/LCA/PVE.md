@@ -211,7 +211,7 @@ Direct Capital Costs - PV > PV CAPEX ($/kW) > Value | \$/kW(PV) | value | 220
 Direct Capital Costs - Electrolyzer > Electrolyzer CAPEX ($/kW) > Value | \$/kW(Electro- lyzer) | value | 200
 Planned Replacement > Electrolyzer Stack Replacement > Cost ($)| Stack replacement (%E-CAPEX) | value | 20% | True
 
-# Monte_Carlo_Analysis
+# Monte_Carlo_Analysis - Deactivate
 
 Name | Value | Comment
 --- | --- | ---
