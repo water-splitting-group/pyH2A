@@ -80,7 +80,7 @@ if "tables" not in st.session_state:
             "columns": [
                 {"name": "Name", "type": "text", "disabled": True},
                 {"name": "Full Name", "type": "text", "disabled": True},
-                {"name": "Value", "type": "number"},
+                {"name": "Value", "type": "text"},
                 {"name": "Path", "type": "text"},
             ],
             "rows": [
@@ -178,6 +178,7 @@ def inject_equal_click_js():
         if (!window.parent.__equalClickInstalled) {
             window.parent.__equalClickInstalled = true;
             window.parent.__activePathInput = null;
+            window.parent.__activeValueInput = null;
 
             function cleanText(text) {
                 return (text || "")
@@ -241,55 +242,59 @@ def inject_equal_click_js():
                 input.dispatchEvent(new Event("change", { bubbles: true }));
                 input.dispatchEvent(new Event("blur", { bubbles: true }));
             }
-            
-            doc.addEventListener("input", function(e) {
-                const el = e.target;
 
+            function updateActiveInput(el) {
                 if (el.tagName !== "INPUT") return;
 
                 const label = el.getAttribute("aria-label") || "";
+                const labelLower = label.toLowerCase();
 
-                if (label.toLowerCase() === "path" && el.value.trim() === "=") {
+                if (labelLower === "path" && el.value.trim() === "=") {
                     window.parent.__activePathInput = el;
+                    window.parent.__activeValueInput = null;
                 }
+
+                if (labelLower === "value" && el.value.trim() === "=") {
+                    window.parent.__activeValueInput = el;
+                    window.parent.__activePathInput = null;
+                }
+            }
+
+            doc.addEventListener("input", function(e) {
+                updateActiveInput(e.target);
             });
 
             doc.addEventListener("change", function(e) {
-                const el = e.target;
-
-                if (el.tagName !== "INPUT") return;
-
-                const label = el.getAttribute("aria-label") || "";
-
-                if (label.toLowerCase() === "path" && el.value.trim() === "=") {
-                    window.parent.__activePathInput = el;
-                }
+                updateActiveInput(e.target);
             });
 
             doc.addEventListener("focusin", function(e) {
-                const el = e.target;
-
-                if (el.tagName !== "INPUT") return;
-
-                const label = el.getAttribute("aria-label") || "";
-
-                if (label.toLowerCase() === "path" && el.value.trim() === "=") {
-                    window.parent.__activePathInput = el;
-                }
+                updateActiveInput(e.target);
             });
 
             doc.addEventListener("mousedown", function(e) {
                 const el = e.target;
 
-                if (!window.parent.__activePathInput) return;
                 if (el.tagName !== "INPUT") return;
-                if (el === window.parent.__activePathInput) return;
 
-                const sourceTableName = getFullPath(el);
+                if (window.parent.__activePathInput && el !== window.parent.__activePathInput) {
+                    const sourcePath = getFullPath(el);
 
-                if (sourceTableName) {
-                    setNativeValue(window.parent.__activePathInput, sourceTableName);
-                    window.parent.__activePathInput = null;
+                    if (sourcePath) {
+                        setNativeValue(window.parent.__activePathInput, sourcePath);
+                        window.parent.__activePathInput = null;
+                    }
+
+                    return;
+                }
+
+                if (window.parent.__activeValueInput && el !== window.parent.__activeValueInput) {
+                    const sourceValue = el.value;
+
+                    setNativeValue(window.parent.__activeValueInput, sourceValue);
+                    window.parent.__activeValueInput = null;
+
+                    return;
                 }
             });
         }
