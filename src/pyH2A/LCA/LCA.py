@@ -7,7 +7,7 @@ from pyH2A.Utilities.lca_utils import (
     atomic_savez,
     factorize,
     find_matrix_path,
-    get_disk_cache_dir,
+    get_cache_paths,
     load_matrices_from_folder,
     matrix_of,
 )
@@ -41,10 +41,8 @@ class LCA:
     Raises
     ------
     ValueError
-        Raised when no LCA input tables are found in the input, when the
-        number of input components exceeds the number of nonzero entries in
-        the technosphere matrix, or when a UUID present in the
-        technosphere matrix is absent from the LCA input tables.
+        Raised when no LCA input tables are found in the input, or when a UUID
+        present in the technosphere matrix is absent from the LCA input tables.
     ZeroDivisionError
         Raised when the Sherman-Morrison denominator is too small for a stable
         rank-1 update.
@@ -53,7 +51,7 @@ class LCA:
     -----
     All caches are class-level and process-local. Disk artifacts are stored
     inside an ``Initial_Artifacts`` subdirectory of the matrix export folder,
-    managed by :func:`pyH2A.Utilities.lca_utils.get_disk_cache_dir`.
+    managed by :func:`pyH2A.Utilities.lca_utils.get_cache_paths`.
     '''
 
     _SM_TOL = 1e-12  # Tolerance for detecting numerical singularity in the Sherman-Morrison update denominator.
@@ -107,8 +105,11 @@ class LCA:
         Populates ``LCA._cache`` with keys ``base_scaling_vector``, ``A0_column``
         (nonzero first-column entries as UUIDs and values), ``basis_component``
         (precomputed ``A^{-1} e_i`` basis vectors), ``matrix_B`` and
-        ``matrix_C`` (sparse originals), and ``impact_index``. Disk writes use
-        :func:`~pyH2A.Utilities.lca_utils.atomic_savez` for atomic file replacement.
+        ``matrix_C`` (sparse originals), and ``impact_index``. Disk paths are
+        resolved by :func:`~pyH2A.Utilities.lca_utils.get_cache_paths`, which
+        also creates the ``Initial_Artifacts`` subdirectory on first call. Disk
+        writes use :func:`~pyH2A.Utilities.lca_utils.atomic_savez` for atomic
+        file replacement.
         '''
 
         # Try to load artifacts from RAM (process-local cache).
@@ -116,15 +117,7 @@ class LCA:
             return
 
         # Not in RAM: try to load artifacts from disk cache
-        cache_path = get_disk_cache_dir(self.matrix_folder)
-        paths = {
-            'base_scaling_vector':   cache_path / "base_scaling_vector.npz",
-            'A0_column':       cache_path / "A0_column.npz",
-            'basis_component': cache_path / "basis_component.npz",
-            'matrix_B':        cache_path / "matrix_B.npz",
-            'matrix_C':        cache_path / "matrix_C.npz",
-            'impact_index':    cache_path / "impact_index.npz",
-        }
+        paths = get_cache_paths(self.matrix_folder)
         
         try:
                      
@@ -250,10 +243,9 @@ class LCA:
         Raises
         ------
         ValueError
-            Raised when no LCA tables are found in ``dcf.inp``, when the
-            number of input components exceeds the number of nonzero entries
-            in the technosphere matrix, or when a UUID present in the
-            technosphere matrix is absent from the input tables.
+            Raised when no LCA tables are found in ``dcf.inp``, or when a
+            UUID present in the cached technosphere column is absent from the
+            input tables (every nonzero entry must be explicitly specified).
 
         Notes
         -----
