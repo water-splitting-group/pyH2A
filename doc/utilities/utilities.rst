@@ -16,5 +16,5 @@ Utilities
    plugin_input_output_processing
    quantity
    quantity_guide
-   utilities_guide
+   lca_utils
    
