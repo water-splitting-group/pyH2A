@@ -52,29 +52,18 @@ input_dict = {
         },                       
     },
     "Time": {
-        "Plant years": {
+        "Years": {
             "Value": {
-                "type": {np.ndarray},
+                "type": {dict,},
                 "bounds": (None, None),
             },
             "Unit": {
                 "dimension": "dimensionless",
             },
             "optional": False,
-            "description": "array whose values correspond to the year, with 0 being the first year of production"
-        },    
-        "Startup time offset": {
-            "Value": {
-                "type": {int, float},
-                "bounds": (None, None),
-            },
-            "Unit": {
-                "dimension": "time",
-            },
-            "optional": False,
-            "description": "difference between startup year and reference year"
-        },        
-    },    
+            "description": "Dictionary containing all time-related quantities."
+        }, 
+    },      
 }
 
 output_dict = {
@@ -154,9 +143,9 @@ class Inflation_Plugin:
 
         inflation_rate = 1 + dictionary['inflation']['Value'].unit['-']
 
-        self.inflation_factor_full = Quantity(inflation_rate ** self.input_dict_resolved['Time']['Plant years']['Value'].unit['-'], '-')
+        self.inflation_factor_full = Quantity(inflation_rate ** self.input_dict_resolved['Time']['Years']['Value']['Plant years'].unit['-'], '-')
 
-        self.inflation_correction = Quantity(inflation_rate ** self.input_dict_resolved['Time']['Startup time offset']['Value'].unit['year'], '-')
+        self.inflation_correction = Quantity(inflation_rate ** self.input_dict_resolved['Time']['Years']['Value']['Startup time offset'].unit['-'], '-')
 
         plant_cost = read_textfile('pyH2A.Lookup_Tables~Plant_Cost_Index.csv', 
                                     delimiter = '	')

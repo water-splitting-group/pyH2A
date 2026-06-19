@@ -54,30 +54,6 @@ input_dict = {
 			"description": "Inflation factor for chemicals"
 		}, 		
 	},
-    "Time": {
-        "Operation years ones": {
-            "Value": {
-                "type": {np.ndarray},
-                "bounds": (None, None),
-            },
-            "Unit": {
-                "dimension": "dimensionless",
-            },
-            "optional": False,
-            "description": "array whose values correspond to the year, with 0 being the first year of production"
-        },
-        "Operation years": {
-            "Value": {
-                "type": {np.ndarray},
-                "bounds": (None, None),
-            },
-            "Unit": {
-                "dimension": "dimensionless",
-            },
-            "optional": False,
-            "description": "array whose values correspond to the year from construction to end of life included"
-        },		
-	},
 	"Utilities": {
 		"<...>": {
 			"Cost_Value": {
@@ -129,7 +105,20 @@ input_dict = {
                 'bottom_key_insertion': 'Value'
             }
         },			
-	}
+	}, 
+    "Time": {
+        "Years": {
+            "Value": {
+                "type": {dict,},
+                "bounds": (None, None),
+            },
+            "Unit": {
+                "dimension": "dimensionless",
+            },
+            "optional": False,
+            "description": "Dictionary containing all time-related quantities."
+        }, 
+    },   	
 }
 
 output_dict = {
@@ -262,11 +251,11 @@ class Utility:
 		
 		if isinstance(dictionary_utility['Cost_Value'], str):
 			prices = read_textfile(dictionary_utility['Cost_Value'], delimiter = '	')
-			years_idx = fn.find_nearest(prices,dictionary['Time']['Operation years']['Value'].unit['-'])
+			years_idx = fn.find_nearest(prices,dictionary['Time']['Years']['Value']['Operation years'].unit['-'])
 			prices = prices[years_idx]
 
 			self.cost_per_functional_unit = Quantity(prices[:,1] * dictionary['Inflation']['Inflation correction']['Value'].unit['-'] * dictionary_utility['Price_Conversion_Factor_Value'].unit['-'] * dictionary_utility['Usage_Value'].unit['1/'+fu.FU], 'USD/'+fu.FU) 
 
 		else:
 			annual_cost_per_functional_unit = dictionary['Inflation']['Inflation correction']['Value'].unit['-'] * dictionary_utility['Cost_Value'].unit['USD'] * dictionary_utility['Usage_Value'].unit['1/'+fu.FU] * dictionary_utility['Price_Conversion_Factor_Value'].unit['-']
-			self.cost_per_functional_unit = Quantity(dictionary['Time']['Operation years ones']['Value'].unit['-'] * annual_cost_per_functional_unit, 'USD/'+fu.FU)
+			self.cost_per_functional_unit = Quantity(dictionary['Time']['Years']['Value']['Operation years ones'].unit['-'] * annual_cost_per_functional_unit, 'USD/'+fu.FU)

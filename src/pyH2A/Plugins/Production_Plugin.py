@@ -50,19 +50,19 @@ input_dict = {
 			"description": "Ratio between the gate production and the raw production"
 		},
 	},
-	"Time": {
-		"Operation years ones": { 
-			"Value": {
-				"type": {np.ndarray}, 
-				"bounds": (0, None),
-			},
-			"Unit": {
-				"dimension": "dimensionless",
-			},
-			"optional": False,
-			"description": "Array of zeros during construction years, followed by ones during operation years."
-		},  
-	}
+    "Time": {
+        "Years": {
+            "Value": {
+                "type": {dict,},
+                "bounds": (None, None),
+            },
+            "Unit": {
+                "dimension": "dimensionless",
+            },
+            "optional": False,
+            "description": "Dictionary containing all time-related quantities."
+        }, 
+    },   
 }
 
 output_dict = {
@@ -154,7 +154,7 @@ class Production_Plugin:
 		# Otherwise fall back to plant design capacity
 		else:
 			design_output_by_year_fu = (operating_parameters['Plant design capacity']['Value'].unit[fu.FU_per_year]
-							   			* self.input_dict_resolved['Time']['Operation years ones']['Value'].unit['-'])
+							   			* self.input_dict_resolved['Time']['Years']['Value']['Operation years ones'].unit['-'])
 
 			self.design_output_by_year = Quantity(design_output_by_year_fu, fu.FU)
 

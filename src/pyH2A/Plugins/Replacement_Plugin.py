@@ -85,18 +85,18 @@ input_dict = {
 		},					
 	},	
     "Time": {
-        "Plant years": {
+        "Years": {
             "Value": {
-                "type": {np.ndarray},
+                "type": {dict,},
                 "bounds": (None, None),
             },
             "Unit": {
                 "dimension": "dimensionless",
             },
             "optional": False,
-            "description": "array whose values correspond to the year, with 0 being the first year of production"
-        },
-	},
+            "description": "Dictionary containing all time-related quantities."
+        }, 
+    },   
 }	
 
 output_dict = {
@@ -169,7 +169,7 @@ class Replacement_Plugin:
 		'''Initializes ndarray filled with zeros with same length as the plant years.
 		'''
 
-		self.yearly = 0.0*self.input_dict_resolved['Time']['Plant years']['Value'].unit['-']
+		self.yearly = 0.0*self.input_dict_resolved['Time']['Years']['Value']['Plant years'].unit['-']
 
 	def initialize_contributions(self):
 		'''Initializes contributions to replacement costs.
@@ -184,7 +184,7 @@ class Replacement_Plugin:
 		'''
 
 		for key in self.input_dict_resolved['Planned Replacement']:
-			planned_replacement = Planned_Replacement(self.input_dict_resolved['Planned Replacement'][key], self.input_dict_resolved['Time']['Plant years']['Value'].unit['-'], self.input_dict_resolved['Inflation']['Combined inflator']['Value'].unit['-'])
+			planned_replacement = Planned_Replacement(self.input_dict_resolved['Planned Replacement'][key], self.input_dict_resolved['Time']['Years']['Value']['Plant years'].unit['-'], self.input_dict_resolved['Inflation']['Combined inflator']['Value'].unit['-'])
 			self.yearly[planned_replacement.years_idx] += planned_replacement.cost
 			self.contributions['Data'][key] = planned_replacement.total_cost
 

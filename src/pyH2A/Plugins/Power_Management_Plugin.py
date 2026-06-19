@@ -4,30 +4,6 @@ from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import numpy as np
 
 input_dict = {
-    "Time": {
-        "Operation years ones": {
-            "Value": {
-                "type": {np.ndarray,},
-                "bounds": (0, None),
-            },
-            "Unit": {
-                "dimension": "dimensionless",
-            },
-            "optional": False,
-            "description": "Array of ones, of length equal to operation years."
-        },
-        "Construction years ones": {
-            "Value": {
-                "type": {np.ndarray,},
-                "bounds": (0, None),
-            },
-            "Unit": {
-                "dimension": "dimensionless",
-            },
-            "optional": False,
-            "description": "Array of ones, of length equal to contruction years."
-        },        
-    },
     "Power Generation": {
         "Available energy (daily)": {
             "Value": {
@@ -82,6 +58,19 @@ input_dict = {
             "description": "Cost of grid electricity. Can be provided as a single value or as an array with values for each year. If not provided, it is assumed that grid electricity is not used."
         },
     },
+    "Time": {
+        "Years": {
+            "Value": {
+                "type": {dict,},
+                "bounds": (None, None),
+            },
+            "Unit": {
+                "dimension": "dimensionless",
+            },
+            "optional": False,
+            "description": "Dictionary containing all time-related quantities."
+        }, 
+    },      
 }
 
 output_dict = {
@@ -206,7 +195,7 @@ class Power_Management_Plugin:
                 flexible_available_energy[year] = self.input_dict_resolved['Power Generation']['Available energy (daily)']['Value'][year].unit['J']
             flexible_available_energy_yearly = daily_to_yearly_power(flexible_available_energy)
         except KeyError:
-            flexible_available_energy_yearly = 0.0 * self.input_dict_resolved['Time']['Operation years ones']['Value'].unit['-']
+            flexible_available_energy_yearly = 0.0 * self.input_dict_resolved['Time']['Years']['Value']['Operation years ones'].unit['-']
 
         try:
             stored_available_energy = {}
@@ -214,7 +203,7 @@ class Power_Management_Plugin:
                 stored_available_energy[year] = self.input_dict_resolved['Power Generation']['Stored energy (daily)']['Value'][year].unit['J']
             stored_available_energy_yearly = daily_to_yearly_power(stored_available_energy)
         except KeyError:
-            stored_available_energy_yearly = 0.0 * self.input_dict_resolved['Time']['Operation years ones']['Value'].unit['-']
+            stored_available_energy_yearly = 0.0 * self.input_dict_resolved['Time']['Years']['Value']['Operation years ones'].unit['-']
 
         self.total_unfulfilled, self.remaining_flexible, self.remaining_stored = allocate_power(self.input_dict_resolved['Power Consumption'], 
                                                                                                 flexible_available_energy_yearly, 

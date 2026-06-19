@@ -4,19 +4,6 @@ from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import numpy as np
 
 input_dict = {
-    "Time": {
-        "Operation years relative": {
-            "Value": {
-                "type": {np.ndarray,},
-                "bounds": (0, None),
-            },
-            "Unit": {
-                "dimension": "dimensionless",
-            },
-            "optional": False,
-            "description": "Array ranging from 0 to number of operation years (excluded)."
-        },
-	},
 	"Irradiation Used": {
 		"Data": {
 			"Value": {
@@ -102,6 +89,19 @@ input_dict = {
 			"description": "Power conversion efficiency of used solar cells. Percentage or value between 0 and 1."
 		},
 	},
+    "Time": {
+        "Years": {
+            "Value": {
+                "type": {dict,},
+                "bounds": (None, None),
+            },
+            "Unit": {
+                "dimension": "dimensionless",
+            },
+            "optional": False,
+            "description": "Dictionary containing all time-related quantities."
+        }, 
+    },   	
 }
 
 output_dict = {
@@ -232,7 +232,7 @@ class Photovoltaic_Plugin:
 		yearly_data = {}
 		yearly_data_daily_energy = {}
 
-		for year in self.input_dict_resolved['Time']['Operation years relative']['Value'].unit['-']:
+		for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']:
 			data_loss_corrected = self.calculate_photovoltaic_loss_correction(data, year)
 
 			# Multiplying irradiance data (J/m2) by nominal power in kW 

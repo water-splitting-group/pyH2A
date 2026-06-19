@@ -53,82 +53,18 @@ input_dict = {
 
 output_dict = {
     "Time": {
-        "Startup time offset": {
+        "Years": {
             "Value": {
-                "inserted_value": "startup_time_offset",
-                "type": {int, float},
-				"dimension": "time",                     
+                "inserted_value": "time_quantities_dict",
+                "type": {dict},
+				"dimension": "dimensionless",                     
             },
             "optional": False,
         },   
-        "Years": {
-            "Value": {
-                "inserted_value": "years",
-                "type": {np.ndarray},
-				"dimension": "dimensionless",                     
-            },
-            "optional": False,
-        },             
-        "Plant years": {
-            "Value": {
-                "inserted_value": "plant_years",
-                "type": {np.ndarray},
-				"dimension": "dimensionless",                     
-            },
-            "optional": False,
-        },
-        "Operation years": {
-            "Value": {
-                "inserted_value": "operation_years",
-                "type": {np.ndarray},
-				"dimension": "dimensionless",                     
-            },
-            "optional": False,
-        },
-        "Operation years relative": {
-            "Value": {
-                "inserted_value": "operation_years_relative",
-                "type": {np.ndarray},
-				"dimension": "dimensionless",                     
-            },
-            "optional": False,
-        },        
-        "Operation years ones": {
-            "Value": {
-                "inserted_value": "operation_years_ones",
-                "type": {np.ndarray},
-				"dimension": "dimensionless",                     
-            },
-            "optional": False,
-        },
-        "Construction years ones": {
-            "Value": {
-                "inserted_value": "construction_years_ones",
-                "type": {np.ndarray},
-				"dimension": "dimensionless",                     
-            },
-            "optional": False,
-        },
-        "Total years ones": {
-            "Value": {
-                "inserted_value": "total_years_ones",
-                "type": {np.ndarray},
-				"dimension": "dimensionless",                     
-            },
-            "optional": False,
-        },    
-        "Operation years ones padded": {
-            "Value": {
-                "inserted_value": "operation_years_ones_padded",
-                "type": {np.ndarray},
-				"dimension": "dimensionless",                     
-            },
-            "optional": False,
-        },                   
     }
 }
 
-
+          
 class Time_Plugin:
 
     def __init__(self, dcf, print_info):
@@ -164,14 +100,12 @@ class Time_Plugin:
 
         # Scalar values
    
-        self.startup_time_offset = Quantity(dictionary['startup year']['Value'].unit['-'] - dictionary['ref year']['Value'].unit['-'], 'year')
+        self.startup_time_offset = Quantity(startup_year - dictionary['ref year']['Value'].unit['-'], '-')
 
         # indices
 
         construction_start = startup_year - construction_time_years
         end_of_life = startup_year + plant_life_years     
-
-        self.years = Quantity(np.arange(construction_start, end_of_life), '-')
 
         self.plant_years = Quantity(np.arange(-construction_time_years, plant_life_years), '-')
 
@@ -182,16 +116,11 @@ class Time_Plugin:
         # arrays of "ones"
         self.operation_years_ones = Quantity(np.ones(plant_life_years), '-')
 
-        self.construction_years_ones = Quantity(np.ones(construction_time_years), '-')
-
-        self.total_years_ones = Quantity(np.ones(total_years), '-')
-
-        # padded array
-
-        self.operation_years_ones_padded = Quantity(
-                                                np.concatenate([
-                                                    np.zeros(construction_time_years), 
-                                                    np.ones(plant_life_years)
-                                                ])
-                                            , '-')
+        self.time_quantities_dict = {
+             "Startup time offset" : self.startup_time_offset, 
+             "Plant years" : self.plant_years, 
+             "Operation years" : self.operation_years,
+             "Operation years relative" : self.operation_years_relative,
+             "Operation years ones": self.operation_years_ones
+        }
 
