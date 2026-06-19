@@ -143,7 +143,7 @@ class Inflation_Plugin:
 
         inflation_rate = 1 + dictionary['inflation']['Value'].unit['-']
 
-        self.inflation_factor_full = Quantity(inflation_rate ** self.input_dict_resolved['Time']['Years']['Value']['Plant years'].unit['-'], '-')
+        self.inflation_factor_full = Quantity(inflation_rate ** self.input_dict_resolved['Time']['Years']['Value']['Plant years relative'].unit['-'], '-')
 
         self.inflation_correction = Quantity(inflation_rate ** self.input_dict_resolved['Time']['Years']['Value']['Startup time offset'].unit['-'], '-')
 

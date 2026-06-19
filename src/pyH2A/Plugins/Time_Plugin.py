@@ -96,18 +96,15 @@ class Time_Plugin:
             )
         )
 
-        total_years = construction_time_years + plant_life_years
-
         # Scalar values
    
         self.startup_time_offset = Quantity(startup_year - dictionary['ref year']['Value'].unit['-'], '-')
 
         # indices
 
-        construction_start = startup_year - construction_time_years
         end_of_life = startup_year + plant_life_years     
 
-        self.plant_years = Quantity(np.arange(-construction_time_years, plant_life_years), '-')
+        self.plant_years_relative = Quantity(np.arange(-construction_time_years, plant_life_years), '-')
 
         self.operation_years = Quantity(np.arange(startup_year, end_of_life), '-')
 
@@ -118,7 +115,7 @@ class Time_Plugin:
 
         self.time_quantities_dict = {
              "Startup time offset" : self.startup_time_offset, 
-             "Plant years" : self.plant_years, 
+             "Plant years relative" : self.plant_years_relative, 
              "Operation years" : self.operation_years,
              "Operation years relative" : self.operation_years_relative,
              "Operation years ones": self.operation_years_ones

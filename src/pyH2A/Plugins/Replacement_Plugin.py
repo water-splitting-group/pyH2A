@@ -169,7 +169,7 @@ class Replacement_Plugin:
 		'''Initializes ndarray filled with zeros with same length as the plant years.
 		'''
 
-		self.yearly = 0.0*self.input_dict_resolved['Time']['Years']['Value']['Plant years'].unit['-']
+		self.yearly = 0.0*self.input_dict_resolved['Time']['Years']['Value']['Plant years relative'].unit['-']
 
 	def initialize_contributions(self):
 		'''Initializes contributions to replacement costs.
@@ -184,7 +184,7 @@ class Replacement_Plugin:
 		'''
 
 		for key in self.input_dict_resolved['Planned Replacement']:
-			planned_replacement = Planned_Replacement(self.input_dict_resolved['Planned Replacement'][key], self.input_dict_resolved['Time']['Years']['Value']['Plant years'].unit['-'], self.input_dict_resolved['Inflation']['Combined inflator']['Value'].unit['-'])
+			planned_replacement = Planned_Replacement(self.input_dict_resolved['Planned Replacement'][key], self.input_dict_resolved['Time']['Years']['Value']['Plant years relative'].unit['-'], self.input_dict_resolved['Inflation']['Combined inflator']['Value'].unit['-'])
 			self.yearly[planned_replacement.years_idx] += planned_replacement.cost
 			self.contributions['Data'][key] = planned_replacement.total_cost
 
@@ -207,10 +207,10 @@ class Planned_Replacement:
 		Calculation of yearly costs from one-time cost and replacement frequency.
 	'''
 
-	def __init__(self, dictionary, plant_years, combined_inflator):
-		self.calculate_yearly_cost(dictionary, plant_years, combined_inflator)
+	def __init__(self, dictionary, plant_years_relative, combined_inflator):
+		self.calculate_yearly_cost(dictionary, plant_years_relative, combined_inflator)
 		
-	def calculate_yearly_cost(self, dictionary, plant_years, combined_inflator):
+	def calculate_yearly_cost(self, dictionary, plant_years_relative, combined_inflator):
 		'''Calculation of yearly replacement costs.
 
 		Replacement costs are billed annually, replacements which are performed at a non-integer rate 
@@ -221,10 +221,10 @@ class Planned_Replacement:
 		non_integer_correction = replacement_frequency / dictionary['Frequency_Value'].unit['year']
 
 		raw_replacement_cost = dictionary['Cost_Value'].unit['USD'] 
-		initial_replacement_year_idx = fn.find_nearest(plant_years, replacement_frequency)[0]
+		initial_replacement_year_idx = fn.find_nearest(plant_years_relative, replacement_frequency)[0]
 
 		self.cost = raw_replacement_cost * non_integer_correction * combined_inflator
-		self.years = plant_years[initial_replacement_year_idx:][0::replacement_frequency]
-		self.years_idx = fn.find_nearest(plant_years, self.years)
+		self.years = plant_years_relative[initial_replacement_year_idx:][0::replacement_frequency]
+		self.years_idx = fn.find_nearest(plant_years_relative, self.years)
 
 		self.total_cost = np.sum(np.ones_like(self.years) * self.cost)
