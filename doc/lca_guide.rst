@@ -1,0 +1,362 @@
+=====================
+Life Cycle Assessment
+=====================
+
+.. contents:: Table of Contents
+    :depth: 2
+    :local:
+    :class: this-will-duplicate-information-and-it-is-still-useful-here
+
+Overview
+========
+
+pyH2A can couple a full techno-economic analysis with life cycle assessment (LCA) in a single
+run. The LCA module reads a technosphere matrix exported from openLCA, updates it with
+scenario-specific exchange amounts resolved from the plugin outputs, and returns impact
+characterisation results (e.g. GWP100) alongside the levelised H2 cost.
+
+LCA is an optional feature: adding a ``# Life Cycle Assessment`` section to the input file
+activates it. If the section is absent, pyH2A runs as a pure techno-economic model.
+
+Export the matrix from openLCA
+==============================
+
+pyH2A reads the sparse matrix export produced by openLCA's *matrix export* function (available
+from the *Tools* menu). Export one product system per project and point pyH2A at the folder.
+
+The export folder must contain:
+
+.. code-block:: text
+
+	<export_folder>/
+	    A.npz          — technosphere matrix (n × n, scipy sparse CSC)
+	    B.npz          — intervention matrix (m × n, scipy sparse)
+	    C.npz          — characterisation matrix (p × m, scipy sparse)
+	    f.npy          — demand vector (n,)
+	    index_A.csv    — process index: row/column → UUID → process name
+	    index_C.csv    — impact category index: row → category name → unit
+
+``n`` is the total number of processes, ``m`` the number of elementary flows, and ``p`` the
+number of impact categories. For ecoinvent-based systems, ``n`` is typically in the tens of thousands.
+
+The ``index_B.csv`` file is bundled with the export but is not read by pyH2A.
+
+Configure the input file for LCA
+=================================
+
+Life Cycle Assessment section
+------------------------------
+
+Add a ``# Life Cycle Assessment`` section to the input file with the path to the export folder:
+
+.. code-block:: markdown
+
+	# Life Cycle Assessment
+
+	Name | Value
+	--- | ---
+	Matrix Folder | data/LCA/LCA_Test_PVE_EF
+
+The path is relative to the working directory from which pyH2A is invoked. Both forward and
+backward slashes are accepted on Windows.
+
+LCA component table
+-------------------
+
+One or more ``# LCA - ...`` sections list the foreground processes whose exchange amounts will
+be updated for each scenario. The section name must begin with ``LCA`` (case-insensitive):
+
+.. code-block:: markdown
+
+	# LCA - PVE Components
+
+	Name | Value | Unit | UUID
+	--- | --- | --- | ---
+	Total H2 Production | Technical Operating Parameters and Specifications > Output per Year at Gate > Value | kg | 50e1c844-e481-4c14-a3ca-1948f1d2fe37
+	PV Area              | Non-Depreciable Capital Costs > Solar Collection Area (m2) > Value                 | m2 | 0c88e490-56a5-3099-807c-06645527c90e
+	Electrolyzer unit number | Electrolyzer > Number of electrolyzers required > Value                        | -  | 98f950b2-39b0-4374-a400-05984b438be9
+	Battery weight       | Battery > Mass (kg) > Value                                                        | kg | c341bfcb-5959-3a70-839e-913e8250b237
+	Reverse Osmosis Units | Reverse Osmosis > Number of devices required > Value                              | -  | 056a11ab-0a7a-38dd-a1d3-4058c2a8662d
+
+Column meanings:
+
+- **Name** — free label; used as the row key in the parsed dictionary. Not matched against the matrix.
+- **Value** — exchange amount. Can be a number or a three-part path reference (``Top > Middle > Value``). Multiple paths separated by ``;`` are multiplied together.
+- **Unit** — informational only. pyH2A does not validate or convert units; the value must already be in the unit expected by the openLCA process.
+- **UUID** — the openLCA process UUID. Must match a nonzero entry in column 0 of the technosphere matrix.
+
+Every UUID that appears in the nonzero entries of the technosphere matrix first column must be
+listed. Omitting one raises a ``ValueError``.
+
+Users always supply positive magnitudes. pyH2A inherits the sign from the original matrix: the
+functional unit process (typically H2 production) is positive; all consumed inputs are stored
+as negative values internally.
+
+Multiple ``# LCA - ...`` tables are supported and their rows are merged, which allows grouping
+components by subsystem for readability.
+
+Plugin LCA outputs
+==================
+
+In a full PV + electrolysis (PVE) model, all five LCA component values are computed by plugins
+and referenced via path expressions in the ``# LCA - ...`` table. The plugins run before LCA is
+triggered, so their outputs are already available in ``dcf.inp`` when the LCA table is
+processed.
+
+Production_Scaling_Plugin
+--------------------------
+
+Computes annual H2 output at the plant gate.
+
+- **LCA input required:** none (outputs are always computed)
+- **Output used by LCA:** ``Technical Operating Parameters and Specifications > Output per Year at Gate > Value`` — annual H2 production in kg/year, used to scale the H2 Production foreground process.
+
+Photovoltaic_Plugin
+--------------------
+
+Simulates PV electricity production and calculates the array area.
+
+- **LCA input required:** none (outputs are always computed)
+- **Output used by LCA:** ``Non-Depreciable Capital Costs > Solar Collection Area (m2) > Value`` — total PV area in m², used to scale the PV module manufacturing foreground process.
+
+Electrolyzer_Plugin
+--------------------
+
+Models electrolyzer operation and calculates the required number of units.
+
+- **LCA input required:** ``Electrolyzer > Unit Nominal Power (kW) > Value`` must be present in the input file. This is the rated power of one electrolyzer unit.
+- **Activation:** the number-of-units calculation is **only triggered when LCA is active** (``if 'Life Cycle Assessment' in dcf.inp``). If the ``# Life Cycle Assessment`` section is absent, neither the calculation nor the ``insert`` call runs.
+- **Output used by LCA:** ``Electrolyzer > Number of electrolyzers required > Value`` — total nominal power divided by unit nominal power, used to scale the electrolyzer manufacturing foreground process.
+
+To enable this output, add ``Unit Nominal Power (kW)`` to the ``# Electrolyzer`` table:
+
+.. code-block:: markdown
+
+	# Electrolyzer
+
+	Name | Value | Comment
+	--- | --- | ---
+	Nominal Power (kW) | 5,500.0 | Total plant electrolyzer power
+	...
+	Unit Nominal Power (kW) | 1,100.0 | Rated power of one electrolyzer unit (gives 5 units)
+
+Battery_Plugin
+---------------
+
+Models battery storage and calculates installed battery mass.
+
+- **LCA input required:** ``Battery > Energy density (kWh/kg) > Value`` must be present (optional input; if absent, the mass is not computed and the path reference in the LCA table will fail to resolve).
+- **Output used by LCA:** ``Battery > Mass (kg) > Value`` — design capacity divided by energy density, used to scale the battery manufacturing foreground process.
+
+Add the energy density to the ``# Battery`` table:
+
+.. code-block:: markdown
+
+	# Battery
+
+	Name | Value | Comment
+	--- | --- | ---
+	Design Capacity (kWh) | 800000 |
+	...
+	Energy density (kWh/kg) | 0.2 | Battery specific energy for mass calculation
+
+Reverse_Osmosis_Plugin
+-----------------------
+
+Models the reverse osmosis water treatment system and calculates the number of devices.
+
+- **LCA input required:** ``Reverse Osmosis > Device throughput (L/year) > Value`` must be present (throughput of one device unit).
+- **Output used by LCA:** ``Reverse Osmosis > Number of devices required > Value`` — total annual sea-water demand divided by device throughput, used to scale the reverse osmosis manufacturing foreground process.
+
+Add the device throughput to the ``# Reverse Osmosis`` table:
+
+.. code-block:: markdown
+
+	# Reverse Osmosis
+
+	Name | Value | Comment
+	--- | --- | ---
+	Power Demand (kWh/m3) | 2.71 |
+	...
+	Device throughput (L/year) | 6.23e10 | Throughput of one RO device per year
+
+Run pyH2A with LCA
+==================
+
+The run command is identical to a standard TEA run:
+
+.. code-block:: bash
+
+	pyH2A run -i input.md -o .
+
+LCA is triggered automatically at the end of the financial workflow whenever the
+``# Life Cycle Assessment`` section is present. No additional flags are required. Upon
+completion, pyH2A prints the levelised H2 cost as usual; LCA results are accessible
+programmatically (see the next section).
+
+Monte Carlo analysis with LCA
+------------------------------
+
+To propagate parameter uncertainty through both TEA and LCA, include ``Monte_Carlo_Analysis``
+in the input file and set ``Dependent Variable`` to ``Climate change``:
+
+.. code-block:: markdown
+
+	# Monte_Carlo_Analysis
+
+	Name | Value
+	--- | ---
+	Samples | 50000
+	Dependent Variable | Climate change
+	Output File | data/LCA/Monte_Carlo_Output.csv
+
+Supported values for ``Dependent Variable`` are ``h2_cost``, ``Climate change``, and
+``Cumulative energy demand``. The Monte Carlo engine samples the specified input parameters,
+re-runs the full pipeline (including LCA) for each sample, and collects the chosen output.
+
+Access LCA results
+==================
+
+When running from a Python script, LCA results are accessible on the DCF object:
+
+.. code-block:: Python
+
+	from pyH2A.run_pyH2A import pyH2A
+
+	result = pyH2A('input.md', '.')
+	lca = result.base_case.lca
+
+``lca.lca_results`` is a dictionary keyed by the verbatim impact category name from
+``index_C.csv``:
+
+.. code-block:: Python
+
+	for name, entry in lca.lca_results.items():
+	    print(f"{name}: {entry['value']:.6f} {entry['unit']}")
+
+Example output for an IPCC 2013 no LT export:
+
+.. code-block:: text
+
+	Climate change no LT - Global warming potential (GWP100) no LT: 0.454132 kg CO2-Eq
+	Climate change no LT - Global warming potential (GWP20) no LT: 1.234567 kg CO2-Eq
+	...
+
+To retrieve a single result by impact name:
+
+.. code-block:: Python
+
+	gwp100_key = 'Climate change no LT - Global warming potential (GWP100) no LT'
+	gwp100 = result.base_case.lca.lca_results[gwp100_key]['value']
+
+The scaling vector (activity levels for all processes) and the per-scenario component values
+are also available as ``lca.scaling_vector`` and ``lca.component_values`` respectively.
+
+Artifact folder and maintenance
+================================
+
+On first run, pyH2A factorises the technosphere matrix and pre-computes basis vectors. These
+are saved to an ``Initial_Artifacts`` subdirectory inside the matrix export folder so that
+subsequent runs (including every Monte Carlo worker) can skip the expensive factorisation:
+
+.. code-block:: text
+
+	<export_folder>/
+	    Initial_Artifacts/
+	        base_scaling_vector.npz   — A⁻¹f for the original demand vector
+	        A0_column.npz             — UUIDs and values of nonzero column-0 entries
+	        basis_component.npz       — A⁻¹ eᵢ columns for each foreground component
+	        matrix_B.npz              — copy of the intervention matrix
+	        matrix_C.npz              — copy of the characterisation matrix
+	        impact_index.npz          — impact category names and units
+
+The artifacts are valid as long as the matrix export does not change. **Delete the
+``Initial_Artifacts`` folder whenever you re-export the matrix from openLCA** to force
+pyH2A to recompute them.
+
+Within a Python process, the artifacts are also held in a process-local RAM cache
+(``LCA._cache``). Multiprocessing workers each build their own RAM cache from disk on first
+use, which adds a short startup overhead per worker but avoids inter-process communication.
+
+Sherman-Morrison engine
+========================
+
+When exchange amounts change between scenarios (e.g. during Monte Carlo sampling), pyH2A
+avoids re-factorising the full matrix. Instead it applies a rank-1 Sherman-Morrison update
+to the pre-computed base scaling vector:
+
+.. code-block:: text
+
+	x' = x₀ - correction × (x₀[0] / (1 + correction[0]))
+
+where ``correction = basis_component @ delta``, ``delta`` is the element-wise change in the
+foreground column values, and ``basis_component`` holds the pre-computed ``A⁻¹ eᵢ`` columns.
+The update is a single dense matrix-vector multiply — typically microseconds — compared to
+tens of seconds for a full factorisation.
+
+For a system with four foreground components, ``basis_component`` has shape ``(n, 4)`` where
+``n`` is the total number of processes. The ``(n, 4)`` multiply replaces an ``(n³)`` factorisation.
+
+See :class:`~pyH2A.LCA.LCA.LCA` for the complete API reference and full mathematical
+derivation.
+
+Troubleshooting
+===============
+
+``ValueError: No LCA component tables found in input``
+--------------------------------------------------------
+
+No section whose name starts with ``LCA`` was found in the input file. Check that the
+``# LCA - ...`` section header is spelled correctly and that the file was loaded without
+parsing errors.
+
+``ValueError: UUID '...' ... is missing from the input LCA component tables``
+-------------------------------------------------------------------------------
+
+A UUID in the nonzero entries of the technosphere matrix first column has no matching entry in
+any ``# LCA - ...`` table. Every foreground component must be listed. Find the missing UUID in
+``index_A.csv`` to identify the process.
+
+``ValueError: Expected N LCA components ... but got M``
+--------------------------------------------------------
+
+More rows were found across all ``# LCA - ...`` tables than there are nonzero entries in
+column 0 of the technosphere matrix. Remove the extra rows or check that the correct matrix
+export folder is specified.
+
+``KeyError: 'Unit Nominal Power (kW)'`` from Electrolyzer_Plugin
+-----------------------------------------------------------------
+
+The ``Electrolyzer > Unit Nominal Power (kW) > Value`` row is missing from the input file.
+This is required when LCA is active (see `Electrolyzer_Plugin`_ above).
+
+``Battery > Mass (kg) > Value`` path reference prints a warning and resolves to 1
+----------------------------------------------------------------------------------
+
+``Battery > Energy density (kWh/kg) > Value`` is absent from the ``# Battery`` table, so the
+battery mass was never computed and the ``Battery > Mass (kg)`` entry does not exist in the
+input dictionary. When the LCA component table is processed, pyH2A prints:
+
+.. code-block:: text
+
+	Warning: Invalid path specified for "Battery > Mass (kg) > Value" (at "LCA - ... > Battery weight > Value"), setting to 1
+
+Add the ``Energy density (kWh/kg)`` row to the ``# Battery`` table to enable mass calculation.
+
+``ZeroDivisionError: Sherman-Morrison denominator is too small``
+----------------------------------------------------------------
+
+The scenario values caused the functional unit production amount to approach zero, making the
+rank-1 update numerically singular. Verify that the exchange amount for the H2 production
+foreground process is non-zero.
+
+``Initial_Artifacts`` files are stale after re-exporting from openLCA
+-----------------------------------------------------------------------
+
+Delete the ``Initial_Artifacts`` folder manually before running pyH2A again:
+
+.. code-block:: bash
+
+	rm -r <export_folder>/Initial_Artifacts
+
+pyH2A will regenerate them on the next run.
