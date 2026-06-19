@@ -10,7 +10,7 @@ from pyH2A.Utilities.lca_utils import (
     atomic_savez,
     factorize,
     find_matrix_path,
-    get_disk_cache_dir,
+    get_cache_paths,
     matrix_of,
     tech_process_indices,
 )
@@ -211,15 +211,18 @@ class TestTechProcessIndices:
         assert result[0, 2] == pytest.approx(7.5)
 
 
-# ── get_disk_cache_dir ─────────────────────────────────────────────────────
+# ── get_cache_paths ────────────────────────────────────────────────────────
 
-class TestGetDiskCacheDir:
+class TestGetCachePaths:
     def test_creates_initial_artifacts_subdir(self, tmp_path):
-        result = get_disk_cache_dir(str(tmp_path))
-        assert result == tmp_path / 'Initial_Artifacts'
-        assert result.exists()
+        result = get_cache_paths(str(tmp_path))
+        assert (tmp_path / 'Initial_Artifacts').exists()
+
+    def test_returns_paths_inside_initial_artifacts(self, tmp_path):
+        paths = get_cache_paths(str(tmp_path))
+        assert all(p.parent == tmp_path / 'Initial_Artifacts' for p in paths.values())
 
     def test_idempotent_on_repeated_calls(self, tmp_path):
-        r1 = get_disk_cache_dir(str(tmp_path))
-        r2 = get_disk_cache_dir(str(tmp_path))
+        r1 = get_cache_paths(str(tmp_path))
+        r2 = get_cache_paths(str(tmp_path))
         assert r1 == r2
