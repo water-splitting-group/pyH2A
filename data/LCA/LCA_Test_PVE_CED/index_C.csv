@@ -1,0 +1,13 @@
+index,indicator ID,indicator name,indicator unit
+0,f75ef731-f39a-4193-9e0f-52cf046941ab,Energy resources: non-renewable,MJ-Eq
+1,62b61cb2-e88d-48e3-b244-4b0a7d0bb4c0,"Energy resources: non-renewable, biomass",MJ-Eq
+2,4156959e-e04c-475b-9914-24fc827afb63,"Energy resources: non-renewable, fossil",MJ-Eq
+3,08cde2a7-2c66-4a69-9e59-06821b955172,"Energy resources: non-renewable, nuclear",MJ-Eq
+4,f6a2a338-32b5-4bc9-aa8a-f0dcf85dda84,Energy resources: renewable,MJ-Eq
+5,1dacb00b-1aa2-4147-9950-846be4c60735,"Energy resources: renewable, biomass",MJ-Eq
+6,f138fbdb-d526-49b6-9bdd-1c12d2b1047b,"Energy resources: renewable, geothermal",MJ-Eq
+7,f3743d8a-0eaa-4549-9aa0-0c85f2e0fb05,"Energy resources: renewable, geothermal, solar, wind",MJ-Eq
+8,f5801bf1-67a1-47e3-adbc-17b0e71386e9,"Energy resources: renewable, solar",MJ-Eq
+9,4a6dc06a-9fd5-49a5-ae50-a13763796b8a,"Energy resources: renewable, water",MJ-Eq
+10,de5e6e53-39c0-4135-83c9-177fdff641ee,"Energy resources: renewable, wind",MJ-Eq
+11,28a90a2f-ba7a-46b0-80d5-5cc067fc6544,Total,MJ-Eq
