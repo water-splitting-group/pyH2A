@@ -95,13 +95,21 @@ as negative values internally.
 Multiple ``# LCA - ...`` tables are supported and their rows are merged, which allows grouping
 components by subsystem for readability.
 
-Plugin LCA outputs
-==================
+Plugin LCA outputs — PVE example
+=================================
 
-In a full PV + electrolysis (PVE) model, all five LCA component values are computed by plugins
-and referenced via path expressions in the ``# LCA - ...`` table. The plugins run before LCA is
-triggered, so their outputs are already available in ``dcf.inp`` when the LCA table is
-processed.
+.. note::
+
+   The plugin descriptions below are specific to the **PV + Electrolysis (PVE)** reference
+   model bundled with pyH2A (``data/LCA/PVE.md``). PVE is one example of a complete
+   TEA–LCA coupling; other H2 production pathways (e.g. PEC, photocatalytic) define a
+   different set of ``# LCA - ...`` rows and rely on different plugin outputs. The general
+   principle — plugins run first, their outputs are referenced by path in the LCA table —
+   applies to any model.
+
+In a full PVE model, all five LCA component values are computed by plugins and referenced via
+path expressions in the ``# LCA - ...`` table. The plugins run before LCA is triggered, so
+their outputs are already available in ``dcf.inp`` when the LCA table is processed.
 
 Production_Scaling_Plugin
 --------------------------
@@ -324,39 +332,9 @@ More rows were found across all ``# LCA - ...`` tables than there are nonzero en
 column 0 of the technosphere matrix. Remove the extra rows or check that the correct matrix
 export folder is specified.
 
-``KeyError: 'Unit Nominal Power (kW)'`` from Electrolyzer_Plugin
------------------------------------------------------------------
-
-The ``Electrolyzer > Unit Nominal Power (kW) > Value`` row is missing from the input file.
-This is required when LCA is active (see `Electrolyzer_Plugin`_ above).
-
-``Battery > Mass (kg) > Value`` path reference prints a warning and resolves to 1
-----------------------------------------------------------------------------------
-
-``Battery > Energy density (kWh/kg) > Value`` is absent from the ``# Battery`` table, so the
-battery mass was never computed and the ``Battery > Mass (kg)`` entry does not exist in the
-input dictionary. When the LCA component table is processed, pyH2A prints:
-
-.. code-block:: text
-
-	Warning: Invalid path specified for "Battery > Mass (kg) > Value" (at "LCA - ... > Battery weight > Value"), setting to 1
-
-Add the ``Energy density (kWh/kg)`` row to the ``# Battery`` table to enable mass calculation.
-
 ``ZeroDivisionError: Sherman-Morrison denominator is too small``
 ----------------------------------------------------------------
 
 The scenario values caused the functional unit production amount to approach zero, making the
 rank-1 update numerically singular. Verify that the exchange amount for the H2 production
 foreground process is non-zero.
-
-``Initial_Artifacts`` files are stale after re-exporting from openLCA
------------------------------------------------------------------------
-
-Delete the ``Initial_Artifacts`` folder manually before running pyH2A again:
-
-.. code-block:: bash
-
-	rm -r <export_folder>/Initial_Artifacts
-
-pyH2A will regenerate them on the next run.
