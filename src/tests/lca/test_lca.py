@@ -10,7 +10,7 @@ import scipy.sparse
 # dependency so that the LCA name is already bound when the second import runs.
 import pyH2A.Discounted_Cash_Flow  # noqa: F401  (import for side-effect only)
 from pyH2A.LCA.LCA import LCA
-from pyH2A.Utilities.lca_utils import get_disk_cache_dir
+from pyH2A.Utilities.lca_utils import get_cache_paths
 
 
 # ── Paths ──────────────────────────────────────────────────────────────────
@@ -53,7 +53,7 @@ _DISK_CACHE_DIR = Path(_TEST_DATA_DIR) / 'Initial_Artifacts'
 def _clear_caches():
     for k in LCA._cache:
         LCA._cache[k] = None
-    get_disk_cache_dir.cache_clear()
+    get_cache_paths.cache_clear()
     if _DISK_CACHE_DIR.exists():
         shutil.rmtree(_DISK_CACHE_DIR)
 

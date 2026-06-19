@@ -24,7 +24,7 @@ import pytest
 # dependency so that the LCA name is already bound when the second import runs.
 import pyH2A.Discounted_Cash_Flow  # noqa: F401  (import for side-effect only)
 from pyH2A.LCA.LCA import LCA
-from pyH2A.Utilities.lca_utils import get_disk_cache_dir
+from pyH2A.Utilities.lca_utils import get_cache_paths
 
 
 # ── Paths ──────────────────────────────────────────────────────────────────
@@ -105,7 +105,7 @@ def _clear_ram_only():
 
 def _clear_caches():
     _clear_ram_only()
-    get_disk_cache_dir.cache_clear()
+    get_cache_paths.cache_clear()
     if _DISK_CACHE_DIR.exists():
         shutil.rmtree(_DISK_CACHE_DIR)
 
