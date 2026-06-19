@@ -254,8 +254,8 @@ def load_matrices_from_folder(matrix_folder: str):
 
 
 @lru_cache(maxsize=None)
-def get_disk_cache_dir(matrix_folder: str) -> Path:
-    '''Return the ``Initial_Artifacts`` cache directory for a matrix export folder.
+def get_cache_paths(matrix_folder: str) -> dict:
+    '''Create the ``Initial_Artifacts`` cache directory and return its ``.npz`` file paths.
 
     Creates the directory if it does not already exist. Results are cached by
     :func:`functools.lru_cache` so the directory is created at most once per
@@ -268,9 +268,17 @@ def get_disk_cache_dir(matrix_folder: str) -> Path:
 
     Returns
     -------
-    pathlib.Path
-        Path to the ``Initial_Artifacts`` subdirectory inside ``matrix_folder``.
+    dict
+        Mapping from each ``LCA._cache`` key to its ``.npz`` file path inside
+        the ``Initial_Artifacts`` subdirectory.
     '''
     cache_dir = Path(matrix_folder) / 'Initial_Artifacts'
     cache_dir.mkdir(parents=True, exist_ok=True)
-    return cache_dir
+    return {
+        'base_scaling_vector': cache_dir / 'base_scaling_vector.npz',
+        'A0_column':           cache_dir / 'A0_column.npz',
+        'basis_component':     cache_dir / 'basis_component.npz',
+        'matrix_B':            cache_dir / 'matrix_B.npz',
+        'matrix_C':            cache_dir / 'matrix_C.npz',
+        'impact_index':        cache_dir / 'impact_index.npz',
+    }
