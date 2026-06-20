@@ -112,10 +112,10 @@ def _clear_caches():
 
 @pytest.fixture(scope='module', autouse=True)
 def _manage_lca_caches():  # noqa: F841
-    """Clear RAM and disk cache once before this module's tests run."""
+    """Start from a clean slate; keep the disk cache after tests for reuse."""
     _clear_caches()
     yield
-    _clear_caches()
+    _clear_ram_only()
 
 
 # ── Ground-truth tests ─────────────────────────────────────────────────────
