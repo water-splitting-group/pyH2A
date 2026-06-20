@@ -1,16 +1,16 @@
-"""Full MC LCA pipeline tests using per-scenario .md files.
+"""End-to-end tests for Discounted_Cash_Flow with LCA enabled.
 
 Each test runs Discounted_Cash_Flow with a dedicated input file whose LCA
-component values are baked in — no programmatic value modification.  This
-mirrors what an individual MC worker does (read file → DCF → LCA result)
-while keeping the scenario inputs fully explicit and auditable.
+component values are baked in — no programmatic value modification.  Results
+are verified against openLCA ground truth (GT) values exported from the same
+toy-model matrix, confirming that pyH2A's Sherman-Morrison engine reproduces
+openLCA's impact scores to within 1%.
 
 Input files:  src/tests/lca/input_files/PVE_GT_S{1..5}.md
 Matrix:       src/tests/lca/LCA_Test_PVE_GT
 """
 import shutil
 from pathlib import Path
-
 import numpy as np
 import pytest
 
@@ -46,7 +46,7 @@ _SCENARIOS = [
 
 # ── Cache management ───────────────────────────────────────────────────────
 
-def _clear_caches():
+def _clear_all_caches():
     for k in LCA._cache:
         LCA._cache[k] = None
     get_cache_paths.cache_clear()
@@ -55,11 +55,11 @@ def _clear_caches():
 
 
 @pytest.fixture(scope='module', autouse=True)
-def _manage_lca_caches():  # noqa: F841
-    """Clear LCA caches at module boundaries; let the cache warm within."""
-    _clear_caches()
+def _manage_lca_caches():
+    """Clear all caches before and after this module's tests."""
+    _clear_all_caches()
     yield
-    _clear_caches()
+    _clear_all_caches()
 
 
 # ── Tests ──────────────────────────────────────────────────────────────────
@@ -69,7 +69,7 @@ def _manage_lca_caches():  # noqa: F841
     _SCENARIOS,
     ids=[s[0] for s in _SCENARIOS],
 )
-def test_mc_lca_pipeline_gwp100(scenario_id, md_file, openlca_gwp100):
+def test_dcf_lca_gwp100(scenario_id, md_file, openlca_gwp100):
     input_file = str(_E2E_DIR / md_file)
     dcf = Discounted_Cash_Flow(input_file, print_info=False, check_processing=False)
     gwp100 = dcf.lca.lca_results[_GWP100_KEY]['value']
