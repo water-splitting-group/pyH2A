@@ -53,14 +53,6 @@ class TechEntry:
         for row in _csv_rows_of(file_path):
             index.append(TechEntry._from_csv(row))
         return index
-    
-    @staticmethod
-    def dict_of(file_path: str) -> dict:
-        dict_index = {}
-        for row in _csv_rows_of(file_path):
-            entry = TechEntry._from_csv(row)
-            dict_index[entry.process_id] = entry
-        return dict_index
 
 
 class FlowEntry:
@@ -99,7 +91,7 @@ class FlowEntry:
         for row in _csv_rows_of(file_path):
             index.append(FlowEntry._from_csv(row))
         return index
-    
+
 
 class ImpactEntry:
     """
@@ -153,7 +145,7 @@ class ExportFolder:
         path = os.path.join(self.folder, 'index_A.csv')
         if not os.path.exists(path):
             return []
-        return TechEntry.dict_of(path)
+        return TechEntry.index_of(path)
 
     def flow_index(self) -> List[FlowEntry]:
         path = os.path.join(self.folder, 'index_B.csv')
@@ -204,3 +196,62 @@ def solve(matrix, f):
 
 def invert(matrix):
     return numpy.linalg.inv(_as_dense(matrix))
+
+
+class UpstreamNode:
+
+    def __init__(self):
+        self.index = -1
+        self.result = 0.0
+        self.scaling = 0.0
+        self.childs: List[UpstreamNode] = []
+
+
+class UpstreamTree:
+
+    def __init__(self):
+        self.root = UpstreamNode()
+        self.intensities = None
+        self.tech_matrix = None
+
+    @staticmethod
+    def of_impact(folder: ExportFolder, i: int) -> UpstreamTree:
+        tech_matrix = _as_dense(folder.load(Matrix.A))
+        flow_matrix = folder.load(Matrix.B)
+        factors = folder.load(Matrix.C)
+        inverse = invert(tech_matrix)
+        intensities = flow_matrix @ inverse
+        impacts = (factors @ intensities)[i, :]
+        demand = folder.load(Matrix.f)[0]
+        root = UpstreamNode()
+        root.index = 0
+        root.result = demand * impacts[0, 0]
+        root.scaling = demand / tech_matrix[0, 0]
+        tree = UpstreamTree()
+        tree.root = root
+        tree.intensities = impacts
+        tree.tech_matrix = tech_matrix
+        return tree
+
+    def expand(self, parent: UpstreamNode) -> List[UpstreamNode]:
+        if parent is None or parent.index < 0:
+            return []
+        parent.childs = []
+        tech_column = self.tech_matrix[:, parent.index]
+        for i in range(0, len(tech_column)):
+            if i == parent.index:
+                continue
+            aij = tech_column[i]
+            intensity = self.intensities[0, i]
+            if aij == 0 or intensity == 0:
+                continue
+            aij = aij * parent.scaling
+            ref_val = self.tech_matrix[i, i]
+            child = UpstreamNode()
+            child.index = i
+            child.scaling = -aij / ref_val
+            child.result = intensity * ref_val * child.scaling
+            parent.childs.append(child)
+
+        parent.childs.sort(key=lambda n: n.result, reverse=True)
+        return parent.childs
