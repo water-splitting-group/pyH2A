@@ -115,6 +115,7 @@ def _manage_lca_caches():  # noqa: F841
     """Clear RAM and disk cache once before this module's tests run."""
     _clear_caches()
     yield
+    _clear_caches()
 
 
 # ── Ground-truth tests ─────────────────────────────────────────────────────
