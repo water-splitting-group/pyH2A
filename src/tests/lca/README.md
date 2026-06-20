@@ -9,7 +9,7 @@ src/tests/lca/
     test_lca.py                  — unit tests for LCA.py methods
     test_lca_utils.py            — unit tests for lca_utils.py functions
     test_lca_gt_e2e.py           — Level 1 ground truth tests (direct LCA engine)
-    test_mc_lca_gt_pipeline.py   — Level 2 ground truth tests (full DCF pipeline)
+    dcf_lca_gt_pipeline_test.py   — Level 2 ground truth tests (full DCF pipeline)
     input_files/
         PVE_GT_S1.md             — scenario 1 input file (base case)
         PVE_GT_S2.md             — scenario 2 input file (low PV)
@@ -29,7 +29,7 @@ pytest src/tests/lca/ -v
 
 Run with results printed (ground truth comparison):
 ```powershell
-pytest src/tests/lca/test_lca_gt_e2e.py src/tests/lca/test_mc_lca_gt_pipeline.py -v -s
+pytest src/tests/lca/test_lca_gt_e2e.py src/tests/lca/dcf_lca_gt_pipeline_test.py -v -s
 ```
 
 Run unit tests only:
@@ -75,7 +75,7 @@ End-to-end ground truth tests that directly test the LCA calculation engine usin
 
 **What it tests:** LCA matrix math, UUID lookup, sign convention, Sherman-Morrison formula, caching
 
-### test_mc_lca_gt_pipeline.py — 5 tests (Level 2)
+### dcf_lca_gt_pipeline_test.py — 5 tests (Level 2)
 End-to-end ground truth tests that run the full DCF pipeline by reading actual `.md` input files. Each test reads its own scenario file, runs `Discounted_Cash_Flow`, and reads the LCA result.
 
 **What it tests:** `.md` file parsing, DCF pipeline, LCA integration, full chain from file to result
@@ -182,7 +182,7 @@ Located in `src/tests/lca/input_files/`:
 
 Run with `-s` flag to see pyH2A vs openLCA comparison:
 ```powershell
-pytest src/tests/lca/test_lca_gt_e2e.py src/tests/lca/test_mc_lca_gt_pipeline.py -v -s
+pytest src/tests/lca/test_lca_gt_e2e.py src/tests/lca/dcf_lca_gt_pipeline_test.py -v -s
 ```
 
 Ground truth comparison results:
