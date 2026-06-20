@@ -11,7 +11,6 @@ src/tests/lca/
     test_lca_gt_e2e.py           — Level 1 ground truth tests (direct LCA engine)
     test_mc_lca_gt_pipeline.py   — Level 2 ground truth tests (full DCF pipeline)
     input_files/
-        PVE_GT_MC_test.md        — base template for minimal LCA test input
         PVE_GT_S1.md             — scenario 1 input file (base case)
         PVE_GT_S2.md             — scenario 2 input file (low PV)
         PVE_GT_S3.md             — scenario 3 input file (high PV)
@@ -171,7 +170,6 @@ Located in `src/tests/lca/input_files/`:
 
 | File | Description |
 |---|---|
-| `PVE_GT_MC_test.md` | Base template — minimal DCF input with no plugins |
 | `PVE_GT_S1.md` | Scenario 1 — base case (H2=1.0, PV=55.0 kWh, Elec=1e-6, RO=9.0 kg) |
 | `PVE_GT_S2.md` | Scenario 2 — low PV (H2=1.0, PV=41.67 kWh, Elec=2e-6, RO=7.0 kg) |
 | `PVE_GT_S3.md` | Scenario 3 — high PV (H2=1.0, PV=69.44 kWh, Elec=5e-7, RO=12.0 kg) |
