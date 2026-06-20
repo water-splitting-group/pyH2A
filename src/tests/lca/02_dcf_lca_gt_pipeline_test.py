@@ -9,7 +9,6 @@ openLCA's impact scores to within 1%.
 Input files:  src/tests/lca/input_files/PVE_GT_S{1..5}.md
 Matrix:       src/tests/lca/LCA_Test_PVE_GT
 """
-import shutil
 from pathlib import Path
 import numpy as np
 import pytest
@@ -27,7 +26,6 @@ from pyH2A.Utilities.lca_utils import get_cache_paths
 
 _HERE = Path(__file__).parent
 _E2E_DIR = _HERE / 'input_files'
-_DISK_CACHE_DIR = _HERE / 'LCA_Test_PVE_GT' / 'Initial_Artifacts'
 
 _GWP100_KEY = 'Climate change no LT - Global warming potential (GWP100) no LT'
 
@@ -52,18 +50,12 @@ def _clear_ram_cache():
     get_cache_paths.cache_clear()
 
 
-def _clear_all_caches():
-    _clear_ram_cache()
-    if _DISK_CACHE_DIR.exists():
-        shutil.rmtree(_DISK_CACHE_DIR)
-
-
 @pytest.fixture(scope='module', autouse=True)
 def _manage_lca_caches():
-    """Reuse disk cache built by 01_lca_gt_e2e_test; clear everything on teardown."""
+    """Reuse disk cache built by 01_lca_gt_e2e_test; clear RAM only on teardown."""
     _clear_ram_cache()
     yield
-    _clear_all_caches()
+    _clear_ram_cache()
 
 
 # ── Tests ──────────────────────────────────────────────────────────────────

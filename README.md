@@ -6,10 +6,11 @@ This directory contains all unit tests and end-to-end ground truth tests for the
 ## Directory Structure
 ```
 src/tests/lca/
-    test_lca.py                  — unit tests for LCA.py methods
-    test_lca_utils.py            — unit tests for lca_utils.py functions
-    01_lca_gt_e2e_test.py           — Level 1 ground truth tests (direct LCA engine)
+    lca_test.py                      — unit tests for LCA.py methods
+    lca_utils_test.py                — unit tests for lca_utils.py functions
+    01_lca_gt_e2e_test.py            — Level 1 ground truth tests (direct LCA engine)
     02_dcf_lca_gt_pipeline_test.py   — Level 2 ground truth tests (full DCF pipeline)
+    03_mc_lca_pipeline_test.py       — Monte Carlo LCA regression test (seed=42, 10 samples)
     input_files/
         PVE_GT_S1.md             — scenario 1 input file (base case)
         PVE_GT_S2.md             — scenario 2 input file (low PV)
@@ -39,7 +40,7 @@ pytest src/tests/lca/test_lca.py src/tests/lca/test_lca_utils.py -v
 
 Expected result:
 ```
-148 passed, 0 skipped
+87 passed, 0 skipped
 ```
 
 ## Test Files
@@ -79,6 +80,16 @@ End-to-end ground truth tests that directly test the LCA calculation engine usin
 End-to-end ground truth tests that run the full DCF pipeline by reading actual `.md` input files. Each test reads its own scenario file, runs `Discounted_Cash_Flow`, and reads the LCA result.
 
 **What it tests:** `.md` file parsing, DCF pipeline, LCA integration, full chain from file to result
+
+### 03_mc_lca_pipeline_test.py — 3 tests (Monte Carlo regression)
+Regression test that fixes the GWP100 response for 10 Monte Carlo samples drawn with a fixed seed. Calls `_mc_response_worker` directly (single process, no executor overhead) so the test is fast and fully deterministic. Reference values must be updated when the LCA computation intentionally changes.
+
+| Parameter | Distribution | Range |
+|---|---|---|
+| PV Electricity Generation | Uniform | 100 – 300 MJ / kg H2 |
+| Reverse Osmosis | Uniform | 5 – 15 kg / kg H2 |
+
+**What it tests:** seeded parameter sampling → `_mc_response_worker` → Sherman-Morrison LCA solve → GWP100 response; detects regressions in the LCA solver, parameter-application path, or `_mc_response_worker` logic
 
 ---
 
