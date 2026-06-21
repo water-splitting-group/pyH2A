@@ -8,4 +8,4 @@ File A | src/tests/end_to_end/Thermal_Base.md
 
 Name | Value
 --- | --- 
-Operating Capacity Factor (%) | 95%
+Operating Capacity Factor | 95%

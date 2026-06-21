@@ -2,8 +2,8 @@
 
 Name | Type | Position
 --- | --- | ---
-Test_Plugin_A | plugin | 4
-Test_Plugin_B | plugin | 4
+Test_Plugin_A | plugin | 400
+Test_Plugin_B | plugin | 400
 
 # Plugin A - Photovoltaic Input
 

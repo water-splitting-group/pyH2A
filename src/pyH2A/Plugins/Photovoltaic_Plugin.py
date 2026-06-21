@@ -17,19 +17,6 @@ input_dict = {
 			"description": "Hourly energy / area data for electricity production calculation. Either a path to a text file containing the data (in this case, it is assumed that data is in kWh/m2 and that relevant data is in column 1) or ndarray. A suitable array can be retrieved from 'Hourly Irradiation > *type of tracking* > Value'."
 		},
 	},
-	"CAPEX Multiplier": {
-		"Multiplier": {
-			"Value": {
-				"type": {float,int,},
-				"bounds": (0, None),
-			},
-			"Unit": {
-				"dimension": "dimensionless",
-			},
-			"optional": False,
-			"description": "Multiplier to describe cost reduction of PV CAPEX for every ten-fold increase of power relative to CAPEX reference power. Based on the multiplier the CAPEX scaling factor is calculated as: multiplier ^ (number of ten-fold increases). A value of 1 leads to no CAPEX reduction, a value < 1 enables cost reduction."
-		},
-	},
 	"Photovoltaic": {
 		"Nominal power": {
 			"Value": {	
@@ -41,17 +28,6 @@ input_dict = {
 			},
 			"optional": False,
 			"description": "Nominal power of PV array."
-		},
-		"CAPEX reference power": {	
-			"Value": {
-				"type": {float,int,},
-				"bounds": (0, None),
-			},
-			"Unit": {
-				"dimension": "power",
-			},
-			"optional": False,
-			"description": "Reference power of PV array for cost reduction calculations."
 		},
 		"Power loss per year": {
 			"Value": {
@@ -79,17 +55,6 @@ input_dict = {
 }
 
 output_dict = {
-    "Photovoltaic": {
-		"Scaling factor": {
-			"Value": {
-       			"inserted_value": "pv_scaling_factor",
-				"type": {float,},
-				"dimension": "dimensionless",
-       		},
-            "description": "CAPEX scaling factor for PV array calculated based on CAPEX multiplier, reference and nominal power.",
-            "optional": False,
-		},
-    },
 	"Power Generation": {
 		"PV hourly power generation": {
 			"Value": {
@@ -150,11 +115,6 @@ class Photovoltaic_Plugin:
 		Hourly power ratio data for electricity production calculation. Either a 
 		path to a text file containing the data or ndarray. A suitable array 
 		can be retrieved from "Hourly Irradiation > *type of tracking* > Value".
-	CAPEX Multiplier > Multiplier > Value : float
-		Multiplier to describe cost reduction of PV CAPEX for every ten-fold
-		increase of power relative to CAPEX reference power. Based on the multiplier the CAPEX
-		scaling factor is calculated as: multiplier ^ (number of ten-fold increases). A value
-		of 1 leads to no CAPEX reduction, a value < 1 enables cost reduction.
 	Photovoltaic > Nominal power > Value : float
 		Nominal power of PV array.
 	Photovoltaic > CAPEX reference power > Value : float
@@ -167,9 +127,6 @@ class Photovoltaic_Plugin:
 
 	Returns
 	-------
-	Photovoltaic > Scaling factor > Value : float
-		CAPEX scaling factor for PV array calculated based on CAPEX multiplier, 
-		reference and nominal power.
 	Power Generation > PV hourly power generation > Value : dict
 		Hourly power generation of PV array (dictionary of years).
 	Power Generation > Available energy (hourly) > Value : dict
@@ -187,7 +144,6 @@ class Photovoltaic_Plugin:
 		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Photovoltaic_Plugin')
 
 		self.calculate_power_production(dcf)
-		self.calculate_scaling_factors()
 		self.calculate_area()
 
 		output_inserter_function(output_dict, self, dcf, 'Photovoltaic_Plugin') 
@@ -228,22 +184,6 @@ class Photovoltaic_Plugin:
 
 		return data * (1. - self.input_dict_resolved['Photovoltaic']['Power loss per year']['Value'].unit['-']) ** year
 
-	def calculate_scaling_factors(self):
-		'''Calculation of PV CAPEX scaling factors.
-		'''
-		scaling_factor = self.scaling_factor(self.input_dict_resolved['Photovoltaic']['Nominal power']['Value'].unit['W'], 
-											 self.input_dict_resolved['Photovoltaic']['CAPEX reference power']['Value'].unit['W'])
-		
-		self.pv_scaling_factor = Quantity(scaling_factor, '-')
-		
-	def scaling_factor(self, power, reference):
-		'''Calculation of CAPEX scaling factor based on nominal and reference power.
-		'''
-		
-		number_of_tenfold_increases = np.log10(power/reference)
-
-		return self.input_dict_resolved['CAPEX Multiplier']['Multiplier']['Value'].unit['-'] ** number_of_tenfold_increases
-
 	def calculate_area(self):
 		'''Area requirement calculation assuming 1000 W/m2 peak power.'''
 
@@ -253,6 +193,3 @@ class Photovoltaic_Plugin:
 		self.area = Quantity(self.input_dict_resolved['Photovoltaic']['Nominal power']['Value'].unit['kW'] 
 							 / peak_kW_per_m2, 
 					'm2')
-
-
-

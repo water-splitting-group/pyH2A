@@ -50,7 +50,7 @@ class DummyDCF:
                     "Unit" : "h"},
                 "H2 production (yearly)": {
                     "Value": electrolyzer_yearly_H2_production_kg, 
-                    "Unit" : "kg / year",
+                    "Unit" : "kg",
                     "Processed": "Yes"
                     },
                 "Yearly operation data": {
@@ -98,7 +98,7 @@ class DummyDCF:
             "expected": {
                 "energy_consumption": Quantity(np.array([1760.0, 1280.0]), "kWh"),
                 "replacement_frequency": Quantity(2.0, "year"),
-                "new_h2_production": Quantity(np.array([1.0, 8.0]), "kg/year"),
+                "new_h2_production": Quantity(np.array([1.0, 8.0]), "kg"),
             },
         }
     ],
@@ -129,8 +129,8 @@ def test_stored_power_electrolysis_plugin(case):
     )
     
     np.testing.assert_allclose(
-        plugin.new_h2_production.unit['kg/s'],
-        expected["new_h2_production"].unit['kg/s'],
+        plugin.new_h2_production.unit['kg'],
+        expected["new_h2_production"].unit['kg'],
         rtol=tolerance,
         atol=tolerance,
     )

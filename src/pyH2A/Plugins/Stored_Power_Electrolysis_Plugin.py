@@ -105,7 +105,7 @@ input_dict = {
                 "bounds": (0, None)
             },
             "Unit": {
-                "dimension": "mass / time"
+                "dimension": "mass"
             },
             "optional": False,
             "description": "Yearly hydrogen production."
@@ -128,14 +128,14 @@ input_dict = {
 
 output_dict = {
     "Technical Operating Parameters and Specifications": {
-        "Plant design capacity": {
+        "Design output by year": {
             "Value": {
                 "inserted_value": "new_h2_production",
-                "type": {float,np.ndarray, },
-                "dimension": "mass / time",
+                "type": {np.ndarray, },
+                "dimension": "mass",
             }, 
             "optional": False,
-            "description": "Plant design capacity in mass flowrate of H2 calculated from installed electrolysis power capacity and hourly power generation data."
+            "description": "Plant design output in mass of H2 calculated from installed electrolysis power capacity and hourly power generation data."
         },
     },
     "Planned Replacement": {
@@ -199,9 +199,8 @@ class Stored_Power_Electrolysis_Plugin:
 
     Returns
     -------
-    Technical Operating Parameters and Specifications > Plant design capacity > Value : nd.array
-        Plant design capacity in (mass of H2)/time calculated from installed 
-        electrolysis power capacity and hourly power generation data.
+    Technical Operating Parameters and Specifications > Design output by year > Value : nd.array
+        Design output of H2 calculated from installed electrolysis power capacity and hourly power generation data.
     Planned Replacement > Electrolyzer stack replacement > Frequency : float
         Frequency of electrolyzer stack replacements in years, calculated from replacement time and hourly
         irradiation data.
@@ -257,11 +256,11 @@ class Stored_Power_Electrolysis_Plugin:
                                                    self.input_dict_resolved['Electrolyzer']['Hydrogen yield per unit energy']['Value'].unit['kg/J'],
                                                    power_increase_ratio)
         
-        old_h2_production = self.input_dict_resolved['Electrolyzer']['H2 production (yearly)']['Value'].unit['kg/year']
+        old_h2_production = self.input_dict_resolved['Electrolyzer']['H2 production (yearly)']['Value'].unit['kg']
 
         self.new_h2_production = old_h2_production.copy()
         self.new_h2_production[-len(additional_h2_production):] += additional_h2_production
-        self.new_h2_production = Quantity(self.new_h2_production, 'kg/year')
+        self.new_h2_production = Quantity(self.new_h2_production, 'kg')
         
         # Updating operation hours
         additional_operation_hours = self.energy_consumption.unit['Wh'] / electrolyzer_power_demand

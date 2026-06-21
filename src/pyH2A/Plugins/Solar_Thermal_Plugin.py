@@ -3,7 +3,7 @@ from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
 input_dict = {
 	"Technical Operating Parameters and Specifications": {
-		"Design output flowrate": {
+		"Plant design capacity": {
 			"Value": {
 				"type": {float,},
 				"bounds": (0, None),
@@ -12,7 +12,7 @@ input_dict = {
 				"dimension": "mass / time",	
 			},
 			"optional": False,
-			"description": "Design output of hydrogen production plant per unit of time."
+			"description": "Plant design capacity (mass of hydrogen/time)."
 		},
 	},	
 	"Solar-to-Hydrogen Efficiency": {
@@ -75,8 +75,8 @@ class Solar_Thermal_Plugin:
 
 	Parameters
 	----------
-	Technical Operating Parameters and Specifications > Design output flowrate > Value : float
-		Design output of hydrogen production plant per day.
+	Technical Operating Parameters and Specifications > Plant design capacity > Value : float
+		Plant design capacity (mass of hydrogen/time).
 	Solar-to-Hydrogen Efficiency > STH > Value : float
 		Solar-to-Hydrogen Efficiency of thermal water splitting process. Percentage of value 
 		between 0 and 1.
@@ -112,7 +112,7 @@ class Solar_Thermal_Plugin:
 						 / self.H2_molecule_energy.unit['J/mol'])
 		H2_kg_per_m2_per_s = H2_mol_per_m2_per_s * self.H2_molecular_weight.unit['kg/mol']
 
-		required_area_m2 = (self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output flowrate']['Value'].unit['kg/s'] 
+		required_area_m2 = (self.input_dict_resolved['Technical Operating Parameters and Specifications']['Plant design capacity']['Value'].unit['kg/s'] 
 							/ H2_kg_per_m2_per_s)
 
 		self.area = Quantity(required_area_m2 

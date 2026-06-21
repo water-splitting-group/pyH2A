@@ -9,7 +9,7 @@ class DummyDCF:
 
     def __init__(
         self,
-        design_output,
+        design_capacity,
         top_cost,
         bottom_cost,
         ports,
@@ -33,34 +33,79 @@ class DummyDCF:
 
         self.inp = {
             "Technical Operating Parameters and Specifications": {
-                "Design output flowrate": {"Value": design_output, "Unit":"kg/day"},
-            },
-            "Reactor Baggies": {
-                "Cost material top": {"Value": top_cost, "Unit":"USD/m2"},
-                "Cost material bottom": {"Value": bottom_cost, "Unit":"USD/m2"},
-                "Number of ports per baggie": {"Value": ports, "Unit":"-"},
-                "Cost of port": {"Value": port_cost, "Unit":"USD"},
-                "Other costs per baggie": {"Value": other_costs, "Unit":"USD"},
-                "Markup factor": {"Value": markup, "Unit":"-"},
-                "Length": {"Value": length, "Unit":"m"},
-                "Width": {"Value": width, "Unit":"m"},
-                "Filling height": {"Value": height, "Unit":"m"},
-                "Additional land area": {"Value": add_land, "Unit":"-"},
-                "Lifetime": {"Value": baggie_lifetime, "Unit":"year"},
-            },
-            "Catalyst": {
-                "Cost per unit of mass": {"Value": catalyst_cost, "Unit":"USD/kg"},
-                "Concentration": {"Value": catalyst_conc, "Unit":"g/liter"},
-                "Lifetime": {"Value": catalyst_lifetime, "Unit":"year"},
-                "Molar Weight": {"Value": molar_weight, "Unit":"g/mol"},
-                "Molar attenuation coefficient": {
-                    "Value": attenuation_coeff, "Unit":"liter/(cm * mol)"
+                "Plant design capacity": {
+                    "Value": design_capacity, 
+                    "Unit":"kg/day"
                 },
             },
-            "Solar-to-Hydrogen Efficiency": {"STH": {"Value": sth, "Unit":"-"}},
+            "Reactor Baggies": {
+                "Cost material top": {
+                    "Value": top_cost, 
+                    "Unit":"USD/m2"},
+                "Cost material bottom": {
+                    "Value": bottom_cost, 
+                    "Unit":"USD/m2"},
+                "Number of ports per baggie": {
+                    "Value": ports, 
+                    "Unit":"-"},
+                "Cost of port": {
+                    "Value": port_cost, 
+                    "Unit":"USD"},
+                "Other costs per baggie": {
+                    "Value": other_costs, 
+                    "Unit":"USD"},
+                "Markup factor": {
+                    "Value": markup, 
+                    "Unit":"-"},
+                "Length": {
+                    "Value": length, 
+                    "Unit":"m"},
+                "Width": {
+                    "Value": width, 
+                    "Unit":"m"},
+                "Filling height": {
+                    "Value": height, 
+                    "Unit":"m"},
+                "Additional land area": {
+                    "Value": add_land, 
+                    "Unit":"-"},
+                "Lifetime": {
+                    "Value": baggie_lifetime, 
+                    "Unit":"year"},
+            },
+            "Catalyst": {
+                "Cost per unit of mass": {
+                    "Value": catalyst_cost, 
+                    "Unit":"USD/kg"},
+                "Concentration": {
+                    "Value": catalyst_conc, 
+                    "Unit":"g/liter"},
+                "Lifetime": {
+                    "Value": catalyst_lifetime, 
+                    "Unit":"year"},
+                "Molar Weight": {
+                    "Value": molar_weight, 
+                    "Unit":"g/mol"},
+                "Molar attenuation coefficient": {
+                    "Value": attenuation_coeff, 
+                    "Unit":"liter/(cm * mol)"
+                },
+            },
+            "Solar-to-Hydrogen Efficiency": {
+                "STH": {
+                    "Value": sth, 
+                    "Unit":"-"
+                }
+            },
             "Solar Input": {
-                "Mean solar input": {"Value": solar_input, "Unit":"kW/m2"},
-                "Hourly": {"Value": hourly_solar, "Unit":"kWh/m2", "Processed": "Yes"},
+                "Mean solar input": {
+                    "Value": solar_input, 
+                    "Unit":"kW/m2"},
+                "Hourly": {
+                    "Value": hourly_solar, 
+                    "Unit":"kWh/m2", 
+                    "Processed": "Yes"
+                },
             },
         }
 
@@ -70,7 +115,7 @@ class DummyDCF:
     [
         {
             "input": {
-                "design_output": 1111.,
+                "design_capacity": 1111.,
                 "top_cost": 0.54,
                 "bottom_cost": 0.47,
                 "ports": 12,

@@ -17,27 +17,10 @@ input_dict = {
             "description": "Construction time of hydrogen production plant."
         },
     },
-    "CAPEX Multiplier": {
-        "Multiplier": {
-            "Value": {
-                "type": {float,},
-                "bounds": (0, None),
-            },
-            "Unit": {
-                "dimension": "dimensionless",
-            },
-            "optional": False,
-            "description": "Multiplier to describe cost reduction of electrolysis CAPEX \
-                            for every ten-fold increase of power relative to CAPEX reference power. \
-                            Based on the multiplier the CAPEX scaling factor is calculated as: \
-                            multiplier ^ (number of ten-fold increases).\
-                            A value of 1 leads to no CAPEX reduction, a value < 1 enables cost reduction."
-        },
-    },
     "Electrolyzer": {
         "Nominal power": {
             "Value": {
-                "type": {float,},
+                "type": {int,float,},
                 "bounds": (0, None),
             },
             "Unit": {
@@ -46,20 +29,9 @@ input_dict = {
             "optional": False,
             "description": "Nominal power of electrolyzer."
         },
-        "CAPEX reference power": {
-            "Value": {
-                "type": {float,},
-                "bounds": (0, None),
-            },
-            "Unit": {
-                "dimension": "power",
-            },
-            "optional": False,
-            "description": "Reference power of electrolyzer for cost reduction calculation."
-        },
         "Power requirement increase per year": {
             "Value": {
-                "type": {float,},
+                "type": {int,float,},
                 "bounds": (0, None),
             },
             "Unit": {
@@ -71,7 +43,7 @@ input_dict = {
         },
         "Minimum capacity": {
             "Value": {
-                "type": {float,},
+                "type": {int,float,},
                 "bounds": (0, 1),
             },
             "Unit": {
@@ -82,7 +54,7 @@ input_dict = {
         },
         "Hydrogen yield per unit energy": {
             "Value": {
-                "type": {float,},
+                "type": {int,float,},
                 "bounds": (0, None),
             },
             "Unit": {
@@ -93,7 +65,7 @@ input_dict = {
         },
         "Replacement time": {
             "Value": {
-                "type": {float,},
+                "type": {int,float,},
                 "bounds": (0, None),
             },
             "Unit": {
@@ -120,14 +92,14 @@ input_dict = {
 
 output_dict = {
     "Technical Operating Parameters and Specifications": {
-        "Plant design capacity": {
+        "Design output by year": {
             "Value": {
                 "inserted_value": "h2_production",
-                "type": {np.ndarray,float,},
-                "dimension": "mass / time",
+                "type": {np.ndarray,},
+                "dimension": "mass",
             },
             "optional": False,
-            "description": "Plant design capacity calculated from installed \
+            "description": "Design output by year calculated from installed \
                             electrolysis power capacity and hourly power generation data."
         },
         "Operating capacity factor": {
@@ -155,16 +127,6 @@ output_dict = {
         },
     },
     "Electrolyzer": {
-        "Scaling factor": {
-            "Value": {
-                "inserted_value": "electrolyzer_scaling_factor",
-                "type": {float,},
-                "dimension": "dimensionless",
-            },
-            "optional": False,
-            "description": "CAPEX scaling factor for electrolyzer calculated based \
-                            on CAPEX multiplier, reference and nominal power."
-        },
         "Yearly operation data": {
             "Year_Value": {
                 "inserted_value": "yearly_data_year",
@@ -188,7 +150,7 @@ output_dict = {
             "Value": {
                 "inserted_value": "h2_production",
                 "type": {np.ndarray,},
-                "dimension": "mass / time",
+                "dimension": "mass",
             },
             "optional": False,
             "description": "Yearly hydrogen production."
@@ -223,15 +185,8 @@ class Electrolyzer_Plugin:
     ----------
     Financial Input Values > Construction time > Value : int
         Construction time of hydrogen production plant in years.
-    CAPEX Multiplier > Multiplier > Value : float
-        Multiplier to describe cost reduction of electrolysis CAPEX for every ten-fold
-        increase of power relative to CAPEX reference power. Based on the multiplier the CAPEX
-        scaling factor is calculated as: multiplier ^ (number of ten-fold increases). A value
-        of 1 leads to no CAPEX reduction, a value < 1 enables cost reduction.
     Electrolyzer > Nominal power > Value : float
         Nominal power of electrolyzer.
-    Electrolyzer > CAPEX reference power > Value : float
-        Reference power of electrolyzer for cost reduction calculation.
     Electrolyzer > Power requirement increase per year > Value : float
         Electrolyzer power requirement increase per year due to stack degradation. 
         Dimensioless value > 0. Increase calculated as: (1 + increase per year) ^ year.
@@ -246,17 +201,14 @@ class Electrolyzer_Plugin:
 
     Returns
     -------
-    Technical Operating Parameters and Specifications > Plant design capacity > Value : nd.array
-        Plant design capacity calculated from installed 
+    Technical Operating Parameters and Specifications > Design output by year > Value : nd.array
+        Design output by year calculated from installed 
         electrolysis power capacity and hourly power generation data.
     Technical Operating Parameters and Specifications >	Operating capacity factor > Value : float
         Operating capacity factor is set to 1.
     Planned Replacement > Electrolyzer stack replacement > Frequency : float
         Frequency of electrolyzer stack replacements, calculated from replacement time and hourly
         irradiation data.
-    Electrolyzer > Scaling factor > Value : float
-        CAPEX scaling factor for electrolyzer calculated based on CAPEX multiplier, 
-        reference and nominal power.
     Electrolyzer > Yearly operation data > Year_Value : nd.array
         Yearly operation data of electrolyzer : year.
     Electrolyzer > Yearly operation data > Production_Value : nd.array
@@ -279,7 +231,6 @@ class Electrolyzer_Plugin:
         self.calculate_H2_production(dcf)
         self.replacement_frequency = calculate_stack_replacement(self.yearly_data_duration, 
                                     self.input_dict_resolved['Electrolyzer']['Replacement time']['Value'].unit['h'])
-        self.calculate_scaling_factors()
 
         output_inserter_function(output_dict, self, dcf, 'Electrolyzer_Plugin') 
 
@@ -339,29 +290,11 @@ class Electrolyzer_Plugin:
                                    np.zeros(int(round(dcf.inp['Financial Input Values']['Construction time']['Value'].unit['year']))), 
                                    self.yearly_data_production.unit['kg']
                                     ])
-        self.h2_production = Quantity(self.h2_production, 'kg/year') # needs to be expressed as a flowrate, as it ultimately serves as the plant design capacity etc
+        self.h2_production = Quantity(self.h2_production, 'kg')
         
         self.yearly_data_unused_energy = yearly_data_unused_energy
         self.yearly_data_unused_energy_daily = yearly_data_unused_energy_daily
 
-    def calculate_scaling_factors(self):
-        '''Calculation of electrolyzer CAPEX scaling factors.
-        '''
-
-        scaling_factor = self.scaling_factor(
-            self.input_dict_resolved['Electrolyzer']['Nominal power']['Value'].unit['W'],
-            self.input_dict_resolved['Electrolyzer']['CAPEX reference power']['Value'].unit['W'])
-
-        self.electrolyzer_scaling_factor = Quantity(scaling_factor, '-')
-            
-    def scaling_factor(self, power, reference):
-        '''Calculation of CAPEX scaling factor based on nominal and reference power.
-        '''
-        
-        number_of_tenfold_increases = np.log10(power/reference)
-
-        return self.input_dict_resolved['CAPEX Multiplier']['Multiplier']['Value'].unit['-'] ** number_of_tenfold_increases
-    
 def calculate_electrolyzer_power_demand(power_requirement_increase, nominal_power, year):
     '''Calculation of yearly increase in electrolyzer power demand.
     '''

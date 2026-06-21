@@ -9,7 +9,7 @@ class DummyDCF:
 
     def __init__(
         self,
-        design_output,
+        design_capacity,
         cell_cost,
         lifetime,
         length,
@@ -22,8 +22,8 @@ class DummyDCF:
     ):
         self.inp = {
             "Technical Operating Parameters and Specifications": {
-                "Design output flowrate": {
-                    "Value": design_output,
+                "Plant design capacity": {
+                    "Value": design_capacity,
                     "Unit": "kg/day",
                 },
             },
@@ -79,7 +79,7 @@ class DummyDCF:
     [
         {
             "input": {
-                "design_output": 1000.0,
+                "design_capacity": 1000.0,
                 "cell_cost": 21000.0,
                 "lifetime": 0.33,
                 "length": 6.0,

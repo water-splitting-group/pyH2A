@@ -4,7 +4,7 @@ from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
 input_dict = {
 	"Technical Operating Parameters and Specifications": {
-		"Design output flowrate": {
+		"Plant design capacity": {
 			"Value": {
 				"type": {float,},
 				"bounds": (0, None),
@@ -13,7 +13,7 @@ input_dict = {
 				"dimension": "mass/time",
 			},
 			"optional": False,
-			"description": "Design output."
+			"description": "Plant design capacity, in mass of hydrogen/time."
 		},
 	},
 	"Reactor Baggies": {
@@ -337,8 +337,8 @@ class Photocatalytic_Plugin:
 
 	Parameters
 	----------
-	Technical Operating Parameters and Specifications > Design output flowrate > Value : float
-		Design output flowrate.
+	Technical Operating Parameters and Specifications > Plant design capacity > Value : float
+		Plant design capacity, in mass of hydrogen/time.
 	Reactor Baggies > Cost material top > Value : float
 		Cost of baggie top material.
 	Reactor Baggies > Cost Material Bottom > Value : float
@@ -524,7 +524,7 @@ class Photocatalytic_Plugin:
 		cost_per_baggie = (baggie['Markup factor']['Value'].unit['-'] 
 						   * (material_cost + port_cost + baggie['Other costs per baggie']['Value'].unit['USD']))
 
-		baggie_number = (self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output flowrate']['Value'].unit['kg/day'] 
+		baggie_number = (self.input_dict_resolved['Technical Operating Parameters and Specifications']['Plant design capacity']['Value'].unit['kg/day'] 
 						 / self.mass_rate_H2_per_baggie.unit['kg/day'])
 		baggie_number_rounded_up = np.ceil(baggie_number).astype(int)
 		

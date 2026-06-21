@@ -3,16 +3,13 @@ import numpy as np
 from pyH2A.Plugins.Photovoltaic_Plugin import Photovoltaic_Plugin
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
-
 class DummyDCF:
     """Minimal DCF object for Photovoltaic_Plugin testing with configurable inputs."""
 
     def __init__(
         self,
         irradiation_hourly,
-        capex_multiplier,
         nominal_power,
-        capex_reference,
         power_loss_per_year,
         efficiency,
     ):
@@ -25,19 +22,9 @@ class DummyDCF:
                     "Processed": "Yes"
                 }
             },
-            "CAPEX Multiplier": {
-                "Multiplier": {
-                    "Value": capex_multiplier,
-                    "Unit": "-"
-                }
-            },
             "Photovoltaic": {
                 "Nominal power": {
                     "Value": nominal_power,
-                    "Unit": "kW"
-                },
-                "CAPEX reference power": {
-                    "Value": capex_reference,
                     "Unit": "kW"
                 },
                 "Power loss per year": {
@@ -50,9 +37,7 @@ class DummyDCF:
                 },
             },
         }
-
         self.operation_years = [2026, 2027]
-
 
 @pytest.mark.parametrize(
     "case",
@@ -71,14 +56,11 @@ class DummyDCF:
                         10.2, 5.2, 12.2, 12.2, 0, 5.2, 12.2, 12.2,
                     ]
                 ]),
-                "capex_reference": 960.0,
                 "nominal_power": 1000.0,
-                "capex_multiplier": 0.6,
                 "power_loss_per_year": 0.005,
                 "efficiency": 0.2,
             },
             "expected": {
-                "pv_scaling_factor": Quantity(0.990984576405111, '-'),
                 "area": Quantity(5000.0, 'm2'),
                 "energy_generation_yearly_data": {
                     2026: Quantity(np.array([
@@ -133,11 +115,6 @@ def test_photovoltaic_plugin(case):
 
     # Tolerance (very small)
     tolerance = 1e-12
-
-    assert plugin.pv_scaling_factor.unit['-'] == pytest.approx(
-        expected["pv_scaling_factor"].unit['-'], 
-        abs=tolerance
-    )
 
     assert plugin.area.unit['m2'] == pytest.approx(
         expected["area"].unit['m2'], 

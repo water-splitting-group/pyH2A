@@ -9,9 +9,7 @@ class DummyDCF:
     def __init__(
         self,
         construction_time,
-        capex_multiplier,
         nominal_power,
-        capex_reference_power,
         power_increase,
         min_capacity,
         efficiency,
@@ -21,29 +19,41 @@ class DummyDCF:
 
         self.inp = {
             "Financial Input Values": {
-                "Construction time": {"Value": construction_time, "Unit":"year"}
+                "Construction time": {
+                    "Value": construction_time,
+                    "Unit": "year"
+                },
             },
-            "CAPEX Multiplier": {"Multiplier": {"Value": capex_multiplier, "Unit":"-"}},
             "Electrolyzer": {
-                "Nominal power": {"Value": nominal_power, "Unit":"kW"},
-                "CAPEX reference power": {"Value": capex_reference_power, "Unit":"kW"},
-                "Power requirement increase per year": {"Value": power_increase, "Unit":"-"},
-                "Minimum capacity": {"Value": min_capacity, "Unit":"-"},
-                "Hydrogen yield per unit energy": {"Value": efficiency, "Unit":"kg/kWh"},
-                "Replacement time": {"Value": replacement_time, "Unit":"h"},
+                "Nominal power": {
+                    "Value": nominal_power, 
+                    "Unit": "kW"
+                },
+                "Power requirement increase per year": {
+                    "Value": power_increase, 
+                    "Unit": "-"
+                },
+                "Minimum capacity": {
+                    "Value": min_capacity, 
+                    "Unit": "-"
+                },
+                "Hydrogen yield per unit energy": {
+                    "Value": efficiency,
+                    "Unit": "kg/kWh"
+                },
+                "Replacement time": {
+                    "Value": replacement_time, 
+                    "Unit": "h"},
             },
             "Power Generation": {
                 "Available energy (hourly)": {
                     "Value": available_power_hourly,
-                    "Unit":"kWh",
+                    "Unit": "kWh",
                     "Processed": "Yes",
                 }
             },
         }
-        
         self.operation_years = list(available_power_hourly.keys())
-
-
 
 @pytest.mark.parametrize(
     "case",
@@ -51,9 +61,7 @@ class DummyDCF:
         {
             "input": {
                 "construction_time": 2,
-                "capex_multiplier": 0.9,
                 "nominal_power": 5500.0,
-                "capex_reference_power": 1000.0,
                 "power_increase": 0.003,
                 "min_capacity": 0.10,
                 "efficiency": 0.0185,
@@ -118,8 +126,7 @@ class DummyDCF:
                 },
             },
             "expected": {
-                "h2_production": Quantity(np.array([0.0, 0.0, 2035.0, 2035.0]), 'kg/year'),
-                "scaling_factor": Quantity(0.9249598065992481, '-'),
+                "h2_production": Quantity(np.array([0.0, 0.0, 2035.0, 2035.0]), 'kg'),
                 "replacement_frequency": Quantity(2.0, 'year'),
                 "yearly_data_year": Quantity(np.array([2026.0, 2027.0]),'-'),
                 "yearly_data_production": Quantity(np.array([2035.0, 2035.0]),'kg'),
@@ -210,15 +217,10 @@ def test_electrolyzer_plugin(case):
     tolerance = 1e-12
 
     np.testing.assert_allclose(
-        plugin.h2_production.unit['kg/s'],
-        expected["h2_production"].unit['kg/s'],
+        plugin.h2_production.unit['kg'],
+        expected["h2_production"].unit['kg'],
         rtol=tolerance,
         atol=tolerance,
-    )
-
-    assert plugin.electrolyzer_scaling_factor.unit['-'] == pytest.approx(
-        expected["scaling_factor"].unit['-'],
-        abs=tolerance
     )
     
     assert plugin.replacement_frequency.unit['year'] == pytest.approx(
