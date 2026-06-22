@@ -4,11 +4,6 @@ from pathlib import Path
 import numpy as np
 import pytest
 import scipy.sparse
-
-# pyH2A.LCA.LCA imports pyH2A.Discounted_Cash_Flow, which in turn re-imports
-# pyH2A.LCA.LCA.  Importing Discounted_Cash_Flow first resolves the circular
-# dependency so that the LCA name is already bound when the second import runs.
-import pyH2A.Discounted_Cash_Flow  # noqa: F401  (import for side-effect only)
 from pyH2A.LCA.LCA import LCA
 from pyH2A.Utilities.lca_utils import get_cache_paths
 
