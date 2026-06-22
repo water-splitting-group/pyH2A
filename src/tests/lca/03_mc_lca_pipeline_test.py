@@ -15,8 +15,6 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-
-import pyH2A.Discounted_Cash_Flow  # noqa: F401  resolve circular import
 from pyH2A.LCA.LCA import LCA
 from pyH2A.Utilities.lca_utils import get_cache_paths
 from pyH2A.Utilities.input_modification import convert_input_to_dictionary

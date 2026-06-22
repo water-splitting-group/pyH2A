@@ -1,7 +1,5 @@
 import shutil
 import numpy as np
-
-from pyH2A import Discounted_Cash_Flow
 from pyH2A.Utilities.input_modification import process_table
 from pyH2A.Utilities.lca_utils import (
     atomic_savez,
@@ -65,7 +63,7 @@ class LCA:
         'impact_index':     None,
     }
 
-    def __init__(self, matrix_folder: str, dcf: Discounted_Cash_Flow):
+    def __init__(self, matrix_folder: str, dcf):
         '''Initialize and run the LCA calculation workflow.
 
         This constructor loads all matrices, prepares the class-level cache,

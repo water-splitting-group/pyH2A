@@ -11,7 +11,6 @@ from pyH2A.Utilities.lca_utils import (
     factorize,
     find_matrix_path,
     get_cache_paths,
-    matrix_of,
     tech_process_indices,
 )
 
