@@ -10,94 +10,19 @@ from pyH2A.Utilities.input_modification import (process_input,
                                                 sum_table_quantity, 
                                                 sum_all_tables_quantity, 
                                                 retrieve_base_unit,
-                                                insert)
+                                                insert,
+                                                identify_bottom_keys)
+from pyH2A.Utilities.constants import (WILDCARD_MARKER,
+                                       SPECIAL_MIDDLE_KEYS,
+                                       SUM_TABLES_KEY,
+                                       OPTIONAL_KEY,
+                                       TYPE_KEY,
+                                       BOUNDS_KEY,
+                                       DIMENSION_KEY,
+                                       OPTIONS_KEY,
+                                       PATH_KEY)
 
 from tests.Utilities.Input_Resolver.input_resolver_test_data import DummyDCF, input_dict, input_dict_resolved
-
-# This marker indicates either a table group (when in top_key) or a wildcard row (when in middle_key). 
-# It is used to indicate that the number of tables/rows is flexible and can be determined based on the content of dcf_class.inp
-WILDCARD_MARKER = "<...>"
-
-# Special middle keys 
-SPECIAL_MIDDLE_KEYS = ['sum_tables']
-
-# These keys are not considered when constructing the resolved values 
-SPECIAL_BOTTOM_KEYS = ['description', 'optional']
-
-# Sum tables key
-SUM_TABLES_KEY = 'sum_tables'
-
-# Key indicating if a value is optional or not
-OPTIONAL_KEY = 'optional'
-
-# Keys for value-unit pairs 
-VALUE_KEY = "Value"
-UNIT_KEY = "Unit"
-VALUE_SUFFIX = "_Value"
-UNIT_SUFFIX = "_Unit"
-
-# Specifications (checks) for values 
-TYPE_KEY = 'type'
-BOUNDS_KEY = 'bounds'
-DIMENSION_KEY = 'dimension'
-OPTIONS_KEY = 'options'
-PATH_KEY = 'path'
-
-def _identify_bottom_keys(row_dict):
-    '''
-    Identify the bottom keys relevant for processing (value-unit pairs and standalone keys)
-
-    This is used to decide whether a row entry should be resolved as a
-    `Quantity` (value + unit) or as a plain value (for categorical strings
-    or non-quantity values).
-
-    Example
-    -------
-    For a row_dict like this:
-
-    {
-        'Usage_Value': 1500,
-        'Usage_Unit': 'kWh/kg',
-        'Cost_Value': 200,
-        'Cost_Unit': 'USD/kWh/day',
-        'Type': 'natural_gas'
-    }
-
-    The function would return:
-
-    [
-        ['Usage_Value', 'Usage_Unit'],
-        ['Cost_Value', 'Cost_Unit'],
-        ['Type']
-    ]   
-    '''
-    
-    result = []
-    processed_keys = set(SPECIAL_BOTTOM_KEYS) # special bottom keys are directly removed from consideration
-    
-    # First pass: find Value/Unit pairs
-    for key in row_dict:
-
-        # Check for direct Value/Unit pair
-        if key == VALUE_KEY and UNIT_KEY in row_dict:
-            result.append([key, UNIT_KEY])
-            processed_keys.update([key, UNIT_KEY])
-
-        # Check for Value/Unit pairs indicated by suffixes
-        elif key.endswith(VALUE_SUFFIX):
-            prefix = key[:-len(VALUE_SUFFIX)]
-            unit_key = prefix + UNIT_SUFFIX
-
-            if unit_key in row_dict:
-                result.append([key, unit_key])
-                processed_keys.update([key, unit_key])
-                
-    # Second pass: append any remaining standalone keys
-    for key in row_dict:
-        if key not in processed_keys:
-            result.append([key])
-            
-    return result
 
 def _get_specification_and_retrieved_value(top_key, 
                                            middle_key, 
@@ -508,9 +433,11 @@ def row_resolver_function(top_key, middle_key, row_dict, dcf_class):
     resolved_row = {}
 
     # Identify bottom keys (value-unit pairs and standalone keys) for the given row_dict
-    bottom_keys = _identify_bottom_keys(row_dict)
+    bottom_keys = identify_bottom_keys(row_dict,
+                                       return_paths=False,
+                                       return_as_lists=True)
 
-    for bottom_key_group in bottom_keys:
+    for bottom_key_group in bottom_keys.values():
 
         # Length == 2 indicates value-unit pair, so resolve value and unit together
         if len(bottom_key_group) == 2:

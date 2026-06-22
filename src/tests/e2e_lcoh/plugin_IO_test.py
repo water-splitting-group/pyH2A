@@ -143,6 +143,14 @@ def test_plugin_IO():
             'Processed': 'Yes',
             'Unit': 'kg',
             'Value': Quantity(np.array([1.188e+13, 1.188e+13, 1.188e+13]), 'kg')
+        },
+        'Mass per energy': {
+            'Comment': 'Retrieving two different paths, one nested, one not',
+            'Former Value': '{Simple Unprocessed Input - read by Plugin B > Energy density > Value, kg/J}',
+            'Path': '{Layer 2 Unprocessed Input > Layer 2 Test > Usage_Value, kg/J}',
+            'Processed': 'Yes',
+            'Unit': 'kg/J',
+            'Value': Quantity(2, 'kg/J')
         }
     }
 
@@ -259,7 +267,7 @@ def test_plugin_IO():
                 }
             }, 
         }
-    
+ 
     expected_plugin_b_processed_input = {
         'Plugin A Output': {
             'Energy': {
@@ -270,7 +278,10 @@ def test_plugin_IO():
         'Plugin B Input': {
             'Mass': {
                 'Value': Quantity(np.array([1.188e+13, 1.188e+13, 1.188e+13]), 'kg')
-            }
+            },
+            'Mass per energy': {
+                'Value': Quantity(2, 'kg/J')
+            },
         },
         'Plugin B - Value/Unit pairs': {
             'Test Input': {
