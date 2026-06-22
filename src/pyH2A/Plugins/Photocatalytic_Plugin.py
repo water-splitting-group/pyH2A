@@ -6,7 +6,7 @@ input_dict = {
 	"Technical Operating Parameters and Specifications": {
 		"Plant design capacity": {
 			"Value": {
-				"type": {float,},
+				"type": {int,float},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -19,7 +19,7 @@ input_dict = {
 	"Reactor Baggies": {
 		"Cost material top": {
 			"Value": {
-				"type": {float,},
+				"type": {int,float},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -30,7 +30,7 @@ input_dict = {
 		},
 		"Cost material bottom": {
 			"Value": {
-				"type": {float,},
+				"type": {int,float},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -52,7 +52,7 @@ input_dict = {
 		},
 		"Cost of port": {
 			"Value": {
-				"type": {float,},
+				"type": {int,float,},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -63,7 +63,7 @@ input_dict = {
 		},		
 		"Other costs per baggie": {
 			"Value": {
-				"type": {float,},
+				"type": {int,float,},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -74,7 +74,7 @@ input_dict = {
 		},
 		"Markup factor": {
 			"Value": {
-				"type": {float,},
+				"type": {int,float,},
 				"bounds": (1, None),
 			},
 			"Unit": {
@@ -85,7 +85,7 @@ input_dict = {
 		},
 		"Length": {
 			"Value": {
-				"type": {float,},
+				"type": {int,float,},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -96,7 +96,7 @@ input_dict = {
 		},
 		"Width": {
 			"Value": {
-				"type": {float,},
+				"type": {int,float,},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -107,7 +107,7 @@ input_dict = {
 		},
 		"Filling height": {
 			"Value": {
-				"type": {float,},
+				"type": {int,float,},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -118,7 +118,7 @@ input_dict = {
 		},
 		"Additional land area": {
 			"Value": {
-				"type": {float,},
+				"type": {int,float,},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -129,7 +129,7 @@ input_dict = {
 		},
 		"Lifetime": {
 			"Value": {
-				"type": {float,},
+				"type": {int,float,},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -142,7 +142,7 @@ input_dict = {
 	"Catalyst": {
 		"Cost per unit of mass": {
 			"Value": {
-				"type": {float,},
+				"type": {int,float,},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -153,7 +153,7 @@ input_dict = {
 		},
 		"Concentration": {
 			"Value": {
-				"type": {float,},
+				"type": {int,float,},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -164,7 +164,7 @@ input_dict = {
 		},
 		"Lifetime": {
 			"Value": {
-				"type": {float,},
+				"type": {int,float,},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -175,7 +175,7 @@ input_dict = {
 		},
 		"Molar weight": {
 			"Value": {
-				"type": {float,},
+				"type": {int,float,},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -186,7 +186,7 @@ input_dict = {
 		},
 		"Molar attenuation coefficient": {
 			"Value": {
-				"type": {float,},
+				"type": {int,float,},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -199,7 +199,7 @@ input_dict = {
 	"Solar-to-Hydrogen Efficiency": {
 		"STH": {
 			"Value": {
-				"type": {float,},
+				"type": {int, float,},
 				"bounds": (0, 1),
 			},
 			"Unit": {
@@ -212,7 +212,7 @@ input_dict = {
  	"Solar Input": {
 		"Mean solar input": {
 			"Value": {
-				"type": {float,},
+				"type": {int, float,},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -240,7 +240,7 @@ output_dict = {
 		"Land required": {
 			"Value": {
 				"inserted_value": "total_land_area",
-				"type": {float,},
+				"type": {int, float,},
 				"dimension": "area",
 			},
 			"optional": False,
@@ -249,7 +249,7 @@ output_dict = {
 		"Solar collection area": {
 			"Value": {
 				"inserted_value": "total_solar_collection_area",
-				"type": {float,},
+				"type": {int,float,},
 				"dimension": "area",
 			},
 			"optional": False,
@@ -260,12 +260,12 @@ output_dict = {
 		"Planned replacement catalyst": {
 			"Cost_Value": {
 				"inserted_value": "catalyst_cost",
-				"type": {float,},
+				"type": {int, float,},
 				"dimension": "currency",
 			},
 			"Frequency_Value": {
 				"inserted_value": "catalyst_lifetime",
-				"type": {float,},
+				"type": {int,float,},
 				"dimension": "time",
 			},
 			"optional": False,
@@ -274,12 +274,12 @@ output_dict = {
 		"Planned Replacement Baggie": {
 			"Cost_Value": {
 				"inserted_value": "baggies_cost",
-				"type": {float,},
+				"type": {int, float,},
 				"dimension": "currency",
 			},
 			"Frequency_Value": {
 				"inserted_value": "baggie_lifetime",
-				"type": {float,},
+				"type": {int,float,},
 				"dimension": "time",
 			},
 			"optional": False,
@@ -290,7 +290,7 @@ output_dict = {
 		"Baggie cost": {
 			"Value": {
 				"inserted_value": "baggies_cost",
-				"type": {float,},
+				"type": {int, float,},
 				"dimension": "currency",
 			},
 			"optional": False,
@@ -301,7 +301,7 @@ output_dict = {
 		"Catalyst cost": {
 			"Value": {
 				"inserted_value": "catalyst_cost",
-				"type": {float,},
+				"type": {int, float,},
 				"dimension": "currency",
 			},
 			"optional": False,
@@ -312,7 +312,7 @@ output_dict = {
 		"Number": {
 			"Value": {
 				"inserted_value": "baggie_number",
-				"type": {int,float}, # should only be an int, but going throught the output isnerte makes it a float despite the use of the .astype(int)
+				"type": {int,float}, # should only be an int, but going throught the output inserter makes it a float despite the use of the .astype(int)
 				"dimension": "dimensionless",
 			},
 			"optional": False,
@@ -323,7 +323,7 @@ output_dict = {
 		"Volume": {
 			"Value": {
 				"inserted_value": "total_volume",
-				"type": {float,},
+				"type": {int,float,},
 				"dimension": "volume",
 			},
 			"optional": False,
