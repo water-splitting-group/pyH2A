@@ -2,10 +2,10 @@
 
 Name | Type | Description | Position |
 --- | --- | --- | --- |
-Hourly_Irradiation_Plugin | plugin | Plugin to calculate solar irradiation from typical meteorological year data | 0 |
-PEC_Plugin | plugin | Plugin to model photoelectrochemical water splitting | 2 |
-Solar_Concentrator_Plugin | plugin | Plugin to model solar concentration | 2 |
-Multiple_Modules_Plugin | plugin | Modelling of module plant modules, adjustment of labor requirement | 3 |
+Hourly_Irradiation_Plugin | plugin | Plugin to calculate solar irradiation from typical meteorological year data | 1 |
+PEC_Plugin | plugin | Plugin to model photoelectrochemical water splitting | 201 |
+Solar_Concentrator_Plugin | plugin | Plugin to model solar concentration | 202 |
+Multiple_Modules_Plugin | plugin | Modelling of module plant modules, adjustment of labor requirement | 301 |
 
 # Display Parameters
 
@@ -16,11 +16,12 @@ Color | darkred |
 
 # Technical Operating Parameters and Specifications
 
-Name | Value | Path | Unit | Full Name |
+Name | Value | Unit | Full Name |
 --- | --- | --- | --- | --- |
-Operating capacity factor | 90% | None | - |
-Plant design capacity | 1,000. | None | kg/day |
-Plant modules | 10 | None | - | 10 identical modules, only affects labor requirement calculation. |
+Operating capacity factor | 90% | - |
+Plant design capacity | 1,000. | kg/day |
+Plant modules | 10 | - | 10 identical modules, only affects labor requirement calculation. |
+Fraction of output that reaches gate | 100% | -
 
 # Construction
 
@@ -43,13 +44,13 @@ Array azimuth | 0. | deg |
 Nominal operating temperature | 45. | degC | Temperature is stabilized even under solar concentration through intrinsic water cooling. |
 Mismatch derating | 98% | - |
 Dirt derating | 98% | - | Values taken from Chang 2020, analogues to silicon PV. |
-Temperature coefficient | 0. | -/delta_degC | No assumed efficiency loss with higher temperature. |
+Temperature coefficient | 0. | 1/delta_degC | No assumed efficiency loss with higher temperature. |
 
 # Solar Input
 
 Name | Value | Path | Unit | Comment |
 --- | --- | --- | --- | --- |
-Mean solar input | Hourly Irradiation > Mean solar input two axis tracking > Value | Solar Concentrator > Concentration factor > Value | W/m2 | Two axis tracking irradiation from hourly irradiation multiplied by solar concentration factor to give solar input incident on PEC cells. |
+Mean solar input | {Hourly Irradiation > Mean solar input two axis tracking > Value, kW/m2} | {Solar Concentrator > Concentration factor > Value, -} | kW/m2 | Two axis tracking irradiation from hourly irradiation multiplied by solar concentration factor to give solar input incident on PEC cells. |
 
 # Solar-to-Hydrogen Efficiency
 
@@ -86,20 +87,20 @@ East/West spacing | 17.3 | m |
 Name | Value | Path | Unit | Comment |
 --- | --- | --- | --- | --- |
 Water pump | 213.0 | None | USD | Based on Pinaud 2013. |
-Water manifold piping | 11.58 | PEC Cells > Number > Value | USD |
-Water collection piping | 1.502 | PEC Cells > Number > Value | USD |
-Water column collection piping | 1.1015 | PEC Cells > Number > Value | USD |
-Water final collection piping | 0.231 | PEC Cells > Number > Value | USD |
+Water manifold piping | 11.58 | {PEC Cells > Number > Value, -} | USD |
+Water collection piping | 1.502 | {PEC Cells > Number > Value, -} | USD |
+Water column collection piping | 1.1015 | {PEC Cells > Number > Value, -} | USD |
+Water final collection piping | 0.231 | {PEC Cells > Number > Value, -} | USD |
 
 # Direct Capital Costs - Gas Processing
 
 Name | Value | Path | Unit | Comment |
 --- | --- | --- | --- | --- |
 Condenser | 7,098.0 | None | USD | Based on Pinaud 2013. |
-Manifold piping | 11.58 | PEC Cells > Number > Value | USD |
-Collection piping | 1.502 | PEC Cells > Number > Value | USD |
-Column collection piping | 1.1015 | PEC Cells > Number > Value | USD |
-Final collection piping | 0.231 | PEC Cells > Number > Value | USD |
+Manifold piping | 11.58 | {PEC Cells > Number > Value, -} | USD |
+Collection piping | 1.502 | {PEC Cells > Number > Value, -} | USD |
+Column collection piping | 1.1015 | {PEC Cells > Number > Value, -} | USD |
+Final collection piping | 0.231 | {PEC Cells > Number > Value, -} | USD |
 
 # Direct Capital Costs - Control System
 
@@ -111,31 +112,31 @@ Control room wiring panel | 3,000.0 | None | USD |
 Computer and monitor | 1,500.0 | None | USD |
 Labview software | 4,299.0 | None | USD |
 Hydrogen flow meter | 5,500.0 | None | USD |
-Water level controllers | 50.0 | PEC Cells > Number > Value | USD |
-Pressure sensors | 3.333 | PEC Cells > Number > Value | USD |
-Hydrogen area sensors | 73.42 | PEC Cells > Number > Value | USD |
-Instrument wiring | 0.252 | PEC Cells > Number > Value | USD |
-Power wiring | 0.1256 | PEC Cells > Number > Value | USD |
-Conduit | 3.759 | PEC Cells > Number > Value | USD |
+Water level controllers | 50.0 | {PEC Cells > Number > Value, -} | USD |
+Pressure sensors | 3.333 | {PEC Cells > Number > Value, -} | USD |
+Hydrogen area sensors | 73.42 | {PEC Cells > Number > Value, -} | USD |
+Instrument wiring | 0.252 | {PEC Cells > Number > Value, -} | USD |
+Power wiring | 0.1256 | {PEC Cells > Number > Value, -} | USD |
+Conduit | 3.759 | {PEC Cells > Number > Value, -} | USD |
 
 # Direct Capital Costs - Installation Costs
 
 Name | Value | Path | Unit | Comment |
 --- | --- | --- | --- | --- |
-Piping installation | 5.65 | PEC Cells > Number > Value | USD | Based on Pinaud 2013. |
-Reactor installation | 22.0 | Non-Depreciable Capital Costs > Solar collection area > Value | USD |
-Pump installation | 30% | Direct Capital Costs - Water Management > Water pump > Value | USD |
-Gas processing installation | 30% | Direct Capital Costs - Gas Processing > Summed total > Value | USD |
-Control system installation | 30% | Direct Capital Costs - Control System > Summed total > Value | USD |
+Piping installation | 5.65 | {PEC Cells > Number > Value, -} | USD | Based on Pinaud 2013. |
+Reactor installation | 22.0 | {Non-Depreciable Capital Costs > Solar collection area > Value, m2} | USD |
+Pump installation | 30% | {Direct Capital Costs - Water Management > Water pump > Value, USD} | USD |
+Gas processing installation | 30% | {Direct Capital Costs - Gas Processing > Summed total > Value, USD} | USD |
+Control system installation | 30% | {Direct Capital Costs - Control System > Summed total > Value, USD} | USD |
 
 # Indirect Capital Costs
 
 Name | Value | Path | Unit | Comment |
 --- | --- | --- | --- | --- |
-Engineering and design | 7% | Direct Capital Cost > Summed group total > Value | USD | Based on Pinaud 2013. |
-Process contingency | 20% | Direct Capital Cost > Summed group total > Value | USD |
-Up-front permitting costs | 0.5% | Direct Capital Cost > Summed group total > Value | USD |
-Site preparation | 1% | Direct Capital Cost > Summed group total > Value | USD |
+Engineering and design | 7% | {Direct Capital Cost > Summed group total > Value, USD} | USD | Based on Pinaud 2013. |
+Process contingency | 20% | {Direct Capital Cost > Summed group total > Value, USD} | USD |
+Up-front permitting costs | 0.5% | {Direct Capital Cost > Summed group total > Value, USD} | USD |
+Site preparation | 1% | {Direct Capital Cost > Summed group total > Value, USD} | USD |
 
 # Non-Depreciable Capital Costs
 
@@ -156,20 +157,20 @@ Hourly labor cost | Burdened labor cost, including overhead | 50.0 | USD/h |
 
 Name | Full Name | Value | Path | Unit | Comment |
 --- | --- | --- | --- | --- | --- |
-G&A | G&A rate | 20% | Fixed Operating Costs > Labor cost > Value | USD | Based on Pinaud 2013. |
-Property tax | Property tax and insurance rate | 2% | Total Capital Costs > Inflated > Value | USD |
-Repairs | Production maintenance and repairs | 0.5% | Direct Capital Cost > Summed group total > Value | USD |
+G&A | G&A rate | 20% | {Fixed Operating Costs > Labor cost > Value, USD} | USD | Based on Pinaud 2013. |
+Property tax | Property tax and insurance rate | 2% | {Total Capital Costs > Inflated > Value, USD} | USD |
+Repairs | Production maintenance and repairs | 0.5% | {Direct Capital Cost > Summed group total > Value, USD} | USD |
 Fees | Licensing, permits and fees | 1000.0 | None | USD |
 
 # Utilities
 
 Name | Usage_Value | Usage_Path | Usage_Unit | Cost_Value | Cost_Path | Cost_Unit | Price_Conversion_Factor_Value | Price_Conversion_Factor_Unit | Comment |
 --- | --- | --- | --- | --- | --- | --- | --- | --- |
-Industrial electricity | 0.16 | | -/kg | pyH2A.Lookup_Tables.Utility_Cost~Industrial_Electricity_AEO_2017_Reference_Case.csv | | USD | 0.0036 | - | Electricity usage based on Pinaud 2013. |
-Process water | 2.369 | | -/kg | 0.0023749510945008 | | USD | 1. | - | Seawater reverse osmosis cost ca. 0.6 USD/m3 (equal to ca. 0.0023 USD/gal), based on Kibria 2021 and Driess 2021. |
+Industrial electricity | 0.16 | None | 1/kg | pyH2A.Lookup_Tables.Utility_Cost~Industrial_Electricity_AEO_2017_Reference_Case.csv | None | USD | 0.0036 | - | Electricity usage based on Pinaud 2013. |
+Process water | 2.369 | None | 1/kg | 0.0023749510945008 | None | USD | 1. | - | Seawater reverse osmosis cost ca. 0.6 USD/m3 (equal to ca. 0.0023 USD/gal), based on Kibria 2021 and Driess 2021. |
 
 # Unplanned Replacement
 
 Name | Full Name | Value | Path | Unit | Comment |
 --- | --- | --- | --- | --- | --- |
-Unplanned replacement | Total unplanned replacement capital cost factor (fraction of total direct depreciable costs/year) | 0.5% | Depreciable Capital Costs > Inflated > Value | USD | Based on Pinaud 2013. |
+Unplanned replacement | Total unplanned replacement capital cost factor (fraction of total direct depreciable costs/year) | 0.5% | {Depreciable Capital Costs > Inflated > Value, USD} | USD | Based on Pinaud 2013. |
