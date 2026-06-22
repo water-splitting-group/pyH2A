@@ -17,7 +17,7 @@ input_dict = {
 	"Irradiance Area Parameters": {	
 		"Module tilt": {
 			"Value": {
-				"type": {float,},
+				"type": {int, float,},
 				"bounds": (0, np.pi / 2),
 			},
 			"Unit": {
@@ -28,7 +28,7 @@ input_dict = {
 		},
 		"Array azimuth": {
 			"Value": {
-				"type": {float,},
+				"type": {int, float,},
 				"bounds": (0, np.pi),
 			},
 			"Unit": {
@@ -39,7 +39,7 @@ input_dict = {
 		},
 		"Nominal operating temperature": {
 			"Value": {
-				"type": {float,},
+				"type": {int, float,},
 				"bounds": (250, 500),
 			},
 			"Unit": {
@@ -50,7 +50,7 @@ input_dict = {
 		},
 		"Mismatch derating": {
 			"Value": {
-				"type": {float,},
+				"type": {int, float,},
 				"bounds": (0, 1), 
 			},
 			"Unit": {
@@ -61,7 +61,7 @@ input_dict = {
 		},
 		"Dirt derating": {
 			"Value": {
-				"type": {float,},
+				"type": {int, float,},
 				"bounds": (0, 1), 
 			},
 			"Unit": {
@@ -72,7 +72,7 @@ input_dict = {
 		},
 		"Temperature coefficient": {
 			"Value": {
-				"type": {float,},
+				"type": {int, float,},
 				"bounds": (-0.5, 0.5), 
 			},
 			"Unit": {
@@ -116,7 +116,7 @@ output_dict = {
 		"Mean solar input no tracking": {
 			"Value": {
 				"inserted_value": "yearly_averaged_power",
-				"type": {float,},
+				"type": {int, float,},
 				"dimension": "power / area",
 			},
 			"optional": False,
@@ -125,7 +125,7 @@ output_dict = {
 		"Mean solar input single axis tracking": {
 			"Value": {
 				"inserted_value": "yearly_averaged_power_sat",
-				"type": {float,},
+				"type": {int, float,},
 				"dimension": "power / area",
 			},
 			"optional": False,
@@ -134,7 +134,7 @@ output_dict = {
 		"Mean solar input two axis tracking": {
 			"Value": {
 				"inserted_value": "yearly_averaged_power_dat",
-				"type": {float,},
+				"type": {int, float,},
 				"dimension": "power / area",
 			},
 			"optional": False,
