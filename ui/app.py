@@ -226,7 +226,7 @@ def inject_equal_click_js():
                 const rowName = getRowName(el);
                 const colName = getColName(el);
 
-                return `(${tableName} > ${rowName} > ${colName}, )`;
+                return `{${tableName} > ${rowName} > ${colName}, }`;
             }
 
             function setNativeValue(input, value) {
