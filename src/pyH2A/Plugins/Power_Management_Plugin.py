@@ -33,7 +33,7 @@ input_dict = {
     "Power Consumption": {
         "<...>": {
             "Value": {
-                "type": {np.ndarray,float,},
+                "type": {np.ndarray,float,int,},
                 "bounds": (0, None),
             },
             "Type": {
@@ -54,7 +54,7 @@ input_dict = {
     "Grid Electricity": {
         "Cost": {
             "Value": {
-                "type": {float, np.ndarray,},
+                "type": {float, np.ndarray, int},
                 "bounds": (0, None),
             },
             "Unit": {
@@ -206,7 +206,7 @@ class Power_Management_Plugin:
                                     * self.input_dict_resolved['Grid Electricity']['Cost']['Value'].unit['USD/J'], 
                             'USD')
 
-        self.electricity_cost = np.concatenate([np.zeros(int(round(dcf.inp['Financial Input Values']['Construction time']['Value'].unit['year']))), 
+        self.electricity_cost = np.concatenate([np.zeros(dcf.inp['Financial Input Values']['Construction time']['Value']), 
                                                 electricity_cost.unit['USD']])
         
         self.electricity_cost = Quantity(self.electricity_cost, 'USD')

@@ -4,19 +4,6 @@ from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import numpy as np
 
 input_dict = {
-    "Financial Input Values": {
-        "Construction time": {
-            "Value": {
-                "type": {int,},
-                "bounds": (0, 40*365*86400),
-            },
-            "Unit": {
-                "dimension": "time",
-            },
-            "optional": False,
-            "description": "Construction time of hydrogen production plant."
-        },
-    },
     "Electrolyzer": {
         "Nominal power": {
             "Value": {
@@ -287,7 +274,7 @@ class Electrolyzer_Plugin:
         self.yearly_data_duration = Quantity(np.asarray(yearly_data_duration), 'h')
 
         self.h2_production = np.concatenate([
-                                   np.zeros(int(round(dcf.inp['Financial Input Values']['Construction time']['Value'].unit['year']))), 
+                                   np.zeros(dcf.inp['Financial Input Values']['Construction time']['Value']), 
                                    self.yearly_data_production.unit['kg']
                                     ])
         self.h2_production = Quantity(self.h2_production, 'kg')

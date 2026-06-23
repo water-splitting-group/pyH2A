@@ -832,6 +832,10 @@ def process_input(dictionary, top_key, key, bottom_key, path_key = 'Path', add_p
 
 	if 'Processed' in dictionary[top_key][key]:
 		return entry
+	
+	elif isinstance(entry, Quantity): 
+		return entry
+		#raise TypeError('Error: Quantity object [{0}] passed to process_input at "{1} > {2} > {3}"'.format(entry, top_key, key, bottom_key))
 
 	elif isinstance(entry, str) and '>' not in entry:
 		if add_processed is True:
