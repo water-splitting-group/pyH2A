@@ -99,20 +99,6 @@ output_dict = {
             "description": "Operating capacity factor is set to 1."
         },
     },
-    "Planned Replacement": {
-        "Electrolyzer stack replacement": {
-            "Frequency_Value": {
-                "inserted_value": "replacement_frequency",
-                "type": {float,},
-                "dimension": "time",
-            },
-            "add_processed": False,
-            "insert_path": False,
-            "optional": False,
-            "description": "Frequency of electrolyzer stack replacements in years, \
-                            calculated from replacement time and hourly irradiation data."
-        },
-    },
     "Electrolyzer": {
         "Yearly operation data": {
             "Year_Value": {
@@ -141,6 +127,15 @@ output_dict = {
             },
             "optional": False,
             "description": "Yearly hydrogen production."
+        },
+        "Actual stack replacement time": {
+            "Value": {
+                "inserted_value": "replacement_frequency",
+                "type": {float,},
+                "dimension": "time",
+            },
+            "description": "Actual stack replacement time, \
+                            calculated from replacement time and operation data."
         },
     },
     "Power Generation": {

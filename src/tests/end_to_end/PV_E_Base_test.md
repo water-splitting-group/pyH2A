@@ -162,5 +162,4 @@ Cost | 10000.12 | USD/kWh
 
 Name | Cost_Value | Cost_Path | Cost_Unit | Frequency_Value | Frequency_Unit | Comment
 --- | --- | --- | --- | ---
-Electrolyzer stack replacement | 40% | {Direct Capital Costs - Electrolyzer > Electrolyzer CAPEX > Value, USD} | USD | None | None | Based on Chang 2020
-
+Electrolyzer stack replacement | 40% | {Direct Capital Costs - Electrolyzer > Electrolyzer CAPEX > Value, USD} | USD | {Electrolyzer > Actual stack replacement time > Value, year} | year | Based on Chang 2020

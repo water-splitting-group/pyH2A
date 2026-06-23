@@ -830,19 +830,23 @@ def process_input(dictionary, top_key, key, bottom_key, path_key = 'Path', add_p
 
 	entry = dictionary[top_key][key][bottom_key]
 
+	# If "Processed" exists, simply return entry
 	if 'Processed' in dictionary[top_key][key]:
 		return entry
 	
-	elif isinstance(entry, Quantity): 
+	# If type is Quantity, dict or np.ndarray, this indicates that processing
+	# has already occured, thus simply return entry
+	elif isinstance(entry, (Quantity, dict, np.ndarray)): 
 		return entry
-		#raise TypeError('Error: Quantity object [{0}] passed to process_input at "{1} > {2} > {3}"'.format(entry, top_key, key, bottom_key))
 
+	# If entry is a string and does not contain ">", it is not a path and is returned as is
 	elif isinstance(entry, str) and '>' not in entry:
 		if add_processed is True:
 			dictionary[top_key][key]['Processed'] = 'Yes'
 		return entry
 
-	else:
+	# If entry is a path string, or numerical value (float, int) apply processing pipeline
+	elif isinstance(entry, (str, float, int)):
 		value = process_cell(dictionary, top_key, key, bottom_key, 
 					   		print_processing_warning = print_processing_warning)
 
@@ -850,8 +854,8 @@ def process_input(dictionary, top_key, key, bottom_key, path_key = 'Path', add_p
 			target_value = process_cell(dictionary, top_key, key, path_key,
 							   print_processing_warning = print_processing_warning)
 			value *= target_value
-		except KeyError:
-			pass
+		except KeyError: # Silent key error, this is bad 
+			pass 
 
 		if np.array_equal(value, dictionary[top_key][key][bottom_key]) is False:
 			former_bottom_key = 'Former ' + bottom_key 
@@ -862,6 +866,9 @@ def process_input(dictionary, top_key, key, bottom_key, path_key = 'Path', add_p
 			dictionary[top_key][key]['Processed'] = 'Yes'   # marking that this key has been processed
 
 		return value
+	
+	else:
+		raise TypeError(f'Unexpected type for entry [{entry}] at "{top_key} > {key} > {bottom_key}" . Expected str, float or int, but got {type(entry)}.')
 
 def process_table(dictionary, top_key, bottom_key, path_key = 'Path', 
 				  print_processing_warning = True):

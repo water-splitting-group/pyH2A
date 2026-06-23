@@ -138,17 +138,15 @@ output_dict = {
             "description": "Plant design output in mass of H2 calculated from installed electrolysis power capacity and hourly power generation data."
         },
     },
-    "Planned Replacement": {
-        "Electrolyzer stack replacement": {
-            "Frequency_Value": {
+    "Electrolyzer": {
+        "Actual stack replacement time": {
+            "Value": {
                 "inserted_value": "replacement_frequency",
-                "type": {float,},
+                "type": {float,int},
                 "dimension": "time",
             },
-            "add_processed": False,
-            "insert_path": False,
-            "optional": False,
-            "description": "Frequency of electrolyzer stack replacements, calculated from replacement time and hourly irradiation data."
+            "description": "Actual stack replacement time, \
+                            calculated from replacement time and operation data."
         },
     },
     "Power Consumption": {
