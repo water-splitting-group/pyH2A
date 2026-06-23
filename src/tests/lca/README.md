@@ -6,16 +6,12 @@ This directory contains all unit tests and end-to-end ground truth tests for the
 ## Directory Structure
 ```
 src/tests/lca/
-    test_lca.py                  — unit tests for LCA.py methods
-    test_lca_utils.py            — unit tests for lca_utils.py functions
-    test_lca_gt_e2e.py           — Level 1 ground truth tests (direct LCA engine)
-    dcf_lca_gt_pipeline_test.py   — Level 2 ground truth tests (full DCF pipeline)
+    lca_test.py                  — unit tests for LCA.py methods
+    lca_utils_test.py            — unit tests for lca_utils.py functions
+    01_lca_gt_e2e_test.py        — ground truth tests (direct LCA engine)
+    02_mc_lca_pipeline_test.py   — Monte Carlo + LCA pipeline test (seed=42)
     input_files/
-        PVE_GT_S1.md             — scenario 1 input file (base case)
-        PVE_GT_S2.md             — scenario 2 input file (low PV)
-        PVE_GT_S3.md             — scenario 3 input file (high PV)
-        PVE_GT_S4.md             — scenario 4 input file (low PV + low RO)
-        PVE_GT_S5.md             — scenario 5 input file (high PV + high RO)
+        PVE_GT_MC_seed42.md      — Monte Carlo + Parameters input file
 
 data/LCA/LCA_Test_PVE_GT/        — toy model matrix export (openLCA)
 ```
@@ -29,56 +25,36 @@ pytest src/tests/lca/ -v
 
 Run with results printed (ground truth comparison):
 ```powershell
-pytest src/tests/lca/test_lca_gt_e2e.py src/tests/lca/dcf_lca_gt_pipeline_test.py -v -s
+pytest src/tests/lca/01_lca_gt_e2e_test.py -v -s
 ```
 
 Run unit tests only:
 ```powershell
-pytest src/tests/lca/test_lca.py src/tests/lca/test_lca_utils.py -v
+pytest src/tests/lca/lca_test.py src/tests/lca/lca_utils_test.py -v
 ```
 
 Expected result:
 ```
-148 passed, 0 skipped
+80 passed, 0 skipped
 ```
 
 ## Test Files
 
-### test_lca_utils.py — 68 tests
-Unit tests for all functions and classes in `src/pyH2A/Utilities/lca_utils.py`:
+### lca_utils_test.py — 30 tests
+Unit tests for all functions in `src/pyH2A/Utilities/lca_utils.py`: matrix loading, index resolution, factorization, and disk-cache path handling.
 
-| Class / Function | What is tested |
-|---|---|
-| `TechEntry` | parsing and indexing of technosphere matrix entries |
-| `ImpactEntry` | parsing and indexing of impact category entries |
-| `ExportFolder` | loading matrix files from openLCA export directory |
-| `Matrix` | string constants for matrix file names |
-| `factorize` | sparse and dense matrix factorization |
-| `_FactorizedSolver` | solver wrapper for repeated solves |
+### lca_test.py — 43 tests
+Unit tests for all public methods in `src/pyH2A/LCA/LCA.py`: cache-key generation, component-value resolution and application, disk/RAM cache loading, LCIA arithmetic, and full `LCA` object integration against the real matrix.
 
-### test_lca.py — 59 tests
-Unit tests for all public methods in `src/pyH2A/LCA/LCA.py`:
-
-| Test Class | What is tested |
-|---|---|
-| `TestBuildMatrixCacheKey` | cache key generation from matrix metadata |
-| `TestExtractComponentFields` | UUID and Value extraction from component data |
-| `TestApplyComponentUpdates` | sign convention, UUID lookup, index mapping |
-| `TestLoadSolverFromDiskToRam` | disk cache loading and validation |
-| `TestLoadBasisVectorsFromDisk` | basis vector cache loading and validation |
-| `TestStoreSolverAndArtifactsInRam` | RAM cache storage |
-| `TestPerformLca` | LCIA arithmetic and result storage |
-| `TestLCAIntegration` | full LCA object integration tests using real matrix |
-
-### test_lca_gt_e2e.py — 14 tests (Level 1)
-End-to-end ground truth tests that directly test the LCA calculation engine using `MagicMock` DCF with hardcoded component values. No plugins, no `.md` file parsing, no full pipeline.
+### 01_lca_gt_e2e_test.py — 6 tests
+End-to-end ground truth tests that directly drive the LCA calculation engine via a `DummyDCF` with hardcoded component values — no plugins, no `.md` file parsing, no full DCF pipeline. The three caching paths (cold start, warm disk, warm RAM) are each exercised once across the 5 ground-truth scenarios below.
 
 **What it tests:** LCA matrix math, UUID lookup, sign convention, Sherman-Morrison formula, caching
 
-### dcf_lca_gt_pipeline_test.py — 5 tests (Level 2)
-End-to-end ground truth tests that run the full DCF pipeline by reading actual `.md` input files. Each test reads its own scenario file, runs `Discounted_Cash_Flow`, and reads the LCA result.
+### 02_mc_lca_pipeline_test.py — 1 test
+Runs `Monte_Carlo_Analysis` exactly as a normal user would: passes `input_files/PVE_GT_MC_seed42.md` (which specifies `Monte_Carlo_Analysis` and `Parameters - Monte_Carlo_Analysis` tables) with the random seed fixed at 42, and compares the resulting results array (PV, RO, GWP100 for 150 samples) against precalculated reference values.
 
-**What it tests:** `.md` file parsing, DCF pipeline, LCA integration, full chain from file to result
+**What it tests:** full Monte Carlo pipeline — parameter sampling, multiprocessing dispatch, and LCA evaluation — against the real `LCA_Test_PVE_GT` matrix
 
 ---
 
@@ -164,25 +140,11 @@ Each scenario was created as a separate product system (`PVE_TEST_GT_S1` through
 
 ---
 
-## Input Files for Level 2 Tests
-
-Located in `src/tests/lca/input_files/`:
-
-| File | Description |
-|---|---|
-| `PVE_GT_S1.md` | Scenario 1 — base case (H2=1.0, PV=55.0 kWh, Elec=1e-6, RO=9.0 kg) |
-| `PVE_GT_S2.md` | Scenario 2 — low PV (H2=1.0, PV=41.67 kWh, Elec=2e-6, RO=7.0 kg) |
-| `PVE_GT_S3.md` | Scenario 3 — high PV (H2=1.0, PV=69.44 kWh, Elec=5e-7, RO=12.0 kg) |
-| `PVE_GT_S4.md` | Scenario 4 — low PV + low RO (H2=1.0, PV=27.78 kWh, Elec=3e-6, RO=5.0 kg) |
-| `PVE_GT_S5.md` | Scenario 5 — high PV + high RO (H2=1.0, PV=83.33 kWh, Elec=1e-7, RO=15.0 kg) |
-
----
-
 ## Expected Test Output
 
 Run with `-s` flag to see pyH2A vs openLCA comparison:
 ```powershell
-pytest src/tests/lca/test_lca_gt_e2e.py src/tests/lca/dcf_lca_gt_pipeline_test.py -v -s
+pytest src/tests/lca/01_lca_gt_e2e_test.py -v -s
 ```
 
 Ground truth comparison results:

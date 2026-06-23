@@ -226,8 +226,9 @@ class Monte_Carlo_Analysis:
 		Number of samples for Monte Carlo analysis.
 	Monte_Carlo_Analysis > Dependent Variable > Value : str
 		Dependent response variable used in Monte Carlo filtering and plots.
-		Supported values are ``h2_cost``, ``Climate change``, and
-		``Cumulative energy demand``.		
+		Supported values are ``h2_cost``, ``Climate change``,
+		``Cumulative energy demand``, and
+		``Climate change no LT - Global warming potential (GWP100) no LT``.
 	Monte_Carlo_Analysis > Target Response Range > Value : str
 		Target response range for the configured dependent variable in the
 		following format: lower value; higher value (e.g. ``1.5; 4.0``).
@@ -280,6 +281,11 @@ class Monte_Carlo_Analysis:
 			'header': 'cumulative energy demand',
 			'label': 'Cumulative energy demand (MJ_Eq/kg H2)',
 			'unit': 'MJ_Eq/kg $H_{2}$',
+		},
+		'Climate change no LT - Global warming potential (GWP100) no LT': {
+			'header': 'gwp100',
+			'label': 'GWP100 (kg CO2-Eq/kg H2)',
+			'unit': 'kg $CO_{2}$-Eq/kg $H_{2}$',
 		},
 	}
 
