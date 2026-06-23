@@ -199,9 +199,8 @@ class Stored_Power_Electrolysis_Plugin:
     -------
     Technical Operating Parameters and Specifications > Design output by year > Value : nd.array
         Design output of H2 calculated from installed electrolysis power capacity and hourly power generation data.
-    Planned Replacement > Electrolyzer stack replacement > Frequency : float
-        Frequency of electrolyzer stack replacements in years, calculated from replacement time and hourly
-        irradiation data.
+    Electrolyzer > Actual stack replacement time > Value : float
+        Actual stack replacement time, calculated from replacement time and operation data.
     Power Consumption > Stored energy electrolysis (yearly) > Value : nd.array
         Electricity demand of electrolysis using stored energy per year.
     Power Consumption > Stored energy electrolysis (yearly) > Type : str

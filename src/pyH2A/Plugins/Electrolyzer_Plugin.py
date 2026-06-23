@@ -188,9 +188,8 @@ class Electrolyzer_Plugin:
         electrolysis power capacity and hourly power generation data.
     Technical Operating Parameters and Specifications >	Operating capacity factor > Value : float
         Operating capacity factor is set to 1.
-    Planned Replacement > Electrolyzer stack replacement > Frequency : float
-        Frequency of electrolyzer stack replacements, calculated from replacement time and hourly
-        irradiation data.
+    Electrolyzer > Actual stack replacement time > Value : float
+        Actual stack replacement time, calculated from replacement time and operation data.
     Electrolyzer > Yearly operation data > Year_Value : nd.array
         Yearly operation data of electrolyzer : year.
     Electrolyzer > Yearly operation data > Production_Value : nd.array
