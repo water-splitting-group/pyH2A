@@ -18,6 +18,16 @@ class DummyDCF:
     ):
 
         self.inp = {
+            "Inflation": {
+                "Combined inflator": {
+                    "Value": combined_inflator,
+                    "Unit": "-"
+                },
+                "CI inflator": {
+                    "Value": ci_inflator,
+                    "Unit": "-"
+                },
+            },              
             "<...> Direct Capital Cost <...>": {
                 key: {
                     "Value": value,
@@ -50,9 +60,6 @@ class DummyDCF:
                 for key, value in other_non_depreciable_costs.items()
             },
         }
-        
-        self.combined_inflator = combined_inflator
-        self.ci_inflator = ci_inflator
 
 
 @pytest.mark.parametrize(

@@ -4,6 +4,19 @@ from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import numpy as np
 
 input_dict = {
+    "Time": {
+        "Years": {
+            "Value": {
+                "type": {dict,},
+                "bounds": (None, None),
+            },
+            "Unit": {
+                "dimension": "dimensionless",
+            },
+            "optional": False,
+            "description": "Dictionary containing all time-related quantities."
+        }, 
+    },        
     "Power Generation": {
         "Available energy (daily)": {
             "Value": {
@@ -134,6 +147,8 @@ class Power_Management_Plugin:
     
     Parameters
     ----------
+    Time > Years > Value : dict
+        Dictionary containing plant life time-related quantities    
 	Power Generation > Available energy (daily) > Value : dict, optional
         Available energy, daily basis, dictionary of years
     Power Generation > Stored energy (daily) > Value : dict, optional
@@ -171,12 +186,12 @@ class Power_Management_Plugin:
         self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Power_Management_Plugin')  
 
         if 'Power Consumption' in self.input_dict_resolved:    
-            self.calculate_consumers(dcf)
-            self.calculate_electricity_cost(dcf)
+            self.calculate_consumers()
+            self.calculate_electricity_cost()
 
         output_inserter_function(output_dict, self, dcf, 'Power_Management_Plugin') 
         
-    def calculate_consumers(self, dcf):
+    def calculate_consumers(self):
         '''Negoitate available and stored power with power consumers. 
         Including fall back options if power generation (either available power or stored power
         is not available). In those cases they are set to zero. 
@@ -186,13 +201,13 @@ class Power_Management_Plugin:
             flexible_available_energy_yearly = daily_to_yearly_power_quantity(
                 self.input_dict_resolved['Power Generation']['Available energy (daily)']['Value'])
         except KeyError:
-            flexible_available_energy_yearly = np.zeros(len(dcf.operation_years))
+            flexible_available_energy_yearly = 0.0 * self.input_dict_resolved['Time']['Years']['Value']['Operation years ones'].unit['-']
 
         try:
             stored_available_energy_yearly = daily_to_yearly_power_quantity(
                 self.input_dict_resolved['Power Generation']['Stored energy (daily)']['Value'])
         except KeyError:
-            stored_available_energy_yearly = np.zeros(len(dcf.operation_years))
+            stored_available_energy_yearly = 0.0 * self.input_dict_resolved['Time']['Years']['Value']['Operation years ones'].unit['-']
 
         (self.total_unfulfilled, 
          self.remaining_flexible, 
@@ -200,16 +215,11 @@ class Power_Management_Plugin:
                                                  flexible_available_energy_yearly, 
                                                  stored_available_energy_yearly)
 
-    def calculate_electricity_cost(self, dcf):
+    def calculate_electricity_cost(self):
 
-        electricity_cost = Quantity(self.total_unfulfilled.unit['J']
+        self.electricity_cost = Quantity(self.total_unfulfilled.unit['J']
                                     * self.input_dict_resolved['Grid Electricity']['Cost']['Value'].unit['USD/J'], 
                             'USD')
-
-        self.electricity_cost = np.concatenate([np.zeros(int(round(dcf.inp['Financial Input Values']['Construction time']['Value'].unit['year']))), 
-                                                electricity_cost.unit['USD']])
-        
-        self.electricity_cost = Quantity(self.electricity_cost, 'USD')
     
 def allocate_power(consumption, flexible_power, stored_power):
     """Allocate available power to consumers based on their type."""

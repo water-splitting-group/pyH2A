@@ -7,14 +7,36 @@ class DummyDCF:
     """Minimal DCF object for Replacement_Plugin with simple variable-value inputs."""
     def __init__(
         self,
-        planned_replacement,
-        unplanned_replacement,
-        plant_years,
+        plant_years_relative, 
         combined_inflator,
         inflation_correction,
-        inflation_factor
+        inflation_factor,               
+        planned_replacement,
+        unplanned_replacement,
     ):
         self.inp = {
+            "Time": {
+                "Years": {
+                    "Value": plant_years_relative,
+                    "Unit": "-",   
+                    "Processed": "Yes",                    
+                },
+            },    
+            "Inflation": {
+                "Combined inflator": {
+                    "Value": combined_inflator,
+                    "Unit": "-"
+                },
+                "Inflation correction": {
+                    "Value": inflation_correction,
+                    "Unit": "-"
+                },
+                "Inflation factor full": {
+                    "Value": inflation_factor,
+                    "Unit": "-",
+                    "Processed": "Yes",                                        
+                },                
+            },                              
             "Planned Replacement": {
                 key: {"Cost_Value": value["cost"],
                       "Cost_Unit": "USD", 
@@ -29,16 +51,16 @@ class DummyDCF:
             }
         }
         
-        self.plant_years = plant_years
-        self.combined_inflator = combined_inflator
-        self.inflation_correction = inflation_correction
-        self.inflation_factor = inflation_factor
 
 @pytest.mark.parametrize(
     "case",
     [
         {
             "input": {
+                "plant_years_relative":{"Plant years relative":np.arange(1, 11)},
+                "combined_inflator": 1.0,
+                "inflation_correction": 1.0,
+                "inflation_factor": np.ones(10),
                 "planned_replacement": {
                     "Electrolyzer Stack": {
                         "cost": 5000.,
@@ -52,10 +74,6 @@ class DummyDCF:
                 "unplanned_replacement": {
                     "Misc": 1000.
                 },
-                "plant_years": np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
-                "combined_inflator": 1.0,
-                "inflation_correction": 1.0,
-                "inflation_factor": np.ones(10),
             },
             "expected": {
                 "total": Quantity(26000.0, "USD"),

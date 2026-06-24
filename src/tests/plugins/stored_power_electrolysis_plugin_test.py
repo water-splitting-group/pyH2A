@@ -8,6 +8,7 @@ class DummyDCF:
 
     def __init__(
         self,
+        operation_years_relative,
         fraction_stored_power_for_electrolysis,
         electrolyzer_nominal_power_kW,
         electrolyzer_power_increase_per_year,
@@ -22,6 +23,13 @@ class DummyDCF:
     ):
 
         self.inp = {
+            "Time": {
+                "Years": {
+                    "Value": operation_years_relative,
+                    "Unit": "-",   
+                    "Processed": "Yes",                    
+                },
+            },                 
             "Electrolysis Using Stored Power": {
                 "Fraction of stored power used for electrolysis": {
                     "Value" : fraction_stored_power_for_electrolysis, 
@@ -72,7 +80,6 @@ class DummyDCF:
             },
         }
 
-        self.operation_years = np.array(list(stored_power_daily_kWh.keys()), dtype=float)
         
 
 @pytest.mark.parametrize(
@@ -80,6 +87,9 @@ class DummyDCF:
     [
         {
             "input": {
+                "operation_years_relative": {
+                    'Operation years relative': np.arange(5, 7)
+                },                      
                 "fraction_stored_power_for_electrolysis": 0.8,
                 "electrolyzer_nominal_power_kW": 500.0,
                 "electrolyzer_power_increase_per_year": 0.02,
@@ -87,18 +97,18 @@ class DummyDCF:
                 "electrolyzer_conversion_efficiency": 0.05,
                 "electrolyzer_replacement_time_h": 4000.0,
                 "electrolyzer_yearly_H2_production_kg": np.array([1.0, 8.0]),
-                "yearly_operation_data_year": np.array([2026, 2027]),
+                "yearly_operation_data_year": np.array([5, 6]),
                 "yearly_operation_data_production": np.array([1., 8.]),
                 "yearly_operation_data_duration": np.array([10., 80.]),             
                 "stored_power_daily_kWh": {
-                    2026: np.array([1000.0, 1200.0, 0]),
-                    2027: np.array([900.0, 0, 700.0]),
+                    5: np.array([1000.0, 1200.0, 0]),
+                    6: np.array([900.0, 0, 700.0]),
                 },
             },
             "expected": {
                 "energy_consumption": Quantity(np.array([1760.0, 1280.0]), "kWh"),
                 "replacement_frequency": Quantity(2.0, "year"),
-                "new_h2_production": Quantity(np.array([1.0, 8.0]), "kg"),
+                "new_h2_production": Quantity(np.array([80.7043112650326, 64.83016845991628]), "kg"),
             },
         }
     ],

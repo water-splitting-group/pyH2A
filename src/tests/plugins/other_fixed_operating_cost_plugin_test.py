@@ -13,6 +13,12 @@ class DummyDCF:
         combined_inflator,
     ):
         self.inp = {
+            "Inflation": {
+                "Combined inflator": {
+                    "Value": combined_inflator,
+                    "Unit": "-"
+                },
+            },               
             "Fixed Operating Costs": {
                 "Labor cost - inflated": {
                     "Value": labor_cost,
@@ -28,9 +34,6 @@ class DummyDCF:
             for key, value in other_fixed_costs.items()
             },
         }
-
-        self.combined_inflator = combined_inflator
-
 
 @pytest.mark.parametrize(
     "case",
