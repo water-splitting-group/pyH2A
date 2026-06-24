@@ -101,13 +101,13 @@ def test_battery_plugin(case):
         np.testing.assert_allclose(
             plugin.yearly_recovered_energy[year].unit["kWh"],
             expected["yearly_recovered_energy"][year].unit["kWh"],
-            rtol=1e-5,  # slightly higher relative tolerance
-            atol=1e-9,  # keep a small absolute tolerance
+            rtol=1e-12,
+            atol=1e-12,
         )
 
         np.testing.assert_allclose(
             plugin.yearly_unstored_energy[year].unit["kWh"],
             expected["yearly_unstored_energy"][year].unit["kWh"],
-            rtol=1e-5,
-            atol=1e-9,
+            rtol=1e-12,
+            atol=1e-12,
         )

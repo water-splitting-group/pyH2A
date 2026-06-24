@@ -659,7 +659,7 @@ class Discounted_Cash_Flow:
 		lcoe_operating_costs = (-self.npv_dict['salvage'] + self.npv_dict['decomissioning'] + self.npv_dict['fixed_operating_costs'] + self.npv_dict['variable_operating_costs'] + self.npv_dict['interest']) * (1. - self.total_tax_rate)
 		lcoe_h2_sales = self.npv_dict['h2_sales'] * (1. - self.total_tax_rate)
 
-		self.h2_cost_nominal = (lcoe_capital_costs + lcoe_depreciation + lcoe_principal_payment + lcoe_operating_costs)/lcoe_h2_sales * (1. + self.fin['inflation']['Value']) ** self.construction_time_years
+		self.h2_cost_nominal = (lcoe_capital_costs + lcoe_depreciation + lcoe_principal_payment + lcoe_operating_costs)/lcoe_h2_sales * (1. + self.fin['inflation']['Value'].unit['-']) ** self.construction_time_years
 		self.h2_cost = self.h2_cost_nominal/self.inflation_correction
 
 	def h2_revenue(self):
