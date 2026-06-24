@@ -80,9 +80,9 @@ def test_e2e_lcoh(case):
     )
     
     # Very strict tolerance to detect economic regression
-    tolerance = 1e-9
+    tolerance = 1e-13
     
     assert result.base_case.h2_cost == pytest.approx(
         case["expected"]["lcoh"],
-        rel=tolerance
+        abs=tolerance
     )
