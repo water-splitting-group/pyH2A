@@ -94,7 +94,7 @@ class DummyDCF:
                 "total_solar_collection_area": Quantity(47057.399999999994, 'm2'),
                 "cell_cost": Quantity(988205399.9999998, 'USD'),
                 "cell_number": Quantity(26143.0, '-'),
-                "mol_H2_per_m2_per_day": Quantity(10.6256954979, 'mol/day/m2'),
+                "mol_H2_per_m2_per_day": Quantity(10.625699702590028, 'mol/day/m2'),
                 "flowrate_H2_per_cell": Quantity(0.0382525189293241, 'kg/day'),
                 "total_land_area": Quantity(5348817.431990256, 'm2'),
             },
