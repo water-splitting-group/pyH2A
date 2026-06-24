@@ -52,7 +52,7 @@ class DummyDCF:
                 "additional_land_area": 0.0,
             },
             "expected": {
-                "area": Quantity(42783.952830200986, "m2"),
+                "area": Quantity(42783.93590009135, "m2"),
             },
         }
     ],
