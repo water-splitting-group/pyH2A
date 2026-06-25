@@ -17,7 +17,36 @@ Example
 
 .. code-block:: Python
 
-	from pyH2A.Utilities.input_modification import insert, process_table
+	from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
+
+	input_dict = {    
+		"Example Table Name": {
+			"Example table row": {
+				"Value": {
+					"type": {example type,},
+					"bounds": (0, None),
+				},
+				"Unit": {
+					"dimension": "example dimension",
+				},                    
+				"optional": False,
+				"description": "Example description"
+			},                      
+		},
+	}
+	output_dict = {
+		"Example Output Table": {
+			"Example output row": {
+				"Value": {
+					"inserted_value": "example_calculation_result",
+					"type": {example type,},
+					"dimension": "example dimension",
+				},
+				"optional": False,
+			},
+		}
+	}
+
 
 	class Example_Plugin:
 		'''Docstring header.
@@ -34,21 +63,27 @@ Example
 		'''
 
 		def __init__(self, dcf, print_info):
-			process_table(dcf.inp, 'Table', 'Value') # 'Value' column of 'Table' is processed
+			self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Example_Plugin')
 
-			self.method(dcf)
+			self.method()
 
-			insert(dcf, 'Other Table', 'Row', 'Value', self.attribute,
-					__name__, print_info = print_info)
+			output_inserter_function(output_dict, self, dcf, 'Example_Plugin') 
 
-		def method(self, dcf):
+		def method(self):
 			'''Calculation performed by plugin. In this case the input information is only 
 			read and stored in an attribute.
 			'''
 
-			self.attribute = dcf.inp['Table']['Row']['Value']
+			self.attribute = self.input_dict_resolved['Table']['Row']['Value']
+			example_calculation_result = f(self.attribute)
+			self.example_calculation_result = Quantity(example_calculation_result, "example unit")
 
-In this example, the plugin reads information from ``Table > Row > Value``, processes it by applying the :func:`~pyH2A.Utilities.input_modification.process_table` function (which ensures that references are resolved) and it runs ``self.method(dcf)``, during which it stores the input information in an attribute ``self.attribute``. Finally, ``self.attribute`` is inserted into ``dcf.inp`` in a new location: ``Other Table > Row > Value``.
+
+
+In this example, the plugin processes the inputs specified in the ``input_dict`` dictionary and fills a local ``self.input_dict_resolved`` dictionary with the corresponding ``Quantity`` objects.
+It then runs ``self.method()``, in which ``self.attribute`` takes is equal to the Quantity found in ``Example Table Name > Example table row > Value``.
+``example_calculation_result`` is calculated as a function of ``self.attribute``, and the ``self.example_calculation_result`` quantity object is built from ``example_calculation_result``.
+Finally, ``self.example_calculation_result`` is inserted in ``dcf.inp`` at location ``Example Output Table > Example output row > Value`` by the ``output_inserter_function`` call, as specified in the ``output_dict`` structure
 
 With this pattern, plugins can process information from other plugins which ran before it in the ``Workflow`` (determined by the ``Workflow`` position) and plugins running after it can use the information inserted in to ``dcf.inp``. 
 
