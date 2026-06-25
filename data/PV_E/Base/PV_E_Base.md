@@ -200,7 +200,7 @@ Samples | 50,000 | Number of samples in Monte Carlo simulation.
 Target Price Range ($) | 1.5; 1.6
 Input File | data/PV_E/Base/Monte_Carlo_Output.csv
 
-# Parameters - Monte_Carlo_Analysis
+# Parameters - Monte_Carlo_Analysis - Deactivate
 
 Parameter | Name | Type | Values | File Index | Comment
 --- | --- | --- | --- | --- | --- 
