@@ -132,8 +132,6 @@ class Photovoltaic_Plugin:
 		can be retrieved from "Hourly Irradiation > *type of tracking* > Value".
 	Photovoltaic > Nominal power > Value : float
 		Nominal power of PV array.
-	Photovoltaic > CAPEX reference power > Value : float
-		Reference power of PV array for cost reduction calculations.
 	Photovoltaic > Power loss per year > Value : float
 		Reduction in power produced by PV array per year due to degradation. Percentage or value
 		> 0. Reduction calculated as: (1 - loss per year) ^ year.
