@@ -151,7 +151,7 @@ class Reverse_Osmosis_Plugin:
 
         # Fixing the array slicing with time plugin
         electricity_demand_J_by_year = self.sea_water_demand_by_year.unit['m3'] * self.input_dict_resolved['Reverse Osmosis']['Power demand']['Value'].unit['J/m3']
-        self.electricity_demand_by_year = Quantity(electricity_demand_J_by_year[dcf.inp['Financial Input Values']['Construction time']['Value']:], 'J')
+        self.electricity_demand_by_year = Quantity(electricity_demand_J_by_year, 'J')
 
     def calculate_reverse_osmosis_scaling(self):
         '''
