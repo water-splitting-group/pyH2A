@@ -1,4 +1,3 @@
-from pyH2A.Utilities.input_modification import sum_all_tables
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import numpy as np
