@@ -27,6 +27,17 @@ input_dict = {
             },
             'description': 'Mass test data',
             'optional': True
+        },
+        'Mass per energy': {
+            'Value': {
+                'type': {float, int},
+                'bounds': (0, None),
+            },
+            'Unit': {
+                'dimension': 'mass / energy'
+            },
+            'description': 'Mass per energy test data',
+            'optional': False
         }
     },
     'Plugin B - Value/Unit pairs' : {

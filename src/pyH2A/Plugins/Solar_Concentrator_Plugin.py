@@ -6,7 +6,7 @@ input_dict = {
 	"Solar Concentrator": {
 		"Concentration factor": {
 			"Value": {
-				"type": {float,},
+				"type": {int, float,},
 				"bounds": (1, None),
 			},
 			"Unit": {
@@ -17,7 +17,7 @@ input_dict = {
 		},
 		"Cost": {
 			"Value": {
-				"type": {float,},
+				"type": {int, float,},
 				"bounds": (0, None),
 			},	
 			"Unit": {
@@ -30,7 +30,7 @@ input_dict = {
 	"PEC Cells": {
 		"Number": {
 			"Value": {
-				"type": {float,},
+				"type": {int, float,},
 				"bounds": (1, None),
 			},	
 			"Unit": {
@@ -43,7 +43,7 @@ input_dict = {
 	"Land Area Requirement": {
 		"South spacing": {
 			"Value": {
-				"type": {float,},
+				"type": {int, float,},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -54,7 +54,7 @@ input_dict = {
 		},
 		"East/West spacing": {
 			"Value": {
-				"type": {float,},
+				"type": {int, float,},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -67,7 +67,7 @@ input_dict = {
 	"Non-Depreciable Capital Costs": {
 		"Solar collection area": {
 			"Value": {
-				"type": {float,},
+				"type": {int, float,},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -84,7 +84,7 @@ output_dict = {
 		"Land required": {
 			"Value": {
 				"inserted_value": "total_land_area",
-				"type": {float,},
+				"type": {int, float,},
 				"dimension": "area",
 			},
 			"optional": False,
@@ -93,7 +93,7 @@ output_dict = {
 		"Solar collection area": {
 			"Value": {
 				"inserted_value": "total_solar_collection_area",
-				"type": {float,},
+				"type": {int, float,},
 				"dimension": "area",
 			},
 			"optional": False,
@@ -104,7 +104,7 @@ output_dict = {
 		"Solar concentrator cost": {
 			"Value": {
 				"inserted_value": "concentrator_cost",
-				"type": {float,},
+				"type": {int, float,},
 				"dimension": "currency",
 			},
 			"optional": False,

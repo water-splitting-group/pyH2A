@@ -56,7 +56,8 @@ class DummyDCF:
                 "recovery_rate": 0.1,                    
             },
             "expected": {
-                "electricity_demand_kWh": Quantity(np.array([1613.3471844103742, 1702.977583544284]), 
+                "electricity_demand_kWh": Quantity(np.array([1613.3471844103742, 
+                                                             1702.977583544284]), 
                                                    "kWh"),
                 "max_capacity_m3_per_hour": Quantity(0.019440383373793193, "m3/h")
             },

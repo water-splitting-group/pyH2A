@@ -46,7 +46,7 @@ input_dict = {
     "Power Consumption": {
         "<...>": {
             "Value": {
-                "type": {np.ndarray,float,},
+                "type": {np.ndarray,float,int,},
                 "bounds": (0, None),
             },
             "Type": {
@@ -67,7 +67,7 @@ input_dict = {
     "Grid Electricity": {
         "Cost": {
             "Value": {
-                "type": {float, np.ndarray,},
+                "type": {float, np.ndarray, int},
                 "bounds": (0, None),
             },
             "Unit": {

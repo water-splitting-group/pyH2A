@@ -19,7 +19,7 @@ input_dict = {
 	"Non-Depreciable Capital Costs": {
 		"Solar collection area": {
 			"Value": {
-				"type": {float,},
+				"type": {int, float,},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -32,7 +32,7 @@ input_dict = {
 	"Fixed Operating Costs": {
 		"Solar collection area per staffer": {
 			"Value": {
-				"type": {float,},
+				"type": {int, float,},
 				"bounds": (0, None),
 			},
 			"Unit": {
@@ -71,7 +71,7 @@ output_dict = {
 		"Staff": {
 			"Value": {
 				"inserted_value": "staff_per_module",
-				"type": {float,},
+				"type": {int, float,},
 				"dimension": "dimensionless",
 			},
 			"description": "Number of 8-hour equivalent staff required for operating one plant module.",

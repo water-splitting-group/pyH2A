@@ -6,7 +6,7 @@ from pyH2A.run_pyH2A import pyH2A
     [
         {
             "input": {
-                "input_file": "src/tests/end_to_end/PEC_Base.md",
+                "input_file": "src/tests/end_to_end/PEC_Base_test.md",
                 "output_directory": "src/tests/end_to_end/",
             },
             "expected": {
@@ -15,7 +15,7 @@ from pyH2A.run_pyH2A import pyH2A
         },
         {
             "input": {
-                "input_file": "src/tests/end_to_end/Photocatalytic_Base.md",
+                "input_file": "src/tests/end_to_end/Photocatalytic_Base_test.md",
                 "output_directory": "src/tests/end_to_end/",
             },
             "expected": {
@@ -24,7 +24,7 @@ from pyH2A.run_pyH2A import pyH2A
         },
         {
             "input": {
-                "input_file": "src/tests/end_to_end/PV_E_Base.md",
+                "input_file": "src/tests/end_to_end/PV_E_Base_test.md",
                 "output_directory": "src/tests/end_to_end/",
             },
             "expected": {
@@ -33,7 +33,7 @@ from pyH2A.run_pyH2A import pyH2A
         },
         {
             "input": {
-                "input_file": "src/tests/end_to_end/Thermal_Base.md",
+                "input_file": "src/tests/end_to_end/Thermal_Base_test.md",
                 "output_directory": "src/tests/end_to_end/",
             },
             "expected": {
@@ -80,9 +80,9 @@ def test_e2e_lcoh(case):
     )
     
     # Very strict tolerance to detect economic regression
-    tolerance = 1e-12
+    tolerance = 1e-13
     
     assert result.base_case.h2_cost == pytest.approx(
         case["expected"]["lcoh"],
-        rel=tolerance
+        abs=tolerance
     )

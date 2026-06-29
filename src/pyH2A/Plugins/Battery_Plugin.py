@@ -33,7 +33,7 @@ input_dict = {
     "Battery": {
         "Design capacity": { 
             "Value": {
-                "type": {float,},
+                "type": {int, float,},
                 "bounds": (0, None),
             },
             "Unit": {
@@ -45,7 +45,7 @@ input_dict = {
         
         "Lowest discharge level": {
             "Value": {
-                "type": {float,},
+                "type": {int, float,},
                 "bounds": (0, 1),
             },
             "Unit": {
@@ -57,7 +57,7 @@ input_dict = {
         
         "Capacity loss per year": {
             "Value": {
-                "type": {float,},
+                "type": {int, float,},
                 "bounds": (0, 1),
             },
             "Unit": {
@@ -69,7 +69,7 @@ input_dict = {
         
         "Round trip efficiency": {
             "Value": {
-                "type": {float,},
+                "type": {int, float,},
                 "bounds": (0, 1),
             },
             "Unit": {

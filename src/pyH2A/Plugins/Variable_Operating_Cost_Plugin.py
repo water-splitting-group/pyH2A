@@ -106,7 +106,7 @@ input_dict = {
 	"<...> Other Variable Operating Cost <...>": {
 		"<...>": {
 			"Value": {
-				"type": {int, float,},
+				"type": {int, float, np.ndarray},
 				"bounds": (0, None)
 			},
 			"Unit": {
@@ -151,7 +151,7 @@ output_dict = {
 		"Other": {
 			"Value": {
 				"inserted_value": "other",
-				"type": {int, float},
+				"type": {int, float, np.ndarray},
 				"dimension": "currency",
 			},
 			"optional": False,
