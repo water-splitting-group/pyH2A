@@ -164,7 +164,7 @@ class TestCalculateDistance:
 
 class TestMcResponseWorker:
 
-    @patch('pyH2A.Analysis.Monte_Carlo_Analysis.Discounted_Cash_Flow')
+    @patch('pyH2A.Analysis.Monte_Carlo_Analysis.Monte_Carlo_Analysis.Discounted_Cash_Flow')
     def test_returns_h2_cost_for_every_sample(self, mock_dcf_class):
         mock_inst = MagicMock()
         mock_inst.h2_cost = 3.5
@@ -175,7 +175,7 @@ class TestMcResponseWorker:
         assert result == [3.5, 3.5, 3.5]
         assert mock_dcf_class.call_count == 3
 
-    @patch('pyH2A.Analysis.Monte_Carlo_Analysis.Discounted_Cash_Flow')
+    @patch('pyH2A.Analysis.Monte_Carlo_Analysis.Monte_Carlo_Analysis.Discounted_Cash_Flow')
     def test_returns_lca_variable_for_non_h2_cost_key(self, mock_dcf_class):
         mock_inst = MagicMock()
         mock_inst.lca.lca_results = {'Climate change': {'value': 0.45}}
@@ -185,13 +185,13 @@ class TestMcResponseWorker:
 
         assert result == [0.45, 0.45]
 
-    @patch('pyH2A.Analysis.Monte_Carlo_Analysis.Discounted_Cash_Flow')
+    @patch('pyH2A.Analysis.Monte_Carlo_Analysis.Monte_Carlo_Analysis.Discounted_Cash_Flow')
     def test_empty_batch_returns_empty_list_without_calling_dcf(self, mock_dcf_class):
         result = _mc_response_worker(np.empty((0, 1)), {}, {}, 'h2_cost')
         assert result == []
         mock_dcf_class.assert_not_called()
 
-    @patch('pyH2A.Analysis.Monte_Carlo_Analysis.Discounted_Cash_Flow')
+    @patch('pyH2A.Analysis.Monte_Carlo_Analysis.Monte_Carlo_Analysis.Discounted_Cash_Flow')
     def test_original_inp_is_not_mutated_between_samples(self, mock_dcf_class):
         received = []
 
@@ -207,8 +207,8 @@ class TestMcResponseWorker:
         assert original_inp == {'key': 'original'}
         assert all(d is not original_inp for d in received)
 
-    @patch('pyH2A.Analysis.Monte_Carlo_Analysis.set_by_path')
-    @patch('pyH2A.Analysis.Monte_Carlo_Analysis.Discounted_Cash_Flow')
+    @patch('pyH2A.Analysis.Monte_Carlo_Analysis.Monte_Carlo_Analysis.set_by_path')
+    @patch('pyH2A.Analysis.Monte_Carlo_Analysis.Monte_Carlo_Analysis.Discounted_Cash_Flow')
     def test_set_by_path_called_with_parameter_value_and_type(
             self, mock_dcf_class, mock_set_by_path):
         mock_dcf_class.return_value = MagicMock(h2_cost=2.0)
