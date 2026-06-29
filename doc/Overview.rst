@@ -111,7 +111,7 @@ The structure below can be read as a map indicating where each of these elements
    │
    └── Lookup_Tables/
        Input data for example calculations:
-       - Contains files used as inputs in provided examples (for example: hourly irradiaiton data)
+       - Contains files used as inputs in provided examples (for example: hourly irradiation data)
 
 
 Additional test structure
@@ -246,15 +246,21 @@ Detailed guidance on plugin ordering is provided separately.
 4. Economic Logic Implemented by the Default Structure
 ------------------------------------------------------
 
-The default financial structure follows a defined economic progression:
-
-- Production definition: The production level is established or scaled to the target output, providing the reference for subsequent cost calculations.
+- Prior to the economic progression itself, quantities related to the plant lifetime (e.g. array ranging from 0 to the number of prodution years) and to the inflation (e.g. inflation correction between the reference year and the startup year) are generated.
 
   .. admonition:: Code implementation
 
-     this is handled by the ``Production_Scaling_Plugin``.
+     this is handled by the ``Time_Plugin`` followed by the ``Inflation_Plugin``.
 
-- Capital costs: The total investment required to construct the system at the specified production scale is calculated.
+The default financial structure then follows a defined economic progression:
+
+- Production definition: The production at gate is established as a function of the plant design production, providing the reference for subsequent cost calculations.
+
+  .. admonition:: Code implementation
+
+     this is handled by the ``Production_Plugin``.
+
+- Capital costs: The total investment required to construct the system at the specified design production is calculated.
 
   .. admonition:: Code implementation
 
@@ -270,9 +276,9 @@ The default financial structure follows a defined economic progression:
 
   .. admonition:: Code implementation
 
-     this is handled by the ``Fixed_Operating_Cost_Plugin`` and ``Variable_Operating_Cost_Plugin``.
+     this is handled by the ``Labor_Operating_Cost_Plugin``, ``Other_Fixed_Operating_Cost_Plugin`` and ``Variable_Operating_Cost_Plugin``.
 
 After these quantities have been established (production, capital costs, replacement costs, and operating costs) the discounted cash flow calculation is performed. 
-Financial parameters such as discount rate, depreciation treatment, and taxation are applied to compute annual cash flows over the project lifetime. From these, net present value–based indicators, including the levelized cost of product, are derived.
+Financial parameters such as discount rate, depreciation treatment, and taxation are applied to compute annual cash flows over the project lifetime. From these, net present value-based indicators, including the levelized cost of product, are derived.
 
 The economic results therefore arise from a clearly structured sequence: production definition, cost construction, and financial evaluation, implemented through the default plugin sequence.
