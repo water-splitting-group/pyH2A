@@ -99,8 +99,6 @@ class Reverse_Osmosis_Plugin:
     
     Parameters
     ----------
-    Financial Input Values > Construction time > Value : int
-        Construction time of hydrogen production plant in years.
 	Technical Operating Parameters and Specifications > Design output by year > Value : nd.array
 		Yearly output ignoring operating capacity factor.
 	Technical Operating Parameters and Specifications > Operating capacity factor > Value : float, int
