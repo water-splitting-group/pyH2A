@@ -15,6 +15,7 @@ import pyH2A.Utilities.find_nearest as fn
 from pyH2A.Utilities.input_modification import convert_input_to_dictionary,parse_parameter, parse_parameter_to_array, get_by_path, set_by_path, read_textfile, file_import, reverse_parameter_to_string
 from pyH2A.Discounted_Cash_Flow import Discounted_Cash_Flow
 from pyH2A.Utilities.output_utilities import make_bold, format_scientific, dynamic_value_formatting, insert_image, Figure_Lean
+from pyH2A.Analysis.Monte_Carlo_Analysis.config import DEPENDENT_VARIABLE_CONFIG
 
 
 def _mc_response_worker(value_batch, inp, parameters, dependent_variable):
@@ -264,24 +265,7 @@ class Monte_Carlo_Analysis:
 	axis in `plot_colored_scatter` (first parameter is on x axis, second on y axis, etc.).
 	'''
 
-	_DEPENDENT_VARIABLE_CONFIG = {
-		'h2_cost': {
-			'header': 'cost',
-			'label': 'H2 Cost ($/kg)',
-			'unit': r'\$/kg($H_{2}$)',
-			'source': 'h2_cost',
-		},
-		'Climate change': {
-			'header': 'climate change',
-			'label': 'Climate change (kg CO2-Eq/kg H2)',
-			'unit': 'kg $CO_{2}$-Eq/kg $H_{2}$',
-		},
-		'Cumulative energy demand': {
-			'header': 'cumulative energy demand',
-			'label': 'Cumulative energy demand (MJ_Eq/kg H2)',
-			'unit': 'MJ_Eq/kg $H_{2}$',
-		},
-	}
+	_DEPENDENT_VARIABLE_CONFIG = DEPENDENT_VARIABLE_CONFIG
 
 	def __init__(self, input_file):
 		'''Initialize and execute the Monte Carlo analysis workflow.
