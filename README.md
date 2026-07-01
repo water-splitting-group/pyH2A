@@ -161,17 +161,18 @@ All scenarios vary all 4 component values simultaneously to test the full A matr
 | S4 — Low PV + Low RO | 1.0 | 27.78 | 100.0 | 3e-6 | 5.0 | 0.22945 |
 | S5 — High PV + High RO | 1.0 | 83.33 | 300.0 | 1e-7 | 15.0 | 0.68823 |
 
-### How Ground Truth Values Were Obtained
+### Reproducing the Ground Truth Results from the Bundled Source File
 
-For each scenario:
+The openLCA source processes are bundled in:
+```
+src/tests/lca/LCA_Test_PVE_GT/openLCA_source_files.zip
+```
 
-1. Copied H2 Production process in openLCA 2.6.1 — renamed `H2 Production S1` through `S5`
-2. Changed exchange amounts to match scenario values 
-3. Created a new product system with auto-link and preferred default providers
-4. Calculated LCIA with IPCC 2013 no LT impact method
-5. Recorded `Climate change no LT — Global warming potential (GWP100) no LT` result
-
-Each scenario was created as a separate product system (`PVE_TEST_GT_S1` through `PVE_TEST_GT_S5`) to preserve all runs independently.
+1. Import the zip into openLCA: **File → Import → File** → select `openLCA_source_files.zip`
+2. Confirm the 5 processes appear under **Processes/**
+3. If openLCA reports missing references on import, verify that ecoinvent 3.12 is loaded in the target database
+4. For each scenario (base scenario, low PV electricity, high PV electricity, low PV + low RO, high PV + high RO), create a product system with **H2 Production** as the reference process
+5. Choose **IPCC 2013 no LT** as the LCIA assessment method
 
 ---
 
@@ -212,4 +213,3 @@ Ground truth comparison results:
 ## Notes
 
 - The toy model matrix (`data/LCA/LCA_Test_PVE_GT/`) must be present for ground truth tests to run.
-- Tests were developed and verified on `design/lca-prototype`   and `feat/lca-calculate-shortcut-method` branches.
