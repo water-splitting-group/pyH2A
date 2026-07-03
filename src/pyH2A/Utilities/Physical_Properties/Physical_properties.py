@@ -1,7 +1,7 @@
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
-import H2_properties as H2_prop
-import O2_properties as O2_prop
-import Water_properties as water_prop
+from pyH2A.Utilities.Physical_Properties import H2_properties as H2_prop
+from pyH2A.Utilities.Physical_Properties import O2_properties as O2_prop
+from pyH2A.Utilities.Physical_Properties import Water_properties as water_prop
 import numpy as np
 
 class Physical_properties:
