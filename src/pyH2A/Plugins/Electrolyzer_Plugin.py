@@ -3,6 +3,196 @@ from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import numpy as np
 
+input_dict = {
+    "Time": {
+        "Years": {
+            "Value": {
+                "type": {dict,},
+                "bounds": (None, None),
+            },
+            "Unit": {
+                "dimension": "dimensionless",
+            },
+            "optional": False,
+            "description": "Dictionary containing all time-related quantities."
+        }, 
+    },    
+    "Electrolyzer": {
+        "Nominal power": {
+            "Value": {
+                "type": {int,float,},
+                "bounds": (0, None),
+            },
+            "Unit": {
+                "dimension": "power",
+            },
+            "optional": False,
+            "description": "Nominal power of electrolyzer."
+        },
+        "Unit nominal power": {
+            "Value": {
+                "type": {float,},
+                "bounds": (0, None),
+            },
+            "Unit": {
+                "dimension": "power",
+            },
+            "optional": True,
+            "description": "Nominal power of one electrolyzer unit for unit-count calculation."
+        },
+        "Power requirement increase per year": {
+            "Value": {
+                "type": {int,float,},
+                "bounds": (0, None),
+            },
+            "Unit": {
+                "dimension": "dimensionless",
+            },
+            "optional": False,
+            "description": "Electrolyzer power requirement increase per year due to stack degradation.\
+                            Percentage or value > 0. Increase calculated as: (1 + increase per year) ^ year."
+        },
+        "Minimum capacity": {
+            "Value": {
+                "type": {int,float,},
+                "bounds": (0, 1),
+            },
+            "Unit": {
+                "dimension": "dimensionless",
+            },
+            "optional": False,
+            "description": "Minimum capacity required for electrolyzer operation. Percentage or value between 0 and 1."
+        },
+        "Hydrogen yield per unit energy": {
+            "Value": {
+                "type": {int,float,},
+                "bounds": (0, None),
+            },
+            "Unit": {
+                "dimension": "mass / energy",
+            },
+            "optional": False,
+            "description": "Electrical conversion efficiency of electrolyzer in mass(H2)/energy(electrical)."
+        },
+        "Replacement time": {
+            "Value": {
+                "type": {int,float,},
+                "bounds": (0, None),
+            },
+            "Unit": {
+                "dimension": "time",
+            },
+            "optional": False,
+            "description": "Operating time before stack replacement of electrolyzer is required."
+        },
+    },
+    "Power Generation": {
+        "Available energy (hourly)": {
+            "Value": {
+                "type": {dict,},
+                "bounds": (0, None),
+            },
+            "Unit": {
+                "dimension": "energy",
+            },
+            "optional": False,
+            "description": "Available energy, hourly basis, dictionary of years in (energy)."
+        },
+    },
+}
+
+output_dict = {
+    "Technical Operating Parameters and Specifications": {
+        "Design output by year": {
+            "Value": {
+                "inserted_value": "h2_production",
+                "type": {np.ndarray,},
+                "dimension": "mass",
+            },
+            "optional": False,
+            "description": "Design output by year calculated from installed \
+                            electrolysis power capacity and hourly power generation data."
+        },
+        "Operating capacity factor": {
+            "Value": {
+                "inserted_value": Quantity(1., '-'),
+                "type": {float,},
+                "dimension": "dimensionless",
+            },
+            "optional": False,
+            "description": "Operating capacity factor is set to 1."
+        },
+    },
+    "Electrolyzer": {
+        "Yearly operation data": {
+            "Year_Value": {
+                "inserted_value": "yearly_data_year",
+                "type": {np.ndarray,},
+                "dimension": "dimensionless", 
+            },
+            "Production_Value": {
+                "inserted_value": "yearly_data_production",
+                "type": {np.ndarray,},
+                "dimension": "mass", 
+            },  
+            "Duration_Value": {
+                "inserted_value": "yearly_data_duration",
+                "type": {np.ndarray,},
+                "dimension": "time", 
+            },                      
+            "optional": False,
+            "description": "Yearly operation data of electrolyzer: year, H2 produced, duration of operation."
+        },
+        "H2 production (yearly)": {
+            "Value": {
+                "inserted_value": "h2_production",
+                "type": {np.ndarray,},
+                "dimension": "mass",
+            },
+            "optional": False,
+            "description": "Yearly hydrogen production."
+        },
+        "Number of electrolyzers required": {
+            "Value": {
+                "inserted_value": "number_of_electrolyzers_required",
+                "type": {int,float,},
+                "dimension": "dimensionless",
+            },
+            "optional": True,
+            "description": "Number of electrolyzer units required, calculated as total nominal electrolyzer power divided by unit nominal power."
+        },
+        "Actual stack replacement time": {
+            "Value": {
+                "inserted_value": "replacement_frequency",
+                "type": {float,},
+                "dimension": "time",
+            },
+            "description": "Actual stack replacement time, \
+                            calculated from replacement time and operation data."
+        },
+    },
+    "Power Generation": {
+        "Available energy (hourly)": {
+            "Value": {
+                "inserted_value": "yearly_data_unused_energy",
+                "type": {dict,},
+                "dimension": "energy",
+            },
+            "optional": False,
+            "description": "Available energy (hourly) after subtracting power consumed by electrolyzer. (dictionary of years)."
+        },
+        "Available energy (daily)": {
+            "Value": {
+                "inserted_value": "yearly_data_unused_energy_daily",
+                "type": {dict,},
+                "dimension": "energy",
+            },
+            "optional": False,
+            "description": "Available energy (daily) after subtracting power consumed by electrolyzer. (dictionary of years)."
+        },
+    },
+}
+
 class Electrolyzer_Plugin:
     '''Simulation of hydrogen production using electrolysis.
 
@@ -12,6 +202,9 @@ class Electrolyzer_Plugin:
         Dictionary containing plant life time-related quantities
     Electrolyzer > Nominal power > Value : float
         Nominal power of electrolyzer.
+    Electrolyzer > Unit nominal power > Value : float, optional
+        Nominal power of one electrolyzer unit, required to calculate Number of
+        electrolyzers required when Life Cycle Assessment is present.
     Electrolyzer > Power requirement increase per year > Value : float
         Electrolyzer power requirement increase per year due to stack degradation. 
         Dimensioless value > 0. Increase calculated as: (1 + increase per year) ^ year.
@@ -41,6 +234,10 @@ class Electrolyzer_Plugin:
         Yearly operation data of electrolyzer : duration of operation during the year.                
     Electrolyzer > H2 production (yearly) > Value : nd.array
         Yearly hydrogen production.
+    Electrolyzer > Number of electrolyzers required > Value : float
+        Number of electrolyzer units required, calculated as total nominal
+        electrolyzer power divided by unit nominal power. Inserted when
+        Life Cycle Assessment is present.
     Power Generation > Available energy (hourly) > Value : dict
         Available energy (hourly) after subtracting power consumed by electrolyzer. 
         (dictionary of years).
@@ -209,7 +406,9 @@ class Electrolyzer_Plugin:
     def _run(self, dcf):
         self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Electrolyzer_Plugin')
 
-        self.calculate_H2_production()
+        self.calculate_H2_production(dcf)
+        if _electrolyzer_count_referenced_in_inp(dcf):
+            self.calculate_number_of_electrolyzers_required()
         self.replacement_frequency = calculate_stack_replacement(self.yearly_data_duration, 
                                     self.input_dict_resolved['Electrolyzer']['Replacement time']['Value'].unit['h'])
 
@@ -271,6 +470,32 @@ class Electrolyzer_Plugin:
         
         self.yearly_data_unused_energy = yearly_data_unused_energy
         self.yearly_data_unused_energy_daily = yearly_data_unused_energy_daily
+
+    def calculate_number_of_electrolyzers_required(self):
+        '''Calculation of required number of electrolyzer units.
+        '''
+
+        total_power = self.input_dict_resolved['Electrolyzer']['Nominal power']['Value'].unit['W']
+
+        unit_power_resolved = self.input_dict_resolved['Electrolyzer'].get('Unit nominal power')
+
+        if unit_power_resolved is None:
+            raise KeyError("Missing required input: Electrolyzer > Unit nominal power > Value. Please add Unit nominal power to calculate Number of electrolyzers required.")
+
+        unit_power = unit_power_resolved['Value'].unit['W']
+
+        if unit_power == 0:
+            raise ValueError("Electrolyzer unit nominal power must be greater than zero.")
+
+        self.number_of_electrolyzers_required = Quantity(total_power / unit_power, '-')
+
+
+def _electrolyzer_count_referenced_in_inp(dcf):
+    '''Return True if any table's Path references electrolyzer unit count.'''
+
+    target = 'electrolyzer > number of electrolyzers required > value'
+    rows = [row for table in dcf.inp.values() for row in table.values()]
+    return any(target in str(row.get('Path', '')).strip().lower() for row in rows)
 
 def calculate_electrolyzer_power_demand(power_requirement_increase, nominal_power, year):
     '''Calculation of yearly increase in electrolyzer power demand.
