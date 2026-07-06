@@ -17,7 +17,7 @@ Name | Value | Unit | UUID
 Total H2 Production | {Technical Operating Parameters and Specifications > Total output at gate > Value, kg} | kg | 50e1c844-e481-4c14-a3ca-1948f1d2fe37
 PV Area | {Non-Depreciable Capital Costs > Solar collection area > Value, m2} | m2 | 0c88e490-56a5-3099-807c-06645527c90e
 Electrolyzer unit number | {Electrolyzer > Number of electrolyzers required > Value, -} | - | 98f950b2-39b0-4374-a400-05984b438be9
-Battery weight | {Battery > Mass (kg) > Value, kg} | kg | c341bfcb-5959-3a70-839e-913e8250b237
+Battery weight | {Battery > Mass > Value, kg} | kg | c341bfcb-5959-3a70-839e-913e8250b237
 Reverse Osmosis Units | {Reverse Osmosis > Number of devices required > Value, -} | - | 056a11ab-0a7a-38dd-a1d3-4058c2a8662d
 
 # Electrolyzer

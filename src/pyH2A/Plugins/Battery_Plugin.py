@@ -95,7 +95,7 @@ input_dict = {
 
 output_dict = {
     "Battery": {
-        "Mass (kg)": {
+        "Mass": {
             "Value": {
                 "inserted_value": "battery_mass",
                 "type": {int, float,},
@@ -170,7 +170,7 @@ class Battery_Plugin:
     Power Generation > Available energy (hourly) > Value : float
         Available energy (hourly) is set to zero, since available power is now
         only in daily format.
-    Battery > Mass (kg) > Value : float
+    Battery > Mass > Value : float
         Installed battery mass in kg, calculated as design capacity divided by
         energy density. Inserted when Life Cycle Assessment is present.
     '''
@@ -358,7 +358,7 @@ class Battery_Plugin:
 def _battery_mass_referenced_in_inp(dcf):
     '''Return True if any table's Path or Value cell references battery mass.'''
 
-    target = 'battery > mass (kg) > value'
+    target = 'battery > mass > value'
     rows = [row for table in dcf.inp.values() for row in table.values()]
     return any(
         target in str(row.get(bottom_key, '')).strip().lower()
