@@ -1,7 +1,15 @@
 import pytest
 import numpy as np
-from pyH2A.Plugins.Production_Plugin import Production_Plugin
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+from pyH2A.Utilities import functional_unit as fu
+
+fu.set_Functional_Unit({
+    "Unit of measurement": "kg",
+    "Reference": "H2 at gate"
+})
+
+from pyH2A.Plugins.Production_Plugin import Production_Plugin
+
 
 class DummyDCF:
     """Minimal DCF object for Production_Plugin testing with configurable inputs."""

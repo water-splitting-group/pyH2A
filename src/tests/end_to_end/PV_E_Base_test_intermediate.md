@@ -1,3 +1,9 @@
+# Functional Unit
+
+Name | Unit of measurement | Reference
+--- | --- |
+Functional unit | kg | H2 at gate
+
 # Workflow
 
 Name                             | Type   | Position |
