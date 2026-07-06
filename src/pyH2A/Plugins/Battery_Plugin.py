@@ -356,8 +356,11 @@ class Battery_Plugin:
 
 
 def _battery_mass_referenced_in_inp(dcf):
-    '''Return True if any table's Path references battery mass.'''
+    '''Return True if any table's Path or Value cell references battery mass.'''
 
     target = 'battery > mass (kg) > value'
     rows = [row for table in dcf.inp.values() for row in table.values()]
-    return any(target in str(row.get('Path', '')).strip().lower() for row in rows)
+    return any(
+        target in str(row.get(bottom_key, '')).strip().lower()
+        for row in rows for bottom_key in ('Path', 'Value')
+    )

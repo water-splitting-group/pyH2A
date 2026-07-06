@@ -12,7 +12,7 @@ import matplotlib.ticker as mticker
 from matplotlib.transforms import Bbox
 
 import pyH2A.Utilities.find_nearest as fn
-from pyH2A.Utilities.input_modification import convert_input_to_dictionary,parse_parameter, parse_parameter_to_array, get_by_path, set_by_path, read_textfile, file_import, reverse_parameter_to_string
+from pyH2A.Utilities.input_modification import convert_input_to_dictionary,parse_parameter, parse_parameter_to_array, parse_path_with_unit, get_by_path, set_by_path, read_textfile, file_import, reverse_parameter_to_string
 from pyH2A.Discounted_Cash_Flow import Discounted_Cash_Flow
 from pyH2A.Utilities.output_utilities import make_bold, format_scientific, dynamic_value_formatting, insert_image, Figure_Lean
 from pyH2A.Analysis.Monte_Carlo_Analysis.config import DEPENDENT_VARIABLE_CONFIG
@@ -351,6 +351,9 @@ class Monte_Carlo_Analysis:
 		The ranges for each parameter are defined in `Values` column as ';' seperated entries. Entries can
 		either be a number, a path, or a `special_value` such as `Base` or `Reference`. If such a `special_value`
 		is specified, the base value of that parameter is retrieved from `self.inp`.
+		When a `special_value` is used, the `Parameter` column must be a bracketed path with an explicit
+		unit (e.g. ``{Top > Middle > Value, kg}``), since it is resolved via `process_path`, which requires
+		this notation. The bracket wrapper is stripped before using the path for `get_by_path`.
 		Parameter information is stored in `self.parameters` attribute.
 		Based on the ranges for each parameter, random values (uniform distribution) are generated and stored
 		in the `self.values` attribute.
@@ -378,7 +381,8 @@ class Monte_Carlo_Analysis:
 												  values_range[1], 
 												  samples)
 
-			path = parse_parameter(key)
+			bare_key = parse_path_with_unit(key)[0] if key.strip().startswith('{') else key
+			path = parse_parameter(bare_key)
 			reference = get_by_path(self.inp, path)
 			limit = select_non_reference_value(reference, values_range)
 		

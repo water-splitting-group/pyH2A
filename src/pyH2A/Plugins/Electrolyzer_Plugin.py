@@ -491,11 +491,14 @@ class Electrolyzer_Plugin:
 
 
 def _electrolyzer_count_referenced_in_inp(dcf):
-    '''Return True if any table's Path references electrolyzer unit count.'''
+    '''Return True if any table's Path or Value cell references electrolyzer unit count.'''
 
     target = 'electrolyzer > number of electrolyzers required > value'
     rows = [row for table in dcf.inp.values() for row in table.values()]
-    return any(target in str(row.get('Path', '')).strip().lower() for row in rows)
+    return any(
+        target in str(row.get(bottom_key, '')).strip().lower()
+        for row in rows for bottom_key in ('Path', 'Value')
+    )
 
 def calculate_electrolyzer_power_demand(power_requirement_increase, nominal_power, year):
     '''Calculation of yearly increase in electrolyzer power demand.

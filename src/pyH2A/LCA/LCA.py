@@ -9,6 +9,7 @@ from pyH2A.Utilities.lca_utils import (
     load_matrices_from_folder,
     matrix_of,
 )
+from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
 class LCA:
     '''Perform LCA calculations from an openLCA matrix export.
@@ -101,9 +102,9 @@ class LCA:
         Notes
         -----
         Populates ``LCA._cache`` with keys ``base_scaling_vector``, ``A0_column``
-        (nonzero first-column entries as UUIDs and values), ``basis_component``
-        (precomputed ``A^{-1} e_i`` basis vectors), ``matrix_B`` and
-        ``matrix_C`` (sparse originals), and ``impact_index``. Disk paths are
+        (nonzero first-column entries as UUIDs, values, and flow units),
+        ``basis_component`` (precomputed ``A^{-1} e_i`` basis vectors),
+        ``matrix_B`` and ``matrix_C`` (sparse originals), and ``impact_index``. Disk paths are
         resolved by :func:`~pyH2A.Utilities.lca_utils.get_cache_paths`, which
         also creates the ``Initial_Artifacts`` subdirectory on first call. Disk
         writes use :func:`~pyH2A.Utilities.lca_utils.atomic_savez` for atomic
@@ -144,7 +145,7 @@ class LCA:
  
         LCA._cache['base_scaling_vector']   = np.asarray(np.load(paths['base_scaling_vector'])['base_scaling_vector'])
         a0 = np.load(paths['A0_column'])
-        LCA._cache['A0_column']       = (np.asarray(a0['uuids'], dtype=str), np.asarray(a0['values']))
+        LCA._cache['A0_column']       = (np.asarray(a0['uuids'], dtype=str), np.asarray(a0['values']), np.asarray(a0['units'], dtype=str))
         LCA._cache['basis_component'] = np.asarray(np.load(paths['basis_component'])['basis_component'])
         LCA._cache['matrix_B']        = matrix_of(str(paths['matrix_B']))
         LCA._cache['matrix_C']        = matrix_of(str(paths['matrix_C']))
@@ -167,10 +168,11 @@ class LCA:
         solver = factorize(A)
         f_vector = np.asarray(f).reshape(-1)
         LCA._cache['base_scaling_vector'] = solver(f_vector)
-         # Cache uuids and value columns of techno_index_uuid_values (UUID column is a string and cannot be serialised as numeric).
+         # Cache uuid, value, and flow unit columns of techno_index_uuid_values (UUID and unit columns are strings and cannot be serialised as numeric).
         LCA._cache['A0_column'] = (
             np.asarray(techno_index_uuid_values[:, 1], dtype=str),
             np.asarray(techno_index_uuid_values[:, 2], dtype=float),
+            np.asarray(techno_index_uuid_values[:, 3], dtype=str),
         )
         # Compute and cache component basis vectors for the nonzero rows of the original first technosphere column.
         # Each column of the basis matrix is ``A^{-1} e_i`` for a changed row, enabling efficient Sherman-Morrison
@@ -211,7 +213,8 @@ class LCA:
         try:
             atomic_savez(paths['base_scaling_vector'],   base_scaling_vector=LCA._cache['base_scaling_vector'])
             atomic_savez(paths['A0_column'],       uuids=np.asarray(LCA._cache['A0_column'][0], dtype=str),
-                                                   values=np.asarray(LCA._cache['A0_column'][1], dtype=float))
+                                                   values=np.asarray(LCA._cache['A0_column'][1], dtype=float),
+                                                   units=np.asarray(LCA._cache['A0_column'][2], dtype=str))
             atomic_savez(paths['basis_component'], basis_component=LCA._cache['basis_component'])
             atomic_savez(paths['impact_index'],    impact_index=np.array(LCA._cache['impact_index'], dtype=object))
             # Copy the original sparse B and C files to disk (Initial_Artifacts)
@@ -249,7 +252,9 @@ class LCA:
         -----
         Array-like ``Value`` entries are reduced to a scalar by summation.
         The ordering of ``self.component_values`` follows ``A0_column``, not
-        the order of rows in the input tables.
+        the order of rows in the input tables. Each component's declared
+        ``Unit`` is converted to the flow unit cached in ``A0_column`` via
+        :class:`~pyH2A.Utilities.Unit_Handler.quantity.Quantity`.
         '''
         lca_table_names = [table_name for table_name in dcf.inp if table_name.lower().startswith('lca')]
         if not lca_table_names:
@@ -264,22 +269,27 @@ class LCA:
             for lca_table_name in lca_table_names
             for item in dcf.inp[lca_table_name].items()
         ):
-            uuid, raw_value = component_data['UUID'], component_data['Value']
+            uuid, raw_value, unit = component_data['UUID'], component_data['Value'], component_data['Unit']
             scalar_value = float(np.sum(raw_value) if isinstance(raw_value, (np.ndarray, list, tuple)) else raw_value)
-            rows.append((uuid, scalar_value))
+            rows.append((uuid, scalar_value, unit))
 
         A0_uuids = LCA._cache['A0_column'][0]
         A0_values = LCA._cache['A0_column'][1]
+        A0_units = LCA._cache['A0_column'][2]
         if len(rows) > len(A0_uuids):
             raise ValueError(
                 f"Expected {len(A0_uuids)} LCA components (one per nonzero column-0 entry), "
                 f"but got {len(rows)}."
             )
-        uuid_to_value = {str(uuid): float(val) for uuid, val in rows}
+        uuid_to_quantity = {str(uuid): Quantity(val, unit) for uuid, val, unit in rows}
         self.component_values = A0_values.copy()
         for i, uuid in enumerate(A0_uuids):
-            if str(uuid) in uuid_to_value:
-                self.component_values[i] = np.sign(A0_values[i]) * abs(uuid_to_value[str(uuid)])
+            if str(uuid) in uuid_to_quantity:
+                # openLCA flow units sometimes carry a pluralization suffix (e.g. "Item(s)")
+                # that the unit parser cannot handle, since parentheses are grouping syntax.
+                target_unit = str(A0_units[i]).replace('(s)', '')
+                converted_value = uuid_to_quantity[str(uuid)].unit[target_unit]
+                self.component_values[i] = np.sign(A0_values[i]) * abs(converted_value)
             else:
                 raise ValueError(
                     f"UUID '{uuid}' from the technosphere matrix is missing from the input "

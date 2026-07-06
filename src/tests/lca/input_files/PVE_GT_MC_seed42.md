@@ -21,25 +21,25 @@ capital perc 1st | % of capital spent in 1st year of construction | 100%
 
 # Technical Operating Parameters and Specifications
 
-Name | Value | Comment
---- | --- | ---
-Plant Design Capacity (kg of H2/day) | 1.0 | Reference production for GT LCA tests
-Operating Capacity Factor (%) | 90% | Capacity factor
-Plant Modules | 1 | Single module
+Name | Value | Unit | Comment
+--- | --- | --- | ---
+Plant design capacity | 1.0 | kg/day | Reference production for GT LCA tests
+Operating capacity factor | 90% | - | Capacity factor
+Fraction of output that reaches gate | 100% | - | No gate losses assumed for minimal LCA test
 
 # Non-Depreciable Capital Costs
 
-Name | Value | Comment
---- | --- | ---
-Cost of land ($ per acre) | 0 | No land cost for LCA test
-Land required (acres) | 0 | No land for LCA test
+Name | Value | Unit | Comment
+--- | --- | --- | ---
+Cost of land | 0 | USD/m2 | No land cost for LCA test
+Land required | 0 | m2 | No land for LCA test
 
 # Fixed Operating Costs
 
-Name | Full Name | Value | Comment
+Name | Value | Unit | Comment
 --- | --- | --- | ---
-staff | Number of staff | 0 | No staff for minimal LCA test
-hourly labor cost | Burdened labor cost ($ per man-hr) | 0 | No labor cost
+Staff | 0 | - | No staff for minimal LCA test
+Hourly labor cost | 0 | USD/h | No labor cost
 
 # Planned Replacement
 
@@ -64,5 +64,5 @@ Output File | src/tests/lca/input_files/PVE_GT_MC_seed42_output.csv
 
 Parameter | Name | Type | Values | Comment
 --- | --- | --- | --- | ---
-LCA - PVE GT Components > PV Electricity Generation > Value | PV (MJ/kg H2) | value | Base; 300 | Base resolves to 198.0 (set above), as required by check_parameter_integrity.
-LCA - PVE GT Components > Reverse Osmosis > Value | RO (kg/kg H2) | value | Base; 15 | Base resolves to 9.0 (set above), as required by check_parameter_integrity.
+{LCA - PVE GT Components > PV Electricity Generation > Value, MJ} | PV (MJ/kg H2) | value | Base; 300 | Base resolves to 198.0 (set above), as required by check_parameter_integrity.
+{LCA - PVE GT Components > Reverse Osmosis > Value, kg} | RO (kg/kg H2) | value | Base; 15 | Base resolves to 9.0 (set above), as required by check_parameter_integrity.

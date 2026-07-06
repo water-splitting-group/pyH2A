@@ -72,21 +72,25 @@ def _make_dcf(h2, pv, elec, ro):
             'H2 Production': {
                 'UUID': _UUID_H2_PRODUCTION,
                 'Value': h2,
+                'Unit': 'kg',
                 'Processed': 'Yes',
             },
             'PV Electricity Generation': {
                 'UUID': _UUID_PV_ELECTRICITY,
                 'Value': pv,
+                'Unit': 'MJ',
                 'Processed': 'Yes',
             },
             'Electrolyzer Manufacturing': {
                 'UUID': _UUID_ELECTROLYZER_MFG,
                 'Value': elec,
+                'Unit': 'item',
                 'Processed': 'Yes',
             },
             'Reverse Osmosis': {
                 'UUID': _UUID_REVERSE_OSMOSIS,
                 'Value': ro,
+                'Unit': 'kg',
                 'Processed': 'Yes',
             },
         }

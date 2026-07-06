@@ -40,7 +40,8 @@ class TestCsvRows:
 
 # ── _load_tech_index ───────────────────────────────────────────────────────
 
-_TECH_HEADER = 'index,provider ID\n'
+# Mirrors the real openLCA export header; flow unit is column index 8.
+_TECH_HEADER = 'index,provider ID,provider name,provider category,provider location,flow ID,flow name,flow category,flow unit,flow type\n'
 
 
 class TestLoadTechIndex:
@@ -52,17 +53,19 @@ class TestLoadTechIndex:
         assert _load_tech_index(str(tmp_path)) == {}
 
     def test_values_are_integers(self, tmp_path):
-        self._write_csv(tmp_path, ['5,uuid-x\n'])
+        self._write_csv(tmp_path, ['5,uuid-x,,,,,,,kg,product\n'])
         d = _load_tech_index(str(tmp_path))
-        assert d['uuid-x'] == 5
-        assert isinstance(d['uuid-x'], int)
+        idx, flow_unit = d['uuid-x']
+        assert idx == 5
+        assert isinstance(idx, int)
+        assert flow_unit == 'kg'
 
     def test_multiple_entries(self, tmp_path):
-        self._write_csv(tmp_path, ['0,uid-0\n', '2,uid-2\n'])
+        self._write_csv(tmp_path, ['0,uid-0,,,,,,,kg,product\n', '2,uid-2,,,,,,,MJ,product\n'])
         d = _load_tech_index(str(tmp_path))
         assert set(d.keys()) == {'uid-0', 'uid-2'}
-        assert d['uid-0'] == 0
-        assert d['uid-2'] == 2
+        assert d['uid-0'] == (0, 'kg')
+        assert d['uid-2'] == (2, 'MJ')
 
     def test_empty_csv_returns_empty_dict(self, tmp_path):
         self._write_csv(tmp_path, [])
@@ -185,10 +188,10 @@ class TestFactorize:
 # ── tech_process_indices ───────────────────────────────────────────────────
 
 class TestTechProcessIndices:
-    def _make_folder(self, tmp_path, uuid_index_pairs):
+    def _make_folder(self, tmp_path, uuid_index_pairs, flow_unit='kg'):
         csv = tmp_path / 'index_A.csv'
-        rows = ''.join(f'{idx},{uuid}\n' for uuid, idx in uuid_index_pairs.items())
-        csv.write_text('index,provider ID\n' + rows, encoding='utf-8')
+        rows = ''.join(f'{idx},{uuid},,,,,,,{flow_unit},product\n' for uuid, idx in uuid_index_pairs.items())
+        csv.write_text(_TECH_HEADER + rows, encoding='utf-8')
 
     def test_only_nonzero_entries_included(self, tmp_path):
         self._make_folder(tmp_path, {'uid-0': 0, 'uid-1': 1})
@@ -202,12 +205,17 @@ class TestTechProcessIndices:
         self._make_folder(tmp_path, {'uid': 0})
         A = scipy.sparse.csc_matrix(np.array([[3.0]]))
         result = tech_process_indices(str(tmp_path), A)
-        assert result.shape == (1, 3)
+        assert result.shape == (1, 4)
 
     def test_value_column_matches_matrix(self, tmp_path):
         self._make_folder(tmp_path, {'uid': 0})
         result = tech_process_indices(str(tmp_path), np.array([[7.5]]))
         assert result[0, 2] == pytest.approx(7.5)
+
+    def test_flow_unit_column_matches_csv(self, tmp_path):
+        self._make_folder(tmp_path, {'uid': 0}, flow_unit='MJ')
+        result = tech_process_indices(str(tmp_path), np.array([[7.5]]))
+        assert result[0, 3] == 'MJ'
 
 
 # ── get_cache_paths ────────────────────────────────────────────────────────

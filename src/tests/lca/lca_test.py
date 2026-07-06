@@ -35,9 +35,9 @@ def _full_dcf(h2_value, hdpe_value=20.0, nh4oh_value=5.2):
     """
     return DummyDCF({
         'LCA Components': {
-            'H2':    {'UUID': _H2_UUID,    'Value': h2_value,    'Processed': 'Yes'},
-            'HDPE':  {'UUID': _HDPE_UUID,  'Value': hdpe_value,  'Processed': 'Yes'},
-            'NH4OH': {'UUID': _NH4OH_UUID, 'Value': nh4oh_value, 'Processed': 'Yes'},
+            'H2':    {'UUID': _H2_UUID,    'Value': h2_value,    'Unit': 'kg', 'Processed': 'Yes'},
+            'HDPE':  {'UUID': _HDPE_UUID,  'Value': hdpe_value,  'Unit': 'kg', 'Processed': 'Yes'},
+            'NH4OH': {'UUID': _NH4OH_UUID, 'Value': nh4oh_value, 'Unit': 'kg', 'Processed': 'Yes'},
         }
     })
 
@@ -69,7 +69,8 @@ class TestApplyComponentUpdates:
     def _seed_cache(self, uuid_val_pairs):
         uuids  = np.array([p[0] for p in uuid_val_pairs], dtype=str)
         values = np.array([p[1] for p in uuid_val_pairs], dtype=float)
-        LCA._cache['A0_column'] = (uuids, values)
+        units  = np.array(['-'] * len(uuid_val_pairs), dtype=str)
+        LCA._cache['A0_column'] = (uuids, values, units)
 
     def _make_lca(self):
         return object.__new__(LCA)
@@ -78,7 +79,7 @@ class TestApplyComponentUpdates:
         """components: {comp_name: (uuid, value)}"""
         return DummyDCF({
             table_name: {
-                name: {'UUID': uuid, 'Value': val, 'Processed': 'Yes'}
+                name: {'UUID': uuid, 'Value': val, 'Unit': '-', 'Processed': 'Yes'}
                 for name, (uuid, val) in components.items()
             }
         })
@@ -105,7 +106,7 @@ class TestApplyComponentUpdates:
     def test_array_value_is_summed(self):
         self._seed_cache([('uuid-0', 1.0)])
         lca = self._make_lca()
-        dcf = DummyDCF({'LCA T': {'A': {'UUID': 'uuid-0', 'Value': np.array([2.0, 3.0, 5.0]), 'Processed': 'Yes'}}})
+        dcf = DummyDCF({'LCA T': {'A': {'UUID': 'uuid-0', 'Value': np.array([2.0, 3.0, 5.0]), 'Unit': '-', 'Processed': 'Yes'}}})
         lca.apply_component_updates(dcf)
         assert lca.component_values[0] == pytest.approx(10.0)
 
@@ -144,8 +145,8 @@ class TestApplyComponentUpdates:
         self._seed_cache([('uuid-0', 1.0), ('uuid-1', 1.0)])
         lca = self._make_lca()
         lca.apply_component_updates(DummyDCF({
-            'LCA Table A': {'C1': {'UUID': 'uuid-0', 'Value': 3.0, 'Processed': 'Yes'}},
-            'LCA Table B': {'C2': {'UUID': 'uuid-1', 'Value': 7.0, 'Processed': 'Yes'}},
+            'LCA Table A': {'C1': {'UUID': 'uuid-0', 'Value': 3.0, 'Unit': '-', 'Processed': 'Yes'}},
+            'LCA Table B': {'C2': {'UUID': 'uuid-1', 'Value': 7.0, 'Unit': '-', 'Processed': 'Yes'}},
         }))
         assert lca.component_values[0] == pytest.approx(3.0)
         assert lca.component_values[1] == pytest.approx(7.0)
@@ -283,6 +284,7 @@ class TestLoadAllFromDiskToRam:
         sv     = np.array([1.0, 2.0, 3.0])
         uuids  = np.array(['u0', 'u1'], dtype=str)
         values = np.array([10.0, -5.0])
+        units  = np.array(['kg', 'MJ'], dtype=str)
         basis  = np.eye(3)
         B = scipy.sparse.eye(2, format='csc')
         C = scipy.sparse.eye(2, format='csc')
@@ -291,7 +293,7 @@ class TestLoadAllFromDiskToRam:
             dtype=object,
         )
         np.savez(tmp_path / 'base_scaling_vector.npz', base_scaling_vector=sv)
-        np.savez(tmp_path / 'A0_column.npz', uuids=uuids, values=values)
+        np.savez(tmp_path / 'A0_column.npz', uuids=uuids, values=values, units=units)
         np.savez(tmp_path / 'basis_component.npz', basis_component=basis)
         scipy.sparse.save_npz(str(tmp_path / 'matrix_B.npz'), B)
         scipy.sparse.save_npz(str(tmp_path / 'matrix_C.npz'), C)
@@ -313,14 +315,20 @@ class TestLoadAllFromDiskToRam:
     def test_loads_a0_column_uuids(self, tmp_path):
         lca = object.__new__(LCA)
         lca.load_all_from_disk_to_ram(self._write_all(tmp_path))
-        uuids, _ = LCA._cache['A0_column']
+        uuids, _, _ = LCA._cache['A0_column']
         assert list(uuids) == ['u0', 'u1']
 
     def test_loads_a0_column_values(self, tmp_path):
         lca = object.__new__(LCA)
         lca.load_all_from_disk_to_ram(self._write_all(tmp_path))
-        _, vals = LCA._cache['A0_column']
+        _, vals, _ = LCA._cache['A0_column']
         np.testing.assert_array_equal(vals, [10.0, -5.0])
+
+    def test_loads_a0_column_units(self, tmp_path):
+        lca = object.__new__(LCA)
+        lca.load_all_from_disk_to_ram(self._write_all(tmp_path))
+        _, _, units = LCA._cache['A0_column']
+        assert list(units) == ['kg', 'MJ']
 
     def test_loads_basis_component(self, tmp_path):
         lca = object.__new__(LCA)

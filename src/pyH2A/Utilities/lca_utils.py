@@ -41,7 +41,7 @@ def _csv_rows(path: str) -> List[List[str]]:
 
 
 def _load_tech_index(folder: str) -> dict:
-    '''Load technosphere index from ``index_A.csv`` as ``{process_id: row_index}``.
+    '''Load technosphere index from ``index_A.csv`` as ``{process_id: (row_index, flow_unit)}``.
 
     Parameters
     ----------
@@ -51,13 +51,15 @@ def _load_tech_index(folder: str) -> dict:
     Returns
     -------
     dict
-        Mapping from process UUID (str) to integer row/column index in A.
+        Mapping from process UUID (str) to a ``(row_index, flow_unit)`` tuple,
+        where ``row_index`` is the integer row/column index in A and
+        ``flow_unit`` is the unit string of the associated flow.
         Returns an empty dict if ``index_A.csv`` does not exist.
     '''
     path = os.path.join(folder, 'index_A.csv')
     if not os.path.exists(path):
         return {}
-    return {row[1]: int(row[0]) for row in _csv_rows(path)}
+    return {row[1]: (int(row[0]), row[8]) for row in _csv_rows(path)}
 
 
 def _load_impact_index(folder: str) -> List[dict]:
@@ -177,7 +179,7 @@ def factorize(matrix):
 
 
 def tech_process_indices(matrix_folder: str, matrix_a) -> numpy.ndarray:
-    '''Extract technosphere indices and UUIDs for nonzero entries in ``A[:, 0]``.
+    '''Extract technosphere indices, UUIDs, and flow units for nonzero entries in ``A[:, 0]``.
 
     Parameters
     ----------
@@ -189,15 +191,15 @@ def tech_process_indices(matrix_folder: str, matrix_a) -> numpy.ndarray:
     Returns
     -------
     numpy.ndarray
-        Three-column object array with ``[index, uuid, value]`` per row for
-        nonzero components of the first technosphere column.
+        Four-column object array with ``[index, uuid, value, flow_unit]`` per
+        row for nonzero components of the first technosphere column.
     '''
     col0 = matrix_a[:, 0]
     a_col0 = numpy.asarray(col0.toarray() if scipy.sparse.issparse(matrix_a) else col0).reshape(-1)
     nonzero = set(numpy.flatnonzero(a_col0).tolist())
     rows = [
-        (idx, uuid, a_col0[idx])
-        for uuid, idx in _load_tech_index(matrix_folder).items()
+        (idx, uuid, a_col0[idx], flow_unit)
+        for uuid, (idx, flow_unit) in _load_tech_index(matrix_folder).items()
         if idx in nonzero
     ]
     return numpy.array(rows, dtype=object)
@@ -217,8 +219,8 @@ def load_matrices_from_folder(matrix_folder: str):
         Ordered list of dicts with keys ``index``, ``impact_name``, and
         ``impact_unit``, loaded from ``index_C.csv``.
     techno_index_uuid : numpy.ndarray
-        Three-column object array with ``[index, uuid, value]`` per row
-        for each nonzero entry in the first technosphere column.
+        Four-column object array with ``[index, uuid, value, flow_unit]``
+        per row for each nonzero entry in the first technosphere column.
     A : numpy.ndarray or scipy.sparse.spmatrix
         Technosphere matrix.
     B : numpy.ndarray or scipy.sparse.spmatrix
