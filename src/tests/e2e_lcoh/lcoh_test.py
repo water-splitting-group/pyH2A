@@ -34,7 +34,7 @@ from pyH2A.Utilities.Unit_Handler import Quantity
         },
         {
             "input": {
-                "input_file": "src/tests/end_to_end/Thermal_Base_test.md",
+                "input_file": "src/tests/end_to_end/Thermal/Thermal_Base_test.md",
                 "output_directory": "src/tests/end_to_end/",
             },
             "expected": {

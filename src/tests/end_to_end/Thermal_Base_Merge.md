@@ -2,8 +2,7 @@
 
 Name | Value
 --- | ---
-File A | src/tests/end_to_end/Thermal_Base_test.md
-Default TEA | pyH2A.Config~Defaults_TEA.md
+File A | src/tests/end_to_end/Thermal/Thermal_Base_test.md
 
 # Technical Operating Parameters and Specifications
 
