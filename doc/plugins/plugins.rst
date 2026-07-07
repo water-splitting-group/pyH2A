@@ -14,16 +14,18 @@ Plugins allow for modelling of different hydrogen production pathways. They proc
    Electrolyzer_Plugin
    Fixed_Operating_Cost_Plugin
    Hourly_Irradiation_Plugin
+   Inflation_Plugin
    Multiple_Modules_Plugin
    PEC_Plugin
    Photocatalytic_Plugin
    Photovoltaic_Plugin
    Power_Management_Plugin
-   Production_Scaling_Plugin
+   Production_Plugin
    Replacement_Plugin
    Reverse_Osmosis_Plugin
    Solar_Concentrator_Plugin
    Solar_Thermal_Plugin
    Stored_Power_Electrolysis_Plugin
+   Time_Plugin
    Variable_Operating_Cost_Plugin
 

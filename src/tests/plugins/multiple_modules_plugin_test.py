@@ -1,6 +1,7 @@
 import pytest
 import numpy as np
 from pyH2A.Plugins.Multiple_Modules_Plugin import Multiple_Modules_Plugin
+from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
 
 class DummyDCF:
@@ -11,15 +12,30 @@ class DummyDCF:
     ):
         self.inp = {
             "Technical Operating Parameters and Specifications": {
-                "Plant Modules": {"Value": plant_modules}
+                "Plant modules": {
+                    "Value": plant_modules,
+                    "Unit": "-"
+                }
             },
             "Non-Depreciable Capital Costs": {
-                "Solar Collection Area (m2)": {"Value": solar_area_per_module}
+                "Solar collection area": {
+                    "Value": solar_area_per_module,
+                    "Unit": "m2"
+                }
             },
             "Fixed Operating Costs": {
-                "area": {"Value": area_per_staff},
-                "shifts": {"Value": shifts},
-                "supervisor": {"Value": supervisors},
+                "Solar collection area per staffer": {
+                    "Value": area_per_staff,
+                    "Unit": "m2"
+                },
+                "Number of 8-hour shifts": {
+                    "Value": shifts,
+                    "Unit": "-"
+                },
+                "Number of supervisors": {
+                    "Value": supervisors,
+                    "Unit": "-"
+                },
             },
         }
 
@@ -36,10 +52,13 @@ class DummyDCF:
                 "supervisors": 1,
             },
             "expected": {
-                "staff_per_module": 0.6,
+                "staff_per_module": Quantity(0.6, "-"),
             },
         },
     ],
+    ids=[
+        "Realistic case - Multiple Modules Plugin"
+    ]
 )
 def test_multiple_modules_plugin(case):
     """Check Multiple_Modules_Plugin calculates staff per module correctly."""
@@ -50,4 +69,4 @@ def test_multiple_modules_plugin(case):
     # Run plugin
     plugin = Multiple_Modules_Plugin(dcf, print_info=False)
 
-    assert plugin.staff_per_module == case["expected"]["staff_per_module"]
+    assert plugin.staff_per_module.base_value == case["expected"]["staff_per_module"].base_value

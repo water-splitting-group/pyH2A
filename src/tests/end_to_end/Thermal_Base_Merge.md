@@ -2,10 +2,10 @@
 
 Name | Value
 --- | ---
-File A | src/tests/end_to_end/Thermal_Base.md
+File A | src/tests/end_to_end/Thermal_Base_test.md
 
 # Technical Operating Parameters and Specifications
 
 Name | Value
 --- | --- 
-Operating Capacity Factor (%) | 95%
+Operating capacity factor | 95%

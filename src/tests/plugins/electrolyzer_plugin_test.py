@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 from pyH2A.Plugins.Electrolyzer_Plugin import Electrolyzer_Plugin
-
+from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
 class DummyDCF:
     """Minimal DCF object for Electrolyzer_Plugin with configurable inputs."""
@@ -9,40 +9,51 @@ class DummyDCF:
     def __init__(
         self,
         construction_time,
-        capex_multiplier,
-        nominal_power_kw,
-        capex_reference_power,
+        nominal_power,
         power_increase,
         min_capacity,
         efficiency,
-        replacement_time_h,
+        replacement_time,
         available_power_hourly,
     ):
 
         self.inp = {
             "Financial Input Values": {
-                "construction time": {"Value": construction_time}
+                "Construction time": {
+                    "Value": construction_time,
+                    "Unit": "year"
+                },
             },
-            "CAPEX Multiplier": {"Multiplier": {"Value": capex_multiplier}},
             "Electrolyzer": {
-                "Nominal Power (kW)": {"Value": nominal_power_kw},
-                "CAPEX Reference Power (kW)": {"Value": capex_reference_power},
-                "Power requirement increase per year": {"Value": power_increase},
-                "Minimum capacity": {"Value": min_capacity},
-                "Conversion efficiency (kg H2/kWh)": {"Value": efficiency},
-                "Replacement time (h)": {"Value": replacement_time_h},
+                "Nominal power": {
+                    "Value": nominal_power, 
+                    "Unit": "kW"
+                },
+                "Power requirement increase per year": {
+                    "Value": power_increase, 
+                    "Unit": "-"
+                },
+                "Minimum capacity": {
+                    "Value": min_capacity, 
+                    "Unit": "-"
+                },
+                "Hydrogen yield per unit energy": {
+                    "Value": efficiency,
+                    "Unit": "kg/kWh"
+                },
+                "Replacement time": {
+                    "Value": replacement_time, 
+                    "Unit": "h"},
             },
             "Power Generation": {
-                "Available Power (hourly, kWh)": {
+                "Available energy (hourly)": {
                     "Value": available_power_hourly,
+                    "Unit": "kWh",
                     "Processed": "Yes",
                 }
             },
         }
-        
         self.operation_years = list(available_power_hourly.keys())
-
-
 
 @pytest.mark.parametrize(
     "case",
@@ -50,13 +61,11 @@ class DummyDCF:
         {
             "input": {
                 "construction_time": 2,
-                "capex_multiplier": 0.9,
-                "nominal_power_kw": 5500.0,
-                "capex_reference_power": 1000.0,
+                "nominal_power": 5500.0,
                 "power_increase": 0.003,
                 "min_capacity": 0.10,
                 "efficiency": 0.0185,
-                "replacement_time_h": 80000.0,
+                "replacement_time": 80000.0,
                 "available_power_hourly": {
                     2026: np.array(
                         [
@@ -117,73 +126,78 @@ class DummyDCF:
                 },
             },
             "expected": {
-                "h2_production": np.array([0.0, 0.0, 2035.0, 2035.0]),
-                "scaling_factor": 0.9249598065992481,
-                "replacement_frequency": 2.0,
-                "yearly_data": np.array(
-                    [[2026.0, 2035.0, 20.0], [2027.0, 2035.0, 20.0]]
-                ),
-                "yearly_data_unused_power": {
-                    2026: np.array(
-                        [
-                            197622869.89416197,
-                            198122869.89416197,
-                            198822869.89416197,
-                            198822869.89416197,
-                            0.0,
-                            198122869.89416197,
-                            198822869.89416197,
-                            198822869.89416197,
-                            198622869.89416197,
-                            198122869.89416197,
-                            198822869.89416197,
-                            198822869.89416197,
-                            198622869.89416197,
-                            0.0,
-                            198822869.89416197,
-                            198822869.89416197,
-                            198622869.89416197,
-                            0.0,
-                            198822869.89416197,
-                            198822869.89416197,
-                            198622869.89416197,
-                            0.0,
-                            198822869.89416197,
-                            198822869.89416197,
-                        ]
+                "h2_production": Quantity(np.array([0.0, 0.0, 2035.0, 2035.0]), 'kg'),
+                "replacement_frequency": Quantity(2.0, 'year'),
+                "yearly_data_year": Quantity(np.array([2026.0, 2027.0]),'-'),
+                "yearly_data_production": Quantity(np.array([2035.0, 2035.0]),'kg'),
+                "yearly_data_duration": Quantity(np.array([20.0, 20.0]),'h'),                                
+                "yearly_data_unused_energy": {
+                    2026: Quantity(
+                            np.array(
+                                [
+                                197622869.89416197,
+                                198122869.89416197,
+                                198822869.89416197,
+                                198822869.89416197,
+                                0.0,
+                                198122869.89416197,
+                                198822869.89416197,
+                                198822869.89416197,
+                                198622869.89416197,
+                                198122869.89416197,
+                                198822869.89416197,
+                                198822869.89416197,
+                                198622869.89416197,
+                                0.0,
+                                198822869.89416197,
+                                198822869.89416197,
+                                198622869.89416197,
+                                0.0,
+                                198822869.89416197,
+                                198822869.89416197,
+                                198622869.89416197,
+                                0.0,
+                                198822869.89416197,
+                                198822869.89416197,
+                                ]
+                            ),
+                            "kWh"
                     ),
-                    2027: np.array(
-                        [
-                            0.0,
-                            198115738.50324446,
-                            198815738.50324446,
-                            198815738.50324446,
-                            198615738.50324446,
-                            0.0,
-                            198815738.50324446,
-                            198815738.50324446,
-                            198615738.50324446,
-                            198115738.50324446,
-                            198815738.50324446,
-                            0.0,
-                            198615738.50324446,
-                            204115738.50324446,
-                            198815738.50324446,
-                            198815738.50324446,
-                            198615738.50324446,
-                            205115738.50324446,
-                            198815738.50324446,
-                            0.0,
-                            198615738.50324446,
-                            206115738.50324446,
-                            198815738.50324446,
-                            198815738.50324446,
-                        ]
-                    ),
+                    2027: Quantity(
+                            np.array(
+                                [
+                                    0.0,
+                                    198115738.50324446,
+                                    198815738.50324446,
+                                    198815738.50324446,
+                                    198615738.50324446,
+                                    0.0,
+                                    198815738.50324446,
+                                    198815738.50324446,
+                                    198615738.50324446,
+                                    198115738.50324446,
+                                    198815738.50324446,
+                                    0.0,
+                                    198615738.50324446,
+                                    204115738.50324446,
+                                    198815738.50324446,
+                                    198815738.50324446,
+                                    198615738.50324446,
+                                    205115738.50324446,
+                                    198815738.50324446,
+                                    0.0,
+                                    198615738.50324446,
+                                    206115738.50324446,
+                                    198815738.50324446,
+                                    198815738.50324446,
+                                ]
+                        ),
+                        'kWh'
+                    ),    
                 },
-                "yearly_data_unused_power_daily": {
-                    2026: np.array([3972357397.8832397]),
-                    2027: np.array([3992814770.0648894]),
+                "yearly_data_unused_energy_daily": {
+                    2026: Quantity(np.array([3972357397.8832397]), 'kWh'),
+                    2027: Quantity(np.array([3992814770.0648894]), 'kWh'),
                 },
             },
         },
@@ -203,40 +217,47 @@ def test_electrolyzer_plugin(case):
     tolerance = 1e-12
 
     np.testing.assert_allclose(
-        plugin.h2_production,
-        expected["h2_production"],
+        plugin.h2_production.unit['kg'],
+        expected["h2_production"].unit['kg'],
         rtol=tolerance,
         atol=tolerance,
     )
-
-    assert plugin.electrolyzer_scaling_factor == pytest.approx(
-        expected["scaling_factor"],
-        abs=tolerance
-    )
     
-    assert plugin.replacement_frequency == pytest.approx(
-        expected["replacement_frequency"],
+    assert plugin.replacement_frequency.unit['year'] == pytest.approx(
+        expected["replacement_frequency"].unit['year'],
         abs=tolerance
     )
 
     np.testing.assert_allclose(
-        plugin.yearly_data,
-        expected["yearly_data"],
+        plugin.yearly_data_year.unit['-'],
+        expected["yearly_data_year"].unit['-'],
+        rtol=tolerance,
+        atol=tolerance,
+    )
+    np.testing.assert_allclose(
+        plugin.yearly_data_production.unit['kg'],
+        expected["yearly_data_production"].unit['kg'],
+        rtol=tolerance,
+        atol=tolerance,
+    )
+    np.testing.assert_allclose(
+        plugin.yearly_data_duration.unit['s'],
+        expected["yearly_data_duration"].unit['s'],
         rtol=tolerance,
         atol=tolerance,
     )
 
     for year in dcf.operation_years:
         np.testing.assert_allclose(
-            plugin.yearly_data_unused_power[year],
-            expected["yearly_data_unused_power"][year],
+            plugin.yearly_data_unused_energy[year].unit['J'],
+            expected["yearly_data_unused_energy"][year].unit['J'],
             rtol=tolerance,
             atol=tolerance,
         )
 
         np.testing.assert_allclose(
-            plugin.yearly_data_unused_power_daily[year],
-            expected["yearly_data_unused_power_daily"][year],
+            plugin.yearly_data_unused_energy_daily[year].unit['J'],
+            expected["yearly_data_unused_energy_daily"][year].unit['J'],
             rtol=tolerance,
             atol=tolerance,
         )

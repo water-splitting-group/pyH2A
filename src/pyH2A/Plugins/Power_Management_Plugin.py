@@ -1,4 +1,6 @@
-from pyH2A.Utilities.input_modification import insert, process_table, daily_to_yearly_power
+from pyH2A.Utilities.input_modification import daily_to_yearly_power_quantity
+from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
+from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import numpy as np
 
 input_dict = {
@@ -12,7 +14,8 @@ input_dict = {
                 "dimension": "energy",
             },
             "optional": True,
-            "description": "Available energy on a daily basis. Can be provided as a single value or as an array with values for each year. If not provided, it is assumed that no available energy is generated."
+            "description": "Available energy on a daily basis, as a dictionary of years. "
+                            "If not provided, it is assumed that no energy is available."
         },
         "Stored energy (daily)": {
             "Value": {
@@ -23,13 +26,14 @@ input_dict = {
                 "dimension": "energy",
             },
             "optional": True,
-            "description": "Stored energy on a daily basis. Can be provided as a single value or as an array with values for each year. If not provided, it is assumed that no stored energy is generated."
+            "description": "Stored energy on a daily basis as a dictionary of years. "
+                            "If not provided, it is assumed that no stored energy is generated."
         },
     },
     "Power Consumption": {
         "<...>": {
             "Value": {
-                "type": {np.ndarray,},
+                "type": {np.ndarray,float,int,},
                 "bounds": (0, None),
             },
             "Type": {
@@ -40,20 +44,87 @@ input_dict = {
                 "dimension": "energy",
             },
             "optional": True,
-            "description": "Power consumption values for each year. Can be provided for multiple consumers, in which case they should be provided as separate entries under Power Consumption. The type of consumer should be specified as either 'flexible' for consumers that can consume both available and stored power, or 'on_demand' for consumers that can only consume stored power."
+            "description": "Power consumption values for each year. Can be provided for multiple consumers, "
+                            "in which case they should be provided as separate entries under Power Consumption. "
+                            "The type of consumer should be specified as either 'flexible' for consumers that "
+                            "can consume both available and stored power, or 'on_demand' for consumers "
+                            "that can only consume stored power."
         },
     },
     "Grid Electricity": {
         "Cost": {
             "Value": {
-                "type": {float, np.ndarray,},
+                "type": {float, np.ndarray, int},
                 "bounds": (0, None),
             },
             "Unit": {
                 "dimension": "currency / energy",
             },
-            "optional": False,
-            "description": "Cost of grid electricity. Can be provided as a single value or as an array with values for each year. If not provided, it is assumed that grid electricity is not used."
+            "optional": True,
+            "description": "Cost of grid electricity. Can be provided as a single value "
+                            "or as an array with values for each year. If not provided, "
+                            "it is assumed that grid electricity is not used."
+        },
+    },
+}
+
+output_dict = {
+    "Power Generation": {
+        "Available energy (yearly)": {
+            "Value": {
+                "inserted_value": "remaining_flexible",
+                "type": {np.ndarray,}, 
+                "dimension": "energy",
+            },
+            "optional": True,
+            "description": "Remaining available energy, yearly basis.",
+        },
+        "Stored energy (yearly)": {
+            "Value": {
+                "inserted_value": "remaining_stored",
+                "type": {np.ndarray,},
+                "dimension": "energy",
+            },
+            "optional": True,
+            "description": "Remaining stored energy, yearly basis.",
+        },
+        "Available energy (daily)": {
+            "Value": {
+                "inserted_value": Quantity(0, 'J'),
+                "type": {float,},
+                "dimension": "energy",
+            },
+            "description": "Remaining available energy, daily basis set to 0.",
+        },
+        "Stored energy (daily)": {
+            "Value": {
+                "inserted_value": Quantity(0, 'J'),
+                "type": {float,},
+                "dimension": "energy",
+            },
+            "description": "Remaining stored energy, daily basis set to 0.",
+        },
+    },
+    "Grid Electricity": {
+        "Used grid electricity (yearly)": {
+            "Value": {
+                "inserted_value": "total_unfulfilled",
+                "type": {np.ndarray,},
+                "dimension": "energy",
+            },
+            "optional": True,
+            "description": "Used grid electricity, yearly basis.",
+        },
+    },
+    "Other Variable Operating Cost - Grid Electricity": {
+        "Cost of grid electricity (yearly)": {
+            "Value": {
+                "inserted_value": "electricity_cost",
+                "type": {np.ndarray,},
+                "dimension": "currency",
+            },
+            "optional": True,
+            "description": "Cost of grid electricity, yearly basis.",
         },
     },
 }
@@ -63,63 +134,47 @@ class Power_Management_Plugin:
     
     Parameters
     ----------
-	Power Generation > Available Power (daily, kWh) > Value : dict, optional
-        Available power, daily basis, dictionary of years (in kWh)
-    Power Generation > Stored Power (daily, kWh) > Value : dict, optional
-        Stored power, daily basis, dictionary of years (in kWh)
-    Power Consumption > [...] > Value : nd.array, optional
+	Power Generation > Available energy (daily) > Value : dict, optional
+        Available energy, daily basis, dictionary of years
+    Power Generation > Stored energy (daily) > Value : dict, optional
+        Stored energy, daily basis, dictionary of years
+    Power Consumption > [...] > Value : nd.array or float, optional
         Array of yearly power consumption values
     Power Consumption > [...] > Type : str, optional
         Type of power consumer, either 'flexible' for power consumer that can consume both 
         available power (not stored) or stored power, or 'on_demand' for power consumer that 
         can only consume stored power.
-    Grid Electricity > Cost ($/kWh) > Value : float or nd.array, optional
-        Cost of grid electricity in $/kWh, can be float or nd.array with same shape
+    Grid Electricity > Cost > Value : float or nd.array, optional
+        Cost of grid electricity, can be float or nd.array with same shape
         as Technical Operating Parameters and Specifications> Output per Year > Value
 
     Returns
     -------
-    Power Generation > Available Power (yearly, kWh) > Value : nd.array
-        Reamining available power, yearly basis, in kWh.
-    Power Generation > Stored Power (yearly, kWh) > Value : nd.array
-        Reamining stored power, yearly basis, in kWh.
-    Power Generation > Available Power (daily, kWh) > Value : float
-        Available power (daily, kWh) is set to zero, since available power is now 
+    Power Generation > Available energy (yearly) > Value : nd.array
+        Reamining available energy, yearly basis.
+    Power Generation > Stored energy (yearly) > Value : nd.array
+        Reamining stored energy, yearly basis.
+    Power Generation > Available energy (daily) > Value : float
+        Available energy (daily) is set to zero, since available energy is now 
         only in yearly format.
-    Power Generation > Stored Power (daily, kWh) > Value : float
-        Stored power (daily, kWh) is set to zero, since stored power is now
+    Power Generation > Stored energy (daily) > Value : float
+        Stored energy (daily) is set to zero, since stored energy is now
         only in yearly format.
-    Grid Electricity > Used grid electricity (yearly, kWh) > Value : nd.array
-        Used grid electricity, yearly basis, in kWh.
-    Other Variable Operating Cost - Grid Electricity > Cost of grid electricity (yearly, $) > Value : nd.array
-        Cost of grid electricity, yearly basis, in $.
+    Grid Electricity > Used grid electricity (yearly) > Value : nd.array
+        Used grid electricity, yearly basis.
+    Other Variable Operating Cost - Grid Electricity > Cost of grid electricity (yearly) > Value : nd.array
+        Cost of grid electricity, yearly basis.
     '''
 
     def __init__(self, dcf, print_info):
 
-        if 'Power Generation' in dcf.inp:
-            process_table(dcf.inp, 'Power Generation', 'Value')
+        self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Power_Management_Plugin')  
 
-        if 'Power Consumption' in dcf.inp:
-            process_table(dcf.inp, 'Power Consumption', 'Value')
-            process_table(dcf.inp, 'Grid Electricity', 'Value')
+        if 'Power Consumption' in self.input_dict_resolved:    
             self.calculate_consumers(dcf)
             self.calculate_electricity_cost(dcf)
 
-        insert(dcf, 'Power Generation', 'Available Power (yearly, kWh)', 'Value',
-               self.remaining_flexible, __name__, print_info = print_info)
-        insert(dcf, 'Power Generation', 'Stored Power (yearly, kWh)', 'Value',
-                self.remaining_stored, __name__, print_info = print_info)
-        insert(dcf, 'Power Generation', 'Available Power (daily, kWh)', 'Value',
-                0, __name__, print_info = print_info)
-        insert(dcf, 'Power Generation', 'Stored Power (daily, kWh)', 'Value',
-                0, __name__, print_info = print_info)
-        
-        insert(dcf, 'Grid Electricity', 'Used grid electricity (yearly, kWh)', 'Value',
-                self.total_unfulfilled, __name__, print_info = print_info)
-        
-        insert(dcf, 'Other Variable Operating Cost - Grid Electricity', 'Cost of grid electricity (yearly, $)', 'Value',
-                self.electricity_cost, __name__, print_info = print_info)
+        output_inserter_function(output_dict, self, dcf, 'Power_Management_Plugin') 
         
     def calculate_consumers(self, dcf):
         '''Negoitate available and stored power with power consumers. 
@@ -128,45 +183,49 @@ class Power_Management_Plugin:
         '''
 
         try:
-            flexible_available_power = dcf.inp['Power Generation']['Available Power (daily, kWh)']['Value']
-            flexible_available_power_yearly = daily_to_yearly_power(flexible_available_power)
+            flexible_available_energy_yearly = daily_to_yearly_power_quantity(
+                self.input_dict_resolved['Power Generation']['Available energy (daily)']['Value'])
         except KeyError:
-            flexible_available_power_yearly = np.zeros(len(dcf.operation_years))
+            flexible_available_energy_yearly = np.zeros(len(dcf.operation_years))
 
         try:
-            stored_available_power = dcf.inp['Power Generation']['Stored Power (daily, kWh)']['Value']
-            stored_available_power_yearly = daily_to_yearly_power(stored_available_power)
+            stored_available_energy_yearly = daily_to_yearly_power_quantity(
+                self.input_dict_resolved['Power Generation']['Stored energy (daily)']['Value'])
         except KeyError:
-            stored_available_power_yearly = np.zeros(len(dcf.operation_years))
+            stored_available_energy_yearly = np.zeros(len(dcf.operation_years))
 
-        self.total_unfulfilled, self.remaining_flexible, self.remaining_stored = allocate_power(dcf.inp['Power Consumption'], 
-                                                                                                flexible_available_power_yearly, 
-                                                                                                stored_available_power_yearly)
+        (self.total_unfulfilled, 
+         self.remaining_flexible, 
+         self.remaining_stored) = allocate_power(self.input_dict_resolved['Power Consumption'], 
+                                                 flexible_available_energy_yearly, 
+                                                 stored_available_energy_yearly)
 
     def calculate_electricity_cost(self, dcf):
 
-        cost_per_kWh = dcf.inp['Grid Electricity']['Cost ($/kWh)']['Value']
+        electricity_cost = Quantity(self.total_unfulfilled.unit['J']
+                                    * self.input_dict_resolved['Grid Electricity']['Cost']['Value'].unit['USD/J'], 
+                            'USD')
 
-        electricity_cost = self.total_unfulfilled * cost_per_kWh
-
-        self.electricity_cost = np.concatenate([np.zeros(dcf.inp['Financial Input Values']['construction time']['Value']), 
-                                                electricity_cost])
+        self.electricity_cost = np.concatenate([np.zeros(dcf.inp['Financial Input Values']['Construction time']['Value']), 
+                                                electricity_cost.unit['USD']])
+        
+        self.electricity_cost = Quantity(self.electricity_cost, 'USD')
     
 def allocate_power(consumption, flexible_power, stored_power):
     """Allocate available power to consumers based on their type."""
 
     # Initialize remaining power
-    remaining_flexible = flexible_power.copy()
-    remaining_stored = stored_power.copy()
+    remaining_flexible = flexible_power.unit['J'].copy()
+    remaining_stored = stored_power.unit['J'].copy()
     
     # Initialize total unfufilled demand
-    total_unfulfilled = np.zeros_like(flexible_power)
+    total_unfulfilled = np.zeros_like(flexible_power.unit['J'])
     
     # Process on_demand consumers first (stored power only)
     for key, consumer in consumption.items():
         if consumer['Type'] == 'on_demand':
 
-            demand = consumer['Value']
+            demand = consumer['Value'].unit['J']
 
             remaining_stored, unfulfilled = calculate_fulfillment(demand, remaining_stored)
 
@@ -176,7 +235,7 @@ def allocate_power(consumption, flexible_power, stored_power):
     for key, consumer in consumption.items():
         if consumer['Type'] == 'flexible':
 
-            demand = consumer['Value']
+            demand = consumer['Value'].unit['J']
             
             # Try flexible power first
             remaining_flexible, remaining_demand = calculate_fulfillment(demand, remaining_flexible)
@@ -191,7 +250,7 @@ def allocate_power(consumption, flexible_power, stored_power):
         else:
             print('Warning: Unknown power consumer type:', consumer['Type'], f',    in Power Consumption > {key} > Type')
     
-    return total_unfulfilled, remaining_flexible, remaining_stored
+    return Quantity(total_unfulfilled, 'J'), Quantity(remaining_flexible, 'J'), Quantity(remaining_stored, 'J')
         
 def calculate_fulfillment(demand, remaining):
     """Calculate fulfillment of demand using stored power."""

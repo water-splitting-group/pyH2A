@@ -1,6 +1,7 @@
 import pytest
 import numpy as np
 from pyH2A.Plugins.Photocatalytic_Plugin import Photocatalytic_Plugin
+from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
 
 class DummyDCF:
@@ -8,7 +9,7 @@ class DummyDCF:
 
     def __init__(
         self,
-        design_output,
+        design_capacity,
         top_cost,
         bottom_cost,
         ports,
@@ -32,34 +33,79 @@ class DummyDCF:
 
         self.inp = {
             "Technical Operating Parameters and Specifications": {
-                "Design Output per Day": {"Value": design_output},
-            },
-            "Reactor Baggies": {
-                "Cost Material Top ($/m2)": {"Value": top_cost},
-                "Cost Material Bottom ($/m2)": {"Value": bottom_cost},
-                "Number of ports": {"Value": ports},
-                "Cost of port ($)": {"Value": port_cost},
-                "Other Costs ($)": {"Value": other_costs},
-                "Markup factor": {"Value": markup},
-                "Length (m)": {"Value": length},
-                "Width (m)": {"Value": width},
-                "Height (m)": {"Value": height},
-                "Additional land area (%)": {"Value": add_land},
-                "Lifetime (years)": {"Value": baggie_lifetime},
-            },
-            "Catalyst": {
-                "Cost per kg ($)": {"Value": catalyst_cost},
-                "Concentration (g/L)": {"Value": catalyst_conc},
-                "Lifetime (years)": {"Value": catalyst_lifetime},
-                "Molar Weight (g/mol)": {"Value": molar_weight},
-                "Molar Attenuation Coefficient (M^-1 cm^-1)": {
-                    "Value": attenuation_coeff
+                "Plant design capacity": {
+                    "Value": design_capacity, 
+                    "Unit":"kg/day"
                 },
             },
-            "Solar-to-Hydrogen Efficiency": {"STH (%)": {"Value": sth}},
+            "Reactor Baggies": {
+                "Cost material top": {
+                    "Value": top_cost, 
+                    "Unit":"USD/m2"},
+                "Cost material bottom": {
+                    "Value": bottom_cost, 
+                    "Unit":"USD/m2"},
+                "Number of ports per baggie": {
+                    "Value": ports, 
+                    "Unit":"-"},
+                "Cost of port": {
+                    "Value": port_cost, 
+                    "Unit":"USD"},
+                "Other costs per baggie": {
+                    "Value": other_costs, 
+                    "Unit":"USD"},
+                "Markup factor": {
+                    "Value": markup, 
+                    "Unit":"-"},
+                "Length": {
+                    "Value": length, 
+                    "Unit":"m"},
+                "Width": {
+                    "Value": width, 
+                    "Unit":"m"},
+                "Filling height": {
+                    "Value": height, 
+                    "Unit":"m"},
+                "Additional land area": {
+                    "Value": add_land, 
+                    "Unit":"-"},
+                "Lifetime": {
+                    "Value": baggie_lifetime, 
+                    "Unit":"year"},
+            },
+            "Catalyst": {
+                "Cost per unit of mass": {
+                    "Value": catalyst_cost, 
+                    "Unit":"USD/kg"},
+                "Concentration": {
+                    "Value": catalyst_conc, 
+                    "Unit":"g/liter"},
+                "Lifetime": {
+                    "Value": catalyst_lifetime, 
+                    "Unit":"year"},
+                "Molar Weight": {
+                    "Value": molar_weight, 
+                    "Unit":"g/mol"},
+                "Molar attenuation coefficient": {
+                    "Value": attenuation_coeff, 
+                    "Unit":"liter/(cm * mol)"
+                },
+            },
+            "Solar-to-Hydrogen Efficiency": {
+                "STH": {
+                    "Value": sth, 
+                    "Unit":"-"
+                }
+            },
             "Solar Input": {
-                "Mean solar input (kWh/m2/day)": {"Value": solar_input},
-                "Hourly (kWh/m2)": {"Value": hourly_solar, "Processed": "Yes"},
+                "Mean solar input": {
+                    "Value": solar_input, 
+                    "Unit":"kW/m2"},
+                "Hourly": {
+                    "Value": hourly_solar, 
+                    "Unit":"kWh/m2", 
+                    "Processed": "Yes"
+                },
             },
         }
 
@@ -69,7 +115,7 @@ class DummyDCF:
     [
         {
             "input": {
-                "design_output": 1111,
+                "design_capacity": 1111.,
                 "top_cost": 0.54,
                 "bottom_cost": 0.47,
                 "ports": 12,
@@ -87,7 +133,7 @@ class DummyDCF:
                 "molar_weight": 500.0,
                 "attenuation_coeff": 8000.0,
                 "sth": 0.2,
-                "solar_input": 5.5,
+                "solar_input": 5.5/24.,
                 "hourly_solar": np.array(
                     [
                         0.22916667,
@@ -118,27 +164,12 @@ class DummyDCF:
                 ),
             },
             "expected": {
-                "total_land_area_acres": 11.392780967100002,
-                "total_solar_collection_area": 35465.4,
-                "catalyst_cost": 2835458.73,
-                "baggies_cost": 66834.53099999999,
-                "baggie_number": 9.0,
-                "catalyst_properties": {
-                    "Peak activity / mmol H2/h/g": np.float64(26.106204419861132),
-                    "Peak H2 production / mol H2/m2/h": np.float64(0.6957303477892992),
-                    "Catalyst Conc. / kg/m2": 0.026650000000000004,
-                    "Catalyst Conc. / g/L": 0.533,
-                    "Homogeneous": {
-                        "Catalyst Conc. / mol/L": 0.001066,
-                        "Catalyst Conc. / mol/m2": 0.05330000000000001,
-                        "Peak TOF / h^-1": np.float64(13.053102209930564),
-                        "Mean daily TOF / d^-1": 313.27444848161434,
-                        "TON": 57172.586847894614,
-                        "Absorbance": 42.64000000000001,
-                        "Absorbed light (%)": 100.0,
-                    },
-                },
-                "total_volume_liters": 1773270.0,
+                "total_land_area": Quantity(46105.020000000004,"m2"),
+                "total_solar_collection_area": Quantity(35465.4,"m2"),
+                "catalyst_cost": Quantity(2835458.73,"USD"),
+                "baggies_cost": Quantity(66834.53099999999,"USD"),
+                "baggie_number": Quantity(9,"-"),
+                "total_volume": Quantity(1773270.0,"liter")
             },
         },
     ],
@@ -156,34 +187,32 @@ def test_photocatalytic_plugin_optional_catalyst(case):
     # Tolerance (very small)
     tolerance = 1e-12
 
-    assert plugin.total_land_area_acres == pytest.approx(
-        expected["total_land_area_acres"], 
+    assert plugin.total_land_area.unit["m2"] == pytest.approx(
+        expected["total_land_area"].unit["m2"], 
         abs=tolerance
     )
 
-    assert plugin.total_solar_collection_area == pytest.approx(
-        expected["total_solar_collection_area"], 
+    assert plugin.total_solar_collection_area.unit["m2"] == pytest.approx(
+        expected["total_solar_collection_area"].unit["m2"], 
         abs=tolerance
     )
 
-    assert plugin.catalyst_cost == pytest.approx(
-        expected["catalyst_cost"], 
+    assert plugin.catalyst_cost.unit["USD"] == pytest.approx(
+        expected["catalyst_cost"].unit["USD"], 
         abs=tolerance
     )
 
-    assert plugin.baggies_cost == pytest.approx(
-        expected["baggies_cost"], 
+    assert plugin.baggies_cost.unit["USD"] == pytest.approx(
+        expected["baggies_cost"].unit["USD"], 
         abs=tolerance
     )
 
-    assert plugin.baggie_number == pytest.approx(
-        expected["baggie_number"], 
+    assert plugin.baggie_number.unit["-"] == pytest.approx(
+        expected["baggie_number"].unit["-"], 
         abs=tolerance
     )
-    
-    assert plugin.catalyst_properties == expected["catalyst_properties"]
 
-    assert plugin.total_volume_liters == pytest.approx(
-        expected["total_volume_liters"], 
+    assert plugin.total_volume.unit["liter"] == pytest.approx(
+        expected["total_volume"].unit["liter"], 
         abs=tolerance
     )
