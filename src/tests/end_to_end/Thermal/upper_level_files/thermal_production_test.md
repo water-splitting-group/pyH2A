@@ -8,6 +8,6 @@ File A | src/tests/end_to_end/Thermal/Thermal_Base_test.md
 
 Name | Value | Unit 
 --- | --- | --- 
-Operating capacity factor | 90% | - 
-Plant design capacity | 1,000 | kg/day
-Fraction of output that reaches gate | 100% | -
+Operating capacity factor | 40% | - 
+Plant design capacity | 2,000 | kg/day
+Fraction of output that reaches gate | 50% | -
