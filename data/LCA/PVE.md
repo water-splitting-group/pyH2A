@@ -70,8 +70,8 @@ Output File | data/LCA/Monte_Carlo_Output.csv
 Parameter | Name | Type | Values | File Index | Comment
 --- | --- | --- | --- | --- | --- 
 {Photovoltaic > Efficiency > Value, -} | PV efficiency (%) | value | Base; 0.4 | 0 | PV module efficiency uncertainty range.
-Battery > Energy density > Value |Battery density kWh / kg | value | 0.1; 0.2 | 1 | Battery specific energy uncertainty range.
-Reverse Osmosis > Recovery rate > Value | Reverse osmosis recovery rate | value | 0.4; 0.9 | 2 | Reverse osmosis recovery range.
+{Battery > Energy density > Value, kWh/kg} |Battery density kWh / kg | value | 0.1; 0.2 | 1 | Battery specific energy uncertainty range.
+{Reverse Osmosis > Recovery rate > Value, -} | Reverse osmosis recovery rate | value | 0.4; 0.9 | 2 | Reverse osmosis recovery range.
 {Electrolyzer > Hydrogen yield per unit energy > Value, kg/kWh} | Electrolyzer efficiency kg($H_{2}$) / kWh | value | Base; 0.025 | 3 | Same Monte Carlo range convention as other PV_E files.
 
 # Methods - Monte_Carlo_Analysis

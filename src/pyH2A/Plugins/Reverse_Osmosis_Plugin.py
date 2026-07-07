@@ -255,8 +255,9 @@ class Reverse_Osmosis_Plugin:
 
         self.calculate_electricity_demand()
         self.calculate_reverse_osmosis_scaling()
-        if _reverse_osmosis_devices_referenced_in_inp(dcf):
-            self.calculate_number_of_reverse_osmosis_devices()
+        device_throughput_resolved = self.input_dict_resolved['Reverse Osmosis'].get('Device throughput')
+        if device_throughput_resolved is not None:
+           self.calculate_number_of_reverse_osmosis_devices(device_throughput_resolved)
         self.consumption_type = "flexible"
 
         output_inserter_function(self.output_dict, self, dcf, 'Reverse_Osmosis_Plugin') 
@@ -293,16 +294,11 @@ class Reverse_Osmosis_Plugin:
                                                               / self.input_dict_resolved['Reverse Osmosis']['Average operating time fraction']['Value'].unit['-'],
                                                      'm3/year')
 
-    def calculate_number_of_reverse_osmosis_devices(self):
+    def calculate_number_of_reverse_osmosis_devices(self, device_throughput_resolved):
         '''Calculation of required number of reverse osmosis devices.
         '''
 
         maximum_yearly_sea_water_demand_m3 = max(self.sea_water_demand_by_year.unit['m3'])
-
-        device_throughput_resolved = self.input_dict_resolved['Reverse Osmosis'].get('Device throughput')
-
-        if device_throughput_resolved is None:
-            raise KeyError("Missing required input: Reverse Osmosis > Device throughput > Value. Please add Device throughput to calculate Number of devices required.")
 
         device_throughput_m3_per_year = device_throughput_resolved['Value'].unit['m3/year']
 
@@ -310,14 +306,3 @@ class Reverse_Osmosis_Plugin:
             raise ValueError("Reverse osmosis device throughput must be greater than zero.")
 
         self.number_of_devices_required = Quantity(maximum_yearly_sea_water_demand_m3 / device_throughput_m3_per_year, '-')
-
-
-def _reverse_osmosis_devices_referenced_in_inp(dcf):
-    '''Return True if any table's Path or Value cell references reverse osmosis device count.'''
-
-    target = 'reverse osmosis > number of devices required > value'
-    rows = [row for table in dcf.inp.values() for row in table.values()]
-    return any(
-        target in str(row.get(bottom_key, '')).strip().lower()
-        for row in rows for bottom_key in ('Path', 'Value')
-    )

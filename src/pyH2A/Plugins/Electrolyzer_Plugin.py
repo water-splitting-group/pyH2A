@@ -407,8 +407,9 @@ class Electrolyzer_Plugin:
         self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Electrolyzer_Plugin')
 
         self.calculate_H2_production(dcf)
-        if _electrolyzer_count_referenced_in_inp(dcf):
-            self.calculate_number_of_electrolyzers_required()
+        unit_power_resolved = self.input_dict_resolved['Electrolyzer'].get('Unit nominal power')
+        if unit_power_resolved is not None:
+           self.calculate_number_of_electrolyzers_required(unit_power_resolved)
         self.replacement_frequency = calculate_stack_replacement(self.yearly_data_duration, 
                                     self.input_dict_resolved['Electrolyzer']['Replacement time']['Value'].unit['h'])
 
@@ -471,16 +472,11 @@ class Electrolyzer_Plugin:
         self.yearly_data_unused_energy = yearly_data_unused_energy
         self.yearly_data_unused_energy_daily = yearly_data_unused_energy_daily
 
-    def calculate_number_of_electrolyzers_required(self):
+    def calculate_number_of_electrolyzers_required(self, unit_power_resolved):
         '''Calculation of required number of electrolyzer units.
         '''
 
         total_power = self.input_dict_resolved['Electrolyzer']['Nominal power']['Value'].unit['W']
-
-        unit_power_resolved = self.input_dict_resolved['Electrolyzer'].get('Unit nominal power')
-
-        if unit_power_resolved is None:
-            raise KeyError("Missing required input: Electrolyzer > Unit nominal power > Value. Please add Unit nominal power to calculate Number of electrolyzers required.")
 
         unit_power = unit_power_resolved['Value'].unit['W']
 
@@ -488,17 +484,6 @@ class Electrolyzer_Plugin:
             raise ValueError("Electrolyzer unit nominal power must be greater than zero.")
 
         self.number_of_electrolyzers_required = Quantity(total_power / unit_power, '-')
-
-
-def _electrolyzer_count_referenced_in_inp(dcf):
-    '''Return True if any table's Path or Value cell references electrolyzer unit count.'''
-
-    target = 'electrolyzer > number of electrolyzers required > value'
-    rows = [row for table in dcf.inp.values() for row in table.values()]
-    return any(
-        target in str(row.get(bottom_key, '')).strip().lower()
-        for row in rows for bottom_key in ('Path', 'Value')
-    )
 
 def calculate_electrolyzer_power_demand(power_requirement_increase, nominal_power, year):
     '''Calculation of yearly increase in electrolyzer power demand.

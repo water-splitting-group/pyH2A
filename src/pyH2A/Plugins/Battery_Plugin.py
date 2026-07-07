@@ -299,8 +299,9 @@ class Battery_Plugin:
         self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Battery_Plugin')
 
         self.calculate_electricity_storage(dcf)
-        if _battery_mass_referenced_in_inp(dcf):
-            self.calculate_battery_mass()
+        energy_density_resolved = self.input_dict_resolved['Battery'].get('Energy density')
+        if energy_density_resolved is not None:
+            self.calculate_battery_mass(energy_density_resolved)
 
         output_inserter_function(output_dict, self, dcf, 'Battery_Plugin')
 
@@ -336,31 +337,14 @@ class Battery_Plugin:
 
         return capacity, capacity_decrease
 
-    def calculate_battery_mass(self):
+    def calculate_battery_mass(self, energy_density_resolved):
         '''Calculation of installed battery mass from design capacity and energy density.
         '''
 
         design_capacity_kWh = self.input_dict_resolved['Battery']['Design capacity']['Value'].unit['kWh']
-
-        energy_density_resolved = self.input_dict_resolved['Battery'].get('Energy density')
-
-        if energy_density_resolved is None:
-            raise KeyError("Missing required input: Battery > Energy density > Value. Please add Energy density to calculate Mass (kg).")
-
         energy_density_kWh_per_kg = energy_density_resolved['Value'].unit['kWh/kg']
 
         if energy_density_kWh_per_kg == 0:
             raise ValueError("Battery energy density must be greater than zero.")
 
         self.battery_mass = Quantity(design_capacity_kWh / energy_density_kWh_per_kg, 'kg')
-
-
-def _battery_mass_referenced_in_inp(dcf):
-    '''Return True if any table's Path or Value cell references battery mass.'''
-
-    target = 'battery > mass > value'
-    rows = [row for table in dcf.inp.values() for row in table.values()]
-    return any(
-        target in str(row.get(bottom_key, '')).strip().lower()
-        for row in rows for bottom_key in ('Path', 'Value')
-    )
