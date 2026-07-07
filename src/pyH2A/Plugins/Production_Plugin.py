@@ -12,7 +12,7 @@ input_dict = {
 				"bounds": (0, None),
 			},
 			"Unit": {
-				"dimension": fu.Functional_Dimension_dot,
+				"dimension": fu.Functional_Dimension_per_time,
 			},
 			"optional": True,
 			"description": "Plant design capacity in functional units / time."

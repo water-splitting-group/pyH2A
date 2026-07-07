@@ -455,7 +455,7 @@ class Discounted_Cash_Flow:
 		Parameters
 		----------
 		Technical Operating Parameters and Specifications > Output at gate by year > Value : float
-			Output at gate by year in mass.
+			Output at gate in functional units by year.
 		'''
 
 		self.output_per_year_at_gate = process_input(self.inp, 
@@ -695,26 +695,26 @@ class Discounted_Cash_Flow:
 		'''Compile contributions to final product cost.
 		'''
 
-		revenue = self.expenses_per_kg_final_product(self.npv_dict['revenue'])
+		revenue = self.expenses_per_amount_final_product(self.npv_dict['revenue'])
 
-		self.contributions = {'Data': {'Initial equity depreciable capital': self.expenses_per_kg_final_product(self.npv_dict['initial_equity_depreciable_capital']),
-						   			   'Non depreciable capital' : self.expenses_per_kg_final_product(self.npv_dict['non_depreciable_capital_costs']),
-						 			   'Replacement costs' : self.expenses_per_kg_final_product(self.npv_dict['replacement_costs']),
-						      		   'Salvage' : -self.expenses_per_kg_final_product(self.npv_dict['salvage']),
-						 	  		   'Decomissioning' : self.expenses_per_kg_final_product(self.npv_dict['decomissioning']),
-						  	  		   'Fixed operating costs' : self.expenses_per_kg_final_product(self.npv_dict['fixed_operating_costs']),
-						 	  		   'Variable operating costs' : self.expenses_per_kg_final_product(self.npv_dict['variable_operating_costs']),
-						 	  		   'Working capital reserve' : self.expenses_per_kg_final_product(self.npv_dict['working_capital_reserve']),
-						   	  		   'Interest' : self.expenses_per_kg_final_product(self.npv_dict['interest']),
-						      		   'Principal payment' : self.expenses_per_kg_final_product(self.npv_dict['principal_payment']),
-						      		   'Taxes' : self.expenses_per_kg_final_product(self.npv_dict['taxes'])}
+		self.contributions = {'Data': {'Initial equity depreciable capital': self.expenses_per_amount_final_product(self.npv_dict['initial_equity_depreciable_capital']),
+						   			   'Non depreciable capital' : self.expenses_per_amount_final_product(self.npv_dict['non_depreciable_capital_costs']),
+						 			   'Replacement costs' : self.expenses_per_amount_final_product(self.npv_dict['replacement_costs']),
+						      		   'Salvage' : -self.expenses_per_amount_final_product(self.npv_dict['salvage']),
+						 	  		   'Decomissioning' : self.expenses_per_amount_final_product(self.npv_dict['decomissioning']),
+						  	  		   'Fixed operating costs' : self.expenses_per_amount_final_product(self.npv_dict['fixed_operating_costs']),
+						 	  		   'Variable operating costs' : self.expenses_per_amount_final_product(self.npv_dict['variable_operating_costs']),
+						 	  		   'Working capital reserve' : self.expenses_per_amount_final_product(self.npv_dict['working_capital_reserve']),
+						   	  		   'Interest' : self.expenses_per_amount_final_product(self.npv_dict['interest']),
+						      		   'Principal payment' : self.expenses_per_amount_final_product(self.npv_dict['principal_payment']),
+						      		   'Taxes' : self.expenses_per_amount_final_product(self.npv_dict['taxes'])}
 						      		   }
 
 		self.contributions['Total'] = self.final_product_cost
 		self.contributions['Table Group'] = 'Total cost of final product'
 
-	def expenses_per_kg_final_product(self, value):
-		'''Calculate expenses per kg final product.
+	def expenses_per_amount_final_product(self, value):
+		'''Calculate expenses per amount of final product.
 		'''
 
 		return value/self.npv_dict['final_product_sales'] * (1. + self.fin['inflation']['Value']) ** self.fin['Construction time']['Value'] / self.inflation_correction
@@ -724,7 +724,7 @@ class Discounted_Cash_Flow:
 
 		Notes
 		-----
-		'Workflow' and 'Display Parameters' tables are exempted.
+		'Workflow', 'Display Parameters' and 'Functional Unit' tables are exempted.
 		Furthermore, all tables that have the term 'Analysis' in their name
 		are also exempted.
 
@@ -733,7 +733,8 @@ class Discounted_Cash_Flow:
 		exceptions = ['Workflow', 
 					  'Display Parameters', 
 					  'Life Cycle Assessment',
-					  'Input files to merge']
+					  'Input files to merge', 
+					  'Functional Unit']
 
 		for top_key in self.inp:
 			if top_key not in exceptions and 'Analysis' not in top_key:
