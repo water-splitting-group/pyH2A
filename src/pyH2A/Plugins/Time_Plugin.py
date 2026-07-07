@@ -1,8 +1,22 @@
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+import pyH2A.Utilities.find_nearest as fn
 import numpy as np
 
 input_dict = {
+    "Construction": {
+        "<...>": {
+            "Value": {
+                "type": {int, float},
+                "bounds": (0, None),
+            },
+            "Unit": {
+                "dimension": "dimensionless",
+            },
+            "optional": False,
+            "description": "Fraction of capital spent during each construction year."
+        },
+    }, 
     "Financial Input Values": {
         "plant life": {
             "Value": {
@@ -14,17 +28,6 @@ input_dict = {
             },
             "optional": False,
             "description": "Operating lifetime of the plant."
-        },
-        "Construction time": {
-            "Value": {
-                "type": {int, float},
-                "bounds": (0, None),
-            },
-            "Unit": {
-                "dimension": "time",
-            },
-            "optional": False,
-            "description": "Construction time of the plant."
         },
         "startup year": {
             "Value": {
@@ -73,10 +76,10 @@ class Time_Plugin:
 
     Parameters
     ----------
+    Construction > [...] > Value : int or float
+        Fraction of capital spent during each construction year. Serves to determine the duration of the construction.
     Financial Input Values > plant life > Value : int or float
         Operating lifetime of the plant.
-    Financial Input Values > Construction time > Value : int or float
-        Construction time of the plant.
     Financial Input Values > startup year > Value : int
         Year the operation starts.
     Financial Input Values > ref year > Value : int
@@ -90,7 +93,10 @@ class Time_Plugin:
         Plant years relative: array of indexes representing the years involved in the plant life, 0 being the year production starts
         Operation years: Array containing the calendar years during which production takes place
         Operation years relative: array of indexes representing the years during which production takes place, 0 being the year production starts
+        Start index: relative year of startup
         Operation years ones: array of ones, of length equal to the number of production years        
+        Analysis years ones: array of ones, of length equal to the construciton time + the number of production years        
+        Construction years ones: array of ones, of length equal to the number of construction years        
 
     '''
 
@@ -105,23 +111,21 @@ class Time_Plugin:
     def generate_time(self):
         dictionary = self.input_dict_resolved['Financial Input Values']
 
-        construction_time_years = int(
-            round(
-                dictionary['Construction time']['Value'].unit['year']
-            )
-        )
+        construction_time_years = len(self.input_dict_resolved['Construction'])
 
         plant_life_years = int(
             round(
                 dictionary['plant life']['Value'].unit['year']
             )
-        )
+        ) 
 
         startup_year = int(
             round(
                 dictionary['startup year']['Value'].unit['-']
             )
         )
+
+        analysis_years = construction_time_years + plant_life_years
 
         # Scalar values
    
@@ -137,8 +141,12 @@ class Time_Plugin:
 
         self.operation_years_relative = Quantity(np.arange(0, plant_life_years), '-')
 
+        self.start_idx = Quantity(fn.find_nearest(self.plant_years_relative.unit['-'], 0)[0], '-')
+
         # array of "ones"
         self.operation_years_ones = Quantity(np.ones(plant_life_years), '-')
+        self.construction_years_ones = Quantity(np.ones(construction_time_years), '-')
+        self.analysis_years_ones = Quantity(np.ones(analysis_years), '-')
 
         # generation of the final dictionary
         self.time_quantities_dict = {
@@ -146,6 +154,9 @@ class Time_Plugin:
              "Plant years relative" : self.plant_years_relative, 
              "Operation years" : self.operation_years,
              "Operation years relative" : self.operation_years_relative,
-             "Operation years ones": self.operation_years_ones
+             "Start index" : self.start_idx,
+             "Operation years ones": self.operation_years_ones, 
+             "Analysis years ones": self.analysis_years_ones,
+             "Construction years ones": self.construction_years_ones, 
         }
 

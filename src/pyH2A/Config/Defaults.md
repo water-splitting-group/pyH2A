@@ -2,20 +2,22 @@
 
 Name | Type | Position | Description
 --- | --- | --- | ---
-Time_Plugin | plugin | 100 | Computes time-rlated arrays and values
-Inflation_Plugin | plugin | 200 | Computes the various inflation factors
-Production_Plugin | plugin | 300 | Computes plant output
-production | function | 400 | core function to process yearly plant output
-Capital_Cost_Plugin | plugin | 500 | Calculation of direct, indirect and non-depreciable capital costs
-initial_equity_depreciable_capital | function | 600 | core function to process depreciable capital costs
-non_depreciable_capital_costs | function | 700 | core function to process non-depreciable capital costs
-Replacement_Plugin | plugin | 800 | Calculation of replacement costs
-replacement_costs | function | 900 | core function to process replacement costs
-Labor_Operating_Cost_Plugin | plugin | 1000 | Calculation of labor operating costs
-Other_Fixed_Operating_Cost_Plugin | plugin | 1100 | Calculation of other fixed operating costs
-fixed_operating_costs | function | 1200 | core function to process fixed operating costs
-Variable_Operating_Cost_Plugin | plugin | 1300 | Calculation of variable operating costs, including utilities
-variable_operating_costs | function | 1400 | core function to process variable operating costs
+Time_Plugin | plugin | 100 | Computes time-related arrays and values
+time | function | 200 | core function to process time-related values
+Inflation_Plugin | plugin | 300 | Computes the various inflation factors
+inflation | function | 400 | core function to process inflation factors
+Production_Plugin | plugin | 500 | Computes plant output
+production | function | 600 | core function to process yearly plant output
+Capital_Cost_Plugin | plugin | 700 | Calculation of direct, indirect and non-depreciable capital costs
+initial_equity_depreciable_capital | function | 800 | core function to process depreciable capital costs
+non_depreciable_capital_costs | function | 900 | core function to process non-depreciable capital costs
+Replacement_Plugin | plugin | 1000 | Calculation of replacement costs
+replacement_costs | function | 1100 | core function to process replacement costs
+Labor_Operating_Cost_Plugin | plugin | 1200 | Calculation of labor operating costs
+Other_Fixed_Operating_Cost_Plugin | plugin | 1300 | Calculation of other fixed operating costs
+fixed_operating_costs | function | 1400 | core function to process fixed operating costs
+Variable_Operating_Cost_Plugin | plugin | 1500 | Calculation of variable operating costs, including utilities
+variable_operating_costs | function | 1600 | core function to process variable operating costs
 
 # Financial Input Values
 

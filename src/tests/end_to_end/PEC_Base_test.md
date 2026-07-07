@@ -2,10 +2,10 @@
 
 Name | Type | Description | Position 
 --- | --- | --- | --- 
-Hourly_Irradiation_Plugin | plugin | Plugin to calculate solar irradiation from typical meteorological year data | 1 
-PEC_Plugin | plugin | Plugin to model photoelectrochemical water splitting | 201 
-Solar_Concentrator_Plugin | plugin | Plugin to model solar concentration | 202 
-Multiple_Modules_Plugin | plugin | Modelling of module plant modules, adjustment of labor requirement | 301 
+Hourly_Irradiation_Plugin | plugin | Plugin to calculate solar irradiation from typical meteorological year data | 401 |
+PEC_Plugin | plugin | Plugin to model photoelectrochemical water splitting | 601 |
+Solar_Concentrator_Plugin | plugin | Plugin to model solar concentration | 602 |
+Multiple_Modules_Plugin | plugin | Modelling of module plant modules, adjustment of labor requirement | 701 |
 
 # Display Parameters
 

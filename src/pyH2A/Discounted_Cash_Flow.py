@@ -273,7 +273,6 @@ class Discounted_Cash_Flow:
 		self.npv_dict = {}	
 		self.plugs = {}
 
-		self.pre_workflow()
 		self.workflow(self.inp, self.npv_dict, self.plugs)  # execution of all functions and plugins specified in "Workflow"
 		self.post_workflow()
 
@@ -283,61 +282,6 @@ class Discounted_Cash_Flow:
 		if check_processing is True:
 			self.check_processing()
 
-	def pre_workflow(self):
-		'''Functions executed before workflow.
-
-		Parameters
-		----------
-		Workflow > initial_equity_depreciable_capital > Type : function
-			Initial equity depreciable capital function.
-		Workflow > initial_equity_depreciable_capital > Position : int
-			Position of initial equity depreciable capital function.
-		Workflow > non_depreciable_capital_costs > Type : function
-			Non-depreciable capital costs function.
-		Workflow > non_depreciable_capital_costs > Position : int
-			Position of non-depreciable capital costs function.
-		Workflow > replacement_costs > Type : function
-			Replacement costs function.
-		Workflow > replacement_costs > Position : int
-			Position of replacement costs function.	
-		Workflow > fixed_operating_costs > Type : function
-			Fixed operating costs function.
-		Workflow > fixed_operating_costs > Position : int
-			Position of fixed operating costs function.
-		Workflow > variable_operating_costs > Type : function
-			Variable operating costs function.
-		Workflow > variable_operating_costs > Position : int
-			Position of variable operating costs function.
-		Workflow > [...] > Type : plugin, optional
-			Plugin to be executed.
-		Workflow > [...] > Position : int, optional
-			Position of plugin to be executed.
-		Financial Input Values > ref year > Value : int
-			Financial reference year.
-		Financial Input Values > startup year > Value : int
-			Startup year for plant.
-		Financial Input Values > basis year > Value : int
-			Financial basis year.
-		Financial Input Values > current year capital costs > Value : int
-			Current year for capital costs.
-		Financial Input Values > plant life > Value : int
-			Plant life in years.
-		Financial Input Values > inflation > Value : float
-			Inflation rate.
-		Construction > [...] > Value : float
-			Percentage of capital spent in given year of construction. Number of entries 
-			determines construction period in year (each entry corresponds to one year).
-			Have to be in order (first entry corresponds to first construction year etc.).
-			Values of all entries have to sum to 100%.
-
-		Returns 
-		-------
-		Financial Input Values > Construction time > Value : int
-			Construction time in years.
-		'''
-
-		self.time()
-		self.inflation()
 
 	def workflow(self, inp, npv_dict, plugs_dict):
 		'''Executing plugins and functions for discounted cash flow.
@@ -397,59 +341,37 @@ class Discounted_Cash_Flow:
 		output = called_function()
 		npv_dict[function_name] = output
 
+	def expand_to_analysis_years(self, operation_array):
+		full = 0*self.plant_years_relative.unit['-']
+		full[self.start_idx:] = operation_array
+		return full
+	
 	def time(self):
 		'''Creating time scale information for discounted cash flow analysis.
 		'''
-		self.construction_time_years = len(self.inp['Construction'])
+			
+		self.time_dict = process_input(self.inp, 'Time', 'Years', 'Value')
+		
+		self.construction_years_ones = self.time_dict['Construction years ones']
+		self.construction_time_years = len(self.construction_years_ones.unit['-'])
 
-		insert(self, 'Financial Input Values', 'Construction time', 'Value', 
-			   self.construction_time_years, __name__, print_info = self.print_info)
-		insert(self, 'Financial Input Values', 'Construction time', 'Unit',
-		 'year', __name__, print_info = self.print_info)
+		self.plant_years_relative = self.time_dict['Plant years relative']
+		self.analysis_years_ones = self.time_dict['Analysis years ones']
 
-		self.nb_analysis_years = self.construction_time_years + self.fin['plant life']['Value']
-		self.plant_years_relative = np.arange(-self.construction_time_years, 
-									  self.fin['plant life']['Value'])
-
-		self.start_idx = fn.find_nearest(self.plant_years_relative, 0)[0]
+		self.start_idx = int(round(self.time_dict['Start index'].unit['-'])) # while the start index is natively an integer, due to the IO resolver behaviour, it is unsuitable to array slicing and needs to be converted into an int explicitly
 
 	def inflation(self):
 		'''Calculate inflation correction and inflators for specific commodities.
 		'''
 
-		inflation_rate = 1 + self.fin['inflation']['Value']
-		self.inflation_factor = inflation_rate ** self.plant_years_relative
-		self.inflation_correction = inflation_rate ** (self.fin['startup year']['Value'] - 
-			      									   self.fin['ref year']['Value'])
+		self.inflation_factor = process_input(self.inp, 'Inflation', 'Inflation factor full', 'Value')
+		self.inflation_correction = process_input(self.inp, 'Inflation', 'Inflation correction', 'Value')
 
-		plant_cost = read_textfile('pyH2A.Lookup_Tables~Plant_Cost_Index.csv', 
-			  						delimiter = '	')
-		gdp_deflator_price = read_textfile('pyH2A.Lookup_Tables~GDP_Implicit_Deflator_Price_Index.csv', 
-											delimiter = '	')
-		labor_price = read_textfile('pyH2A.Lookup_Tables~Labor_Index.csv', 
-									 delimiter = '	')
-		chemical_price = read_textfile('pyH2A.Lookup_Tables~SRI_Chemical_Price_Index.csv', 
-										delimiter = '	')
-
-		plant_idx = fn.find_nearest(plant_cost, [self.fin['current year capital costs']['Value'], 
-												 self.fin['basis year']['Value']])
-		gdp_idx = fn.find_nearest(gdp_deflator_price, [self.fin['ref year']['Value'], 
-													   self.fin['current year capital costs']['Value']])
-		labor_idx = fn.find_nearest(labor_price, [self.fin['ref year']['Value'], 
-												  self.fin['basis year']['Value']])
-		chemical_idx = fn.find_nearest(chemical_price, [self.fin['ref year']['Value'], 
-														self.fin['basis year']['Value']])
-
-		self.cepci_inflator = plant_cost[:,1][plant_idx[0]]/plant_cost[:,1][plant_idx[1]]
-		self.ci_inflator = gdp_deflator_price[:,1][gdp_idx[0]]/gdp_deflator_price[:,1][gdp_idx[1]]
-		self.combined_inflator = self.cepci_inflator * self.ci_inflator
-		self.labor_inflator = labor_price[:,1][labor_idx[0]]/labor_price[:,1][labor_idx[1]]
-		self.chemical_inflator = chemical_price[:,1][chemical_idx[0]]/chemical_price[:,1][chemical_idx[1]]
-
-	def expand_to_analysis_years(self, operation_array):
-		full = np.zeros(self.nb_analysis_years)
-		full[self.start_idx:] = operation_array
-		return full
+		self.cepci_inflator = process_input(self.inp, 'Inflation', 'CEPCI inflator', 'Value')
+		self.ci_inflator = process_input(self.inp, 'Inflation', 'CI inflator', 'Value')
+		self.combined_inflator = process_input(self.inp, 'Inflation', 'Combined inflator', 'Value')
+		self.labor_inflator = process_input(self.inp, 'Inflation', 'Labor inflator', 'Value')
+		self.chemical_inflator = process_input(self.inp, 'Inflation', 'Chemical inflator', 'Value')
 
 	def production(self):
 		'''Get plant output at gate by year.
@@ -484,18 +406,18 @@ class Discounted_Cash_Flow:
 		'''
 
 		self.depreciable_capital = process_input(self.inp, 'Depreciable Capital Costs', 'Inflated', 'Value')
-		self.depreciable_capital_inflation = self.depreciable_capital.unit['USD'] * self.inflation_correction
+		self.depreciable_capital_inflation = self.depreciable_capital.unit['USD'] * self.inflation_correction.unit['-']
 
 		process_table(self.inp, 'Construction', 'Value')
 
 		construction_years = []
 		for counter, key in enumerate(self.inp['Construction']):
-			cost = self.inp['Construction'][key]['Value'] * self.fin['equity']['Value'] * self.depreciable_capital_inflation * self.inflation_factor[counter]
+			cost = self.inp['Construction'][key]['Value'].unit['-'] * self.fin['equity']['Value'] * self.depreciable_capital_inflation * self.inflation_factor.unit['-'][counter]
 			construction_years.append(cost)
 
 		self.initial_depreciable_capital = np.sum(construction_years)
 
-		self.annual_initial_depreciable_capital = np.zeros(len(self.inflation_factor))
+		self.annual_initial_depreciable_capital = 0.*self.analysis_years_ones.unit['-']
 
 		self.annual_initial_depreciable_capital[:self.construction_time_years] = construction_years
 
@@ -513,10 +435,10 @@ class Discounted_Cash_Flow:
 		'''
 		
 		self.non_depreciable_capital = process_input(self.inp, 'Non-Depreciable Capital Costs', 'Inflated', 'Value')
-		self.non_depreciable_capital_inflated = self.non_depreciable_capital.unit['USD'] * self.inflation_correction
-		non_depreciable_capital_inflation_corrected = self.non_depreciable_capital_inflated * self.inflation_factor[0]
+		self.non_depreciable_capital_inflated = self.non_depreciable_capital.unit['USD'] * self.inflation_correction.unit['-']
+		non_depreciable_capital_inflation_corrected = self.non_depreciable_capital_inflated * self.inflation_factor.unit['-'][0]
 
-		self.annual_non_depreciable_capital = np.zeros(len(self.inflation_factor))
+		self.annual_non_depreciable_capital = 0.*self.analysis_years_ones.unit['-']
 		self.annual_non_depreciable_capital[0] = non_depreciable_capital_inflation_corrected
 
 		return non_depreciable_capital_inflation_corrected
@@ -552,11 +474,11 @@ class Discounted_Cash_Flow:
 
 		fixed_operating = process_input(self.inp, 'Fixed Operating Costs', 'Total', 'Value')
 		fixed_operating = Quantity(self.expand_to_analysis_years(fixed_operating.unit['USD']), 'USD')
-		fixed_operating_inflated = fixed_operating.unit['USD'] * self.inflation_correction
+		fixed_operating_inflated = fixed_operating.unit['USD'] * self.inflation_correction.unit['-']
 
 		self.start_up_time_idx = self.start_idx + self.fin['startup time']['Value']
 
-		yearly_costs = fixed_operating_inflated * self.inflation_factor
+		yearly_costs = fixed_operating_inflated * self.inflation_factor.unit['-']
 		yearly_costs[:self.start_up_time_idx] = yearly_costs[:self.start_up_time_idx] * self.fin['startup cost fixed']['Value']
 		yearly_costs[:self.start_idx] = 0
 
@@ -575,7 +497,7 @@ class Discounted_Cash_Flow:
 			Total variable operating costs.
 		'''
 
-		variable_operating_costs = self.inflation_factor * self.expand_to_analysis_years(self.inp['Variable Operating Costs']['Total']['Value'].unit['USD'])
+		variable_operating_costs = self.inflation_factor.unit['-'] * self.expand_to_analysis_years(self.inp['Variable Operating Costs']['Total']['Value'].unit['USD'])
 		variable_operating_costs[:self.start_up_time_idx] = variable_operating_costs[:self.start_up_time_idx] * self.fin['startup cost variable']['Value']
 		variable_operating_costs[:self.start_idx] = 0
 
@@ -592,11 +514,11 @@ class Discounted_Cash_Flow:
 		decommissioning = self.depreciable_capital_inflation * self.fin['decommissioning']['Value']
 		salvage = self.total_capital_inflated * self.fin['salvage']['Value']
 
-		self.decommissioning_costs = np.zeros(len(self.plant_years_relative))
-		self.decommissioning_costs[-1] = decommissioning * self.inflation_factor[-1]
+		self.decommissioning_costs = 0.*self.analysis_years_ones.unit['-']
+		self.decommissioning_costs[-1] = decommissioning * self.inflation_factor.unit['-'][-1]
 
-		self.salvage_income = np.zeros(len(self.plant_years_relative))
-		self.salvage_income[-1] = salvage * self.inflation_factor[-1]
+		self.salvage_income = 0.*self.analysis_years_ones.unit['-']
+		self.salvage_income[-1] = salvage * self.inflation_factor.unit['-'][-1]
 
 		return numpy_npv(self.after_tax_nominal_irr, self.salvage_income), numpy_npv(self.after_tax_nominal_irr, self.decommissioning_costs)
 
@@ -616,11 +538,11 @@ class Discounted_Cash_Flow:
 		'''Calculate constant debt financing.
 		'''
 
-		self.debt_financed_capital = self.depreciable_capital_inflation * (1 - self.fin['equity']['Value']) * self.inflation_factor[0]
+		self.debt_financed_capital = self.depreciable_capital_inflation * (1 - self.fin['equity']['Value']) * self.inflation_factor.unit['-'][0]
 		interest = self.debt_financed_capital * self.fin['interest']['Value']
-		self.interest_per_year = np.ones(len(self.inflation_factor)) * interest
+		self.interest_per_year = self.analysis_years_ones.unit['-'] * interest
 
-		self.principal_payment = np.zeros(len(self.inflation_factor))
+		self.principal_payment = 0.*self.analysis_years_ones.unit['-']
 		self.principal_payment[-1] = self.debt_financed_capital
 
 		return numpy_npv(self.after_tax_nominal_irr, self.interest_per_year), numpy_npv(self.after_tax_nominal_irr, self.principal_payment)
@@ -633,7 +555,7 @@ class Discounted_Cash_Flow:
 		annual_depreciable_capital = np.copy(self.annual_replacement_costs)
 		annual_depreciable_capital[self.start_idx] += total_initial_depreciable_capital
 
-		self.annual_charge = MACRS_depreciation(self.plant_years_relative, self.fin['depreciation length']['Value'], annual_depreciable_capital)		
+		self.annual_charge = MACRS_depreciation(self.plant_years_relative.unit['-'], self.fin['depreciation length']['Value'], annual_depreciable_capital)		
 
 		return numpy_npv(self.after_tax_nominal_irr, self.annual_charge)
 
@@ -660,13 +582,13 @@ class Discounted_Cash_Flow:
 		lcoe_h2_sales = self.npv_dict['h2_sales'] * (1. - self.total_tax_rate)
 
 		self.h2_cost_nominal = (lcoe_capital_costs + lcoe_depreciation + lcoe_principal_payment + lcoe_operating_costs)/lcoe_h2_sales * (1. + self.fin['inflation']['Value'].unit['-']) ** self.construction_time_years
-		self.h2_cost = self.h2_cost_nominal/self.inflation_correction
+		self.h2_cost = self.h2_cost_nominal/self.inflation_correction.unit['-']
 
 	def h2_revenue(self):
 		'''Calculate H2 sales revenue.
 		'''
 
-		self.annual_revenue = self.annual_sales * self.h2_cost_nominal * self.inflation_factor
+		self.annual_revenue = self.annual_sales * self.h2_cost_nominal * self.inflation_factor.unit['-']
 
 		return numpy_npv(self.after_tax_nominal_irr, self.annual_revenue)
 
@@ -723,7 +645,7 @@ class Discounted_Cash_Flow:
 		'''Calculate expenses per kg H2.
 		'''
 
-		return value/self.npv_dict['h2_sales'] * (1. + self.fin['inflation']['Value'].unit['-']) ** self.construction_time_years / self.inflation_correction
+		return value/self.npv_dict['h2_sales'] * (1. + self.fin['inflation']['Value'].unit['-']) ** self.construction_time_years / self.inflation_correction.unit['-']
 
 	def check_processing(self):
 		'''Check whether all tables in input file were used.
