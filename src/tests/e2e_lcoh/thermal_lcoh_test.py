@@ -6,7 +6,7 @@ from pyH2A.run_pyH2A import pyH2A
     [
         {
             "input": {
-                "input_file": "src/tests/end_to_end/Thermal/Thermal_base_test.md",
+                "input_file": "src/tests/end_to_end/Thermal/Thermal_Base_test.md",
                 "output_directory": "src/tests/end_to_end/",
             },
             "expected": {
