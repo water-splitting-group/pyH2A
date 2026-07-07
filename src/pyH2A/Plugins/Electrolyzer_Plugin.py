@@ -12,6 +12,9 @@ class Electrolyzer_Plugin:
         Dictionary containing plant life time-related quantities
     Electrolyzer > Nominal power > Value : float
         Nominal power of electrolyzer.
+    Electrolyzer > Unit nominal power > Value : float, optional
+        Nominal power of one electrolyzer unit, required to calculate Number of
+        electrolyzers required when Life Cycle Assessment is present.
     Electrolyzer > Power requirement increase per year > Value : float
         Electrolyzer power requirement increase per year due to stack degradation. 
         Dimensioless value > 0. Increase calculated as: (1 + increase per year) ^ year.
@@ -41,6 +44,10 @@ class Electrolyzer_Plugin:
         Yearly operation data of electrolyzer : duration of operation during the year.                
     Electrolyzer > H2 production (yearly) > Value : nd.array
         Yearly hydrogen production.
+    Electrolyzer > Number of electrolyzers required > Value : float
+        Number of electrolyzer units required, calculated as total nominal
+        electrolyzer power divided by unit nominal power. Inserted when
+        Life Cycle Assessment is present.
     Power Generation > Available energy (hourly) > Value : dict
         Available energy (hourly) after subtracting power consumed by electrolyzer. 
         (dictionary of years).
@@ -82,6 +89,17 @@ class Electrolyzer_Plugin:
                     },
                     "optional": False,
                     "description": "Nominal power of electrolyzer."
+                },
+                "Unit nominal power": {
+                    "Value": {
+                    "type": {float,},
+                    "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "power",
+                    },
+                    "optional": True,
+                    "description": "Nominal power of one electrolyzer unit for unit-count calculation."
                 },
                 "Power requirement increase per year": {
                     "Value": {
@@ -174,6 +192,15 @@ class Electrolyzer_Plugin:
                     "optional": False,
                     "description": "Yearly hydrogen production."
                 },
+                "Number of electrolyzers required": {
+                    "Value": {
+                        "inserted_value": "number_of_electrolyzers_required",
+                        "type": {int,float,},
+                        "dimension": "dimensionless",
+                    },
+                    "optional": True,
+                    "description": "Number of electrolyzer units required, calculated as total nominal electrolyzer power divided by unit nominal power."
+                },
                 "Actual stack replacement time": {
                     "Value": {
                         "inserted_value": "replacement_frequency",
@@ -209,7 +236,10 @@ class Electrolyzer_Plugin:
     def _run(self, dcf):
         self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Electrolyzer_Plugin')
 
-        self.calculate_H2_production()
+        self.calculate_H2_production(dcf)
+        unit_power_resolved = self.input_dict_resolved['Electrolyzer'].get('Unit nominal power')
+        if unit_power_resolved is not None:
+           self.calculate_number_of_electrolyzers_required(unit_power_resolved)
         self.replacement_frequency = calculate_stack_replacement(self.yearly_data_duration, 
                                     self.input_dict_resolved['Electrolyzer']['Replacement time']['Value'].unit['h'])
 
@@ -271,6 +301,19 @@ class Electrolyzer_Plugin:
         
         self.yearly_data_unused_energy = yearly_data_unused_energy
         self.yearly_data_unused_energy_daily = yearly_data_unused_energy_daily
+
+    def calculate_number_of_electrolyzers_required(self, unit_power_resolved):
+        '''Calculation of required number of electrolyzer units.
+        '''
+
+        total_power = self.input_dict_resolved['Electrolyzer']['Nominal power']['Value'].unit['W']
+
+        unit_power = unit_power_resolved['Value'].unit['W']
+
+        if unit_power == 0:
+            raise ValueError("Electrolyzer unit nominal power must be greater than zero.")
+
+        self.number_of_electrolyzers_required = Quantity(total_power / unit_power, '-')
 
 def calculate_electrolyzer_power_demand(power_requirement_increase, nominal_power, year):
     '''Calculation of yearly increase in electrolyzer power demand.
