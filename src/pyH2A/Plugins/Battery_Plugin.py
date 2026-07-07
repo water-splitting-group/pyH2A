@@ -21,17 +21,23 @@ class Battery_Plugin:
         Loss of capacity per year. Dimensionless value > 0.
     Battery > Round trip efficiency > Value : float
         Round trip efficiency of battery. Dimensionless value between 0 and 1.
-    
+    Battery > Energy density > Value : float, optional
+        Battery specific energy in kWh/kg. Used to calculate installed battery mass
+        from design capacity.
+
     Returns
     -------
     Power Generation > Stored energy (daily) > Value : dict
         Energy stored in battery daily (dictionary of years).
     Power Generation > Available energy (daily) > Value : dict
-        Available energy, daily basis, dictionary of years - power which 
+        Available energy, daily basis, dictionary of years - power which
         has not been stored in battery
     Power Generation > Available energy (hourly) > Value : float
-        Available energy (hourly) is set to zero, since available power is now 
-        only in daily format. 
+        Available energy (hourly) is set to zero, since available power is now
+        only in daily format.
+    Battery > Mass > Value : float
+        Installed battery mass in kg, calculated as design capacity divided by
+        energy density. Inserted when Life Cycle Assessment is present.
     '''
 
     def __init__(self, dcf, print_info, run = True):
@@ -118,11 +124,35 @@ class Battery_Plugin:
                     },                    
                     "optional": False,
                     "description": "Round trip efficiency of battery."
+                },
+                "Energy density": {
+                    "Value": {
+                        "type": {int, float,},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "energy / mass",
+                    },                    
+                    "optional": True,
+                    "description": "Battery specific energy in kWh/kg. Used to calculate installed battery mass from design capacity."
                 },  
             } 
         }
 
         self.output_dict = {
+            "Battery": {
+                "Mass": {
+                    "Value": {
+                        "inserted_value": "battery_mass",
+                        "type": {int, float,},
+                        "dimension": "mass",
+                    },
+                    "description": "Installed battery mass, calculated as design capacity divided by "
+                                   "energy density.",
+                    "optional": True,
+                },
+            },
+
             "Power Generation": {
                 "Stored energy (daily)": {
                     "Value": {
@@ -158,8 +188,11 @@ class Battery_Plugin:
         self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Battery_Plugin')
 
         self.calculate_electricity_storage()
-        
-        output_inserter_function(self.output_dict, self, dcf, 'Battery_Plugin')            
+        energy_density_resolved = self.input_dict_resolved['Battery'].get('Energy density')
+        if energy_density_resolved is not None:
+            self.calculate_battery_mass(energy_density_resolved)
+
+        output_inserter_function(self.output_dict, self, dcf, 'Battery_Plugin')
 
     def calculate_electricity_storage(self):
         '''Using hourly energy generation data and electrolyzer parameters,
@@ -192,3 +225,15 @@ class Battery_Plugin:
         capacity = nominal_capacity * capacity_decrease
 
         return capacity, capacity_decrease
+
+    def calculate_battery_mass(self, energy_density_resolved):
+        '''Calculation of installed battery mass from design capacity and energy density.
+        '''
+
+        design_capacity_kWh = self.input_dict_resolved['Battery']['Design capacity']['Value'].unit['kWh']
+        energy_density_kWh_per_kg = energy_density_resolved['Value'].unit['kWh/kg']
+
+        if energy_density_kWh_per_kg == 0:
+            raise ValueError("Battery energy density must be greater than zero.")
+
+        self.battery_mass = Quantity(design_capacity_kWh / energy_density_kWh_per_kg, 'kg')
