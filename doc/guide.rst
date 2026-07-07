@@ -16,36 +16,6 @@ pyH2A can be installed using ``pip``:
 
 	pip install pyH2A
 
-Optional performance backends for LCA solvers
-----------------------------------------------
-
-For faster sparse matrix solves in LCA workflows, you can optionally install:
-
-- ``pypardiso`` (MKL-backed, optimized for Windows/Linux):
-
-  .. code-block:: bash
-
-      pip install pypardiso
-
-- ``scikit-umfpack`` (UMFPACK-backed, cross-platform including Mac):
-
-  .. code-block:: bash
-
-      pip install scikit-umfpack
-
-Or install the platform-appropriate backend automatically via:
-
-.. code-block:: bash
-
-	pip install pyH2A[performance]
-
-If either solver is available, pyH2A will use it automatically. Otherwise, it falls back to SciPy's default sparse solvers.
-
-With ``pyH2A[performance]``, pip uses platform markers to install:
-
-- ``pypardiso`` on Windows/Linux
-- ``scikit-umfpack`` on macOS
-
 Choose configuration
 ====================
 
