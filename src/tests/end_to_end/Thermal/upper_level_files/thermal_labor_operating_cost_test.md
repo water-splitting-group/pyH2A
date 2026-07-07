@@ -8,5 +8,5 @@ File A | src/tests/end_to_end/Thermal/Thermal_Base_test.md
 
 Name | Value | Unit | Comment
 --- | --- | --- | --- 
-Staff | 7 | - | Number of staff
-Hourly labor cost | 50.0  | USD/h | Burdened labor cost, including overhead
+Staff | 14 | - | Number of staff
+Hourly labor cost | 100.0  | USD/h | Burdened labor cost, including overhead
