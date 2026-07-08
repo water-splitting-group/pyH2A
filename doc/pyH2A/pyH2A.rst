@@ -8,8 +8,5 @@ pyH2A
    cli_pyH2A
    run_pyH2A
    discounted_cash_flow
+   lca
    default_settings
-
-
-
-
