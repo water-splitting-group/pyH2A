@@ -52,7 +52,10 @@ class DummyDCF:
                 "plant_years_relative": Quantity(np.arange(-2,5), "-"),
                 "operation_years": Quantity(np.arange(2030,2035), "-"),
                 "operation_years_relative": Quantity(np.arange(0,5), "-"),   
-                "operation_years_ones": Quantity(np.ones(5), "-"),                                   
+                "start_idx": Quantity(2, "-"),
+                "operation_years_ones": Quantity(np.ones(5), "-"),    
+                "analysis_years_ones": Quantity(np.ones(7), "-"),   
+                "construction_years_ones": Quantity(np.ones(2), "-"),   
             },
         }
     ],
@@ -97,9 +100,28 @@ def test_time_plugin(case):
         atol=1e-12,  
     )    
 
+    assert plugin.start_idx.unit["-"] == pytest.approx(
+        expected["start_idx"].unit["-"],
+        abs=1e-12
+    )    
+
     np.testing.assert_allclose(
         plugin.operation_years_ones.unit["-"],
         expected["operation_years_ones"].unit["-"],
         rtol=1e-12,  
         atol=1e-12,  
     )   
+
+    np.testing.assert_allclose(
+        plugin.analysis_years_ones.unit["-"],
+        expected["analysis_years_ones"].unit["-"],
+        rtol=1e-12,  
+        atol=1e-12,  
+    )   
+
+    np.testing.assert_allclose(
+        plugin.construction_years_ones.unit["-"],
+        expected["construction_years_ones"].unit["-"],
+        rtol=1e-12,  
+        atol=1e-12,  
+    )           
