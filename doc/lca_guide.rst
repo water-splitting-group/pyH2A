@@ -219,20 +219,29 @@ Add the device throughput to the ``# Reverse Osmosis`` table:
 Run pyH2A with LCA
 ==================
 
-The run command is identical to a standard TEA run:
+The run command is identical to a standard TEA run and no additional flags are required:
 
 .. code-block:: bash
 
 	pyH2A run -i input.md -o .
 
-LCA is triggered automatically at the end of the financial workflow whenever the
-``# Life Cycle Assessment`` section is present. No additional flags are required. 
+Base case scenario
+------------------
+
+LCA workflow for the base case is automatically triggered at the end of the financial workflow
+provided that the ``# Life Cycle Assessment`` section and all the required components of the foreground
+process in the ``# LCA - ...`` section are present.
 
 Monte Carlo analysis with LCA
 ------------------------------
 
-To propagate parameter uncertainty through both TEA and LCA, include ``Monte_Carlo_Analysis``
-in the input file and set ``Dependent Variable`` to ``Climate change``:
+To propagate parameter uncertainty through LCA as well, include ``Monte_Carlo_Analysis``
+in the input file and set ``Dependent Variable`` to one of the impact assessment metrics 
+which is included in Characterisation matrix (C) of the openLCA matrix export. For example,
+to collect ``Climate change`` index from the results of EF Impact Assessment Method 
+(Environmental Footprint Impact Assessment Method), set the dependent variable to ``Climate change``,
+as illustrated in the example below. The Monte Carlo engine will sample the specified input parameters,
+re-run the full pipeline (including LCA) for each sample, and collect the chosen output.:
 
 .. code-block:: markdown
 
@@ -244,8 +253,16 @@ in the input file and set ``Dependent Variable`` to ``Climate change``:
 	Dependent Variable | Climate change
 	Output File | examples/LCA_example/Monte_Carlo_Output.csv
 
-The Monte Carlo engine samples the specified input parameters, re-runs the full pipeline (including LCA)
-for each sample, and collects the chosen output.
+
+	# Parameters - Monte_Carlo_Analysis
+
+    Parameter | Name | Type | Values | File Index | Comment
+    --- | --- | --- | --- | --- | --- 
+    {Photovoltaic > Efficiency > Value, -} | PV efficiency (%) | value | Base; 0.4 | 0 | PV module efficiency uncertainty range.
+    {Battery > Energy density > Value, kWh/kg} |Battery density kWh / kg | value | 0.1; 0.2 | 1 | Battery specific energy uncertainty range.
+    {Reverse Osmosis > Recovery rate > Value, -} | Reverse osmosis recovery rate | value | 0.4; 0.9 | 2 | Reverse osmosis recovery range.
+    {Electrolyzer > Hydrogen yield per unit energy > Value, kg/kWh} | Electrolyzer efficiency kg($H_{2}$) / kWh | value | Base; 0.025 | 3 | Same Monte Carlo range convention as other PV_E files.
+
 
 Access LCA results
 ==================
@@ -282,21 +299,27 @@ To retrieve a single result by impact name:
 	gwp100_key = 'Climate change no LT - Global warming potential (GWP100) no LT'
 	gwp100 = result.base_case.lca.lca_results[gwp100_key]['value']
 
+The output CSV file from a Monte Carlo run contains the same impact category names as column 
+headers, and the values are in the same units as reported in the base case. The CSV file also
+contains the sampled input parameters for each row, so that the full uncertainty propagation
+can be analyzed in post-processing. The Monte Carlo output file is specified in the 
+``# Monte_Carlo_Analysis`` section of the input file. 
 
 Artifact folder and maintenance
 ================================
 
-On first run, pyH2A factorises the technosphere matrix and pre-computes basis vectors. These
-are saved to an ``Initial_Artifacts`` subdirectory inside the matrix export folder so that
-subsequent runs (including every Monte Carlo worker) can skip the expensive factorisation.
-It stores only the minimum information needed to perform the Sherman-Morrison update.
+On first run, pyH2A factorises the technosphere matrix and pre-computes basis vectors. These,
+together with copies of the intervention and characterisation matrices and the impact category
+index, are saved to an ``Initial_Artifacts`` subdirectory inside the matrix export folder so that
+subsequent runs (including every Monte Carlo worker) can skip both the expensive factorisation
+and re-loading the original openLCA export.
 
 .. code-block:: text
 
 	<export_folder>/
 	    Initial_Artifacts/
 	        base_scaling_vector.npz   — A⁻¹f for the original demand vector
-	        A0_column.npz             — UUIDs and values of nonzero column-0 entries
+	        A0_column.npz             — UUIDs, values and units of nonzero column-0 entries
 	        basis_component.npz       — A⁻¹ eᵢ columns for each foreground component
 	        matrix_B.npz              — copy of the intervention matrix
 	        matrix_C.npz              — copy of the characterisation matrix
@@ -336,42 +359,42 @@ Troubleshooting
 ===============
 
 ``ValueError: No LCA component tables found in input``
---------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 No section whose name starts with ``LCA`` was found in the input file. Check that the
 ``# LCA - ...`` section header is spelled correctly and that the file was loaded without
 parsing errors.
 
 ``ValueError: UUID '...' ... is missing from the input LCA component tables``
--------------------------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A UUID in the nonzero entries of the technosphere matrix first column has no matching entry in
 any ``# LCA - ...`` table. Every foreground component must be listed. Find the missing UUID in
 ``index_A.csv`` to identify the process.
 
 ``ValueError: Expected N LCA components ... but got M``
---------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 More rows were found across all ``# LCA - ...`` tables than there are nonzero entries in
 column 0 of the technosphere matrix. Remove the extra rows or check that the correct matrix
 export folder is specified.
 
 ``ZeroDivisionError: Sherman-Morrison denominator is too small``
-----------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The scenario values caused the functional unit production amount to approach zero, making the
 rank-1 update numerically singular. Verify that the exchange amount for the H2 production
 foreground process is non-zero.
 
 ``KeyError: 'Unit'``
-----------------------
+~~~~~~~~~~~~~~~~~~~~~
 
 An ``# LCA - ...`` table row is missing its ``Unit`` column. Every row must declare a ``Unit`` —
 it is required to convert the resolved ``Value`` into the flow unit recorded in ``index_A.csv``,
 not merely informational. Add a ``Unit`` entry for the affected row.
 
 ``ValueError: Dimension mismatch: original dimension '...', but requested dimension '...'``
------------------------------------------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The ``Unit`` declared for an LCA component does not share a physical dimension with the flow's
 unit in ``index_A.csv`` (e.g. supplying a mass unit for a flow whose unit is energy). Check the
