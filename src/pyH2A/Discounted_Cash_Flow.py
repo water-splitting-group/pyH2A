@@ -361,7 +361,7 @@ class Discounted_Cash_Flow:
 		self.start_idx = int(round(self.time_dict['Start index'].unit['-'])) # while the start index is natively an integer, due to the IO resolver behaviour, it is unsuitable to array slicing and needs to be converted into an int explicitly
 
 	def inflation(self):
-		'''Calculate inflation correction and inflators for specific commodities.
+		'''Creating inflation correction and inflators information for specific commodities.
 		'''
 
 		self.inflation_factor = self.inp['Inflation']['Inflation factor full']['Value']
