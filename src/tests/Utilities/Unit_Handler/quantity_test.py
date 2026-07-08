@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 
-from pyH2A.Utilities.Unit_Handler.quantity import parse_composite_unit, UnitDictionary, Quantity
+from pyH2A.Utilities.Unit_Handler.quantity import parse_composite_unit, parse_reference, UnitDictionary, Quantity
 
 def test_parse_composite_unit_simple():
     multiplier, base, dim = parse_composite_unit("kWh")
@@ -100,3 +100,30 @@ def test_dimensionless_quantity():
     assert q.dimension == "dimensionless"
     assert q.unit["-"] == 0.5
     assert q.unit["ppm"] == 500000.0
+
+def test_parse_reference_with_bracket():
+    result = parse_reference('kg[H2]')
+    assert result == ('kg', 'H2')
+
+def test_parse_reference_without_bracket():
+    result = parse_reference('kg')
+    assert result == ('kg', None)
+
+def test_parse_reference_empty_bracket():
+    result = parse_reference('kg[]')
+    assert result == ('kg', None)
+
+def test_quantity_with_reference():
+    q = Quantity(10, 'kg[H2]')
+    assert q.reference == 'H2'
+    assert q.unit['g'] == 10000.0
+    assert q.dimension == 'mass'
+
+def test_quantity_repr_with_reference():
+    q = Quantity(5, 'kg[H2]')
+    assert '[H2]' in repr(q)
+
+def test_quantity_reference_dimension_mismatch_still_raises():
+    q = Quantity(10, 'kg[H2]')
+    with pytest.raises(ValueError, match="Dimension mismatch"):
+        _ = q.unit['J']

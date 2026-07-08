@@ -81,6 +81,44 @@ def parse_composite_unit(unit_str):
     return combined_multiplier, combined_base_str, combined_dim_str
 
 
+def parse_reference(unit_str):
+    """
+    Split a unit string into its clean unit part and an optional bracketed reference label.
+
+    Parameters
+    ----------
+    unit_str : str
+        Unit expression that may contain a trailing bracketed reference,
+        e.g. `kg[H2]`. Brackets are purely descriptive and are not
+        considered during unit computations.
+
+    Returns
+    -------
+    clean_unit_str : str
+        Unit expression with the bracketed reference (if any) removed.
+    reference : str or None
+        Text found inside the brackets, or `None` if no brackets are
+        present or the brackets are empty. If an opening bracket is
+        found without a matching closing bracket, `unit_str` is
+        returned unmodified with a `None` reference, so that it fails
+        naturally downstream during unit parsing.
+    """
+    before, open_bracket, rest = unit_str.partition('[')
+
+    if not open_bracket:
+        return unit_str.strip(), None
+
+    inside, close_bracket, after = rest.partition(']')
+
+    if not close_bracket:
+        return unit_str, None
+
+    reference = inside.strip()
+    clean_unit_str = (before + after).strip()
+
+    return clean_unit_str, reference if reference else None
+
+
 class UnitDictionary(dict):
     """
     A custom dictionary class designed for lazy runtime unit evaluations.
@@ -165,13 +203,14 @@ class Quantity:
     dimension string. Unit conversion is provided lazily through a
     `UnitDictionary` stored on `self.unit`.
     """
-    __slots__ = ['supplied_value', 
-                 'supplied_unit', 
-                 'base_value', 
-                 'base_unit', 
-                 'dimension', 
-                 'unit', 
-                 'is_absolute_temp']
+    __slots__ = ['supplied_value',
+                 'supplied_unit',
+                 'base_value',
+                 'base_unit',
+                 'dimension',
+                 'unit',
+                 'is_absolute_temp',
+                 'reference']
     
     def __init__(self, value, unit_str):
         '''
@@ -191,9 +230,10 @@ class Quantity:
         '''
 
         self.supplied_value = value
-        self.supplied_unit = unit_str.strip()
+        clean_unit_str, self.reference = parse_reference(unit_str.strip())
+        self.supplied_unit = clean_unit_str
         self.is_absolute_temp = False
-        
+
         # Detect hardcoded offset pathway
         if self.supplied_unit in ABSOLUTE_TEMPERATURE["supported_units"]:
             self.is_absolute_temp = True
@@ -218,8 +258,13 @@ class Quantity:
         Returns
         -------
         representation : str
-            String form `Quantity(<base_value>, '<base_unit>')`.
+            String form `Quantity(<base_value>, '<base_unit>')`. If a
+            reference label was supplied, it is appended to the unit
+            as `'<base_unit>[<reference>]'`.
         """
+        if self.reference:
+            return f"Quantity({self.base_value}, '{self.base_unit}[{self.reference}]')"
+
         return f"Quantity({self.base_value}, '{self.base_unit}')"
 
 
