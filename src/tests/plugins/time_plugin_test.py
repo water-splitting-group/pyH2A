@@ -16,10 +16,10 @@ class DummyDCF:
         self.inp = {
             "Construction":{
                 key:{
-                    "Value": 1, 
+                    "Value": value, 
                     "Unit": "-"
                 }
-                for key in construction          
+                for key, value in construction.items()          
             },
             "Financial Input Values": {
                 "plant life": {
@@ -42,7 +42,7 @@ class DummyDCF:
     [
         {
             "input": {
-                "construction": np.array(["year 0", "year 1"]),
+                "construction": {"year 0":0.5, "year 1":0.5},
                 "plant_life": 5,
                 "startup_year": 2030,
                 "ref_year": 2020,
