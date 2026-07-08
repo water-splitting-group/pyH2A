@@ -8,19 +8,22 @@ class DummyDCF:
 
     def __init__(
         self,
+        construction, 
         plant_life,
-        Construction_time,
         startup_year,
         ref_year,
     ):
         self.inp = {
+            "Construction":{
+                key:{
+                    "Value": 1, 
+                    "Unit": "-"
+                }
+                for key in construction          
+            },
             "Financial Input Values": {
                 "plant life": {
                     "Value": plant_life, 
-                    "Unit": "year", 
-                },
-                "Construction time": {
-                    "Value": Construction_time, 
                     "Unit": "year", 
                 },
                 "startup year": {
@@ -39,8 +42,8 @@ class DummyDCF:
     [
         {
             "input": {
+                "construction": np.array(["year 0", "year 1"]),
                 "plant_life": 5,
-                "Construction_time": 2,
                 "startup_year": 2030,
                 "ref_year": 2020,
             },
