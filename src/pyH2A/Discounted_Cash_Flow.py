@@ -2,7 +2,7 @@ import copy
 import numbers
 from functools import lru_cache
 import numpy as np
-from pyH2A.Utilities.input_modification import convert_input_to_dictionary, process_input, process_table, insert, read_textfile, set_by_path, execute_plugin
+from pyH2A.Utilities.input_modification import convert_input_to_dictionary, process_input, process_table, read_textfile, set_by_path, execute_plugin
 from pyH2A.LCA.LCA import LCA
 import pyH2A.Utilities.find_nearest as fn
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
@@ -350,7 +350,7 @@ class Discounted_Cash_Flow:
 		'''Creating time scale information for discounted cash flow analysis.
 		'''
 			
-		self.time_dict = process_input(self.inp, 'Time', 'Years', 'Value')
+		self.time_dict = self.inp['Time']['Years']['Value']
 		
 		self.construction_years_ones = self.time_dict['Construction years ones']
 		self.construction_time_years = len(self.construction_years_ones.unit['-'])
@@ -364,14 +364,14 @@ class Discounted_Cash_Flow:
 		'''Calculate inflation correction and inflators for specific commodities.
 		'''
 
-		self.inflation_factor = process_input(self.inp, 'Inflation', 'Inflation factor full', 'Value')
-		self.inflation_correction = process_input(self.inp, 'Inflation', 'Inflation correction', 'Value')
+		self.inflation_factor = self.inp['Inflation']['Inflation factor full']['Value']
+		self.inflation_correction = self.inp['Inflation']['Inflation correction']['Value']
 
-		self.cepci_inflator = process_input(self.inp, 'Inflation', 'CEPCI inflator', 'Value')
-		self.ci_inflator = process_input(self.inp, 'Inflation', 'CI inflator', 'Value')
-		self.combined_inflator = process_input(self.inp, 'Inflation', 'Combined inflator', 'Value')
-		self.labor_inflator = process_input(self.inp, 'Inflation', 'Labor inflator', 'Value')
-		self.chemical_inflator = process_input(self.inp, 'Inflation', 'Chemical inflator', 'Value')
+		self.cepci_inflator = self.inp['Inflation']['CEPCI inflator']['Value']
+		self.ci_inflator = self.inp['Inflation']['CI inflator']['Value']
+		self.combined_inflator = self.inp['Inflation']['Combined inflator']['Value']
+		self.labor_inflator = self.inp['Inflation']['Labor inflator']['Value']
+		self.chemical_inflator = self.inp['Inflation']['Chemical inflator']['Value']
 
 	def production(self):
 		'''Get plant output at gate by year.
