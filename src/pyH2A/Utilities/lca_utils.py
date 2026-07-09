@@ -80,7 +80,7 @@ def _load_impact_index(folder: str) -> List[dict]:
     path = os.path.join(folder, 'index_C.csv')
     if not os.path.exists(path):
         return []
-    return [{'index': int(row[0]), 'impact_name': row[2], 'impact_unit': row[3]}
+    return [{'index': int(row[0]), 'impact_name': row[2].strip(), 'impact_unit': row[3].strip()}
             for row in _csv_rows(path)]
 
 
