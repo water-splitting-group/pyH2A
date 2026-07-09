@@ -81,42 +81,58 @@ def parse_composite_unit(unit_str):
     return combined_multiplier, combined_base_str, combined_dim_str
 
 
+# Matches one or more word characters immediately followed by [label], e.g. 'kg[H2]' -> captures ('kg', 'H2').
+# Does not match a bracket with no preceding unit token (e.g. '[kg]H2'), so malformed/misplaced brackets are
+# left untouched and fail naturally downstream.
+REFERENCE_PATTERN = re.compile(r'(\w+)\[([^\[\]]*)\]')
+
+
 def parse_reference(unit_str):
     """
-    Split a unit string into its clean unit part and an optional bracketed reference label.
+    Split a composite unit string into its clean unit expression and a mapping
+    of per-token bracketed reference labels.
 
     Parameters
     ----------
     unit_str : str
-        Unit expression that may contain a trailing bracketed reference,
-        e.g. `kg[H2]`. Brackets are purely descriptive and are not
-        considered during unit computations.
+        Unit expression that may contain one or more bracketed reference
+        labels attached to individual unit tokens, e.g.
+        `kg[H2]/J[electricity]`. Brackets are purely descriptive and are
+        not considered during unit computations.
 
     Returns
     -------
     clean_unit_str : str
-        Unit expression with the bracketed reference (if any) removed.
-    reference : str or None
-        Text found inside the brackets, or `None` if no brackets are
-        present or the brackets are empty. If an opening bracket is
-        found without a matching closing bracket, `unit_str` is
-        returned unmodified with a `None` reference, so that it fails
-        naturally downstream during unit parsing.
+        Unit expression with all bracketed references removed.
+    reference : dict
+        Mapping of `{unit_token: label}` for each unit token that had a
+        non-empty bracketed label. Empty if no `[` is present, if no
+        label is non-empty, or if the brackets are malformed (unclosed,
+        or not preceded by a unit token), in which case `unit_str` is
+        returned unmodified so that it fails naturally downstream during
+        unit parsing.
     """
-    before, open_bracket, rest = unit_str.partition('[')
+    # Fast path: keeps bracket-free calls (the vast majority of ~122 real production call sites) cheap
+    # by skipping regex entirely when there's nothing to parse.
+    if '[' not in unit_str:
+        return unit_str.strip(), {}
 
-    if not open_bracket:
-        return unit_str.strip(), None
+    # Covers both unclosed brackets ('kg[H2') and brackets with nothing preceding them ('[kg]H2') — in
+    # both cases we deliberately don't guess, letting parse_composite_unit raise its own clear error downstream.
+    if REFERENCE_PATTERN.search(unit_str) is None:
+        return unit_str, {}
 
-    inside, close_bracket, after = rest.partition(']')
+    reference = {}
 
-    if not close_bracket:
-        return unit_str, None
+    def _extract(match):
+        unit_token, label = match.group(1), match.group(2)
+        if label:
+            reference[unit_token] = label
+        return unit_token
 
-    reference = inside.strip()
-    clean_unit_str = (before + after).strip()
+    clean_unit_str = REFERENCE_PATTERN.sub(_extract, unit_str).strip()
 
-    return clean_unit_str, reference if reference else None
+    return clean_unit_str, reference
 
 
 class UnitDictionary(dict):
@@ -258,12 +274,20 @@ class Quantity:
         Returns
         -------
         representation : str
-            String form `Quantity(<base_value>, '<base_unit>')`. If a
-            reference label was supplied, it is appended to the unit
-            as `'<base_unit>[<reference>]'`.
+            String form `Quantity(<base_value>, '<base_unit>')`. If
+            reference labels were supplied, each labeled unit token in
+            `base_unit` is reattached with its bracketed label, e.g.
+            `'J / kg'` with `{'J': 'energy', 'kg': 'H2'}` becomes
+            `'J[energy] / kg[H2]'`.
         """
         if self.reference:
-            return f"Quantity({self.base_value}, '{self.base_unit}[{self.reference}]')"
+            # base_unit can be a composite (multiple tokens) and self.reference is now a dict, so each
+            # token needs its own label reattached individually rather than appending one bracket at the end.
+            labeled_base_unit = ' '.join(
+                f"{token}[{self.reference[token]}]" if token in self.reference else token
+                for token in self.base_unit.split(' ')
+            )
+            return f"Quantity({self.base_value}, '{labeled_base_unit}')"
 
         return f"Quantity({self.base_value}, '{self.base_unit}')"
 

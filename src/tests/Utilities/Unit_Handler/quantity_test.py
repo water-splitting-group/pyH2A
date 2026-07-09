@@ -103,19 +103,19 @@ def test_dimensionless_quantity():
 
 def test_parse_reference_with_bracket():
     result = parse_reference('kg[H2]')
-    assert result == ('kg', 'H2')
+    assert result == ('kg', {'kg': 'H2'})
 
 def test_parse_reference_without_bracket():
     result = parse_reference('kg')
-    assert result == ('kg', None)
+    assert result == ('kg', {})
 
 def test_parse_reference_empty_bracket():
     result = parse_reference('kg[]')
-    assert result == ('kg', None)
+    assert result == ('kg', {})
 
 def test_quantity_with_reference():
     q = Quantity(10, 'kg[H2]')
-    assert q.reference == 'H2'
+    assert q.reference == {'kg': 'H2'}
     assert q.unit['g'] == 10000.0
     assert q.dimension == 'mass'
 
@@ -127,3 +127,62 @@ def test_quantity_reference_dimension_mismatch_still_raises():
     q = Quantity(10, 'kg[H2]')
     with pytest.raises(ValueError, match="Dimension mismatch"):
         _ = q.unit['J']
+
+def test_parse_reference_multiple_brackets():
+    result = parse_reference('kg[H2]/J[electricity]')
+    assert result == ('kg/J', {'kg': 'H2', 'J': 'electricity'})
+
+def test_parse_reference_multiple_brackets_spaced():
+    result = parse_reference('J[energy] / kg[H2]')
+    assert result == ('J / kg', {'J': 'energy', 'kg': 'H2'})
+
+def test_parse_reference_malformed_bracket_order():
+    result = parse_reference('[kg]H2')
+    assert result == ('[kg]H2', {})
+
+def test_quantity_composite_reference():
+    q = Quantity(10, 'kg[H2]/J[electricity]')
+    assert q.reference == {'kg': 'H2', 'J': 'electricity'}
+    assert q.dimension == 'mass / energy'
+
+def test_quantity_composite_reference_repr():
+    q = Quantity(5, 'J[energy] / kg[H2]')
+    assert '[energy]' in repr(q)
+    assert '[H2]' in repr(q)
+
+def test_quantity_composite_reference_real_pattern():
+    q = Quantity(10, 'kWh[solar]/m2[area]')
+    assert q.reference == {'kWh': 'solar', 'm2': 'area'}
+    assert q.unit['J / m2'] == pytest.approx(3.6e7)
+
+def test_quantity_lca_unit_with_reference():
+    q = Quantity(1, 'MJ[impact category]')
+    assert q.reference == {'MJ': 'impact category'}
+    assert q.unit['J'] == 1000000.0
+
+def test_quantity_absolute_temperature_with_reference():
+    q = Quantity(25, 'degC[reactor]')
+    assert q.reference == {'degC': 'reactor'}
+    assert q.unit['K'] == pytest.approx(298.15)
+
+def test_quantity_unregistered_lca_unit_with_reference_fails_cleanly():
+    # CTUe is not registered in FLAT_MULTIPLIERS today (separate, pre-existing
+    # gap, unrelated to #95). Confirms the bracket feature doesn't mask that
+    # gap — it still fails with a clear "unknown unit" error.
+    with pytest.raises(ValueError, match="Unknown unit"):
+        Quantity(1, 'CTUe[toxicity]')
+
+def test_quantity_lca_unit_ton_with_reference():
+    q = Quantity(2, 'ton[steel]')
+    assert q.reference == {'ton': 'steel'}
+    assert q.unit['kg'] == 2000.0
+
+def test_quantity_lca_composite_conversion_with_reference():
+    q = Quantity(1, 'kWh[grid electricity]')
+    assert q.reference == {'kWh': 'grid electricity'}
+    assert q.unit['MJ'] == pytest.approx(3.6)
+
+def test_quantity_leading_numeric_reference():
+    q = Quantity(1, '1/day[TOF]')
+    assert q.reference == {'day': 'TOF'}
+    assert q.unit['1 / s'] == pytest.approx(1/86400)
