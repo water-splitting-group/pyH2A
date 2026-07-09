@@ -15,107 +15,107 @@ from pyH2A.run_pyH2A import pyH2A
         },
         {
             "input": {
-                "input_file": "src/tests/end_to_end/PEC/upper_level_files/pec_base_capital_cost.md",
+                "input_file": "src/tests/end_to_end/PEC/upper_level_files/pec_capital_cost_test.md",
                 "output_directory": "src/tests/end_to_end/",
             },
             "expected": {
-                "lcoh": 139.8475151386626
+                "lcoh": 140.95384791867752
             },
         },
         {
             "input": {
-                "input_file": "src/tests/end_to_end/PEC/upper_level_files/pec_base_hourly_irradition.md",
+                "input_file": "src/tests/end_to_end/PEC/upper_level_files/pec_hourly_irradition_test.md",
                 "output_directory": "src/tests/end_to_end/",
             },
             "expected": {
-                "lcoh": 131.08137444479016
+                "lcoh": 20.241051800889103
             },
         },
         {
             "input": {
-                "input_file": "src/tests/end_to_end/PEC/upper_level_files/pec_base_labor_operating_cost.md",
+                "input_file": "src/tests/end_to_end/PEC/upper_level_files/pec_labor_operating_cost_test.md",
                 "output_directory": "src/tests/end_to_end/",
             },
             "expected": {
-                "lcoh": 139.91796619364624
+                "lcoh": 141.24887439224383
             },
         },
         {
             "input": {
-                "input_file": "src/tests/end_to_end/PEC/upper_level_files/pec_base_multiple_modules.md",
+                "input_file": "src/tests/end_to_end/PEC/upper_level_files/pec_multiple_modules_test.md",
                 "output_directory": "src/tests/end_to_end/",
             },
             "expected": {
-                "lcoh": 139.06238235169062
+                "lcoh": 138.7454994472626
             },
         },
         {
             "input": {
-                "input_file": "src/tests/end_to_end/PEC/upper_level_files/pec_base_other_fixed_operating_cost.md",
+                "input_file": "src/tests/end_to_end/PEC/upper_level_files/pec_other_fixed_operating_cost_test.md",
                 "output_directory": "src/tests/end_to_end/",
             },
             "expected": {
-                "lcoh": 140.3652784598172
+                "lcoh": 146.4761070153525
             },
         },
         {
             "input": {
-                "input_file": "src/tests/end_to_end/PEC/upper_level_files/pec_base_pec.md",
+                "input_file": "src/tests/end_to_end/PEC/upper_level_files/pec_pec_test.md",
                 "output_directory": "src/tests/end_to_end/",
             },
             "expected": {
-                "lcoh": 99.35205374520058
+                "lcoh": 56.71697140773922
             },
         },
         {
             "input": {
-                "input_file": "src/tests/end_to_end/PEC/upper_level_files/pec_base_production.md",
+                "input_file": "src/tests/end_to_end/PEC/upper_level_files/pec_production_test.md",
                 "output_directory": "src/tests/end_to_end/",
             },
             "expected": {
-                "lcoh": 127.74642981483795
+                "lcoh": 520.6098066922727
             },
         },
         {
             "input": {
-                "input_file": "src/tests/end_to_end/PEC/upper_level_files/pec_base_replacement.md",
+                "input_file": "src/tests/end_to_end/PEC/upper_level_files/pec_replacement_test.md",
                 "output_directory": "src/tests/end_to_end/",
             },
             "expected": {
-                "lcoh": 139.57923509057508
+                "lcoh": 141.98462716161907
             },
         },
         {
             "input": {
-                "input_file": "src/tests/end_to_end/PEC/upper_level_files/pec_base_solar_concentartor.md",
+                "input_file": "src/tests/end_to_end/PEC/upper_level_files/pec_solar_concentartor_test.md",
                 "output_directory": "src/tests/end_to_end/",
             },
             "expected": {
-                "lcoh": 173.72124001115256
+                "lcoh": 90.07290248911876
             },
         },
         {
             "input": {
-                "input_file": "src/tests/end_to_end/PEC/upper_level_files/pec_base_variable_operating_cost.md",
+                "input_file": "src/tests/end_to_end/PEC/upper_level_files/pec_variable_operating_cost_test.md",
                 "output_directory": "src/tests/end_to_end/",
             },
             "expected": {
-                "lcoh": 179.26310924919397
+                "lcoh": 418.31275217674124
             },
         },
     ],
     ids=[
         "PEC_Base_Main",
-        "PEC_Base_Capital_Cost_Plugin",
-        "PEC_Base_Hourly_Irradiation_Plugin",
-        "PEC_Base_Labor_Operating_Cost_plugin",
-        "PEC_Base_Multiple_Modules_plugin",
-        "PEC_Base_Other_Fixed_Operating_Cost_plugin",
-        "PEC_Base_PEC_Plugin",
-        "PEC_Base_Production_Plugin",
-        "PEC_Base_Replacement_Plugin",
-        "PEC_Base_Solar_concentrator_Plugin",
-        "PEC_Base_Variable_operating_Cost_plugin",
+        "PEC_Capital_Cost_Plugin",
+        "PEC_Hourly_Irradiation_Plugin",
+        "PEC_Labor_Operating_Cost_plugin",
+        "PEC_Multiple_Modules_plugin",
+        "PEC_Other_Fixed_Operating_Cost_plugin",
+        "PEC_PEC_Plugin",
+        "PEC_Production_Plugin",
+        "PEC_Replacement_Plugin",
+        "PEC_Solar_concentrator_Plugin",
+        "PEC_Variable_operating_Cost_plugin",
     ]
 )
 def test_e2e_lcoh(case):
