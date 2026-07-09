@@ -2,7 +2,15 @@
 Untracked/
 
 # LCA disk cache (generated at runtime)
-src/tests/lca/LCA_Test_PVE_GT/Initial_Artifacts/
+src/tests/lca/data/matrix_folders/smartphone_3layer_gwp_base/Initial_Artifacts/
+src/tests/lca/data/matrix_folders/smartphone_3layer_ced_base/Initial_Artifacts/
+src/tests/lca/data/matrix_folders/smartphone_3layer_acid_base/Initial_Artifacts/
+src/tests/lca/data/matrix_folders/smartphone_2layer_gwp/Initial_Artifacts/
+src/tests/lca/data/matrix_folders/smartphone_2layer_ced/Initial_Artifacts/
+src/tests/lca/data/matrix_folders/smartphone_2layer_acid/Initial_Artifacts/
+src/tests/lca/data/matrix_folders/smartphone_1layer_gwp/Initial_Artifacts/
+src/tests/lca/data/matrix_folders/smartphone_1layer_ced/Initial_Artifacts/
+src/tests/lca/data/matrix_folders/smartphone_1layer_acid/Initial_Artifacts/
 
 # docx Files
 *.docx
