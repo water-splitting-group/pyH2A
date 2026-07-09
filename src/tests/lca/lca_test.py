@@ -444,7 +444,7 @@ class TestLCAIntegration:
         LCA(_TEST_DATA_DIR, _full_dcf(1000.0))
         expected = [
             'base_scaling_vector.npz', 'A0_column.npz', 'basis_component.npz',
-            'matrix_B.npz', 'matrix_C.npz', 'impact_index.npz',
+            'matrix_B.npy', 'matrix_C.npz', 'impact_index.npz',
         ]
         for fname in expected:
             assert (_DISK_CACHE_DIR / fname).exists(), f'missing: {fname}'
