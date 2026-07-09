@@ -117,20 +117,15 @@ def parse_reference(unit_str):
     if '[' not in unit_str:
         return unit_str.strip(), {}
 
+    matches = list(REFERENCE_PATTERN.finditer(unit_str))
+
     # Covers both unclosed brackets ('kg[H2') and brackets with nothing preceding them ('[kg]H2') — in
     # both cases we deliberately don't guess, letting parse_composite_unit raise its own clear error downstream.
-    if REFERENCE_PATTERN.search(unit_str) is None:
+    if not matches:
         return unit_str, {}
 
-    reference = {}
-
-    def _extract(match):
-        unit_token, label = match.group(1), match.group(2)
-        if label:
-            reference[unit_token] = label
-        return unit_token
-
-    clean_unit_str = REFERENCE_PATTERN.sub(_extract, unit_str).strip()
+    reference = {match.group(1): match.group(2) for match in matches if match.group(2)}
+    clean_unit_str = REFERENCE_PATTERN.sub(r'\1', unit_str).strip()
 
     return clean_unit_str, reference
 
