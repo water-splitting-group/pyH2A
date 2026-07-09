@@ -276,11 +276,13 @@ def get_cache_paths(matrix_folder: str) -> dict:
     '''
     cache_dir = Path(matrix_folder) / 'Initial_Artifacts'
     cache_dir.mkdir(parents=True, exist_ok=True)
+    b_suffix = Path(find_matrix_path(matrix_folder, 'B') or 'B.npz').suffix
+    c_suffix = Path(find_matrix_path(matrix_folder, 'C') or 'C.npz').suffix
     return {
         'base_scaling_vector': cache_dir / 'base_scaling_vector.npz',
         'A0_column':           cache_dir / 'A0_column.npz',
         'basis_component':     cache_dir / 'basis_component.npz',
-        'matrix_B':            cache_dir / 'matrix_B.npz',
-        'matrix_C':            cache_dir / 'matrix_C.npz',
+        'matrix_B':            cache_dir / f'matrix_B{b_suffix}',
+        'matrix_C':            cache_dir / f'matrix_C{c_suffix}',
         'impact_index':        cache_dir / 'impact_index.npz',
     }
