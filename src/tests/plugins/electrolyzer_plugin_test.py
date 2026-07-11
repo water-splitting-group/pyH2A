@@ -16,6 +16,7 @@ class DummyDCF:
         efficiency,
         replacement_time,
         available_power_hourly,
+        unit_power=None,
     ):
 
         self.functional_unit = resolve_functional_unit('kg')
@@ -57,156 +58,182 @@ class DummyDCF:
             },
         }
 
+        # "Unit nominal power" is an optional input, only added to dcf.inp when provided,
+        # matching how a real input file would omit an unused optional row.
+        if unit_power is not None:
+            self.inp["Electrolyzer"]["Unit nominal power"] = {
+                "Value": unit_power,
+                "Unit": "kW",
+            }
+
+        self.operation_years = list(available_power_hourly.keys())
+
+# Case 1 is a realistic case for Electrolyzer_Plugin, with no unit power provided
+# (so number of electrolyzers required is not calculated). However, the second case, which is defined
+# based on case 1, is tested except the unit power is provided as an input, so number of
+# electrolyzers required is calculated.
+_CASE_1_INPUT = {
+    "construction_time": 2,
+    "nominal_power": 5500.0,
+    "power_increase": 0.003,
+    "min_capacity": 0.10,
+    "efficiency": 0.0185,
+    "replacement_time": 80000.0,
+    "available_power_hourly": {
+        2026: np.array(
+            [
+                200000000.2,
+                200500000.2,
+                201200000.2,
+                201200000.2,
+                0.0,
+                200500000.2,
+                201200000.2,
+                201200000.2,
+                201000000.2,
+                200500000.2,
+                201200000.2,
+                201200000.2,
+                201000000.2,
+                0.0,
+                201200000.2,
+                201200000.2,
+                201000000.2,
+                0.0,
+                201200000.2,
+                201200000.2,
+                201000000.2,
+                0.0,
+                201200000.2,
+                201200000.2,
+            ]
+        ),
+        2027: np.array(
+            [
+                0.0,
+                200500000.2,
+                201200000.2,
+                201200000.2,
+                201000000.2,
+                0.0,
+                201200000.2,
+                201200000.2,
+                201000000.2,
+                200500000.2,
+                201200000.2,
+                0.0,
+                201000000.2,
+                206500000.2,
+                201200000.2,
+                201200000.2,
+                201000000.2,
+                207500000.2,
+                201200000.2,
+                0.0,
+                201000000.2,
+                208500000.2,
+                201200000.2,
+                201200000.2,
+            ]
+        ),
+    },
+    "unit_power": None,
+}
+
+_CASE_1_EXPECTED = {
+    "h2_production": Quantity(np.array([0.0, 0.0, 2035.0, 2035.0]), 'kg'),
+    "replacement_frequency": Quantity(2.0, 'year'),
+    "yearly_data_year": Quantity(np.array([2026.0, 2027.0]), '-'),
+    "yearly_data_production": Quantity(np.array([2035.0, 2035.0]), 'kg'),
+    "yearly_data_duration": Quantity(np.array([20.0, 20.0]), 'h'),
+    "yearly_data_unused_energy": {
+        2026: Quantity(
+                np.array(
+                    [
+                    197622869.89416197,
+                    198122869.89416197,
+                    198822869.89416197,
+                    198822869.89416197,
+                    0.0,
+                    198122869.89416197,
+                    198822869.89416197,
+                    198822869.89416197,
+                    198622869.89416197,
+                    198122869.89416197,
+                    198822869.89416197,
+                    198822869.89416197,
+                    198622869.89416197,
+                    0.0,
+                    198822869.89416197,
+                    198822869.89416197,
+                    198622869.89416197,
+                    0.0,
+                    198822869.89416197,
+                    198822869.89416197,
+                    198622869.89416197,
+                    0.0,
+                    198822869.89416197,
+                    198822869.89416197,
+                    ]
+                ),
+                "kWh"
+        ),
+        2027: Quantity(
+                np.array(
+                    [
+                        0.0,
+                        198115738.50324446,
+                        198815738.50324446,
+                        198815738.50324446,
+                        198615738.50324446,
+                        0.0,
+                        198815738.50324446,
+                        198815738.50324446,
+                        198615738.50324446,
+                        198115738.50324446,
+                        198815738.50324446,
+                        0.0,
+                        198615738.50324446,
+                        204115738.50324446,
+                        198815738.50324446,
+                        198815738.50324446,
+                        198615738.50324446,
+                        205115738.50324446,
+                        198815738.50324446,
+                        0.0,
+                        198615738.50324446,
+                        206115738.50324446,
+                        198815738.50324446,
+                        198815738.50324446,
+                    ]
+            ),
+            'kWh'
+        ),
+    },
+    "yearly_data_unused_energy_daily": {
+        2026: Quantity(np.array([3972357397.8832397]), 'kWh'),
+        2027: Quantity(np.array([3992814770.0648894]), 'kWh'),
+    },
+    "number_of_electrolyzers_required": None,
+}
+
+
 @pytest.mark.parametrize(
     "case",
     [
         {
-            "input": {
-                "operation_years_relative": {
-                    # in the plugin logic, years are relative to startup year, not calendar year
-                    'Operation years relative': np.arange(0, 2) 
-                },       
-                "nominal_power": 5500.0,
-                "power_increase": 0.003,
-                "min_capacity": 0.10,
-                "efficiency": 0.0185,
-                "replacement_time": 80000.0,
-                "available_power_hourly": {
-                    0: np.array(
-                        [
-                            200000000.2,
-                            200500000.2,
-                            201200000.2,
-                            201200000.2,
-                            0.0,
-                            200500000.2,
-                            201200000.2,
-                            201200000.2,
-                            201000000.2,
-                            200500000.2,
-                            201200000.2,
-                            201200000.2,
-                            201000000.2,
-                            0.0,
-                            201200000.2,
-                            201200000.2,
-                            201000000.2,
-                            0.0,
-                            201200000.2,
-                            201200000.2,
-                            201000000.2,
-                            0.0,
-                            201200000.2,
-                            201200000.2,
-                        ]
-                    ),
-                    1: np.array(
-                        [
-                            0.0,
-                            200500000.2,
-                            201200000.2,
-                            201200000.2,
-                            201000000.2,
-                            0.0,
-                            201200000.2,
-                            201200000.2,
-                            201000000.2,
-                            200500000.2,
-                            201200000.2,
-                            0.0,
-                            201000000.2,
-                            206500000.2,
-                            201200000.2,
-                            201200000.2,
-                            201000000.2,
-                            207500000.2,
-                            201200000.2,
-                            0.0,
-                            201000000.2,
-                            208500000.2,
-                            201200000.2,
-                            201200000.2,
-                        ]
-                    ),
-                },
-            },
-            "expected": {
-                "h2_production": Quantity(np.array([2035.0, 2035.0]), 'kg'),
-                "replacement_frequency": Quantity(2.0, 'year'),
-                "yearly_data_year": Quantity(np.array([0.0, 1.0]),'-'),
-                "yearly_data_production": Quantity(np.array([2035.0, 2035.0]),'kg'),
-                "yearly_data_duration": Quantity(np.array([20.0, 20.0]),'h'),                                
-                "yearly_data_unused_energy": {
-                    0: Quantity(
-                            np.array(
-                                [
-                                    199994500.2 ,
-                                    200494500.2 ,
-                                    201194500.2 ,
-                                    201194500.2 ,
-                                    0.0,
-                                    200494500.2,
-                                    201194500.2,
-                                    201194500.2,
-                                    200994500.2,
-                                    200494500.2 ,
-                                    201194500.2 ,
-                                    201194500.2 ,
-                                    200994500.2 ,
-                                    0.0,
-                                    201194500.2 ,
-                                    201194500.2 ,
-                                    200994500.2 ,
-                                    0.0,
-                                    201194500.2 ,
-                                    201194500.2 ,
-                                    200994500.2 ,
-                                    0.0,
-                                    201194500.2 ,
-                                    201194500.2 ,
-                                ]
-                            ),
-                            "kWh"
-                    ),
-                    1: Quantity(
-                            np.array(
-                                [
-                                    0.0,
-                                    200494483.7 ,
-                                    201194483.7 ,
-                                    201194483.7 ,
-                                    200994483.7 ,
-                                    0.0,
-                                    201194483.7 ,
-                                    201194483.7 ,
-                                    200994483.7 ,
-                                    200494483.7 ,
-                                    201194483.7 ,
-                                    0.0,
-                                    200994483.7,
-                                    206494483.7 ,
-                                    201194483.7,
-                                    201194483.7 ,
-                                    200994483.7 ,
-                                    207494483.7 ,
-                                    201194483.7 ,
-                                    0.0,
-                                    200994483.7 ,
-                                    208494483.7 ,
-                                    201194483.7 ,
-                                    201194483.7 ,
-                                ]
-                        ),
-                        'kWh'
-                    ),    
-                },
-                "yearly_data_unused_energy_daily": {
-                    0: Quantity(np.array([4019790003.9999995]), 'kWh'),
-                    1: Quantity(np.array([4040389673.9999995]), 'kWh'),
-                },
-            },
+            "input": _CASE_1_INPUT,
+            "expected": _CASE_1_EXPECTED,
+        },
+        {
+            "input": {**_CASE_1_INPUT, "unit_power": 500.0},
+            "expected": {**_CASE_1_EXPECTED, "number_of_electrolyzers_required": Quantity(11.0, '-')},
         },
     ],
+    ids=[
+        "Realistic case - Electrolyzer Plugin",
+        "Realistic case - Electrolyzer Plugin with unit nominal power (electrolyzer count calculated)",
+    ]
 )
 def test_electrolyzer_plugin(case):
     """Check plugin handles edge and real cases without errors and returns correct annualized costs."""
@@ -266,3 +293,31 @@ def test_electrolyzer_plugin(case):
             rtol=tolerance,
             atol=tolerance,
         )
+
+    if expected["number_of_electrolyzers_required"] is None:
+        # No unit nominal power provided: number of electrolyzers required should not be calculated.
+        assert not hasattr(plugin, "number_of_electrolyzers_required")
+    else:
+        assert plugin.number_of_electrolyzers_required.unit['-'] == pytest.approx(
+            expected["number_of_electrolyzers_required"].unit['-'],
+            abs=tolerance
+        )
+
+
+def test_electrolyzer_plugin_zero_unit_power_raises():
+    """Number of electrolyzers required calculation must raise when unit nominal power is zero,
+    to avoid division by zero."""
+
+    dcf = DummyDCF(
+        construction_time=0,
+        nominal_power=5500.0,
+        power_increase=0.003,
+        min_capacity=0.10,
+        efficiency=0.0185,
+        replacement_time=80000.0,
+        available_power_hourly={2026: np.full(24, 200000000.2)},
+        unit_power=0.0,
+    )
+
+    with pytest.raises(ValueError):
+        Electrolyzer_Plugin(dcf, print_info=False)
