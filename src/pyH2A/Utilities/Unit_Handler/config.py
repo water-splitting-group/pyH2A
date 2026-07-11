@@ -217,6 +217,17 @@ DIMENSIONS = {
             "kOhm": 1e3
         }
     },
+    "radioactivity": {
+        "base": "Bq",
+        "conversions": {
+            "Bq": 1.0,
+            "kBq": 1e3,
+            "MBq": 1e6,
+            "GBq": 1e9,
+            "TBq": 1e12,
+            "Ci": 3.7e10
+        }
+    },
     "dimensionless": {
         "base": "-",
         "conversions": {
