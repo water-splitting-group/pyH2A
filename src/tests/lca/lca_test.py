@@ -5,7 +5,9 @@ import numpy as np
 import pytest
 import scipy.sparse
 from pyH2A.LCA.LCA import LCA
+from pyH2A.LCA.config import CONFIG
 from pyH2A.Utilities.lca_utils import get_cache_paths
+from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
 
 # ── Paths ──────────────────────────────────────────────────────────────────
@@ -214,10 +216,16 @@ class TestBuildScalingVector:
 class TestPerformLca:
     """Tests for perform_lca using dense matrices seeded into LCA._cache."""
 
-    def _make_lca(self, B, C, scaling_vector, impacts):
+    def _make_lca(self, B, C, scaling_vector, impacts, functional_unit_unit='kg'):
         LCA._cache['matrix_B'] = np.asarray(B, dtype=float)
         LCA._cache['matrix_C'] = np.asarray(C, dtype=float)
         LCA._cache['impact_index'] = impacts
+        # perform_lca reads the functional unit's flow unit from A0_column[2][0].
+        LCA._cache['A0_column'] = (
+            np.array(['functional-flow-uuid'], dtype=str),
+            np.array([1.0], dtype=float),
+            np.array([functional_unit_unit], dtype=str),
+        )
         lca = object.__new__(LCA)
         lca.scaling_vector = np.asarray(scaling_vector, dtype=float)
         return lca
@@ -226,18 +234,20 @@ class TestPerformLca:
         # g = [[2,0],[0,3]] @ [1,2] = [2,6]; h = [[1,1]] @ [2,6] = [8]
         lca = self._make_lca(
             B=[[2, 0], [0, 3]], C=[[1, 1]], scaling_vector=[1.0, 2.0],
-            impacts=[{'index': 0, 'impact_name': 'GWP', 'impact_unit': 'kg CO2-eq'}],
+            impacts=[{'index': 0, 'impact_name': 'GWP', 'impact_unit': 'kg CO2-Eq'}],
         )
         lca.perform_lca()
-        assert lca.lca_results['GWP']['value'] == pytest.approx(8.0)
+        assert lca.lca_results['GWP'].supplied_value == pytest.approx(8.0)
 
     def test_result_unit_stored_correctly(self):
         lca = self._make_lca(
             B=[[1]], C=[[1]], scaling_vector=[1.0],
-            impacts=[{'index': 0, 'impact_name': 'GWP', 'impact_unit': 'kg CO2-eq'}],
+            impacts=[{'index': 0, 'impact_name': 'GWP', 'impact_unit': 'kg CO2-Eq'}],
         )
         lca.perform_lca()
-        assert lca.lca_results['GWP']['unit'] == 'kg CO2-eq'
+        expected = CONFIG['kg CO2-Eq']
+        # Composite unit: <impact unit> / <functional unit> (both 'kg' here).
+        assert lca.lca_results['GWP'].supplied_unit == f"{expected['unit']} / kg"
 
     def test_empty_impact_index_gives_empty_results(self):
         lca = self._make_lca(
@@ -252,14 +262,14 @@ class TestPerformLca:
         lca = self._make_lca(
             B=np.eye(2), C=np.eye(2), scaling_vector=[3.0, 5.0],
             impacts=[
-                {'index': 0, 'impact_name': 'GWP', 'impact_unit': 'kg CO2-eq'},
+                {'index': 0, 'impact_name': 'GWP', 'impact_unit': 'kg CO2-Eq'},
                 {'index': 1, 'impact_name': 'CED', 'impact_unit': 'MJ'},
             ],
         )
         lca.perform_lca()
         assert set(lca.lca_results.keys()) == {'GWP', 'CED'}
-        assert lca.lca_results['GWP']['value'] == pytest.approx(3.0)
-        assert lca.lca_results['CED']['value'] == pytest.approx(5.0)
+        assert lca.lca_results['GWP'].supplied_value == pytest.approx(3.0)
+        assert lca.lca_results['CED'].supplied_value == pytest.approx(5.0)
 
 
 # ── initialize_all_artifacts ───────────────────────────────────────────────
@@ -289,7 +299,7 @@ class TestLoadAllFromDiskToRam:
         B = scipy.sparse.eye(2, format='csc')
         C = scipy.sparse.eye(2, format='csc')
         impact_index = np.array(
-            [{'index': 0, 'impact_name': 'GWP', 'impact_unit': 'kg CO2-eq'}],
+            [{'index': 0, 'impact_name': 'GWP', 'impact_unit': 'kg CO2-Eq'}],
             dtype=object,
         )
         np.savez(tmp_path / 'base_scaling_vector.npz', base_scaling_vector=sv)
@@ -367,7 +377,10 @@ class TestLCAIntegration:
         [[1000.,    0.,   0. ],
          [ -20.,    1.,   0. ],
          [  -5.2,   0.,   1. ]]
-    f = [1000., 0., 0.]  →  base scaling vector = [1., 20., 5.2]
+    f = [1000., 0., 0.] on disk, but compute_all_artifacts_from_scratch always
+    forces f[0] to 1.0 before solving (results are inherently per 1 unit of
+    the functional flow, regardless of the real magnitude reported by
+    openLCA) -> base scaling vector = [0.001, 0.02, 0.0052].
     All three column-0 entries are nonzero → all three UUIDs must be supplied.
     """
 
@@ -383,19 +396,26 @@ class TestLCAIntegration:
         n = LCA._cache['base_scaling_vector'].shape[0]
         assert lca.scaling_vector.shape == (n,)
 
+    def test_base_scaling_vector_ignores_real_functional_unit_magnitude(self):
+        # LCA_Test_Data's f on disk is [1000., 0., 0.], but f[0] is always
+        # forced to 1.0 before solving, so base_scaling_vector is scaled down
+        # by 1000x relative to what solving with the real f would give.
+        LCA(_TEST_DATA_DIR, _full_dcf(1000.0))
+        np.testing.assert_allclose(LCA._cache['base_scaling_vector'], [0.001, 0.02, 0.0052], rtol=1e-10)
+
     def test_no_change_scenario_matches_base_solution(self):
         lca = LCA(_TEST_DATA_DIR, _full_dcf(1000.0))
-        np.testing.assert_allclose(lca.scaling_vector[0], 1.0,  rtol=1e-10)
-        np.testing.assert_allclose(lca.scaling_vector[1], 20.0, rtol=1e-10)
-        np.testing.assert_allclose(lca.scaling_vector[2], 5.2,  rtol=1e-10)
+        np.testing.assert_allclose(lca.scaling_vector[0], 0.001,  rtol=1e-10)
+        np.testing.assert_allclose(lca.scaling_vector[1], 0.02, rtol=1e-10)
+        np.testing.assert_allclose(lca.scaling_vector[2], 0.0052,  rtol=1e-10)
 
     def test_halved_diagonal_doubles_first_element(self):
         lca = LCA(_TEST_DATA_DIR, _full_dcf(500.0))
-        np.testing.assert_allclose(lca.scaling_vector[0], 2.0, rtol=1e-10)
+        np.testing.assert_allclose(lca.scaling_vector[0], 0.002, rtol=1e-10)
 
     def test_halved_diagonal_full_scaling_vector(self):
         lca = LCA(_TEST_DATA_DIR, _full_dcf(500.0))
-        np.testing.assert_allclose(lca.scaling_vector, [2.0, 40.0, 10.4], rtol=1e-10)
+        np.testing.assert_allclose(lca.scaling_vector, [0.002, 0.04, 0.0104], rtol=1e-10)
 
     def test_lca_results_dict_populated(self):
         lca = LCA(_TEST_DATA_DIR, _full_dcf(1000.0))
@@ -405,13 +425,14 @@ class TestLCAIntegration:
     def test_lca_results_have_value_and_unit_keys(self):
         lca = LCA(_TEST_DATA_DIR, _full_dcf(1000.0))
         for result in lca.lca_results.values():
-            assert 'value' in result
-            assert 'unit' in result
+            assert isinstance(result, Quantity)
+            assert hasattr(result, 'supplied_value')
+            assert hasattr(result, 'supplied_unit')
 
     def test_lca_result_values_are_finite(self):
         lca = LCA(_TEST_DATA_DIR, _full_dcf(1000.0))
         for result in lca.lca_results.values():
-            assert np.isfinite(float(result['value']))
+            assert np.isfinite(float(result.supplied_value))
 
     def test_no_lca_tables_raises_value_error(self):
         with pytest.raises(ValueError, match='LCA'):
@@ -425,10 +446,10 @@ class TestLCAIntegration:
 
     def test_different_scenarios_produce_different_results(self):
         lca1 = LCA(_TEST_DATA_DIR, _full_dcf(1000.0))
-        results1 = {k: v['value'] for k, v in lca1.lca_results.items()}
+        results1 = {k: v.supplied_value for k, v in lca1.lca_results.items()}
         _clear_caches()
         lca2 = LCA(_TEST_DATA_DIR, _full_dcf(500.0))
-        results2 = {k: v['value'] for k, v in lca2.lca_results.items()}
+        results2 = {k: v.supplied_value for k, v in lca2.lca_results.items()}
         nonzero = [n for n in results1 if results1[n] != 0.0 or results2[n] != 0.0]
         assert len(nonzero) > 0, "all impact results are zero — test is vacuous"
         for name in nonzero:
