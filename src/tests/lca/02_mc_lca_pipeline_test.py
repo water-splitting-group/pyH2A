@@ -5,10 +5,8 @@ Monte_Carlo_Analysis specified, fixes the random seed at 42, passes the file
 to Monte_Carlo_Analysis exactly as a normal run would, and compares the
 resulting results array against precalculated outcomes.
 
-Uses Cumulative energy demand rather than the 3-layer model's GWP indicator
-as the dependent variable, since 'Cumulative energy demand' is already
-registered in DEPENDENT_VARIABLE_CONFIG (Monte_Carlo_Analysis/config.py) --
-unlike 'Global warming potential', it needs no new config entry.
+Uses Cumulative energy demand, since 'Cumulative energy demand' is already
+registered in DEPENDENT_VARIABLE_CONFIG (Monte_Carlo_Analysis/config.py).
 
 Matrix: src/tests/lca/data/matrix_folders/smartphone_3layer_ced_base
 Input:  src/tests/lca/data/input_files/Smartphone_3Layer_CED_MC_seed42.md
