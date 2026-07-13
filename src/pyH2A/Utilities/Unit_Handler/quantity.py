@@ -1,4 +1,5 @@
 import re
+from functools import lru_cache
 import numpy as np
 
 from pyH2A.Utilities.Unit_Handler.config import FLAT_MULTIPLIERS, FLAT_BASES, FLAT_DIMENSIONS, ABSOLUTE_TEMPERATURE
@@ -7,9 +8,10 @@ from pyH2A.Utilities.Unit_Handler.config import FLAT_MULTIPLIERS, FLAT_BASES, FL
 # Filters out spaces and empty strings automatically based on regex logic.
 TOKEN_PATTERN = re.compile(r'([*/()])|\s+')
 
+@lru_cache(maxsize=None)
 def parse_composite_unit(unit_str):
     """
-    Parse a composite unit (like 'kWh / cm2' or '(kWh * m)/m2') string into conversion multiplier, 
+    Parse a composite unit (like 'kWh / cm2' or '(kWh * m)/m2') string into conversion multiplier,
     resulting composite base unit, and composite dimension.
 
     This function expands user-facing units (e.g., `kWh / cm2` or
@@ -37,6 +39,14 @@ def parse_composite_unit(unit_str):
     ValueError
         If an unknown unit token is encountered or the expression cannot
         be evaluated.
+
+    Notes
+    -----
+    Memoized with :func:`functools.lru_cache`: the result depends only on
+    `unit_str` (and the module-level unit tables, which are fixed at import
+    time), and this function is called on every `Quantity` construction and
+    every `.unit[...]` lookup, often with the same handful of unit strings
+    repeated many times (e.g. once per Monte Carlo sample).
     """
     tokens = TOKEN_PATTERN.split(unit_str)
     # Remove empty/whitespace tokens
@@ -171,9 +181,10 @@ class Quantity:
                  'base_unit', 
                  'dimension', 
                  'unit', 
-                 'is_absolute_temp']
-    
-    def __init__(self, value, unit_str):
+                 'is_absolute_temp',
+                 'reference']
+
+    def __init__(self, value, unit_str, reference=None):
         '''
         Create a `Quantity` from a numeric value and unit expression.
 
@@ -183,6 +194,12 @@ class Quantity:
             Supplied numeric value.
         unit_str : str
             Unit expression compatible with the unit handler configuration.
+        reference : str, optional
+            Equivalency substance or other qualifier that is not itself a
+            parseable unit (e.g. ``"CO2-eq"`` for an ``"kg CO2-eq"`` LCA
+            impact result), kept alongside the physical unit for display or
+            bookkeeping purposes. Not used in any conversion or dimension
+            logic.
 
         Returns
         -------
@@ -193,6 +210,7 @@ class Quantity:
         self.supplied_value = value
         self.supplied_unit = unit_str.strip()
         self.is_absolute_temp = False
+        self.reference = reference
         
         # Detect hardcoded offset pathway
         if self.supplied_unit in ABSOLUTE_TEMPERATURE["supported_units"]:
@@ -218,9 +236,28 @@ class Quantity:
         Returns
         -------
         representation : str
-            String form `Quantity(<base_value>, '<base_unit>')`.
+            String form `Quantity(<base_value>, '<base_unit>')`, with a
+            trailing `reference=...` when a reference was supplied.
         """
-        return f"Quantity({self.supplied_value}, '{self.supplied_unit}')"
+        if self.reference is not None:
+            return f"Quantity({self.base_value}, '{self.base_unit}', reference={self.reference!r})"
+        return f"Quantity({self.base_value}, '{self.base_unit}')"
+
+    def __str__(self):
+        """
+        Provide a human-readable representation using the originally
+        supplied value and unit (not the base unit), plus the reference
+        qualifier when present.
+
+        Returns
+        -------
+        representation : str
+            String form `<supplied_value> <supplied_unit>`, with a
+            trailing ` <reference>` when a reference was supplied.
+        """
+        if self.reference is not None:
+            return f"{self.supplied_value} {self.supplied_unit} {self.reference}"
+        return f"{self.supplied_value} {self.supplied_unit}"
 
 
 
