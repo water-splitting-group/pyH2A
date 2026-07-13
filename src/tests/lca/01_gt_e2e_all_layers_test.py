@@ -39,6 +39,7 @@ from types import SimpleNamespace
 
 import pytest
 from pyH2A.LCA.LCA import LCA
+from pyH2A.LCA.config import CONFIG
 from pyH2A.Utilities.input_modification import convert_input_to_dictionary
 from pyH2A.Utilities.lca_utils import get_cache_paths
 
@@ -86,12 +87,18 @@ def _run_lca_cold(input_file_stem):
     return LCA(matrix_folder, SimpleNamespace(inp=inp))
 
 
-def _assert_matches(lca, impact_name, expected_value, expected_unit):
-    result = lca.lca_results[impact_name]['value']
+def _assert_matches(lca, impact_name, expected_value, expected_impact_unit):
+    """``expected_impact_unit`` is the raw openLCA unit string (e.g. 'kg CO2-eq'),
+    used as a CONFIG lookup key to check the resolved unit stored on the result
+    Quantity, expressed as ``<impact unit> / <functional unit>``."""
+    quantity = lca.lca_results[impact_name]
+    result = quantity.supplied_value
     diff_pct = (result - expected_value) / expected_value * 100
     print(f'\n  pyH2A={result:.6f}  reference={expected_value:.6f}  diff={diff_pct:+.4f}%')
     assert result == pytest.approx(expected_value, rel=1e-3)
-    assert lca.lca_results[impact_name]['unit'] == expected_unit
+    expected = CONFIG[expected_impact_unit]
+    functional_unit_unit = str(LCA._cache['A0_column'][2][0])
+    assert quantity.supplied_unit == f"{expected['unit']} / {functional_unit_unit}"
 
 
 # ── 1-layer: single scenario per method ─────────────────────────────────────
