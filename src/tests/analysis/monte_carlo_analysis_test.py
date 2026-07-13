@@ -19,6 +19,7 @@ from pyH2A.Analysis.Monte_Carlo_Analysis import (
     normalize_parameter,
     select_non_reference_value,
 )
+from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
 
 # ── divide_into_batches ────────────────────────────────────────────────────────
@@ -178,7 +179,7 @@ class TestMcResponseWorker:
     @patch('pyH2A.Analysis.Monte_Carlo_Analysis.Monte_Carlo_Analysis.Discounted_Cash_Flow')
     def test_returns_lca_variable_for_non_h2_cost_key(self, mock_dcf_class):
         mock_inst = MagicMock()
-        mock_inst.lca.lca_results = {'Climate change': {'value': 0.45}}
+        mock_inst.lca.lca_results = {'Climate change': Quantity(0.45, 'kg')}
         mock_dcf_class.return_value = mock_inst
 
         result = _mc_response_worker(np.array([[1.0], [2.0]]), {}, {}, 'Climate change')
