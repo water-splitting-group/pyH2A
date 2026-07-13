@@ -1,5 +1,6 @@
 import shutil
 import numpy as np
+from pyH2A.LCA.config import CONFIG
 from pyH2A.Utilities.input_modification import process_table
 from pyH2A.Utilities.lca_utils import (
     atomic_savez,
@@ -34,8 +35,12 @@ class LCA:
     scaling_vector : numpy.ndarray
         Scenario-specific activity scaling vector. Set by :meth:`build_scaling_vector`.
     lca_results : dict
-        LCIA results keyed by impact name. Each value is a dictionary with
-        ``"value"`` and ``"unit"`` entries. Set by :meth:`perform_lca`.
+        LCIA results keyed by impact name. Each value is a
+        :class:`~pyH2A.Utilities.Unit_Handler.quantity.Quantity` instance,
+        inherently expressed per 1 unit of the functional flow (the demand
+        vector's first entry is always solved as exactly ``1.0``, regardless
+        of the real magnitude reported by openLCA), as a composite unit of
+        ``<impact unit> / <functional unit>``. Set by :meth:`perform_lca`.
 
     Raises
     ------
@@ -104,10 +109,10 @@ class LCA:
         Populates ``LCA._cache`` with keys ``base_scaling_vector``, ``A0_column``
         (nonzero first-column entries as UUIDs, values, and flow units),
         ``basis_component`` (precomputed ``A^{-1} e_i`` basis vectors),
-        ``matrix_B`` and ``matrix_C`` (sparse originals), and ``impact_index``. Disk paths are
-        resolved by :func:`~pyH2A.Utilities.lca_utils.get_cache_paths`, which
-        also creates the ``Initial_Artifacts`` subdirectory on first call. Disk
-        writes use :func:`~pyH2A.Utilities.lca_utils.atomic_savez` for atomic
+        ``matrix_B`` and ``matrix_C`` (sparse originals), and ``impact_index``.
+        Disk paths are resolved by :func:`~pyH2A.Utilities.lca_utils.get_cache_paths`,
+        which also creates the ``Initial_Artifacts`` subdirectory on first call.
+        Disk writes use :func:`~pyH2A.Utilities.lca_utils.atomic_savez` for atomic
         file replacement.
         '''
 
@@ -150,13 +155,22 @@ class LCA:
         LCA._cache['matrix_B']        = matrix_of(str(paths['matrix_B']))
         LCA._cache['matrix_C']        = matrix_of(str(paths['matrix_C']))
         LCA._cache['impact_index']    = list(np.load(str(paths['impact_index']), allow_pickle=True)['impact_index'])
-    
+
     def compute_all_artifacts_from_scratch(self):
         '''Compute all LCA artifacts from source matrices and populate the RAM cache.
 
         Loads matrices via :func:`~pyH2A.Utilities.lca_utils.load_matrices_from_folder`,
         factorizes the technosphere matrix, solves for the base scaling vector,
-        precomputes Sherman-Morrison basis columns, and populates ``LCA._cache``.        
+        precomputes Sherman-Morrison basis columns, and populates ``LCA._cache``.
+
+        Notes
+        -----
+        The demand vector's first entry (``f[0]``) is always solved as
+        exactly ``1.0``, regardless of the real magnitude reported by
+        openLCA, so that the resulting scaling vector - and every downstream
+        LCIA result - is inherently expressed per 1 unit of the functional
+        flow, without needing a separate normalization step or cached
+        artifact for the real demand magnitude.
         '''
         (   impact_index,
             techno_index_uuid_values,
@@ -166,7 +180,8 @@ class LCA:
             f,
         ) = load_matrices_from_folder(self.matrix_folder)
         solver = factorize(A)
-        f_vector = np.asarray(f).reshape(-1)
+        f_vector = np.asarray(f, dtype=float).reshape(-1).copy()
+        f_vector[0] = 1.0
         LCA._cache['base_scaling_vector'] = solver(f_vector)
          # Cache uuid, value, and flow unit columns of techno_index_uuid_values (UUID and unit columns are strings and cannot be serialised as numeric).
         LCA._cache['A0_column'] = (
@@ -188,8 +203,8 @@ class LCA:
         # Cache the original sparse B and C matrices for future reuse
         LCA._cache['matrix_B'] = B
         LCA._cache['matrix_C'] = C
-        
-    
+
+
     def save_all_to_disk(self, paths: dict):
         '''Save all artifacts from RAM to disk cache.
 
@@ -341,14 +356,28 @@ class LCA:
         Notes
         -----
         Stores results on ``self.lca_results`` as a dictionary mapping impact
-        names to dictionaries with ``"value"`` and ``"unit"`` entries.
+        names to ``Quantity`` instances. No normalization is performed here:
+        since :meth:`compute_all_artifacts_from_scratch` always solves with
+        the demand vector's first entry forced to ``1.0``, ``h[i]`` is
+        already expressed per 1 unit of the functional flow. Each result is
+        expressed as a composite unit of ``<impact unit> / <functional unit>``
+        (e.g. ``'kg / kg'``), where the functional unit's flow unit is read
+        directly from the cached ``A0_column`` (technosphere row 0, the
+        reference/functional flow, always present as the process's own
+        product-output entry and always first in ``A0_column`` since it is
+        the lowest possible row index).
         '''
         g = LCA._cache['matrix_B'] @ self.scaling_vector
         h = LCA._cache['matrix_C'] @ g
 
+        # openLCA flow units sometimes carry a pluralization suffix (e.g. "Item(s)")
+        # that the unit parser cannot handle, since parentheses are grouping syntax.
+        functional_unit_unit = str(LCA._cache['A0_column'][2][0]).replace('(s)', '')
+
         self.lca_results = {}
         for i in LCA._cache['impact_index']:
-            self.lca_results[i['impact_name']] = {
-                'value': h[i['index']],
-                'unit': i['impact_unit']
-            }
+            unit_map = CONFIG[i['impact_unit']]
+            self.lca_results[i['impact_name']] = Quantity(
+                h[i['index']],
+                f"{unit_map['unit']} / {functional_unit_unit}"
+            )
