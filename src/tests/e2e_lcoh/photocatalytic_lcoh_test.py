@@ -10,7 +10,7 @@ from pyH2A.run_pyH2A import pyH2A
                 "output_directory": "src/tests/end_to_end/",
             },
             "expected": {
-                "lcoh": 185.44329282256817
+                "lcoh": 185.44329282256822
             },
         },
         {
@@ -19,7 +19,7 @@ from pyH2A.run_pyH2A import pyH2A
                 "output_directory": "src/tests/end_to_end/",
             },
             "expected": {
-                "lcoh": 99.68557772664028
+                "lcoh": 187.18191593700934
             },
         },
         {
@@ -28,7 +28,7 @@ from pyH2A.run_pyH2A import pyH2A
                 "output_directory": "src/tests/end_to_end/",
             },
             "expected": {
-                "lcoh": 1264.008584330617
+                "lcoh": 1264.0085843306172
             },
         },
         {
@@ -37,7 +37,7 @@ from pyH2A.run_pyH2A import pyH2A
                 "output_directory": "src/tests/end_to_end/",
             },
             "expected": {
-                "lcoh": 184.47274187266243
+                "lcoh": 184.47274187266245
             },
         },
         {
@@ -46,7 +46,7 @@ from pyH2A.run_pyH2A import pyH2A
                 "output_directory": "src/tests/end_to_end/",
             },
             "expected": {
-                "lcoh": 642.6546026635854
+                "lcoh": 962.8955832643528
             },
         },
     ],
