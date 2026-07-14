@@ -6,7 +6,6 @@ DEPENDENT_VARIABLE_CONFIG = {
 		'header': 'cost',
 		'label': 'H2 Cost ($/kg)',
 		'unit': r'\$/kg($H_{2}$)',
-		'source': 'h2_cost',
 	},
 	'Climate change': {
 		'header': 'climate change',
