@@ -73,7 +73,7 @@ Molar Attenuation Coefficient (M^-1 cm^-1) | 4000 | Assumption for calculation o
 
 Name | Value | Comment
 --- | --- | ---
-Height (m) | 0.15 | Optimal height depends on absorption coefficient of material/complex and catalytic activity (TOF or mol H2/h/g). Height of 5 cm based on experimental set-up used in Kang 2015 (shown in Kang 2015 SI).
+Height (m) | 0.10 | Optimal height depends on absorption coefficient of material/complex and catalytic activity (TOF or mol H2/h/g). Height of 5 cm based on experimental set-up used in Kang 2015 (shown in Kang 2015 SI).
 Length (m) | 623.0 | Baggie parameters based on Pinaud 2013.
 Width (m) | 22.2 |
 Cost Material Top ($/m2) | 1.04
