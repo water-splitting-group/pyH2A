@@ -65,7 +65,7 @@ Name | Value | Comment
 --- | --- | ---
 Cost per kg ($) | 3,000 | CatCost Model of Urea/Melamine derived catalyst, 5% mass yield, 0.5% wt% Ruthenium as cost placeholder for CDots (Kang 2015 uses 0.48% wt% CDots on C3N4), 60 kWh electricity per kg(catalyst) due to electrochemical CDot synthesis, process template "Metal on Metal Oxide - Strong Electrostatic Adsorption" used in CatCost Model, 5 t/a production scale, estimated cost: 890 $/kg, increased to 3,000 $/kg.
 Concentration (g/L) | 0.533 | Kang 2015: 2% STH, 80 mg C3N4/CDot catalyst in 150 ml, 1150 umol H2 after 6h, 9 cm^2 irradiation area (2266 J/h incident irradiation), ca. 2.395 mmol H2/h/g; Tremblay 2020: 3.4% STH (200 W m^-2), 30 mg C3N4 + catalase in 20 ml, 47.49 umol H2/h, ca. 1.583 mmol H<sub>2</sub>/h/g (ca. 5 cm<sup>2</sup> irradiation area gives reported STH); Zhao 2021: 1.16% STH (100 mW/cm^2), 0.64 cm^2 irradiated area, 11.25 umol H2 h^-1, 40 mg catalyst, 0.281 mmol H2/g/h, activity 420 nm irradiation: 65 umol H2/h, 40 mg, 1.625 mmol H2/g/h
-Lifetime (years) | 0.5 | Kang 2015, 45 days continuous irradiation, 200 days with recycling
+Lifetime (years) | 1 | Kang 2015, 45 days continuous irradiation, 200 days with recycling
 Molar Weight (g/mol) | 1000 | Assumption for calculation of hypothetical homogeneous water splitting catalyst.
 Molar Attenuation Coefficient (M^-1 cm^-1) | 8000 | Assumption for calculation of hypothetical homogeneous water splitting catalyst.
 
@@ -83,7 +83,7 @@ Cost of port ($) | 30 | Cost per port.
 Other Costs ($) | 610.7 | Other costs per baggie.
 Markup factor | 1.5 | Markup factor of baggies.
 Additional land area (%) | 30.0% | Land area required in addition to area occupied by baggies.
-Lifetime (years) | 1 | Lifetime of reactor baggies.
+Lifetime (years) | 5 | Lifetime of reactor baggies.
 
 # Catalyst Separation
 
