@@ -22,8 +22,8 @@ from pyH2A import __version__
 # -- Project information -----------------------------------------------------
 
 project = 'pyH2A'
-copyright = '2022, Jacob Schneidewind'
-author = 'Jacob Schneidewind'
+copyright = '2026, Water Splitting Group, Jacob Schneidewind'
+author = 'Water Splitting Group, Jacob Schneidewind'
 
 # The full version, including alpha/beta/rc tags
 release = __version__
