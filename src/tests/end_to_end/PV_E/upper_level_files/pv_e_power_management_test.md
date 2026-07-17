@@ -9,8 +9,6 @@ File A | src/tests/end_to_end/PV_E/PV_E_Base_test.md
 Name | Value | Unit | Type | Comment
 --- | --- | --- | ---
 Test consumer | 1 | kWh | on_demand | Reference value is 0.
-Test consumer 2 | 1 | kWh | on_demand | New component
-Test consumer 3 | 1 | kWh | flexible | New component
 
 # Grid Electricity
 
