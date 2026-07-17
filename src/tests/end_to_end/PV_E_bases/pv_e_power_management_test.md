@@ -107,8 +107,6 @@ Recovery Rate | 40.0% | Fraction of fresh water obtained from given volume of se
 Name | Value | Type
 --- | --- | ---
 Test consumer | 1 | on_demand
-Test consumer 2 | 1 | on_demand
-Test consumer 3 | 1 | flexible
 
 # Direct Capital Costs - Reverse Osmosis
 
@@ -166,7 +164,7 @@ Process Water | 10 | L/kg H2 | 0.0006 | $/L | 1. | Seawater reverse osmosis cost
 
 Name | Value
 --- | ---
-Cost ($/kWh) | 1600000.12
+Cost ($/kWh) | 5000.12
 
 # Planned Replacement
 

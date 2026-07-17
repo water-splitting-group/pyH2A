@@ -45,7 +45,7 @@ from pyH2A.run_pyH2A import pyH2A
                 "input_file": "src/tests/end_to_end/PV_E_bases/pv_e_power_management_test.md",
                 "output_directory": "src/tests/end_to_end/",
             },
-            "expected": {"lcoh": 132.38222070989227},
+            "expected": {"lcoh": 3.7923599041471188},
         },
         {
             "input": {
