@@ -63,7 +63,7 @@ Multiplier | 1.0 | CAPEX multiplier for every 10-fold increase of system size.
 
 Name | Value | Comment
 --- | --- | ---
-Nominal Power (kW) | 5,500.0 | Production of ca. 1 t of H2 per day to compare with PEC and photocatalytic models.
+Nominal Power (kW) | 5500.0 | Production of ca. 1 t of H2 per day to compare with PEC and photocatalytic models.
 CAPEX Reference Power (kW) | 1,000.0
 Power requirement increase per year | 0.3% | Based on Chang 2020
 Minimum capacity | 10.0% | Based on Chang 2020, minimum capacity for electrolyzer to operate.
@@ -171,13 +171,3 @@ Cost ($/kWh) | 10000.12
 Name | Cost ($) | Path | Comment
 --- | --- | --- | ---
 Electrolyzer Stack Replacement | 40% | Direct Capital Costs - Electrolyzer > Electrolyzer CAPEX ($/kW) > Value | Based on Chang 2020
-
-# Electrolyzer
-
-Name | Value | Unit | Comment
---- | --- | --- | --- 
-Nominal power | 16,500 | kW | 3× change from reference value (Production of ca. 1 t of H2 per day to compare with PEC and photocatalytic models)
-Power requirement increase per year | 0.9% | - | 3× change from reference value (Based on Chang 2020)
-Minimum capacity | 20% | - | 2× change from reference value (Based on Chang 2020, minimum capacity for electrolyzer to operate)
-Hydrogen yield per unit energy | 0.0085 | kg/kWh | 0.46× change from reference value (Based on Chang 2020)
-Replacement time | 160,000 | h | 2× change from reference value (Based on Chang 2020, operating time after which electrolyzer stacks have to be replaced)

@@ -10,63 +10,63 @@ from pyH2A.run_pyH2A import pyH2A
                 "input_file": "src/tests/end_to_end/PV_E_Base.md",
                 "output_directory": "src/tests/end_to_end/",
             },
-            "expected": {"lcoh": 185.44329282256822},
+            "expected": {"lcoh": 4.194302976489675},
         },
         {
             "input": {
                 "input_file": "src/tests/end_to_end/PV_E_bases/pv_e_battery_test.md",
                 "output_directory": "src/tests/end_to_end/",
             },
-            "expected": {"lcoh": 642.6546026635854},
+            "expected": {"lcoh": 40.1548227860604},
         },
         {
             "input": {
                 "input_file": "src/tests/end_to_end/PV_E_bases/pv_e_electrolyzer_test.md",
                 "output_directory": "src/tests/end_to_end/",
             },
-            "expected": {"lcoh": 642.6546026635854},
+            "expected": {"lcoh": 6.859428387742992},
         },
         {
             "input": {
                 "input_file": "src/tests/end_to_end/PV_E_bases/pv_e_hourly_irradiation_test.md",
                 "output_directory": "src/tests/end_to_end/",
             },
-            "expected": {"lcoh": 642.6546026635854},
+            "expected": {"lcoh": 17.108717581630824},
         },
         {
             "input": {
                 "input_file": "src/tests/end_to_end/PV_E_bases/pv_e_photovoltaic_test.md",
                 "output_directory": "src/tests/end_to_end/",
             },
-            "expected": {"lcoh": 642.6546026635854},
+            "expected": {"lcoh": 2.657467777523577},
         },
         {
             "input": {
                 "input_file": "src/tests/end_to_end/PV_E_bases/pv_e_power_management_test.md",
                 "output_directory": "src/tests/end_to_end/",
             },
-            "expected": {"lcoh": 642.6546026635854},
+            "expected": {"lcoh": 132.38222070989227},
         },
         {
             "input": {
                 "input_file": "src/tests/end_to_end/PV_E_bases/pv_e_reverse_osmosis_test.md",
                 "output_directory": "src/tests/end_to_end/",
             },
-            "expected": {"lcoh": 642.6546026635854},
+            "expected": {"lcoh": 3.385530136739836},
         },
         {
             "input": {
                 "input_file": "src/tests/end_to_end/PV_E_bases/pv_e_stored_power_electrolysis_test.md",
                 "output_directory": "src/tests/end_to_end/",
             },
-            "expected": {"lcoh": 642.6546026635854},
+            "expected": {"lcoh": 7.397009679328874},
         },
         {
             "input": {
                 "input_file": "src/tests/end_to_end/PV_E_bases/pv_e_multiple_modules_test.md",
                 "output_directory": "src/tests/end_to_end/",
             },
-            "expected": {"lcoh": 642.6546026635854},
+            "expected": {"lcoh": 4.148928019459272},
         },
     ],
     ids=[

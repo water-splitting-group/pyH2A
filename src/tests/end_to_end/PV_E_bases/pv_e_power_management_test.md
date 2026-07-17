@@ -166,7 +166,7 @@ Process Water | 10 | L/kg H2 | 0.0006 | $/L | 1. | Seawater reverse osmosis cost
 
 Name | Value
 --- | ---
-Cost ($/MWh) | 1000.12
+Cost ($/kWh) | 1600000.12
 
 # Planned Replacement
 

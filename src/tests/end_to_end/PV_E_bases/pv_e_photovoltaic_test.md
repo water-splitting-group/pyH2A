@@ -39,7 +39,7 @@ Temperature Coefficient (per Celsius) | -0.4% | Based on Chang 2020.
 
 Name | Value | Comment
 --- | --- | --- 
-Data | Hourly Irradiation > Two axis tracking (kW) > Value| Two axis tracking based on Chang 2020.
+Data | Hourly Irradiation > Horizontal Single Axis Tracking (kW) > Value | Single axis tracking based on Chang 2020.
 
 # Technical Operating Parameters and Specifications
 
