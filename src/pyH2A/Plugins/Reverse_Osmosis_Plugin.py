@@ -124,13 +124,13 @@ class Reverse_Osmosis_Plugin:
     def __init__(self, dcf, print_info):
         self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Reverse_Osmosis_Plugin')
 
-        self.calculate_electricity_demand(dcf)
+        self.calculate_electricity_demand()
         self.calculate_reverse_osmosis_scaling()
         self.consumption_type = "flexible"
 
         output_inserter_function(output_dict, self, dcf, 'Reverse_Osmosis_Plugin') 
                 
-    def calculate_electricity_demand(self, dcf):
+    def calculate_electricity_demand(self):
         '''Calculation of electricity demand for reverse osmosis based on
         yearly amount of hydrogen production.
         '''
@@ -144,8 +144,8 @@ class Reverse_Osmosis_Plugin:
         fresh_water_demand_m3_by_year = fresh_water_demand_kg_by_year / DENSITY_WATER_KG_PER_M3
 
         self.sea_water_demand_by_year = Quantity(fresh_water_demand_m3_by_year 
-                                         / self.input_dict_resolved['Reverse Osmosis']['Recovery rate']['Value'].unit['-'], 
-                                         'm3')
+                                                 / self.input_dict_resolved['Reverse Osmosis']['Recovery rate']['Value'].unit['-'], 
+                                        'm3')
 
         electricity_demand_J_by_year = (self.sea_water_demand_by_year.unit['m3'] 
                                         * self.input_dict_resolved['Reverse Osmosis']['Power demand']['Value'].unit['J/m3'])

@@ -52,9 +52,6 @@ class DummyDCF:
             },
         }
 
-        self.operation_years = list(available_daily.keys())
-
-
 @pytest.mark.parametrize(
     "case",
     [

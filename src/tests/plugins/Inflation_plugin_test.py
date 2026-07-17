@@ -16,19 +16,19 @@ class DummyDCF:
     ):
         self.inp = {
             "Financial Input Values": {
-                "inflation": {
+                "Inflation rate": {
                     "Value": inflation, 
                     "Unit": "-", 
                 },
-                "current year capital costs": {
+                "Current year for capital costs": {
                     "Value": current_year_capital_costs, 
                     "Unit": "-", 
                 },
-                "basis year": {
+                "Basis year": {
                     "Value": basis_year, 
                     "Unit": "-", 
                 },      
-                "ref year": {
+                "Reference year": {
                     "Value": ref_year, 
                     "Unit": "-", 
                 },             

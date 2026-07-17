@@ -154,7 +154,6 @@ class Production_Plugin:
 
 		# Otherwise fall back to plant design capacity
 		else:
-			# Horrible ugly mess, which will be fixed with time plugin
 			design_output_by_year_kg = (operating_parameters['Plant design capacity']['Value'].unit['kg/year']
 							   			* self.input_dict_resolved['Time']['Years']['Value']['Operation years ones'].unit['-'])
 			self.design_output_by_year = Quantity(design_output_by_year_kg, 'kg')

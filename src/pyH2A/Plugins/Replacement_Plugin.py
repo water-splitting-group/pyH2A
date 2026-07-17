@@ -191,7 +191,7 @@ class Replacement_Plugin:
 		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Replacement_Plugin')
 		
 		# Initialize self.yearly as an array of zeros with the same length as the number of plant years to store yearly replacement costs.
-		self.yearly = 0.0*self.input_dict_resolved['Time']['Years']['Value']['Plant years relative'].unit['-']
+		self.yearly = np.zeros_like(self.input_dict_resolved['Time']['Years']['Value']['Plant years relative'].unit['-'])
 
 		# Initialize contributions
 		self.contributions = {}

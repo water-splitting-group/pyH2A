@@ -2,6 +2,7 @@ import pytest
 from pyH2A.Plugins.Time_Plugin import Time_Plugin
 import numpy as np
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+from tests.Utilities.check_dicts_for_testing import check_dicts
 
 class DummyDCF:
     """DCF object for Time_plugin with configurable inputs."""
@@ -22,15 +23,15 @@ class DummyDCF:
                 for key, value in construction.items()          
             },
             "Financial Input Values": {
-                "plant life": {
+                "Plant life": {
                     "Value": plant_life, 
                     "Unit": "year", 
                 },
-                "startup year": {
+                "Assumed start-up year": {
                     "Value": startup_year, 
                     "Unit": "-", 
                 },      
-                "ref year": {
+                "Reference year": {
                     "Value": ref_year, 
                     "Unit": "-", 
                 },             
@@ -42,20 +43,22 @@ class DummyDCF:
     [
         {
             "input": {
-                "construction": {"year 0":0.5, "year 1":0.5},
+                "construction": {
+                    "year 0": 0.5,
+                    "year 1": 0.5},
                 "plant_life": 5,
                 "startup_year": 2030,
                 "ref_year": 2020,
             },
            "expected": {
-                "startup_time_offset": Quantity(10, "-"),
-                "plant_years_relative": Quantity(np.arange(-2,5), "-"),
-                "operation_years": Quantity(np.arange(2030,2035), "-"),
-                "operation_years_relative": Quantity(np.arange(0,5), "-"),   
-                "start_idx": Quantity(2, "-"),
-                "operation_years_ones": Quantity(np.ones(5), "-"),    
-                "analysis_years_ones": Quantity(np.ones(7), "-"),   
-                "construction_years_ones": Quantity(np.ones(2), "-"),   
+                "Startup time offset": Quantity(10, "-"),
+                "Plant years relative": Quantity(np.arange(-2,5), "-"),
+                "Operation years": Quantity(np.arange(2030,2035), "-"),
+                "Operation years relative": Quantity(np.arange(0,5), "-"),   
+                "Start index": Quantity(2, "-"),
+                "Operation years ones": Quantity(np.ones(5), "-"),    
+                "Analysis years ones": Quantity(np.ones(7), "-"),   
+                "Construction years ones": Quantity(np.ones(2), "-"),   
             },
         }
     ],
@@ -63,6 +66,7 @@ class DummyDCF:
         "Realistic case - Time Plugin",
     ]
 )
+
 def test_time_plugin(case):
     """Check plugin returns correct time-related quantities."""
 
@@ -73,55 +77,4 @@ def test_time_plugin(case):
     plugin = Time_Plugin(dcf, print_info=False)
     expected = case["expected"]
 
-
-    assert plugin.startup_time_offset.unit["-"] == pytest.approx(
-        expected["startup_time_offset"].unit["-"],
-        abs=1e-12
-    )
-
-    np.testing.assert_allclose(
-        plugin.plant_years_relative.unit["-"],
-        expected["plant_years_relative"].unit["-"],
-        rtol=1e-12,  
-        atol=1e-12,  
-    )
-
-    np.testing.assert_allclose(
-        plugin.operation_years.unit["-"],
-        expected["operation_years"].unit["-"],
-        rtol=1e-12,  
-        atol=1e-12,  
-    )
-
-    np.testing.assert_allclose(
-        plugin.operation_years_relative.unit["-"],
-        expected["operation_years_relative"].unit["-"],
-        rtol=1e-12,  
-        atol=1e-12,  
-    )    
-
-    assert plugin.start_idx.unit["-"] == pytest.approx(
-        expected["start_idx"].unit["-"],
-        abs=1e-12
-    )    
-
-    np.testing.assert_allclose(
-        plugin.operation_years_ones.unit["-"],
-        expected["operation_years_ones"].unit["-"],
-        rtol=1e-12,  
-        atol=1e-12,  
-    )   
-
-    np.testing.assert_allclose(
-        plugin.analysis_years_ones.unit["-"],
-        expected["analysis_years_ones"].unit["-"],
-        rtol=1e-12,  
-        atol=1e-12,  
-    )   
-
-    np.testing.assert_allclose(
-        plugin.construction_years_ones.unit["-"],
-        expected["construction_years_ones"].unit["-"],
-        rtol=1e-12,  
-        atol=1e-12,  
-    )           
+    check_dicts(plugin.time_quantities_dict, expected)

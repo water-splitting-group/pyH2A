@@ -21,26 +21,26 @@ variable_operating_costs | function | 1600 | core function to process variable o
 
 # Financial Input Values
 
-Name | Full Name | Value | Unit
+Name | Value | Unit
 --- | --- | ---
-ref year | Reference year | 2016 | -
-startup year | Assumed start-up year | 2020 | -
-basis year | Basis year | 2016 | -
-current year capital costs | Current year for capital costs | 2016 | -
-startup time | Start-up Time (years) | 1 | year
-plant life | Plant life (years) | 20 | year
-depreciation length | Depreciation Schedule Length (years) | 20 | year
-depreciation type | Depreciation Type | MACRS | -
-equity | % Equity Financing | 40% | -
-interest | Interest rate on debt (%) | 3.7% | -
-debt | Debt period | Constant | -
-startup cost fixed | % of Fixed Operating Costs During Start-up | 100% | -
-startup revenues | % of Revenues During Start-up | 75% | -
-startup cost variable | % of Variable Operating Costs During Start-up | 75% | -
-decommissioning | Decommissioning costs (% of depreciable capital investment) | 10% | -
-salvage | Salvage value (% of total capital investment) | 10% | -
-inflation | Inflation rate (%) | 1.9% | -
-irr | After-tax Real IRR (%) | 8.0% | -
-state tax | State Taxes (%) | 6.0% | -
-federal tax | Federal Taxes (%) | 21.0% | -
-working capital | Working Capital (% of yearly change in operating costs) | 15.0% | - 
+Reference year | 2016 | -
+Assumed start-up year | 2020 | -
+Basis year | 2016 | -
+Current year for capital costs | 2016 | -
+Start-up time | 1 | year
+Plant life | 20 | year
+Depreciation schedule Length | 20 | year
+Depreciation type | MACRS | -
+Fraction equity financing | 40% | -
+Interest rate on debt | 3.7% | -
+Debt period | Constant | -
+Fraction of fixed operating costs during start-up | 100% | -
+Fraction of variable operating costs during start-up | 75% | -
+Fraction of revenues during start-up | 75% | -
+Decommissioning costs (fraction of depreciable capital investment) | 10% | -
+Salvage value (fraction of total capital investment) | 10% | -
+Inflation rate | 1.9% | -
+After-tax real IRR | 8.0% | -
+State taxes | 6.0% | -
+Federal taxes | 21.0% | -
+Working Capital (fraction of yearly change in operating costs) | 15.0% | - 

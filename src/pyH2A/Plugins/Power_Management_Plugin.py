@@ -201,13 +201,13 @@ class Power_Management_Plugin:
             flexible_available_energy_yearly = daily_to_yearly_power_quantity(
                 self.input_dict_resolved['Power Generation']['Available energy (daily)']['Value'])
         except KeyError:
-            flexible_available_energy_yearly = 0.0 * self.input_dict_resolved['Time']['Years']['Value']['Operation years ones'].unit['-']
+            flexible_available_energy_yearly = np.zeros_like(self.input_dict_resolved['Time']['Years']['Value']['Operation years ones'].unit['-'])
 
         try:
             stored_available_energy_yearly = daily_to_yearly_power_quantity(
                 self.input_dict_resolved['Power Generation']['Stored energy (daily)']['Value'])
         except KeyError:
-            stored_available_energy_yearly = 0.0 * self.input_dict_resolved['Time']['Years']['Value']['Operation years ones'].unit['-']
+            stored_available_energy_yearly = np.zeros_like(self.input_dict_resolved['Time']['Years']['Value']['Operation years ones'].unit['-'])
 
         (self.total_unfulfilled, 
          self.remaining_flexible, 
@@ -218,8 +218,8 @@ class Power_Management_Plugin:
     def calculate_electricity_cost(self):
 
         self.electricity_cost = Quantity(self.total_unfulfilled.unit['J']
-                                    * self.input_dict_resolved['Grid Electricity']['Cost']['Value'].unit['USD/J'], 
-                            'USD')
+                                         * self.input_dict_resolved['Grid Electricity']['Cost']['Value'].unit['USD/J'], 
+                                'USD')
     
 def allocate_power(consumption, flexible_power, stored_power):
     """Allocate available power to consumers based on their type."""

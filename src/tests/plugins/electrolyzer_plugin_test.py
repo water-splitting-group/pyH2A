@@ -54,7 +54,6 @@ class DummyDCF:
                 }
             },
         }
-        self.operation_years = list(available_power_hourly.keys())
 
 @pytest.mark.parametrize(
     "case",
@@ -251,7 +250,7 @@ def test_electrolyzer_plugin(case):
         atol=tolerance,
     )
 
-    for year in dcf.operation_years:
+    for year in plugin.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']:
         np.testing.assert_allclose(
             plugin.yearly_data_unused_energy[year].unit['J'],
             expected["yearly_data_unused_energy"][year].unit['J'],

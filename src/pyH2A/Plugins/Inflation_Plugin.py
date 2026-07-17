@@ -6,7 +6,7 @@ import numpy as np
 
 input_dict = {
     "Financial Input Values": {
-        "inflation": {
+        "Inflation rate": {
             "Value": {
                 "type": {int, float},
                 "bounds": (0, None),
@@ -17,7 +17,7 @@ input_dict = {
             "optional": False,
             "description": "inflation factor"
         },
-        "current year capital costs": {
+        "Current year for capital costs": {
             "Value": {
                 "type": {int, float},
                 "bounds": (0, None),
@@ -28,7 +28,7 @@ input_dict = {
             "optional": False,
             "description": "current year capital costs"
         },     
-        "basis year": {
+        "Basis year": {
             "Value": {
                 "type": {int, float},
                 "bounds": (0, None),
@@ -39,7 +39,7 @@ input_dict = {
             "optional": False,
             "description": "basis year for inflation calculation"
         },    
-        "ref year": {
+        "Reference year": {
             "Value": {
                 "type": {int, float},
                 "bounds": (0, None),
@@ -108,7 +108,8 @@ output_dict = {
             "Value": {
                 "inserted_value": "combined_inflator",
                 "type": {float},
-				"dimension": "dimensionless",               },
+				"dimension": "dimensionless",               
+            },
             "optional": False,
             "description": "Sum of CEPCI and CI inflation factors"                  
         }, 
@@ -137,20 +138,18 @@ output_dict = {
 class Inflation_Plugin:
     '''Generation of a the necessary inflation-related quantities for other plugins.
 
-
     Parameters
     ----------
-    Financial Input Values > inflation > Value : int or float
+    Financial Input Values > Inflation rate > Value : int or float
         Inflation factor.
-    Financial Input Values > current year capital costs > Value : int or float
+    Financial Input Values > Current year for capital costs > Value : int or float
         Current year capital costs.
-    Financial Input Values > basis year > Value : int or float
+    Financial Input Values > Basis year > Value : int or float
         Basis year for inflation calculation.
-    Financial Input Values > ref year > Value : int or float
+    Financial Input Values > Reference year > Value : int or float
         Reference year for inflation calculation.   
     Time > Years > Value : dict
         Dictionary containing all time-related quantities.                              
-   
     
     Returns
     -------
@@ -168,11 +167,8 @@ class Inflation_Plugin:
        Cost of labor inflation factor.
     Inflation > Chemical inflator > Value : float
        Cost of chemicals inflation factor.                                   
-       
-
     '''
     def __init__(self, dcf, print_info):
-
         self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Inflation_Plugin')
 
         self.inflation()
@@ -180,14 +176,9 @@ class Inflation_Plugin:
         output_inserter_function(output_dict,self,dcf,'Inflation_Plugin')
 
     def inflation(self):
-        dictionary = self.input_dict_resolved['Financial Input Values']
+        finance_dict = self.input_dict_resolved['Financial Input Values']
 
-        inflation_rate = 1 + dictionary['inflation']['Value'].unit['-']
-
-        self.inflation_factor_full = Quantity(inflation_rate ** self.input_dict_resolved['Time']['Years']['Value']['Plant years relative'].unit['-'], '-')
-
-        self.inflation_correction = Quantity(inflation_rate ** self.input_dict_resolved['Time']['Years']['Value']['Startup time offset'].unit['-'], '-')
-
+        # Read in the necessary lookup tables for inflation calculations
         plant_cost = read_textfile('pyH2A.Lookup_Tables~Plant_Cost_Index.csv', 
                                     delimiter = '	')
         gdp_deflator_price = read_textfile('pyH2A.Lookup_Tables~GDP_Implicit_Deflator_Price_Index.csv', 
@@ -197,17 +188,38 @@ class Inflation_Plugin:
         chemical_price = read_textfile('pyH2A.Lookup_Tables~SRI_Chemical_Price_Index.csv', 
                                         delimiter = '	')
 
-        plant_idx = fn.find_nearest(plant_cost, [dictionary['current year capital costs']['Value'].unit['-'], 
-                                                    dictionary['basis year']['Value'].unit['-']])
-        gdp_idx = fn.find_nearest(gdp_deflator_price, [dictionary['ref year']['Value'].unit['-'], 
-                                                        dictionary['current year capital costs']['Value'].unit['-']])
-        labor_idx = fn.find_nearest(labor_price, [dictionary['ref year']['Value'].unit['-'], 
-                                                    dictionary['basis year']['Value'].unit['-']])
-        chemical_idx = fn.find_nearest(chemical_price, [dictionary['ref year']['Value'].unit['-'], 
-                                                        dictionary['basis year']['Value'].unit['-']])
+        # Find the indices of the years in the lookup tables that are closest to the years specified in the input dictionary
+        plant_idx = fn.find_nearest(plant_cost, [finance_dict['Current year for capital costs']['Value'].unit['-'], 
+                                                    finance_dict['Basis year']['Value'].unit['-']])
+        gdp_idx = fn.find_nearest(gdp_deflator_price, [finance_dict['Reference year']['Value'].unit['-'], 
+                                                        finance_dict['Current year for capital costs']['Value'].unit['-']])
+        labor_idx = fn.find_nearest(labor_price, [finance_dict['Reference year']['Value'].unit['-'], 
+                                                    finance_dict['Basis year']['Value'].unit['-']])
+        chemical_idx = fn.find_nearest(chemical_price, [finance_dict['Reference year']['Value'].unit['-'], 
+                                                        finance_dict['Basis year']['Value'].unit['-']])
 
-        self.cepci_inflator = Quantity(plant_cost[:,1][plant_idx[0]]/plant_cost[:,1][plant_idx[1]], '-')
-        self.ci_inflator = Quantity(gdp_deflator_price[:,1][gdp_idx[0]]/gdp_deflator_price[:,1][gdp_idx[1]], '-')
-        self.combined_inflator = Quantity(self.cepci_inflator.unit['-'] * self.ci_inflator.unit['-'], '-')
-        self.labor_inflator = Quantity(labor_price[:,1][labor_idx[0]]/labor_price[:,1][labor_idx[1]], '-')
-        self.chemical_inflator = Quantity(chemical_price[:,1][chemical_idx[0]]/chemical_price[:,1][chemical_idx[1]], '-')
+        # Calculate the inflation factor
+        inflation_rate = 1 + finance_dict['Inflation rate']['Value'].unit['-']
+
+        # Calculate the different inflation factors and create corresponding Quantity objects and attributes
+        self.inflation_factor_full = Quantity(inflation_rate 
+                                              ** self.input_dict_resolved['Time']['Years']['Value']['Plant years relative'].unit['-'], 
+                                    '-')
+        self.inflation_correction = Quantity(inflation_rate 
+                                             ** self.input_dict_resolved['Time']['Years']['Value']['Startup time offset'].unit['-'], 
+                                    '-')
+        self.cepci_inflator = Quantity(plant_cost[:,1][plant_idx[0]]
+                                       /plant_cost[:,1][plant_idx[1]], 
+                              '-')
+        self.ci_inflator = Quantity(gdp_deflator_price[:,1][gdp_idx[0]]
+                                    /gdp_deflator_price[:,1][gdp_idx[1]], 
+                           '-')
+        self.combined_inflator = Quantity(self.cepci_inflator.unit['-'] 
+                                          * self.ci_inflator.unit['-'], 
+                                 '-')
+        self.labor_inflator = Quantity(labor_price[:,1][labor_idx[0]]
+                                       /labor_price[:,1][labor_idx[1]], 
+                              '-')
+        self.chemical_inflator = Quantity(chemical_price[:,1][chemical_idx[0]]
+                                          /chemical_price[:,1][chemical_idx[1]], 
+                                '-')

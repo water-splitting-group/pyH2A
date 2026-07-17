@@ -45,7 +45,6 @@ class DummyDCF:
                 },
             },
         }
-        self.operation_years_relative = [5,6]
 
 @pytest.mark.parametrize(
     "case",
@@ -133,7 +132,7 @@ def test_photovoltaic_plugin(case):
         abs=tolerance
     )
 
-    for year in dcf.operation_years_relative:
+    for year in plugin.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']:
         np.testing.assert_allclose(
             plugin.electric_energy_generation_yearly_data[year].unit['J'],
             expected["energy_generation_yearly_data"][year].unit['J'],
