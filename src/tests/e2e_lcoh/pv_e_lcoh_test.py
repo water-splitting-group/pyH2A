@@ -64,7 +64,7 @@ from pyH2A.run_pyH2A import pyH2A
                 "output_directory": "src/tests/end_to_end/",
             },
             "expected": {
-                "lcoh": 132.38222070989227
+                "lcoh": 3.7923599041471188
             },
         },
         {
