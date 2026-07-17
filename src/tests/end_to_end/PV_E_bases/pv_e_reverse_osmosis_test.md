@@ -63,7 +63,7 @@ Multiplier | 1.0 | CAPEX multiplier for every 10-fold increase of system size.
 
 Name | Value | Comment
 --- | --- | ---
-Nominal Power (kW) | 5500.0 | Production of ca. 1 t of H2 per day to compare with PEC and photocatalytic models.
+Nominal Power (kW) | 5,500.0 | Production of ca. 1 t of H2 per day to compare with PEC and photocatalytic models.
 CAPEX Reference Power (kW) | 1,000.0
 Power requirement increase per year | 0.3% | Based on Chang 2020
 Minimum capacity | 10.0% | Based on Chang 2020, minimum capacity for electrolyzer to operate.
@@ -100,7 +100,7 @@ Name | Value | Comment
 --- | --- | --- | ---
 Power Demand (kWh/m3) | 4.71 | based on Hausmann 2021 and Kim 2008 (this was chosen for a purity of < 10 ppm of disolved salts in the obtained water), kWh per m3 of sea water
 Average daily operating hours | 4 | Assumption that reverse osmosis runs for 4 h/day, relevant for scaling of reverse osmosis plant
-Recovery Rate | 98.0% | Fraction of fresh water obtained from given volume of sea water, based Palmer 2021 and Tewlour 2022
+Recovery Rate | 90.0% | Fraction of fresh water obtained from given volume of sea water, based Palmer 2021 and Tewlour 2022
 
 # Power Consumption
 

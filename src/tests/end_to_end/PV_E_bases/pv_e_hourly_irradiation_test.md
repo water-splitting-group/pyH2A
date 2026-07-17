@@ -28,7 +28,7 @@ File | pyH2A.Lookup_Tables.Hourly_Irradiation_Data~tmy_34.859_-116.889_2006_2015
 
 Name | Value | Comment
 --- | --- | ---
-Module Tilt (degrees) | Hourly Irradiation > Latitude > Value | Module tilt equal to latitude of location.
+Module Tilt (degrees) | 0 | Module tilt equal to latitude of location.
 Array Azimuth (degrees) | 90
 Nominal Operating Temperature (Celsius) | 75
 Mismatch Derating | 0.48 | Based on Chang 2020.

@@ -31,7 +31,7 @@ from pyH2A.run_pyH2A import pyH2A
                 "input_file": "src/tests/end_to_end/PV_E_bases/pv_e_hourly_irradiation_test.md",
                 "output_directory": "src/tests/end_to_end/",
             },
-            "expected": {"lcoh": 17.108717581630824},
+            "expected": {"lcoh": 19.8641278811002},
         },
         {
             "input": {
@@ -52,7 +52,7 @@ from pyH2A.run_pyH2A import pyH2A
                 "input_file": "src/tests/end_to_end/PV_E_bases/pv_e_reverse_osmosis_test.md",
                 "output_directory": "src/tests/end_to_end/",
             },
-            "expected": {"lcoh": 3.385530136739836},
+            "expected": {"lcoh": 3.3857936137606788},
         },
         {
             "input": {
