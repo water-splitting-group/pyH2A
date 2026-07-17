@@ -1,0 +1,107 @@
+import pytest
+from pyH2A.run_pyH2A import pyH2A
+
+
+@pytest.mark.parametrize(
+    "case",
+    [
+        {
+            "input": {
+                "input_file": "src/tests/end_to_end/PV_E_Base.md",
+                "output_directory": "src/tests/end_to_end/",
+            },
+            "expected": {"lcoh": 185.44329282256822},
+        },
+        {
+            "input": {
+                "input_file": "src/tests/end_to_end/PV_E_bases/pv_e_battery_test.md",
+                "output_directory": "src/tests/end_to_end/",
+            },
+            "expected": {"lcoh": 642.6546026635854},
+        },
+        {
+            "input": {
+                "input_file": "src/tests/end_to_end/PV_E_bases/pv_e_electrolyzer_test.md",
+                "output_directory": "src/tests/end_to_end/",
+            },
+            "expected": {"lcoh": 642.6546026635854},
+        },
+        {
+            "input": {
+                "input_file": "src/tests/end_to_end/PV_E_bases/pv_e_hourly_irradiation_test.md",
+                "output_directory": "src/tests/end_to_end/",
+            },
+            "expected": {"lcoh": 642.6546026635854},
+        },
+        {
+            "input": {
+                "input_file": "src/tests/end_to_end/PV_E_bases/pv_e_photovoltaic_test.md",
+                "output_directory": "src/tests/end_to_end/",
+            },
+            "expected": {"lcoh": 642.6546026635854},
+        },
+        {
+            "input": {
+                "input_file": "src/tests/end_to_end/PV_E_bases/pv_e_power_management_test.md",
+                "output_directory": "src/tests/end_to_end/",
+            },
+            "expected": {"lcoh": 642.6546026635854},
+        },
+        {
+            "input": {
+                "input_file": "src/tests/end_to_end/PV_E_bases/pv_e_reverse_osmosis_test.md",
+                "output_directory": "src/tests/end_to_end/",
+            },
+            "expected": {"lcoh": 642.6546026635854},
+        },
+        {
+            "input": {
+                "input_file": "src/tests/end_to_end/PV_E_bases/pv_e_stored_power_electrolysis_test.md",
+                "output_directory": "src/tests/end_to_end/",
+            },
+            "expected": {"lcoh": 642.6546026635854},
+        },
+        {
+            "input": {
+                "input_file": "src/tests/end_to_end/PV_E_bases/pv_e_multiple_modules_test.md",
+                "output_directory": "src/tests/end_to_end/",
+            },
+            "expected": {"lcoh": 642.6546026635854},
+        },
+    ],
+    ids=[
+        "PV_E_Base",
+        "PV_E_Battery",
+        "PV_E_Electrolyzer",
+        "PV_E_Hourly_Irradiation",
+        "PV_E_Photovoltaic",
+        "PV_E_Power_Management",
+        "PV_E_Reverse_Osmosis",
+        "PV_E_Stored_Power_Electrolysis",
+        "PV_E_Multiple_Modules",
+    ],
+)
+def test_e2e_lcoh(case):
+    """
+    End-to-end regression test for Levelized Cost of Hydrogen (LCOH).
+
+    This test runs the full pyH2A workflow using reference input files
+    and asserts that the computed LCOH matches the master-branch
+    reference value within tight numerical tolerance.
+
+    Purpose:
+    - Detect unintended economic logic changes
+    - Detect numerical drift
+    - Protect financial model stability
+    """
+
+    input_data = case["input"]
+
+    result = pyH2A(input_data["input_file"], input_data["output_directory"])
+
+    # Very strict tolerance to detect economic regression
+    tolerance = 1e-12
+
+    assert result.base_case.h2_cost == pytest.approx(
+        case["expected"]["lcoh"], rel=tolerance
+    )
