@@ -6,12 +6,14 @@ File A | src/tests/end_to_end/PV_E/PV_E_Base_test.md
 
 # Power Consumption
 
-Name | Value | Unit | Type
+Name | Value | Unit | Type | Comment
 --- | --- | --- | ---
-Test consumer | 1 | kWh | on_demand
+Test consumer | 1 | kWh | on_demand | Reference value is 0.
+Test consumer 2 | 1 | kWh | on_demand | New component
+Test consumer 3 | 1 | kWh | flexible | New component
 
 # Grid Electricity
 
-Name | Value | Unit
+Name | Value | Unit | Comment
 --- | --- | ---
-Cost | 20000.12 | USD/kWh
+Cost | 1000.12 | USD/MWh | 0.0001× change from reference value (unit converted from USD/kWh to USD/MWh)
