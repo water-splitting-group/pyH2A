@@ -14,4 +14,4 @@ Test consumer | 1 | kWh | on_demand | Reference value is 0.
 
 Name | Value | Unit | Comment
 --- | --- | ---
-Cost | 1000.12 | USD/MWh | 0.0001× change from reference value (unit converted from USD/kWh to USD/MWh)
+Cost | 5000.12 | USD/kWh | 0.5× change from reference value (unit converted from USD/kWh to USD/MWh)
