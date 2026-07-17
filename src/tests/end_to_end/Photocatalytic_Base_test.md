@@ -2,10 +2,10 @@
 
 Name | Type | Description | Position
 --- | --- | --- | ---
-Hourly_Irradiation_Plugin | plugin | Plugin to calculate solar irradiation from typical meteorological year data | 1
-Photocatalytic_Plugin | plugin | Computes number of required baggies, cost of baggies and catalyst cost | 201
-Catalyst_Separation_Plugin | plugin | Computes cost of catalyst separation | 202
-Multiple_Modules_Plugin | plugin | Modelling of multiple plant modules, adjustment of labor requirement | 301
+Hourly_Irradiation_Plugin | plugin | Plugin to calculate solar irradiation from typical meteorological year data | 401 |
+Photocatalytic_Plugin | plugin | Computes number of required baggies, cost of baggies and catalyst cost | 601 |
+Catalyst_Separation_Plugin | plugin | Computes cost of catalyst separation | 602 |
+Multiple_Modules_Plugin | plugin | Modelling of multiple plant modules, adjustment of labor requirement | 701 |
 
 # Display Parameters
 

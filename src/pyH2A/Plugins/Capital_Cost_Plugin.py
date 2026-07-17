@@ -3,6 +3,30 @@ from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import numpy as np
 
 input_dict = {
+	"Inflation":{
+		"Combined inflator": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "dimensionless",
+			},	
+			"optional": False,
+			"description": "Combined inflator."
+		},
+		"CI inflator": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "dimensionless",
+			},	
+			"optional": False,
+			"description": "CI inflator."
+		},		
+	},	
 	"<...> Direct Capital Cost <...>": {
 		"<...>": {
 			"Value": {
@@ -283,6 +307,10 @@ class Capital_Cost_Plugin:
 
 	Parameters
 	----------
+	Inflation > Combined inflator > Value: float
+		Combined inflator.
+	Inflation > CI inflator > Value: float
+		CI inflator.		
 	<...> Direct Capital Cost <...> >> Value : float
 		``sum_all_tables()`` is used in the input resolver.
 	<...> Indirect Capital Cost <...> >> Value : float
@@ -334,22 +362,22 @@ class Capital_Cost_Plugin:
 		indirect_capital_costs = self.input_dict_resolved['Indirect Capital Cost']['Summed group total']['Value'] # Calculated during the call of sum_tables
 		
 		self.direct_inflated = Quantity(direct_capital_costs.unit['USD'] 
-								  		* dcf.combined_inflator, 
+								  		* self.input_dict_resolved['Inflation']['Combined inflator']['Value'].unit['-'], 
 								'USD')
 		self.indirect_inflated = Quantity(indirect_capital_costs.unit['USD'] 
-										  * dcf.combined_inflator, 
+										  * self.input_dict_resolved['Inflation']['Combined inflator']['Value'].unit['-'], 
 								'USD')
 
 		self.depreciable = Quantity(direct_capital_costs.unit['USD'] 
 							        + indirect_capital_costs.unit['USD'], 
 							'USD')
 		self.depreciable_inflated = Quantity(self.depreciable.unit['USD'] 
-										  * dcf.combined_inflator, 
+										  * self.input_dict_resolved['Inflation']['Combined inflator']['Value'].unit['-'], 
 								    'USD')
 
 		self.non_depreciable = self.non_depreciable_capital_costs()
 		self.non_depreciable_inflated = Quantity(self.non_depreciable.unit['USD'] 
-										         * dcf.ci_inflator, 
+										         * self.input_dict_resolved['Inflation']['CI inflator']['Value'].unit['-'], 
 								         'USD')
 		
 		self.total = Quantity(self.depreciable.unit['USD'] 

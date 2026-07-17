@@ -13,6 +13,12 @@ class DummyDCF:
         labor_inflator,
     ):
         self.inp = {
+            "Inflation": {
+                "Labor inflator": {
+                    "Value": labor_inflator,
+                    "Unit": "-"
+                },
+            },               
             "Fixed Operating Costs": {
                 "Staff": {
                     "Value": staff,
@@ -24,8 +30,6 @@ class DummyDCF:
                 },
             },
         }
-
-        self.labor_inflator = labor_inflator
 
 
 @pytest.mark.parametrize(

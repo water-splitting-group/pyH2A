@@ -9,14 +9,32 @@ class DummyDCF:
 
     def __init__(
         self, 
+        time_values,
+        inflation_correction,
+        chemical_inflator,
         plant_output_per_year,
         capacity_factor, 
         utilities, 
-        other_variable_costs, 
-        inflation_correction,
-        chemical_inflator
+        other_variable_costs
     ):  
         self.inp = {
+            "Time": {
+                "Years": {
+                    "Value": time_values,
+                    "Unit": "-",   
+                    "Processed": "Yes",                    
+                },
+            },    
+            "Inflation": {
+                "Inflation correction": {
+                    "Value": inflation_correction,
+                    "Unit": "-"
+                },
+                "Chemical inflator": {
+                    "Value": chemical_inflator,
+                    "Unit": "-"
+                },
+            },                          
             "Technical Operating Parameters and Specifications": {
                 "Design output by year": {
                     "Value": plant_output_per_year, 
@@ -46,12 +64,7 @@ class DummyDCF:
                 }
                 for key, value in other_variable_costs.items()
             }
-        }
-        
-        self.inflation_correction = inflation_correction
-        self.chemical_inflator = chemical_inflator
-        self.inflation_factor = np.ones(10)  
-        self.years = np.arange(2026, 2036) 
+        }      
           
 
 @pytest.mark.parametrize(
@@ -59,6 +72,12 @@ class DummyDCF:
     [
         {
             "input": {
+                "time_values":{
+                    "Operation years":np.arange(2026, 2036),
+                    "Operation years ones": np.ones(10)
+                },
+                "inflation_correction": 1.2,
+                "chemical_inflator": 1.0,
                 "plant_output_per_year": np.array([125_000.0,
                                                    125_000.0,
                                                    125_000.0,
@@ -89,8 +108,6 @@ class DummyDCF:
                         "Cost_Unit": "USD"
                     }
                 },
-                "inflation_correction": 1.2,
-                "chemical_inflator": 1.0
             },
             "expected": {
                 "utilities": Quantity(np.array([612000.0, 

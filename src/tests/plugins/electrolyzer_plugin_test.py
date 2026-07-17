@@ -8,7 +8,7 @@ class DummyDCF:
 
     def __init__(
         self,
-        construction_time,
+        operation_years_relative,
         nominal_power,
         power_increase,
         min_capacity,
@@ -18,12 +18,13 @@ class DummyDCF:
     ):
 
         self.inp = {
-            "Financial Input Values": {
-                "Construction time": {
-                    "Value": construction_time,
-                    "Unit": "year"
+            "Time": {
+                "Years": {
+                    "Value": operation_years_relative,
+                    "Unit": "-",   
+                    "Processed": "Yes",                    
                 },
-            },
+            },    
             "Electrolyzer": {
                 "Nominal power": {
                     "Value": nominal_power, 
@@ -53,21 +54,23 @@ class DummyDCF:
                 }
             },
         }
-        self.operation_years = list(available_power_hourly.keys())
 
 @pytest.mark.parametrize(
     "case",
     [
         {
             "input": {
-                "construction_time": 2,
+                "operation_years_relative": {
+                    # in the plugin logic, years are relative to startup year, not calendar year
+                    'Operation years relative': np.arange(0, 2) 
+                },       
                 "nominal_power": 5500.0,
                 "power_increase": 0.003,
                 "min_capacity": 0.10,
                 "efficiency": 0.0185,
                 "replacement_time": 80000.0,
                 "available_power_hourly": {
-                    2026: np.array(
+                    0: np.array(
                         [
                             200000000.2,
                             200500000.2,
@@ -95,7 +98,7 @@ class DummyDCF:
                             201200000.2,
                         ]
                     ),
-                    2027: np.array(
+                    1: np.array(
                         [
                             0.0,
                             200500000.2,
@@ -126,78 +129,78 @@ class DummyDCF:
                 },
             },
             "expected": {
-                "h2_production": Quantity(np.array([0.0, 0.0, 2035.0, 2035.0]), 'kg'),
+                "h2_production": Quantity(np.array([2035.0, 2035.0]), 'kg'),
                 "replacement_frequency": Quantity(2.0, 'year'),
-                "yearly_data_year": Quantity(np.array([2026.0, 2027.0]),'-'),
+                "yearly_data_year": Quantity(np.array([0.0, 1.0]),'-'),
                 "yearly_data_production": Quantity(np.array([2035.0, 2035.0]),'kg'),
                 "yearly_data_duration": Quantity(np.array([20.0, 20.0]),'h'),                                
                 "yearly_data_unused_energy": {
-                    2026: Quantity(
+                    0: Quantity(
                             np.array(
                                 [
-                                197622869.89416197,
-                                198122869.89416197,
-                                198822869.89416197,
-                                198822869.89416197,
-                                0.0,
-                                198122869.89416197,
-                                198822869.89416197,
-                                198822869.89416197,
-                                198622869.89416197,
-                                198122869.89416197,
-                                198822869.89416197,
-                                198822869.89416197,
-                                198622869.89416197,
-                                0.0,
-                                198822869.89416197,
-                                198822869.89416197,
-                                198622869.89416197,
-                                0.0,
-                                198822869.89416197,
-                                198822869.89416197,
-                                198622869.89416197,
-                                0.0,
-                                198822869.89416197,
-                                198822869.89416197,
+                                    199994500.2 ,
+                                    200494500.2 ,
+                                    201194500.2 ,
+                                    201194500.2 ,
+                                    0.0,
+                                    200494500.2,
+                                    201194500.2,
+                                    201194500.2,
+                                    200994500.2,
+                                    200494500.2 ,
+                                    201194500.2 ,
+                                    201194500.2 ,
+                                    200994500.2 ,
+                                    0.0,
+                                    201194500.2 ,
+                                    201194500.2 ,
+                                    200994500.2 ,
+                                    0.0,
+                                    201194500.2 ,
+                                    201194500.2 ,
+                                    200994500.2 ,
+                                    0.0,
+                                    201194500.2 ,
+                                    201194500.2 ,
                                 ]
                             ),
                             "kWh"
                     ),
-                    2027: Quantity(
+                    1: Quantity(
                             np.array(
                                 [
                                     0.0,
-                                    198115738.50324446,
-                                    198815738.50324446,
-                                    198815738.50324446,
-                                    198615738.50324446,
+                                    200494483.7 ,
+                                    201194483.7 ,
+                                    201194483.7 ,
+                                    200994483.7 ,
                                     0.0,
-                                    198815738.50324446,
-                                    198815738.50324446,
-                                    198615738.50324446,
-                                    198115738.50324446,
-                                    198815738.50324446,
+                                    201194483.7 ,
+                                    201194483.7 ,
+                                    200994483.7 ,
+                                    200494483.7 ,
+                                    201194483.7 ,
                                     0.0,
-                                    198615738.50324446,
-                                    204115738.50324446,
-                                    198815738.50324446,
-                                    198815738.50324446,
-                                    198615738.50324446,
-                                    205115738.50324446,
-                                    198815738.50324446,
+                                    200994483.7,
+                                    206494483.7 ,
+                                    201194483.7,
+                                    201194483.7 ,
+                                    200994483.7 ,
+                                    207494483.7 ,
+                                    201194483.7 ,
                                     0.0,
-                                    198615738.50324446,
-                                    206115738.50324446,
-                                    198815738.50324446,
-                                    198815738.50324446,
+                                    200994483.7 ,
+                                    208494483.7 ,
+                                    201194483.7 ,
+                                    201194483.7 ,
                                 ]
                         ),
                         'kWh'
                     ),    
                 },
                 "yearly_data_unused_energy_daily": {
-                    2026: Quantity(np.array([3972357397.8832397]), 'kWh'),
-                    2027: Quantity(np.array([3992814770.0648894]), 'kWh'),
+                    0: Quantity(np.array([4019790003.9999995]), 'kWh'),
+                    1: Quantity(np.array([4040389673.9999995]), 'kWh'),
                 },
             },
         },
@@ -247,7 +250,7 @@ def test_electrolyzer_plugin(case):
         atol=tolerance,
     )
 
-    for year in dcf.operation_years:
+    for year in plugin.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']:
         np.testing.assert_allclose(
             plugin.yearly_data_unused_energy[year].unit['J'],
             expected["yearly_data_unused_energy"][year].unit['J'],

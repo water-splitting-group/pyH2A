@@ -3,6 +3,19 @@ from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import numpy as np
 
 input_dict = {    
+    "Time": {
+        "Years": {
+            "Value": {
+                "type": {dict,},
+                "bounds": (None, None),
+            },
+            "Unit": {
+                "dimension": "dimensionless",
+            },
+            "optional": False,
+            "description": "Dictionary containing all time-related quantities."
+        }, 
+    },        
     "Power Generation": {
         "Available energy (daily)": {
             "Value": {
@@ -107,6 +120,8 @@ class Battery_Plugin:
 
     Parameters
     ----------
+    Time > Years > Value : dict
+        Dictionary containing plant life time-related quantities
     Power Generation > Available energy (daily) > Value : dict
         Available energy, daily basis, dictionary of years.
     Battery > Design capacity > Value : float
@@ -133,11 +148,11 @@ class Battery_Plugin:
     def __init__(self, dcf, print_info):
         self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Battery_Plugin')
 
-        self.calculate_electricity_storage(dcf)
+        self.calculate_electricity_storage()
         
         output_inserter_function(output_dict, self, dcf, 'Battery_Plugin')            
 
-    def calculate_electricity_storage(self, dcf):
+    def calculate_electricity_storage(self):
         '''Using hourly energy generation data and electrolyzer parameters,
         H2 production is calculated.
         '''
@@ -146,7 +161,7 @@ class Battery_Plugin:
         self.yearly_recovered_energy = {}
         self.yearly_unstored_energy = {}
 
-        for year in dcf.operation_years:
+        for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']:
             daily_available_energy = available_energy_yearly[year].unit['J'] # array of floats
 
             capacity, capacity_decrease = self.calculate_battery_capacity(year) # floats

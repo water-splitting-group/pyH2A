@@ -2,6 +2,19 @@ from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
 input_dict = {
+	"Inflation": {
+		"Combined inflator": {
+			"Value": {
+				"type": {float,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "dimensionless",
+			},
+   			"optional": False,
+			"description": "Combined inflation factor"
+		},					
+	},			
 	"Fixed Operating Costs": {
 		"Labor cost - inflated": {
 			"Value": {
@@ -94,6 +107,8 @@ class Other_Fixed_Operating_Cost_Plugin:
 
 	Parameters
 	----------
+	Inflation > Combined inflator > Value: float
+		sum of CEPCI and CI inflation factors
 	Fixed Operating Costs > Labor Cost - inflated > Value : float, int
 		Yearly total labor cost after applying labor inflator.
 	<...> Other Fixed Operating Cost <...> >> Value : float
@@ -112,18 +127,18 @@ class Other_Fixed_Operating_Cost_Plugin:
 
 		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Other_Fixed_Operating_Cost_Plugin')
 
-		self.total_fixed_operating_cost = self.calculate_total_fixed_operating_cost(dcf)
+		self.total_fixed_operating_cost = self.calculate_total_fixed_operating_cost()
 
 		output_inserter_function(output_dict, self, dcf, 'Other_Fixed_Operating_Cost_Plugin')  
 
-	def calculate_total_fixed_operating_cost(self, dcf):
+	def calculate_total_fixed_operating_cost(self):
 		'''Calculation of total fixed operating cost by summing total labor cost and total other fixed operating cost.'''
 
 		labor = self.input_dict_resolved['Fixed Operating Costs']['Labor cost - inflated']['Value']
 		other = self.input_dict_resolved['Other Fixed Operating Cost']['Summed group total']['Value']
 
 		other_inflated = Quantity(other.unit['USD'] 
-								  * dcf.combined_inflator, 
+								  * self.input_dict_resolved['Inflation']['Combined inflator']['Value'].unit['-'], 
 						 'USD')
 		
 		total = Quantity(labor.unit['USD'] + other_inflated.unit['USD'], 'USD')

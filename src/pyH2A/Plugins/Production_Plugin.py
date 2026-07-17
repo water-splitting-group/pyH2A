@@ -3,6 +3,19 @@ from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import numpy as np
 
 input_dict = {
+    "Time": {
+        "Years": {
+            "Value": {
+                "type": {dict,},
+                "bounds": (None, None),
+            },
+            "Unit": {
+                "dimension": "dimensionless",
+            },
+            "optional": False,
+            "description": "Dictionary containing all time-related quantities."
+        }, 
+    },    	
     "Technical Operating Parameters and Specifications": {
 		"Plant design capacity": { 
 			"Value": {
@@ -97,6 +110,8 @@ class Production_Plugin:
 
 	Parameters
 	----------
+    Time > Years > Value : dict
+        Dictionary containing plant life time-related quantities	
 	Technical Operating Parameters and Specifications > Plant design capacity > Value : float or int
 		Plant design capacity in mass per time.
 	Technical Operating Parameters and Specifications > Design output by year > Value : np.ndarray
@@ -122,11 +137,11 @@ class Production_Plugin:
 	def __init__(self, dcf, print_info):
 		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Production_Plugin')
 
-		self.calculate_output(dcf)
+		self.calculate_output()
 
 		output_inserter_function(output_dict, self, dcf, 'Production_Plugin')     
 
-	def calculate_output(self, dcf):
+	def calculate_output(self):
 		'''Calculation of yearly output and yearly output at gate, 
 		as well as their sum over the plant lifetime.
 		'''
@@ -139,10 +154,8 @@ class Production_Plugin:
 
 		# Otherwise fall back to plant design capacity
 		else:
-			# Horrible ugly mess, which will be fixed with time plugin
 			design_output_by_year_kg = (operating_parameters['Plant design capacity']['Value'].unit['kg/year']
-							   			* np.ones(len(dcf.inflation_factor)))
-			design_output_by_year_kg[:dcf.inp['Financial Input Values']['Construction time']['Value']] = 0.0
+							   			* self.input_dict_resolved['Time']['Years']['Value']['Operation years ones'].unit['-'])
 			self.design_output_by_year = Quantity(design_output_by_year_kg, 'kg')
 
 		# Calculation of output at gate by year array,

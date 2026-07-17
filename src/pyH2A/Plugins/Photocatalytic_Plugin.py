@@ -486,7 +486,7 @@ class Photocatalytic_Plugin:
 			catalyst_properties['Homogeneous'] = {}
 			catalyst_properties['Homogeneous']['Molar catalyst concentration per volume'] = Quantity(catalyst_mol_per_L, 'mol/liter')
 			catalyst_properties['Homogeneous']['Molar catalyst Concentration per area'] = Quantity(mol_catalyst_per_m2, 'mol/m2')
-			catalyst_properties['Homogeneous']['Peak TOF'] = Quantity(peak_TOF_hourly, '1/hour')
+			catalyst_properties['Homogeneous']['Peak TOF'] = Quantity(peak_TOF_hourly, '1/h')
 			catalyst_properties['Homogeneous']['Mean daily TOF'] = Quantity(average_TOF_daily, '1/day')
 			catalyst_properties['Homogeneous']['TON'] = Quantity(TON, '-')
 

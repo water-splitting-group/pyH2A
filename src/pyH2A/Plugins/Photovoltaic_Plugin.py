@@ -4,6 +4,19 @@ from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import numpy as np
 
 input_dict = {
+    "Time": {
+        "Years": {
+            "Value": {
+                "type": {dict,},
+                "bounds": (None, None),
+            },
+            "Unit": {
+                "dimension": "dimensionless",
+            },
+            "optional": False,
+            "description": "Dictionary containing all time-related quantities."
+        }, 
+    },    	
 	"Irradiation Used": {
 		"Data": {
 			"Value": {
@@ -111,14 +124,14 @@ class Photovoltaic_Plugin:
 
 	Parameters
 	----------
+    Time > Years > Value : dict
+        Dictionary containing plant life time-related quantities	
 	Irradiation Used > Data > Value : str or ndarray
 		Hourly power ratio data for electricity production calculation. Either a 
 		path to a text file containing the data or ndarray. A suitable array 
 		can be retrieved from "Hourly Irradiation > *type of tracking* > Value".
 	Photovoltaic > Nominal power > Value : float
 		Nominal power of PV array.
-	Photovoltaic > CAPEX reference power > Value : float
-		Reference power of PV array for cost reduction calculations.
 	Photovoltaic > Power loss per year > Value : float
 		Reduction in power produced by PV array per year due to degradation. Percentage or value
 		> 0. Reduction calculated as: (1 - loss per year) ^ year.
@@ -143,12 +156,12 @@ class Photovoltaic_Plugin:
 	def __init__(self, dcf, print_info):
 		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Photovoltaic_Plugin')
 
-		self.calculate_power_production(dcf)
+		self.calculate_power_production()
 		self.calculate_area()
 
 		output_inserter_function(output_dict, self, dcf, 'Photovoltaic_Plugin') 
 
-	def calculate_power_production(self, dcf):
+	def calculate_power_production(self):
 		'''Using hourly irradiation data and PV array parameters,
 		power production is calculated.
 		'''
@@ -162,7 +175,7 @@ class Photovoltaic_Plugin:
 		yearly_data = {}
 		yearly_data_daily_energy = {}
 
-		for year in dcf.operation_years:
+		for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']:
 			data_loss_corrected = self.calculate_photovoltaic_loss_correction(data, year)
 
 			# Multiplying irradiance data (J/m2) by nominal power in kW 

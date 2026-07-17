@@ -8,15 +8,21 @@ class DummyDCF:
     
     def __init__(
         self,
+        operation_years_ones,
         plant_design_capacity,
         operating_capacity_factor,
         design_output_by_year,
         fraction_of_output_that_reaches_gate,
-        construction_duration, 
-        total_duration,
     ):
         if design_output_by_year is None:
             self.inp = {
+                "Time": {
+                    "Years": {
+                        "Value": operation_years_ones,
+                        "Unit": "-",   
+                        "Processed": "Yes",                    
+                    },
+                },                   
                 "Technical Operating Parameters and Specifications": {
                     "Plant design capacity": {
                         "Value": plant_design_capacity, 
@@ -30,14 +36,18 @@ class DummyDCF:
                         "Value": fraction_of_output_that_reaches_gate, 
                         "Unit":"-"
                     },
-                }, 
-                "Financial Input Values": {
-                    "Construction time": {"Value": construction_duration},
-                },             
+                },        
             }
 
         else:
             self.inp = {
+                "Time": {
+                    "Years": {
+                        "Value": operation_years_ones,
+                        "Unit": "-",   
+                        "Processed": "Yes",                    
+                    },
+                },                  
                 "Technical Operating Parameters and Specifications": {
                     "Operating capacity factor": {
                         "Value": operating_capacity_factor, 
@@ -52,14 +62,8 @@ class DummyDCF:
                         "Value": fraction_of_output_that_reaches_gate,
                         "Unit": "-"
                     },
-                }, 
-                "Financial Input Values": {
-                    "Construction time": {
-                        "Value": construction_duration},
-                },             
+                },           
             }    
-
-        self.inflation_factor = np.ones(total_duration)
 
 
 @pytest.mark.parametrize(
@@ -67,24 +71,23 @@ class DummyDCF:
     [
         {
             "input": {
+                "operation_years_ones": {"Operation years ones": np.ones(4)},                
                 "plant_design_capacity": 1000.0,
                 "operating_capacity_factor": 0.9,
                 "design_output_by_year": None,
                 "fraction_of_output_that_reaches_gate": 0.8,
-                "construction_duration": 1, 
-                "total_duration": 5
             },
             "expected": {
                 "design_output_by_year": Quantity(
                                                 np.array(
-                                                        [0., 1000., 1000., 1000., 1000. ]
+                                                        [1000., 1000., 1000., 1000. ]
                                                 ),
                                                 "kg"
                                         ),
                 "sum_design_output": Quantity(4000.0,"kg"),
                 "output_per_year_at_gate": Quantity(
                                                 np.array(
-                                                        [0., 720., 720., 720., 720. ]
+                                                        [720., 720., 720., 720. ]
                                                 ),
                                                 "kg"
                                         ),
@@ -93,24 +96,23 @@ class DummyDCF:
         }, 
         {
             "input": {
+                "operation_years_ones": {"Operation years ones": np.ones(4)},
                 "plant_design_capacity": None,
                 "operating_capacity_factor": 0.9,
-                "design_output_by_year": np.array([0., 1000., 1000., 1000., 1000. ]),
+                "design_output_by_year": np.array([1000., 1000., 1000., 1000. ]),
                 "fraction_of_output_that_reaches_gate": 0.8,
-                "construction_duration": 1, 
-                "total_duration": 5
             },
             "expected": {
                 "design_output_by_year": Quantity(
                                                 np.array(
-                                                        [0., 1000., 1000., 1000., 1000. ]
+                                                        [1000., 1000., 1000., 1000. ]
                                                 ),
                                                 "kg"
                                         ),
                 "sum_design_output": Quantity(4000.0,"kg"),
                 "output_per_year_at_gate": Quantity(
                                                 np.array(
-                                                        [0., 720., 720., 720., 720. ]
+                                                        [720., 720., 720., 720. ]
                                                 ),
                                                 "kg"
                                         ),

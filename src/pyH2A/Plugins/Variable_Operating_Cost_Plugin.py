@@ -5,6 +5,43 @@ import pyH2A.Utilities.find_nearest as fn
 import numpy as np
 
 input_dict = {	
+    "Time": {
+        "Years": {
+            "Value": {
+                "type": {dict,},
+                "bounds": (None, None),
+            },
+            "Unit": {
+                "dimension": "dimensionless",
+            },
+            "optional": False,
+            "description": "Dictionary containing all time-related quantities."
+        }, 
+    },    
+	"Inflation": {
+		"Inflation correction": {
+			"Value": {
+				"type": {float},
+				"bounds": (0, None)
+			},
+			"Unit": {
+				"dimension": "dimensionless"
+			},
+			"optional": False,
+			"description": "Inflation correction accounting for startup year offset"
+		}, 
+		"Chemical inflator": {
+			"Value": {
+				"type": {float},
+				"bounds": (0, None)
+			},
+			"Unit": {
+				"dimension": "dimensionless"
+			},
+			"optional": False,
+			"description": "Inflation factor for chemicals"
+		}, 		
+	},			
 	"Technical Operating Parameters and Specifications": {
 		"Design output by year": {
 			"Value": {
@@ -164,6 +201,12 @@ class Variable_Operating_Cost_Plugin:
 
 	Parameters
 	----------
+    Time > Years > Value : dict
+        Dictionary containing plant life time-related quantities
+	Inflation > Inflation correction > Value : float
+		Inflation correction accounting for startup year offset
+	Inflation > Chemical inflator > Value : float
+		Inflation factor for chemicals		
 	Technical Operating Parameters and Specifications > Design output by year > Value : nd.array
 		Yearly output ignoring capacity factor, in (kg of H2).
 	Technical Operating Parameters and Specifications > Operating capacity factor > Value : float or int
@@ -204,21 +247,21 @@ class Variable_Operating_Cost_Plugin:
 
 		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Variable_Operating_Cost_Plugin')
 
-		self.calculate_utilities_cost(dcf)
-		self.other_variable_costs(dcf)
+		self.calculate_utilities_cost()
+		self.other_variable_costs()
 
 		self.total_variable_costs = Quantity(self.utilities.unit['USD'] + self.other.unit['USD'], 'USD')	
 
 		output_inserter_function(output_dict, self, dcf, 'Variable_Operating_Cost_Plugin')   
 
-	def calculate_utilities_cost(self, dcf):
+	def calculate_utilities_cost(self):
 		'''Iterating over all utilities and computing summed yearly costs.
 		'''
 
 		self.utilities = 0.
 
 		for key in self.input_dict_resolved['Utilities']:
-			utility = Utility(self.input_dict_resolved['Utilities'][key], dcf)
+			utility = Utility(self.input_dict_resolved['Utilities'][key], self.input_dict_resolved)
 			self.utilities += utility.cost_per_unit_of_product.unit['USD/kg']
 
 		self.utilities = (self.utilities 
@@ -226,12 +269,12 @@ class Variable_Operating_Cost_Plugin:
 						  * self.input_dict_resolved['Technical Operating Parameters and Specifications']['Operating capacity factor']['Value'].unit['-'])
 		self.utilities = Quantity(self.utilities, 'USD')
 
-	def other_variable_costs(self, dcf):
+	def other_variable_costs(self):
 		'''
 		Applying inflation correct to summed other variable operating costs
 		'''
 		self.other = Quantity(
-						dcf.chemical_inflator 
+						self.input_dict_resolved['Inflation']['Chemical inflator']['Value'].unit['-'] 
 						* self.input_dict_resolved['Other Variable Operating Cost']['Summed group total']['Value'].unit['USD'], 
 					 'USD') 
 
@@ -244,20 +287,20 @@ class Utility:
 		Calculation of utility cost per kg of H2 with inflation correction.
 	'''
 
-	def __init__(self, dictionary, dcf):
-		self.calculate_cost_per_unit_of_product(dictionary, dcf)
+	def __init__(self, dictionary, full_dict):
+		self.calculate_cost_per_unit_of_product(dictionary, full_dict)
 
-	def calculate_cost_per_unit_of_product(self, dictionary, dcf):
+	def calculate_cost_per_unit_of_product(self, dictionary, full_dict):
 		'''Calculation of utility cost per unit of product with inflation correction.
 		'''
 		
 		if isinstance(dictionary['Cost_Value'], str):
 			prices = read_textfile(dictionary['Cost_Value'], delimiter = '	')
-			years_idx = fn.find_nearest(prices, dcf.years)
+			years_idx = fn.find_nearest(prices, full_dict['Time']['Years']['Value']['Operation years'].unit['-'])
 			prices = prices[years_idx]
 
 			self.cost_per_unit_of_product = Quantity(prices[:,1] 
-													 * dcf.inflation_correction 
+													 * full_dict['Inflation']['Inflation correction']['Value'].unit['-']
 													 * dictionary['Price_Conversion_Factor_Value'].unit['-'] 
 													 * dictionary['Usage_Value'].unit['1/kg'], 
 											 'USD/kg') 
@@ -265,11 +308,11 @@ class Utility:
 		elif isinstance(dictionary['Cost_Value'], Quantity):
 
 			annual_cost_per_unit_of_product = (dictionary['Cost_Value'].unit['USD'] 
-											   * dcf.inflation_correction 
+											   * full_dict['Inflation']['Inflation correction']['Value'].unit['-']
 											   * dictionary['Price_Conversion_Factor_Value'].unit['-']
 											   * dictionary['Usage_Value'].unit['1/kg'])
 			
-			self.cost_per_unit_of_product = Quantity(np.ones(len(dcf.inflation_factor)) 
+			self.cost_per_unit_of_product = Quantity(full_dict['Time']['Years']['Value']['Operation years ones'].unit['-'] 
 													 * annual_cost_per_unit_of_product, 
 											'USD/kg')
 

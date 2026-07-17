@@ -9,14 +9,21 @@ class DummyDCF:
 
     def __init__(
         self,
+        operation_years_ones,
         available_daily,
         stored_daily,
         power_consumption,
         grid_cost,
-        construction_time,
     ):
 
         self.inp = {
+            "Time": {
+                "Years": {
+                    "Value": operation_years_ones,
+                    "Unit": "-",   
+                    "Processed": "Yes",                    
+                },
+            },               
             "Power Generation": {
                 "Available energy (daily)": {
                     "Value": available_daily,
@@ -43,16 +50,7 @@ class DummyDCF:
                     "Unit": "USD / kWh",
                 }
             },
-            "Financial Input Values": {
-                "Construction time": {
-                    "Value": construction_time,
-                    "Unit": "year"
-                }
-            },
         }
-
-        self.operation_years = list(available_daily.keys())
-
 
 @pytest.mark.parametrize(
     "case",
@@ -72,13 +70,13 @@ class DummyDCF:
                     "type": "flexible"
                 },
                 "grid_cost": 100000.12,
-                "construction_time": 1,
+                "operation_years_ones": {"Operation years ones": np.ones(3)},                
             },
             "expected": {
                 "remaining_flexible": Quantity(np.array([0., 0.]), 'kWh'),
                 "remaining_stored": Quantity(np.array([0.0, 0.0]), 'kWh'),
                 "total_unfulfilled": Quantity(np.array([35000000.0, 34630000.0]), 'kWh'),
-                "electricity_cost": Quantity(np.array([0.0, 3.5000042e12, 3.4630041556e12]), 'USD'),
+                "electricity_cost": Quantity(np.array([3.5000042e12, 3.4630041556e12]), 'USD'),
             },
         },
         {
@@ -96,13 +94,13 @@ class DummyDCF:
                     "type": "on_demand"
                 },
                 "grid_cost": 100000.12,
-                "construction_time": 1,
+                "operation_years_ones": {"Operation years ones": np.ones(3)},
             },
             "expected": {
                 "remaining_flexible": Quantity(np.array([36000000.0, 36000000.0]), 'kWh'),
                 "remaining_stored": Quantity(np.array([23975000.0, 23975000.0]), 'kWh'),
                 "total_unfulfilled": Quantity(np.array([0.0, 0.0]), 'kWh'),
-                "electricity_cost": Quantity(np.array([0.0, 0.0, 0.0]), 'USD'),
+                "electricity_cost": Quantity(np.array([0.0, 0.0]), 'USD'),
             },
         }
     ],

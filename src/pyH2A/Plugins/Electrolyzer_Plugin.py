@@ -4,6 +4,19 @@ from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import numpy as np
 
 input_dict = {
+    "Time": {
+        "Years": {
+            "Value": {
+                "type": {dict,},
+                "bounds": (None, None),
+            },
+            "Unit": {
+                "dimension": "dimensionless",
+            },
+            "optional": False,
+            "description": "Dictionary containing all time-related quantities."
+        }, 
+    },    
     "Electrolyzer": {
         "Nominal power": {
             "Value": {
@@ -165,8 +178,8 @@ class Electrolyzer_Plugin:
 
     Parameters
     ----------
-    Financial Input Values > Construction time > Value : int
-        Construction time of hydrogen production plant in years.
+    Time > Years > Value : dict
+        Dictionary containing plant life time-related quantities
     Electrolyzer > Nominal power > Value : float
         Nominal power of electrolyzer.
     Electrolyzer > Power requirement increase per year > Value : float
@@ -209,13 +222,13 @@ class Electrolyzer_Plugin:
 
         self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Electrolyzer_Plugin')
 
-        self.calculate_H2_production(dcf)
+        self.calculate_H2_production()
         self.replacement_frequency = calculate_stack_replacement(self.yearly_data_duration, 
                                     self.input_dict_resolved['Electrolyzer']['Replacement time']['Value'].unit['h'])
 
         output_inserter_function(output_dict, self, dcf, 'Electrolyzer_Plugin') 
 
-    def calculate_H2_production(self, dcf):
+    def calculate_H2_production(self):
         '''Using hourly power generation data and electrolyzer parameters,
         H2 production is calculated.
         '''
@@ -228,7 +241,7 @@ class Electrolyzer_Plugin:
         yearly_data_unused_energy = {}
         yearly_data_unused_energy_daily = {}
 
-        for year in dcf.operation_years:
+        for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']:
 
             energy_generation = energy_generation_yearly_data[year].unit['J']
 
@@ -267,11 +280,7 @@ class Electrolyzer_Plugin:
         self.yearly_data_production = Quantity(np.asarray(yearly_data_production), 'kg')
         self.yearly_data_duration = Quantity(np.asarray(yearly_data_duration), 'h')
 
-        self.h2_production = np.concatenate([
-                                   np.zeros(dcf.inp['Financial Input Values']['Construction time']['Value']), 
-                                   self.yearly_data_production.unit['kg']
-                                    ])
-        self.h2_production = Quantity(self.h2_production, 'kg')
+        self.h2_production = self.yearly_data_production
         
         self.yearly_data_unused_energy = yearly_data_unused_energy
         self.yearly_data_unused_energy_daily = yearly_data_unused_energy_daily

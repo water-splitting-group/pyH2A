@@ -2,14 +2,14 @@
 
 Name | Type | Position 
 --- | --- | --- 
-Hourly_Irradiation_Plugin | plugin | 1 
-Photovoltaic_Plugin | plugin | 2 
-Electrolyzer_Plugin | plugin | 3 
-Battery_Plugin | plugin | 4 
-Stored_Power_Electrolysis_Plugin | plugin | 5 
-Reverse_Osmosis_Plugin | plugin | 201 
-Power_Management_Plugin | plugin | 202 
-Multiple_Modules_Plugin | plugin | 301 
+Hourly_Irradiation_Plugin | plugin | 401 |
+Photovoltaic_Plugin | plugin | 402 |
+Electrolyzer_Plugin | plugin | 403 |
+Battery_Plugin | plugin | 404 |
+Stored_Power_Electrolysis_Plugin | plugin | 405 |
+Reverse_Osmosis_Plugin | plugin | 601 |
+Power_Management_Plugin | plugin | 602 |
+Multiple_Modules_Plugin | plugin | 701 |
 
 # Display Parameters
 

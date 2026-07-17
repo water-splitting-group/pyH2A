@@ -5,6 +5,19 @@ from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import numpy as np
 
 input_dict = {
+    "Time": {
+        "Years": {
+            "Value": {
+                "type": {dict,},
+                "bounds": (None, None),
+            },
+            "Unit": {
+                "dimension": "dimensionless",
+            },
+            "optional": False,
+            "description": "Dictionary containing all time-related quantities."
+        }, 
+    },        
     "Electrolysis Using Stored Power": {
         "Fraction of stored power used for electrolysis": {
             "Value": {
@@ -171,6 +184,8 @@ class Stored_Power_Electrolysis_Plugin:
 
     Parameters
     ----------
+    Time > Years > Value : dict
+        Dictionary containing plant life time-related quantities    
     Electrolysis Using Stored Power > Fraction of stored power used for electrolysis > Value : float
         Fraction of stored power used for electrolysis.
     Electrolyzer > Nominal power > Value : float
@@ -210,7 +225,7 @@ class Stored_Power_Electrolysis_Plugin:
     def __init__(self, dcf, print_info):
         self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Stored_Power_Electrolysis_Plugin')
 
-        self.calculate_H2_production(dcf)
+        self.calculate_H2_production()
         self.on_demand = "on_demand"
 
         self.replacement_frequency = calculate_stack_replacement(self.operation_hours, # operation hours being for each year, the result is in years between replacement
@@ -218,7 +233,7 @@ class Stored_Power_Electrolysis_Plugin:
                                                                 
         output_inserter_function(output_dict, self, dcf, 'Stored_Power_Electrolysis_Plugin') 
 
-    def calculate_H2_production(self, dcf):
+    def calculate_H2_production(self):
         '''
         '''
 
@@ -230,12 +245,12 @@ class Stored_Power_Electrolysis_Plugin:
                power_increase_ratio) = calculate_electrolyzer_power_demand(
                                                 self.input_dict_resolved['Electrolyzer']['Power requirement increase per year']['Value'].unit['-'],
                                                 self.input_dict_resolved['Electrolyzer']['Nominal power']['Value'].unit['W'],
-                                                dcf.operation_years)
+                                                self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-'])
 
         maximum_consumable_energy = remaining_run_time_per_year_in_seconds * electrolyzer_power_demand # result in Joules
         
         stored_energy = {}
-        for year in dcf.operation_years:
+        for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']:
             stored_energy[year] = self.input_dict_resolved['Power Generation']['Stored energy (daily)']['Value'][year].unit['J']
             
         stored_energy_yearly = daily_to_yearly_power(stored_energy)

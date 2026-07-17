@@ -9,7 +9,6 @@ class DummyDCF:
 
     def __init__(
         self, 
-        construction_time,
         design_output_by_year, 
         operating_capacity_factor,
         power_demand_kWh_per_m3, 
@@ -17,12 +16,6 @@ class DummyDCF:
         recovery_rate
     ):
         self.inp = {
-            "Financial Input Values": {
-                "Construction time": {
-                    "Value": construction_time,
-                    "Unit": "year",
-                }
-            },
             "Technical Operating Parameters and Specifications": {
                 "Design output by year": {
                     "Value": design_output_by_year, 
@@ -56,9 +49,8 @@ class DummyDCF:
     [
         {
             "input": {
-                "design_output_by_year": np.array([0.0, 2250.0, 2375.0]),
+                "design_output_by_year": np.array([2250.0, 2375.0]),
                 "operating_capacity_factor": 0.8,
-                "construction_time": 1,                   
                 "power_demand_kWh_per_m3": 10.0,          
                 "operating_time_fraction": 1.,                  
                 "recovery_rate": 0.1,                    

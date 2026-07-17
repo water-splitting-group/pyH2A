@@ -8,6 +8,7 @@ class DummyDCF:
 
     def __init__(
         self,
+        operation_years_relative,
         available_power,
         design_capacity,
         lowest_discharge_level,
@@ -15,6 +16,13 @@ class DummyDCF:
         round_trip_efficiency,
     ):
         self.inp = {
+            "Time": {
+                "Years": {
+                    "Value": operation_years_relative,
+                    "Unit": "-",   
+                    "Processed": "Yes",                    
+                },
+            },            
             "Power Generation": {
                 "Available energy (daily)": {
                     "Value": available_power,
@@ -49,23 +57,27 @@ class DummyDCF:
     [
         {
             "input": {
+                "operation_years_relative": {
+                    # in the plugin logic, years are relative to startup year, not calendar year
+                    'Operation years relative': np.arange(5, 7) 
+                },                 
                 "available_power": {
-                    2027: np.array([10.2, 5.2, 12.2, 12.2]),
-                    2028: np.array([22.2, 6.2, 8.2, 9.2]),
+                    5: np.array([10.2, 5.2, 12.2, 12.2]),
+                    6: np.array([22.2, 6.2, 8.2, 9.2]),
                 },
-                "design_capacity": 800000.0,
+                "design_capacity": 8.0,
                 "lowest_discharge_level": 0.20,
-                "loss_of_capacity": 0.01,
-                "round_trip_efficiency": 1.0,
+                "loss_of_capacity": 0.02,
+                "round_trip_efficiency": 0.95,
             },
            "expected": {
                 "yearly_recovered_energy": {
-                    2027: Quantity(np.array([0.00090933, 0.00090933, 0.00090933, 0.00090933]), "kWh"),
-                    2028: Quantity(np.array([0.00090023, 0.00090023, 0.00090023, 0.00090023]), "kWh"),
+                    5: Quantity(np.array([5.495838444544, 4.94, 5.495838444544, 5.495838444544]), "kWh"),
+                    6: Quantity(np.array([5.385921675653119, 5.385921675653119, 5.385921675653119, 5.385921675653119]), "kWh"),
                 },
                 "yearly_unstored_energy": {
-                    2027: Quantity(np.array([10.19909067, 5.19909067, 12.19909067, 12.19909067]), "kWh"),
-                    2028: Quantity(np.array([22.19909977, 6.19909977, 8.19909977, 9.19909977]), "kWh"),
+                    5: Quantity(np.array([4.414906900479999 , 0., 6.414906900479999 , 6.414906900479999 ]), "kWh"),
+                    6: Quantity(np.array([16.5306087624704 , 0.5306087624704006, 2.5306087624703997 , 3.5306087624703997]), "kWh"),
                 },
             },
         }
@@ -87,15 +99,15 @@ def test_battery_plugin(case):
     for year in dcf.operation_years:
 
         np.testing.assert_allclose(
-            plugin.yearly_recovered_energy[year].unit["J"],
-            expected["yearly_recovered_energy"][year].unit["J"],
-            rtol=1e-5,  # slightly higher relative tolerance
-            atol=1e-9,  # keep a small absolute tolerance
+            plugin.yearly_recovered_energy[year].unit["kWh"],
+            expected["yearly_recovered_energy"][year].unit["kWh"],
+            rtol=1e-12,
+            atol=1e-12,
         )
 
         np.testing.assert_allclose(
-            plugin.yearly_unstored_energy[year].unit["J"],
-            expected["yearly_unstored_energy"][year].unit["J"],
-            rtol=1e-5,
-            atol=1e-9,
+            plugin.yearly_unstored_energy[year].unit["kWh"],
+            expected["yearly_unstored_energy"][year].unit["kWh"],
+            rtol=1e-12,
+            atol=1e-12,
         )
