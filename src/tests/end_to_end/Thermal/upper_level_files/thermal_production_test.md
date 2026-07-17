@@ -10,4 +10,3 @@ Name | Value | Unit
 --- | --- | --- 
 Operating capacity factor | 40% | - | 0.44x change from reference value
 Plant design capacity | 2,000 | kg/day | 2.0x change from reference value.
-Fraction of output that reaches gate | 50% | - | 0.5x change from reference value
