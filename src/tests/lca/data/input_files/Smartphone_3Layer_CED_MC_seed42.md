@@ -9,9 +9,38 @@ Matrix Folder | src/tests/lca/data/matrix_folders/smartphone_3layer_ced_base
 Name | Value | Unit | UUID
 --- | --- | --- | ---
 Smartphone | 1.0 | kg | 927ba7de-2e36-4192-a585-91b7db8a07e4
-Circuit Board | 1.0 | item | 86c3e6eb-2103-4a36-87e0-5abaa79ee289
-Display | 1.0 | kg | 49092338-ccb5-4102-8d7b-d9a55ebecdaf
-Battery | 1.0 | kg | 91c3199d-cf4c-452e-979a-c467fc9c8404
+Circuit Board | {GT Circuit Board Output > Circuit Board > Value, item} | item | 86c3e6eb-2103-4a36-87e0-5abaa79ee289
+Display | {GT Display Output > Display > Value, kg} | kg | 49092338-ccb5-4102-8d7b-d9a55ebecdaf
+Battery | {GT Battery Output > Battery > Value, kg} | kg | 91c3199d-cf4c-452e-979a-c467fc9c8404
+
+# Workflow
+
+Name | Type | Position
+--- | --- | ---
+Test_Plugin_C | plugin | 50
+Test_Plugin_D | plugin | 50
+Test_Plugin_E | plugin | 50
+
+# GT Circuit Board Input
+
+Name | Value | Unit
+--- | --- | ---
+Base Quantity | 1.0 | item
+Scenario Factor | 1.0 | -
+
+# GT Display Input
+
+Name | Value | Unit
+--- | --- | ---
+Base Quantity | 1.0 | kg
+Scenario Factor | 1.0 | -
+
+# GT Battery Input
+
+Name | Value | Unit
+--- | --- | ---
+Base Quantity | 1.0 | kg
+Scenario Factor | 1.0 | -
 
 # Construction
 
@@ -55,14 +84,15 @@ Name | Usage per kg H2 | Usage Unit | Cost | Cost Unit | Price Conversion Factor
 
 Name | Value | Comment
 --- | --- | ---
-Samples | 150 | Sized so full_distance_cost_relationship's default reduction_factor=25 gives window_length=7 > poly_order=4, so Monte_Carlo_Analysis(input_file) runs without error.
+Samples | 10 | Small sample count for a fast test run. full_distance_cost_relationship's Savitzky-Golay smoothing (window_length = int(samples/reduction_factor), reduction_factor=25) would otherwise need >= 100 samples to exceed poly_order=4; Monte_Carlo_Analysis now skips that smoothing gracefully instead of raising when window_length <= poly_order, so a small sample count like this works fine.
 Dependent Variable | Cumulative energy demand | Already registered in _DEPENDENT_VARIABLE_CONFIG (unlike 'Global warming potential', which would require adding a new entry), and matches smartphone_3layer_ced_base's actual impact category key exactly.
-Target Response Range | 0; 100 | Brackets the expected CED range for Display in [1,2] kg and Battery in [1,2] kg (CED = 9*CircuitBoard + 14*Display + 27*Battery gives 50.0-91.0 for this range).
+Target Response Range | 0; 100 | Brackets the expected CED range for Circuit Board, Display, and Battery each in [1,2] (CED = 9*CircuitBoard + 14*Display + 27*Battery gives 50.0-100.0 for this range).
 Output File | src/tests/lca/data/input_files/Smartphone_3Layer_CED_MC_seed42_output.csv
 
 # Parameters - Monte_Carlo_Analysis
 
 Parameter | Name | Type | Values | Comment
 --- | --- | --- | --- | ---
-{LCA - Smartphone GT Components > Display > Value, kg} | Display (kg) | value | Base; 2.0 | Base resolves to 1.0 (set above), as required by check_parameter_integrity.
-{LCA - Smartphone GT Components > Battery > Value, kg} | Battery (kg) | value | Base; 2.0 | Base resolves to 1.0 (set above), as required by check_parameter_integrity.
+{GT Circuit Board Input > Scenario Factor > Value, -} | Circuit Board (item) | value | Base; 2.0 | Targets Test_Plugin_C's own input, same mechanism as Display/Battery below. Base resolves to 1.0 (set above), as required by check_parameter_integrity.
+{GT Display Input > Scenario Factor > Value, -} | Display (kg) | value | Base; 2.0 | Targets Test_Plugin_D's own input (not the LCA table cell directly): the sampled factor is read by the plugin and multiplied by Base Quantity (1.0 kg) into GT Display Output, which the LCA GT Components table then references via path. Base resolves to 1.0 (set above), as required by check_parameter_integrity.
+{GT Battery Input > Scenario Factor > Value, -} | Battery (kg) | value | Base; 2.0 | Targets Test_Plugin_E's own input, same as Display above. Base resolves to 1.0 (set above), as required by check_parameter_integrity.

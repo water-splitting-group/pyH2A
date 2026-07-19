@@ -17,9 +17,9 @@ Battery | {GT Battery Output > Battery > Value, kg} | kg | 042f97ea-dbbe-4ef4-ab
 
 Name | Type | Position
 --- | --- | ---
-GT_Circuit_Board_Plugin | plugin | 50
-GT_Display_Plugin | plugin | 50
-GT_Battery_Plugin | plugin | 50
+Test_Plugin_C | plugin | 50
+Test_Plugin_D | plugin | 50
+Test_Plugin_E | plugin | 50
 
 # GT Circuit Board Input
 
