@@ -46,8 +46,8 @@ class pyH2A:
 		self.output_directory = output_directory
 		self.inp = convert_input_to_dictionary(self.input_file)
 
-		self.functional_unit = self.inp['Functional Unit']['Functional Unit']['Unit']
-		fu.set_functional_unit(self.functional_unit)
+		# self.functional_unit = self.inp['Functional Unit']['Functional Unit']['Unit']
+		# fu.set_functional_unit(self.functional_unit)
 
 		self.base_case = Discounted_Cash_Flow(self.input_file, print_info = print_info)
 
