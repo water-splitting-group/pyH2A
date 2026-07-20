@@ -9,6 +9,20 @@ class Physical_properties:
     This class defines multiple constants (e.g. the ideal gas constant) as well as material properties characteristics (e.g. molecular weight).
     It also defines methods that calculate thermophysical properties of a mixture (e.g. enthalpy) using correlations derived from literature data.
     The variables are Quantity objects to make them easy to handle in plugins. 
+
+    Supported methods: 
+    - Substance_to_mass:
+        converts a dictionary made of {species: molar amount} into a dictionary of mass amounts. Also returns the mass fractions.
+    - Mass_to_substance: 
+        converts a dictionary made of {species: mass amount} into a dictionary of molar amounts. Also returns the molar fractions.
+    - Volume:
+        calcualtes the volume of a mixture defined by a dictionary of amounts {species: mass or molar amount} at the specified temeprature and pressure, for the specified phase.
+    - Enthalpy:
+        calcualtes the enthalpy and the heat capacity at constant pressure of a mixture defined by a dictionary of amounts {species: mass or molar amount} at the specified temeprature and pressure, for the specified phase.
+    - Water_saturation_pressure:
+        calculates the saturation pressure of pure water steam at the specified temeprature.
+    - Combustion_enthalpy:
+        calculates the mass-specific combustion enthalpy of hydrogen.
     '''
     
     # Universal constants
@@ -55,7 +69,7 @@ class Physical_properties:
 
     # Conversion of molar to mass amounts, and conversely
     @staticmethod
-    def substance_to_mass(molar_amounts):
+    def Substance_to_mass(molar_amounts):
         '''
         Convert molar amounts into mass amounts. Also returns the mass fractions
 
@@ -91,7 +105,7 @@ class Physical_properties:
 
 
     @staticmethod
-    def mass_to_substance(mass_amounts):
+    def Mass_to_substance(mass_amounts):
         '''
         Convert mass amounts into molar amounts. Also returns the molar fractions.
 
@@ -159,7 +173,7 @@ class Physical_properties:
             for species, quant in amount.items(): 
                 mass[species] = amount[species]
         else:
-            mass, mass_fraction = Physical_properties.substance_to_mass(amount)
+            mass, mass_fraction = Physical_properties.Substance_to_mass(amount)
 
         V = {}
         V_total = 0.      
@@ -207,7 +221,7 @@ class Physical_properties:
             for species, quant in amount.items(): 
                 mass[species] = amount[species]
         else:
-            mass, mass_fraction = Physical_properties.substance_to_mass(amount)
+            mass, mass_fraction = Physical_properties.Substance_to_mass(amount)
 
         H = {}
         Cp = {}
@@ -224,7 +238,7 @@ class Physical_properties:
 
     # Saturation pressure of pure water 
     @staticmethod
-    def water_saturation_pressure(T):
+    def Water_saturation_pressure(T):
         '''
         Calculates the saturation pressure of pure water 
 
@@ -243,7 +257,7 @@ class Physical_properties:
 
     # Combustion enthalpy of a hydrogen - we can extend it to a mixture in the future
     @staticmethod
-    def combustion_enthalpy(T, P):
+    def Combustion_enthalpy(T, P):
         '''
         Calculates the saturation pressure of hydrogen
 

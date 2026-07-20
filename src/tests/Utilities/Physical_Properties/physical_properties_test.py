@@ -82,13 +82,13 @@ def test_physical_properties(case):
     obtained = {}
 
     if inp["composition_basis"] == "mass":
-        mol, mol_fraction = PP.mass_to_substance(amount)
+        mol, mol_fraction = PP.Mass_to_substance(amount)
 
         obtained["mol"] = mol
         obtained["mol_fraction"] = mol_fraction
 
     else:
-        mass, mass_fraction = PP.substance_to_mass(amount)
+        mass, mass_fraction = PP.Substance_to_mass(amount)
 
         obtained["mass"] = mass
         obtained["mass_fraction"] = mass_fraction
@@ -134,7 +134,7 @@ def test_water_saturation_pressure(case):
     """Check water saturation pressure."""
 
     obtained = {
-        "psat": PP.water_saturation_pressure(case["input"]["temperature"]),
+        "psat": PP.Water_saturation_pressure(case["input"]["temperature"]),
     }
 
     check_dicts(obtained, case["expected"])
@@ -149,7 +149,7 @@ def test_water_saturation_pressure(case):
                 "pressure": Quantity(1.013, "bar"),
             },
             "expected": {
-                "combustion_enthalpy": Quantity(142500000.0, 'J / kg'),
+                "Combustion_enthalpy": Quantity(142500000.0, 'J / kg'),
             },
         },
     ],
@@ -159,7 +159,7 @@ def test_combustion_enthalpy(case):
     """Check combustion enthalpy."""
 
     obtained = {
-        "combustion_enthalpy": PP.combustion_enthalpy(
+        "Combustion_enthalpy": PP.Combustion_enthalpy(
             case["input"]["temperature"],
             case["input"]["pressure"],
         ),
