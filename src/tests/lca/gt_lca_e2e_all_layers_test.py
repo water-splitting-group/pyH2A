@@ -138,38 +138,38 @@ def _run_and_assert(input_file_stem, impact_name, expected_value, expected_unit)
 # ── Scenario data ────────────────────────────────────────────────────────────
 
 _SCENARIOS_1LAYER = [
-    ('Smartphone_1Layer_GWP', 'Global warming potential', 10.0, 'kg CO2-eq'),
-    ('Smartphone_1Layer_CED', 'Cumulative energy demand', 50.0, 'kWh'),
-    ('Smartphone_1Layer_ACID', 'Acidification', 4.0, 'kg SO2-eq'),
+    ('smartphone_1layer_gwp', 'Global warming potential', 10.0, 'kg CO2-eq'),
+    ('smartphone_1layer_ced', 'Cumulative energy demand', 50.0, 'kWh'),
+    ('smartphone_1layer_acid', 'Acidification', 4.0, 'kg SO2-eq'),
 ]
 
 _SCENARIOS_2LAYER = [
-    ('Smartphone_2Layer_GWP', 'Global warming potential', 10.0, 'kg CO2-eq'),
-    ('Smartphone_2Layer_CED', 'Cumulative energy demand', 50.0, 'kWh'),
-    ('Smartphone_2Layer_ACID', 'Acidification', 4.0, 'kg SO2-eq'),
+    ('smartphone_2layer_gwp', 'Global warming potential', 10.0, 'kg CO2-eq'),
+    ('smartphone_2layer_ced', 'Cumulative energy demand', 50.0, 'kWh'),
+    ('smartphone_2layer_acid', 'Acidification', 4.0, 'kg SO2-eq'),
 ]
 
 # Each list is (input_file_stem, expected_value) in base, S2, S3, S4, S5 order.
 _SCENARIOS_3LAYER_GWP = [
-    ('Smartphone_3Layer_GWP', 10.0),
-    ('Smartphone_3Layer_S2_GWP', 8.0),
-    ('Smartphone_3Layer_S3_GWP', 12.0),
-    ('Smartphone_3Layer_S4_GWP', 11.2),
-    ('Smartphone_3Layer_S5_GWP', 9.2),
+    ('smartphone_3layer_gwp_base', 10.0),
+    ('smartphone_3layer_gwp_s2', 8.0),
+    ('smartphone_3layer_gwp_s3', 12.0),
+    ('smartphone_3layer_gwp_s4', 11.2),
+    ('smartphone_3layer_gwp_s5', 9.2),
 ]
 _SCENARIOS_3LAYER_CED = [
-    ('Smartphone_3Layer_CED', 50.0),
-    ('Smartphone_3Layer_S2_CED', 39.5),
-    ('Smartphone_3Layer_S3_CED', 60.5),
-    ('Smartphone_3Layer_S4_CED', 54.4),
-    ('Smartphone_3Layer_S5_CED', 47.4),
+    ('smartphone_3layer_ced_base', 50.0),
+    ('smartphone_3layer_ced_s2', 39.5),
+    ('smartphone_3layer_ced_s3', 60.5),
+    ('smartphone_3layer_ced_s4', 54.4),
+    ('smartphone_3layer_ced_s5', 47.4),
 ]
 _SCENARIOS_3LAYER_ACID = [
-    ('Smartphone_3Layer_ACID', 4.0),
-    ('Smartphone_3Layer_S2_ACID', 3.2),
-    ('Smartphone_3Layer_S3_ACID', 4.8),
-    ('Smartphone_3Layer_S4_ACID', 4.66),
-    ('Smartphone_3Layer_S5_ACID', 3.46),
+    ('smartphone_3layer_acid_base', 4.0),
+    ('smartphone_3layer_acid_s2', 3.2),
+    ('smartphone_3layer_acid_s3', 4.8),
+    ('smartphone_3layer_acid_s4', 4.66),
+    ('smartphone_3layer_acid_s5', 3.46),
 ]
 
 
