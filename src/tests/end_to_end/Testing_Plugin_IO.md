@@ -1,9 +1,15 @@
+# Input files to merge
+
+Name | Value
+--- | ---
+Default TEA | pyH2A.Config~Defaults_TEA.md
+
 # Workflow
 
 Name | Type | Position
 --- | --- | ---
-Test_Plugin_A | plugin | 400
-Test_Plugin_B | plugin | 400
+Test_Plugin_A | plugin | 201
+Test_Plugin_B | plugin | 202
 
 # Functional Unit
 

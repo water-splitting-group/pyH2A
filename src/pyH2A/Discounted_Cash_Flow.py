@@ -1,88 +1,17 @@
 import copy
 import numbers
-from functools import lru_cache
-import numpy as np
-from pyH2A.Utilities.input_modification import (convert_input_to_dictionary, 
-												process_input, 
-												process_table, 
-												read_textfile,
-												set_by_path, 
+from pyH2A.Utilities.input_modification import (convert_input_to_dictionary,
+												set_by_path,
 												execute_plugin)
 from pyH2A.LCA.LCA import LCA
-import pyH2A.Utilities.find_nearest as fn
-from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
-def numpy_npv(rate, values):
-	'''Calculation of net present value.
-	'''
-
-	values = np.asarray(values)
-	return (values / (1+rate)**np.arange(0, len(values))).sum(axis=0)
-
-@lru_cache(maxsize = None)
-def get_idx(diagonal_number, axis0, axis1):
-	'''Calculation of index for MACRS calculation.
-	Uses ``lru_cache`` for repeated calculations.
-	'''
-
-	a = np.arange(0, diagonal_number)
-	b = a[::-1]
-	c = np.c_[a, b]
-
-	idx = c[(c[:,0] <= axis0 - 1) & (c[:,1] <= axis1 - 1)]
-	idx = (np.array(idx[:,0]), np.array(idx[:,1]))
-
-	return idx
-
-def MACRS_depreciation(plant_years, depreciation_length, annual_depreciable_capital):
-	'''Calculation of MACRS depreciations.
-	
-	Parameters
-	----------
-	plant_years : ndarray
-		Array of plant years.
-	depreciation_length : int
-		Depreciation length.
-	annual_depreicable_capital : ndarray
-		Depreciable capital by year.
-
-	Returns 
-	-------
-	annual_charge : ndarray
-		Charge by year.
-
-	'''
-
-	end_idx = len(plant_years)	
-
-	original_macrs = read_textfile('pyH2A.Lookup_Tables~MACRS.csv', delimiter = '	')
-	macrs = np.copy(original_macrs)
-
-	macrs[1:,1:] = macrs[1:,1:]/100.
-	idx_macrs = fn.find_nearest(macrs[0][1:], depreciation_length)[0] 
-	macrs_values = macrs[1:,1:][:,idx_macrs]
-	macrs_values = macrs_values[macrs_values != 0]
-
-	depreciation = np.outer(annual_depreciable_capital, macrs_values)
-
-	charge = []
-	diagonals = sum(depreciation.shape) + 1
-
-	for i in range(1, diagonals):
-		idx = get_idx(i, depreciation.shape[0], depreciation.shape[1])
-
-		diagonal = depreciation[idx]
-		charge.append(np.sum(diagonal))
-
-	charge = np.asarray(charge)
-
-	annual_charge = charge[:end_idx]
-	annual_charge[-1] += np.sum(charge[end_idx:])
-
-	return annual_charge
-
-def discounted_cash_flow_function(inp, values, parameters, attribute = 'h2_cost', 
-											plugin = None, plugin_attr = None):
+def discounted_cash_flow_function(inp, 
+								  values, 
+								  parameters, 
+								  dependent_variable = '{Dependent Variables > Levelized Cost > Value, USD/kg}',
+								  attribute = 'h2_cost',
+								  plugin = None, 
+								  plugin_attr = None):
 	'''Wrapper function for ``Discounted_Cash_Flow``, substituting provided values 
 	at specified parameter positions and returning desired attribute of 
 	``Discounted_Cash_Flow`` object.
@@ -147,8 +76,12 @@ def discounted_cash_flow_function(inp, values, parameters, attribute = 'h2_cost'
 
 	return results
 
-def discounted_cash_flow_function_1D(values, parameters, inp, attribute = 'h2_cost', 
-											plugin = None, plugin_attr = None):
+def discounted_cash_flow_function_1D(values, 
+									 parameters, 
+									 inp, 
+									 attribute = 'h2_cost', 
+									 plugin = None, 
+									 plugin_attr = None):
 	'''
 	Wrapper function for ``Discounted_Cash_Flow``, substituting provided values
 	at specified parameter positions and returning desired attribute of
@@ -247,9 +180,8 @@ class Discounted_Cash_Flow:
 
 	**Workflow**
 
-	Workflow specifies which functions and plugins are used and in which order they are executed. The listed
-	five functions have to be executed in the specified order for pyH2A to work. Plugins can be inserted at 
-	appropiate positions (Type: "plugin"). Plugins have to be located in the ./Plugins/ directory. Execcution
+	Workflow specifies which plugins are used and in which order they are executed. Plugins can be inserted at 
+	appropiate positions (Type: "plugin"). Plugins have to be located in the ./Plugins/ directory. Execution
 	order is determined by the "Position" input. If the specified position is equal to an already exisiting one,
 	the function/plugin will be executed after the already specified one. If multiple plugins/function are
 	specified with the same position, they will be executed in the order in which they are listed in the 
@@ -259,8 +191,7 @@ class Discounted_Cash_Flow:
 
 	Plugins needs to be composed of a class with the same name as the plugin file name. This class uses two inputs, 
 	a discounted cash flow object (usually indicated by "self") and "print_info", which controls the printing of run time
-	statements. Within the __init__ function of the class the actions of the plugins are specified, typically call(s)
-	of the "insert()" function to modify the discounted cash flow object's "inp" dictionary (self.inp).
+	statements. Within the __init__ function of the class the actions of the plugins are specified.
 	'''
 
 	def __init__(self, input_file, print_info = True, check_processing = True):
@@ -272,451 +203,39 @@ class Discounted_Cash_Flow:
 
 		self.print_info = print_info
 
-		process_table(self.inp, 'Financial Input Values', 'Value')
-		self.fin = self.inp['Financial Input Values']
-
 		self.npv_dict = {}	
 		self.plugs = {}
 
-		self.workflow(self.inp, self.npv_dict, self.plugs)  # execution of all functions and plugins specified in "Workflow"
-		self.post_workflow()
+		self.workflow(self.inp, self.plugs)  # execution of all functions and plugins specified in "Workflow"
+
+		##################### This section is to be changed (LCA should also be executed as a plugin)
+		######################## And removing dcf attributes ################
+
+		# The actual discounted cash flow analysis is performed by "Discounted_Cash_Flow_Plugin"
+		# (executed as part of "Workflow" above). Its results are exposed directly on this object
+		# for convenience and backwards compatibility.
+		dcf_plugin = self.plugs['Discounted_Cash_Flow_Plugin']
+		self.h2_cost = dcf_plugin.h2_cost
+		self.contributions = dcf_plugin.contributions
+		self.npv_dict.update(dcf_plugin.npv_dict)
 
 		if 'Life Cycle Assessment' in self.inp:
 			self.lca = LCA(self.inp['Life Cycle Assessment']['Matrix Folder']['Value'], self)
+
+		###################################################################
 
 		if check_processing is True:
 			self.check_processing()
 
 
-	def workflow(self, inp, npv_dict, plugs_dict):
+	def workflow(self, inp, plugs_dict):
 		'''Executing plugins and functions for discounted cash flow.
 		'''
 
 		sorted_keys = sorted(inp['Workflow'], key = lambda x: inp['Workflow'][x]['Position'])
 
 		for key in sorted_keys:
-			if inp['Workflow'][key]['Type'] == 'function':
-				self.execute_function(key, npv_dict)
-			else:
-				execute_plugin(key, plugs_dict, print_info = self.print_info, dcf = self)
-
-	def post_workflow(self):
-		'''Functions executed after workflow.
-
-		Parameters
-		----------
-		Financial Input Values > depreciation length > Value : int
-			Depreciation length in years.
-		Financial Input Values > depreciation type > Value : str
-			Type of depreciation, currently only MACRS is implemented.		
-		Financial Input Values > interest > Value : float
-			Interest rate on debt.
-		Financial Input Values > debt > Value : str
-			Debt period, currently only constant debt is implemented.
-		Financial Input Values > startup revenues > Value : float
-			Percentage of revenues during start-up.
-		Financial Input Values > decommissioning > Value : float
-			Decommissioning cost in percentage of depreciable capital investment.
-		Financial Input Values > salvage > Value : float
-			Salvage value in percentage of total capital investment.
-		Financial Input Values > state tax > Value : float
-			State tax.
-		Financial Input Values > federal tax > Value : float
-			Federal tax.
-		Financial Input Values > working capital > Value : float
-			Working capital as percentage of yearly change in operating costs.
-
-		'''
-
-		self.npv_dict['salvage'], self.npv_dict['decommissioning'] = self.salvage_decommissioning()		
-		self.npv_dict['working_capital_reserve'] = self.working_capital_reserve_calc()
-		self.npv_dict['interest'], self.npv_dict['principal_payment'] = self.debt_financing()
-		self.npv_dict['depreciation_charge'] = self.depreciation_charge()
-		self.npv_dict['h2_sales'] = self.h2_sales()
-		self.h2_cost()
-		self.npv_dict['revenue'] = self.h2_revenue()
-		(self.npv_dict['pre_depreciation_income'], 
-   		 self.npv_dict['taxable_income'], 
-		 self.npv_dict['taxes'], 
-		 self.npv_dict['after_tax_income']) = self.income()
-		self.cash_flow()
-		self.cost_contribution()
-
-	def execute_function(self, function_name, npv_dict):
-		'''Execute class function named `function_name` and store output in `npv_dict`'''
-
-		called_function = getattr(self, function_name)
-		output = called_function()
-		npv_dict[function_name] = output
-
-	def expand_to_analysis_years(self, operation_array):
-		'''Expand operation array to match analysis years.'''
-
-		full = np.zeros_like(self.plant_years_relative.unit['-'])
-		full[self.start_idx:] = operation_array
-
-		return full
-	
-	def time(self):
-		'''Creating time scale information for discounted cash flow analysis.
-		'''
-			
-		self.time_dict = self.inp['Time']['Years']['Value']
-		
-		self.construction_years_ones = self.time_dict['Construction years ones']
-		self.construction_time_years = len(self.construction_years_ones.unit['-'])
-
-		self.plant_years_relative = self.time_dict['Plant years relative']
-		self.analysis_years_ones = self.time_dict['Analysis years ones']
-
-		# while the start index is natively an integer, due to the IO resolver behaviour,
-		# it is unsuitable to array slicing and needs to be converted into an int explicitly
-		self.start_idx = int(round(self.time_dict['Start index'].unit['-'])) 
-
-	def inflation(self):
-		'''Creating inflation correction and inflators information for specific commodities.
-		'''
-
-		self.inflation_factor = self.inp['Inflation']['Inflation factor full']['Value']
-		self.inflation_correction = self.inp['Inflation']['Inflation correction']['Value']
-
-		self.cepci_inflator = self.inp['Inflation']['CEPCI inflator']['Value']
-		self.ci_inflator = self.inp['Inflation']['CI inflator']['Value']
-		self.combined_inflator = self.inp['Inflation']['Combined inflator']['Value']
-		self.labor_inflator = self.inp['Inflation']['Labor inflator']['Value']
-		self.chemical_inflator = self.inp['Inflation']['Chemical inflator']['Value']
-
-	def production(self):
-		'''Get plant output at gate by year.
-
-		Parameters
-		----------
-		Technical Operating Parameters and Specifications > Output at gate by year > Value : float
-			Output at gate by year in mass.
-		'''
-
-		self.output_per_year_at_gate = process_input(self.inp, 
-										'Technical Operating Parameters and Specifications', 
-										'Output at gate by year', 
-										'Value')
-		self.output_per_year_at_gate = Quantity(
-											self.expand_to_analysis_years(self.output_per_year_at_gate.unit['kg']), 
-											'kg')
-
-		return 0.
-
-	def initial_equity_depreciable_capital(self):
-		'''Calculate initial equity depreciable capital.
-
-		Parameters
-		----------
-		Financial Input Values > equity > Value : float
-			Percentage of equity financing.
-		Financial Input Values > irr > Value : float
-			After tax real internal rate of return.
-		Depreciable Capital Costs > Inflated > Value : float
-			Inflated depreciable capital costs.
-		'''
-
-		self.depreciable_capital = process_input(self.inp, 'Depreciable Capital Costs', 'Inflated', 'Value')
-		self.depreciable_capital_inflation = (self.depreciable_capital.unit['USD'] 
-											  * self.inflation_correction.unit['-'])
-
-		process_table(self.inp, 'Construction', 'Value')
-
-		construction_years = []
-		for counter, key in enumerate(self.inp['Construction']):
-			cost = (self.inp['Construction'][key]['Value'].unit['-'] 
-		   			* self.fin['Fraction equity financing']['Value'] 
-					* self.depreciable_capital_inflation 
-					* self.inflation_factor.unit['-'][counter])
-			construction_years.append(cost)
-
-		self.initial_depreciable_capital = np.sum(construction_years)
-
-		self.annual_initial_depreciable_capital = np.zeros_like(self.analysis_years_ones.unit['-'])
-		self.annual_initial_depreciable_capital[:self.construction_time_years] = construction_years
-
-		self.after_tax_nominal_irr = ((1 + self.fin['After-tax real IRR']['Value']) 
-									   * (1 + self.fin['Inflation rate']['Value'].unit['-']) - 1)
-
-		return numpy_npv(self.after_tax_nominal_irr, construction_years)
-
-	def non_depreciable_capital_costs(self):
-		'''Calculate non-depreciable capital costs.
-
-		Parameters
-		----------
-		Non-Depreciable Capital Costs > Inflated > Value : float
-			Inflated non-depreciable capital costs.
-		'''
-		
-		self.non_depreciable_capital = process_input(self.inp, 'Non-Depreciable Capital Costs', 'Inflated', 'Value')
-		self.non_depreciable_capital_inflated = self.non_depreciable_capital.unit['USD'] * self.inflation_correction.unit['-']
-		non_depreciable_capital_inflation_corrected = self.non_depreciable_capital_inflated * self.inflation_factor.unit['-'][0]
-
-		self.annual_non_depreciable_capital = np.zeros_like(self.analysis_years_ones.unit['-'])
-		self.annual_non_depreciable_capital[0] = non_depreciable_capital_inflation_corrected
-
-		return non_depreciable_capital_inflation_corrected
-
-	def replacement_costs(self):
-		'''Calculate replacement costs.
-
-		Parameters
-		----------
-		Replacement > Total > Value : ndarray
-			Total replacement costs.
-		'''
-	
-		yearly_costs = self.inp['Replacement']['Total']['Value'].unit['USD']
-
-		yearly_costs[:self.start_idx] = 0
-		self.annual_replacement_costs = yearly_costs	
-
-		return numpy_npv(self.after_tax_nominal_irr, yearly_costs)
-
-	def fixed_operating_costs(self):
-		'''Calculate fixed operating costs.
-
-		Parameters
-		----------
-		Financial Input Values > startup time > Value : int
-			Startup time in years. 
-		Financial Input Values > startup cost fixed > Value : float
-			Percentage of fixed operating costs during start-up.
-		Fixed Operating Costs > Total > Value : float
-			Total fixed operating costs.
-		'''
-
-		fixed_operating = process_input(self.inp, 'Fixed Operating Costs', 'Total', 'Value')
-		fixed_operating = Quantity(self.expand_to_analysis_years(fixed_operating.unit['USD']), 'USD')
-		fixed_operating_inflated = fixed_operating.unit['USD'] * self.inflation_correction.unit['-']
-
-		self.start_up_time_idx = self.start_idx + self.fin['Start-up time']['Value']
-
-		yearly_costs = fixed_operating_inflated * self.inflation_factor.unit['-']
-		yearly_costs[:self.start_up_time_idx] = (yearly_costs[:self.start_up_time_idx] 
-										   		 * self.fin['Fraction of fixed operating costs during start-up']['Value'])
-		yearly_costs[:self.start_idx] = 0
-
-		self.fixed_operating_costs = yearly_costs
-
-		return numpy_npv(self.after_tax_nominal_irr, yearly_costs)
-
-	def variable_operating_costs(self):
-		'''Calculate variable operating costs.
-
-		Parameters
-		----------
-		Financial Input Values > startup cost variable > Value : float
-			Percentage of variable operating costs during start-up.
-		Variable Operating Costs > Total > Value : ndarray
-			Total variable operating costs.
-		'''
-
-		variable_operating_costs = (self.inflation_factor.unit['-'] 
-							  		* self.expand_to_analysis_years(self.inp['Variable Operating Costs']['Total']['Value'].unit['USD']))
-		variable_operating_costs[:self.start_up_time_idx] = (variable_operating_costs[:self.start_up_time_idx] 
-													   		* self.fin['Fraction of variable operating costs during start-up']['Value'])
-		variable_operating_costs[:self.start_idx] = 0
-
-		self.variable_operating_costs = variable_operating_costs
-
-		return numpy_npv(self.after_tax_nominal_irr, variable_operating_costs)
-
-	def salvage_decommissioning(self):
-		'''Calculate salvage and decommissioning costs.
-		'''
-
-		self.total_capital_inflated = self.depreciable_capital_inflation + self.non_depreciable_capital_inflated
-
-		decommissioning = (self.depreciable_capital_inflation 
-					 	   * self.fin['Decommissioning costs (fraction of depreciable capital investment)']['Value'])
-		salvage = (self.total_capital_inflated 
-			 	   * self.fin['Salvage value (fraction of total capital investment)']['Value'])
-
-		self.decommissioning_costs = np.zeros_like(self.analysis_years_ones.unit['-'])
-		self.decommissioning_costs[-1] = decommissioning * self.inflation_factor.unit['-'][-1]
-
-		self.salvage_income = np.zeros_like(self.analysis_years_ones.unit['-'])
-		self.salvage_income[-1] = salvage * self.inflation_factor.unit['-'][-1]
-
-		return (numpy_npv(self.after_tax_nominal_irr, self.salvage_income), 
-		  		numpy_npv(self.after_tax_nominal_irr, self.decommissioning_costs))
-
-	def working_capital_reserve_calc(self):
-		'''Calculate working capital reserve.
-		'''
-
-		sum_variable_fixed_operating_costs = self.variable_operating_costs + self.fixed_operating_costs
-
-		self.working_capital_reserve = (-self.fin['Working Capital (fraction of yearly change in operating costs)']['Value'] 
-								  		* np.diff(sum_variable_fixed_operating_costs))
-		self.working_capital_reserve[-1] = -np.sum(self.working_capital_reserve[:-1])
-		self.working_capital_reserve = np.r_[np.zeros(1), self.working_capital_reserve]
-
-		return -numpy_npv(self.after_tax_nominal_irr, self.working_capital_reserve)
-
-	def debt_financing(self):
-		'''Calculate constant debt financing.
-		'''
-
-		self.debt_financed_capital = (self.depreciable_capital_inflation 
-									  * (1 - self.fin['Fraction equity financing']['Value']) 
-									  * self.inflation_factor.unit['-'][0])
-		
-		interest = self.debt_financed_capital * self.fin['Interest rate on debt']['Value']
-		self.interest_per_year = self.analysis_years_ones.unit['-'] * interest
-
-		self.principal_payment = np.zeros_like(self.analysis_years_ones.unit['-'])
-
-		self.principal_payment[-1] = self.debt_financed_capital
-
-		return (numpy_npv(self.after_tax_nominal_irr, self.interest_per_year), 
-		  		numpy_npv(self.after_tax_nominal_irr, self.principal_payment))
-
-	def depreciation_charge(self):
-		'''Calculate depreciation charge.
-		'''
-
-		total_initial_depreciable_capital = self.debt_financed_capital + self.initial_depreciable_capital
-		annual_depreciable_capital = np.copy(self.annual_replacement_costs)
-		annual_depreciable_capital[self.start_idx] += total_initial_depreciable_capital
-
-		self.annual_charge = MACRS_depreciation(self.plant_years_relative.unit['-'], 
-										  		self.fin['Depreciation schedule Length']['Value'], 
-												annual_depreciable_capital)		
-
-		return numpy_npv(self.after_tax_nominal_irr, self.annual_charge)
-
-	def h2_sales(self):
-		'''Calculate H2 sales.
-		'''
-
-		self.annual_sales = self.output_per_year_at_gate.unit['kg']
-		self.annual_sales[:self.start_up_time_idx] = (self.annual_sales[:self.start_up_time_idx] 
-													  * self.fin['Fraction of revenues during start-up']['Value'])
-		self.annual_sales[:self.start_idx] = 0
-
-		return numpy_npv(self.fin['After-tax real IRR']['Value'], self.annual_sales)
-
-	def h2_cost(self):
-		'''Calculate levelized H2 cost.
-		'''
-
-		self.total_tax_rate = (self.fin['Federal taxes']['Value'] 
-						 	   + self.fin['State taxes']['Value'] 
-							   * (1. - self.fin['Federal taxes']['Value']))
-
-		lcoe_capital_costs = (self.npv_dict['initial_equity_depreciable_capital'] 
-							  + self.npv_dict['non_depreciable_capital_costs'] 
-							  + self.npv_dict['replacement_costs'] 
-							  + self.npv_dict['working_capital_reserve'])
-		
-		lcoe_depreciation = -self.npv_dict['depreciation_charge'] * self.total_tax_rate
-		lcoe_principal_payment = self.npv_dict['principal_payment']
-		lcoe_operating_costs = ((-self.npv_dict['salvage'] 
-						   		 + self.npv_dict['decommissioning'] 
-								 + self.npv_dict['fixed_operating_costs'] 
-								 + self.npv_dict['variable_operating_costs'] 
-								 + self.npv_dict['interest']) 
-								* (1. - self.total_tax_rate))
-		
-		lcoe_h2_sales = self.npv_dict['h2_sales'] * (1. - self.total_tax_rate)
-
-		self.h2_cost_nominal = ((lcoe_capital_costs 
-						    	 + lcoe_depreciation 
-								 + lcoe_principal_payment 
-								 + lcoe_operating_costs)
-								/lcoe_h2_sales 
-								* (1. + self.fin['Inflation rate']['Value'].unit['-']) ** self.construction_time_years)
-		
-		self.h2_cost = self.h2_cost_nominal/self.inflation_correction.unit['-']
-
-	def h2_revenue(self):
-		'''Calculate H2 sales revenue.
-		'''
-
-		self.annual_revenue = (self.annual_sales 
-						 	   * self.h2_cost_nominal * self.inflation_factor.unit['-'])
-
-		return numpy_npv(self.after_tax_nominal_irr, self.annual_revenue)
-
-	def income(self):
-		'''Calculate total income.
-		'''
-
-		self.annual_pre_depreciation_income = (self.annual_revenue 
-										 	   + self.salvage_income 
-											   - self.decommissioning_costs 
-											   - self.fixed_operating_costs 
-											   - self.variable_operating_costs 
-											   - self.interest_per_year)
-		
-		self.taxable_income = self.annual_pre_depreciation_income - self.annual_charge
-		self.annual_taxes = self.taxable_income * self.total_tax_rate
-		self.after_tax_income = self.annual_pre_depreciation_income - self.annual_taxes
-
-		return (numpy_npv(self.after_tax_nominal_irr, self.annual_pre_depreciation_income), 
-		  		numpy_npv(self.after_tax_nominal_irr, self.taxable_income), 
-				numpy_npv(self.after_tax_nominal_irr, self.annual_taxes), 
-				numpy_npv(self.after_tax_nominal_irr, self.after_tax_income))
-
-	def cash_flow(self):
-		'''Calculate cash flow.
-		'''
-
-		pre_tax_cash_flow = (-self.annual_initial_depreciable_capital 
-					   		 - self.annual_replacement_costs 
-							 + self.working_capital_reserve 
-							 - self.annual_non_depreciable_capital 
-							 + self.annual_pre_depreciation_income 
-							 - self.principal_payment)
-		
-		after_tax_post_depreciation_cash_flow = pre_tax_cash_flow - self.annual_taxes
-
-		npv_after_tax_post_depreciation = numpy_npv(self.after_tax_nominal_irr, after_tax_post_depreciation_cash_flow)
-
-		if abs(npv_after_tax_post_depreciation) > 1e-6:
-			print('Warning: NPV of After tax post-depreciation cash flow is not 0, possible error. NPV: {0}'.format(npv_after_tax_post_depreciation))
-
-		cummulative_cash_flow = np.cumsum(after_tax_post_depreciation_cash_flow)
-
-		return numpy_npv(self.after_tax_nominal_irr, cummulative_cash_flow)
-
-	def cost_contribution(self):
-		'''Compile contributions to H2 cost.
-		'''
-
-		revenue = self.expenses_per_kg_H2(self.npv_dict['revenue'])
-
-		self.contributions = {'Data': {'Initial equity depreciable capital': self.expenses_per_kg_H2(self.npv_dict['initial_equity_depreciable_capital']),
-						   			   'Non depreciable capital' : self.expenses_per_kg_H2(self.npv_dict['non_depreciable_capital_costs']),
-						 			   'Replacement costs' : self.expenses_per_kg_H2(self.npv_dict['replacement_costs']),
-						      		   'Salvage' : -self.expenses_per_kg_H2(self.npv_dict['salvage']),
-						 	  		   'Decommissioning' : self.expenses_per_kg_H2(self.npv_dict['decommissioning']),
-						  	  		   'Fixed operating costs' : self.expenses_per_kg_H2(self.npv_dict['fixed_operating_costs']),
-						 	  		   'Variable operating costs' : self.expenses_per_kg_H2(self.npv_dict['variable_operating_costs']),
-						 	  		   'Working capital reserve' : self.expenses_per_kg_H2(self.npv_dict['working_capital_reserve']),
-						   	  		   'Interest' : self.expenses_per_kg_H2(self.npv_dict['interest']),
-						      		   'Principal payment' : self.expenses_per_kg_H2(self.npv_dict['principal_payment']),
-						      		   'Taxes' : self.expenses_per_kg_H2(self.npv_dict['taxes'])}
-						      		   }
-
-		self.contributions['Total'] = self.h2_cost
-		self.contributions['Table Group'] = 'Total cost of hydrogen'
-
-	def expenses_per_kg_H2(self, value):
-		'''Calculate expenses per kg H2.
-		'''
-
-		result = (value
-			      / self.npv_dict['h2_sales'] 
-				  * (1. + self.fin['Inflation rate']['Value'].unit['-']) ** self.construction_time_years 
-				  / self.inflation_correction.unit['-'])
-
-		return result
+			execute_plugin(key, plugs_dict, print_info = self.print_info, dcf = self)
 
 	def check_processing(self):
 		'''Check whether all tables in input file were used.

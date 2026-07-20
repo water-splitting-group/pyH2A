@@ -339,21 +339,15 @@ def merge(a, b, path=None, update=True):
 			a[key] = b[key]
 	return a
 
-
-def convert_input_to_dictionary(file, default = 'pyH2A.Config~Defaults.md', merge_default = True):
+def convert_input_to_dictionary(file):
 	'''
-	Read markdown input file into dictionary and optionally merge defaults and
+	Read markdown input file into dictionary and merge
 	one level of external base-input files.
 
 	Parameters
 	----------
 	file : str
 		Path to input file.
-	default : str, optional
-		Path to default file.
-	merge_default : bool
-		If ``True``, defaults are merged first and the main input file overrides
-		the default values.
 
 	Returns
 	-------
@@ -362,12 +356,9 @@ def convert_input_to_dictionary(file, default = 'pyH2A.Config~Defaults.md', merg
 
 	Notes
 	-----
-	If ``merge_default`` is ``True``, the default file is merged first and the
-	main input file overrides those values.
-
 	If a ``Input files to merge`` table exists, each row's ``Value`` is treated as a
 	referenced file path. Referenced files are loaded in listed order and merged
-	into the current dictionary, so later listed files have higher priority.
+	into the current dictionary. Files listed first have higher priority. 
 
 	Only first-level references from the main input file are resolved. Nested
 	``Input files to merge`` tables inside referenced files are not followed.
@@ -375,11 +366,6 @@ def convert_input_to_dictionary(file, default = 'pyH2A.Config~Defaults.md', merg
  
 
 	inp = convert_file_to_dictionary(file_import(file, mode = 'r'))
-
-	if merge_default is True:
-
-		inp_default = convert_file_to_dictionary(file_import(default, mode = 'r'))
-		inp = merge(inp_default, inp)
 
 	if 'Input files to merge' in inp:
 
@@ -676,8 +662,6 @@ def process_path(dictionary, path, top_key, key, bottom_key):
 		Middle key.
 	bottom_key : str
 		Bottom key.
-	print_processing_warning : bool
-		Flag to control if a warning is printed when an unprocessed value is being used.
 
 	Notes
 	-----
