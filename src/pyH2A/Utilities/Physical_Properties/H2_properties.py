@@ -1,3 +1,5 @@
+from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+
 class H2_properties:
     '''
     This class calculates properties of pure Hydrogen
@@ -7,51 +9,52 @@ class H2_properties:
     def calc_enthalpy(T, P, m, phase):
         '''
         Calculating the enthalpy of pure H2 at the specified temperature and pressure, in the specified phase.
-        Reference conditions: null enthalpy for hydrogen gas at 298.15 K
+        Polynomials established from NIST Janaf tables with reference conditions: null enthalpy for hydrogen gas at 298.15 K.
 
         Parameters
         ----------
         T : float 
-            Temperature, Kelvins
+            Temperature.
         P : float 
-            Pressure, Pascals. Placeholder, as some correlations might use pressure for some species in the future
+            Pressure. Placeholder, as some correlations might use pressure for some species in the future
         m : float 
-            Mass of water, kg 
+            Mass of hydrogen 
         phase : str
             S, L or V 
+
         Returns
         -------
         H: float 
-            Enthalpy of the mass m of H2 under the specified conditions in J   
+            Enthalpy of the mass m of H2 under the specified conditions   
         Cp: float 
-            Constant pressure heat capacity of the mass m of H2 under the specified conditions in J       
+            Constant pressure heat capacity of the mass m of H2 under the specified conditions       
         '''
 
-        # thermal coefficients:
-        T_ref = 298.15 # reference temperature
-        linear_vapour = 6.86e3 
-        quadratic_vapour = 0.46
-        cubic_vapour = - 3.33e-4
-        offset_liquid = - 2.65e6 # vapourization enthalpy of liquid H2
-        linear_liquid = 10e3 # heat capacity of liquid
+        # thermal coefficients, with imposed units due to the correlation they originate from:
+        T_ref = 298.15 # reference temperature, K
+        linear_vapour = 6.86e3 # J/kg/K
+        quadratic_vapour = 0.46 # J/kg/K^2
+        cubic_vapour = - 3.33e-4 # J/kg/K^3
+        offset_liquid = - 2.65e6 # vapourization enthalpy of liquid H2, J/kg
+        linear_liquid = 10e3 # heat capacity of liquid, J/kg/K
         
         # Calculation of the mass-specific enthalpy
         if phase == 'V':
-            h = linear_vapour*(T-T_ref) + quadratic_vapour*(T**2-T_ref**2) + cubic_vapour*(T**3-T_ref**3)
-            cp = linear_vapour + quadratic_vapour*2*T + cubic_vapour*3*T**2
+            h = linear_vapour*(T.unit['K']-T_ref) + quadratic_vapour*(T.unit['K']**2-T_ref**2) + cubic_vapour*(T.unit['K']**3-T_ref**3)
+            cp = linear_vapour + quadratic_vapour*2*T.unit['K'] + cubic_vapour*3*T.unit['K']**2
 
         elif phase == 'L': # liquid H2 might be needed if a plant includes liquiefaction at some point
             # this relation is valid at 1 Atm only
-            # it should be considered as a placeholder rather than an actual correlation we will use
-            h = offset_liquid + linear_liquid*(T-20.37)
+            # it should be considered as a placeholder in case we would consider liquid H2 in the future, rather than an actual correlation we will use at the moment
+            h = offset_liquid + linear_liquid*(T.unit['K']-20.37)
             cp = linear_liquid
             
         else: 
             raise ValueError("Solid H2 is not supported")
         
-        H = h*m
-        Cp = cp*m
-        return H, Cp
+        H = h*m.unit['kg']
+        Cp = cp*m.unit['kg']
+        return Quantity(H, 'J'), Quantity(Cp, 'J/delta_K')
     
 
     # Hydrogen combustion enthalpy (used to assess EROEI | equivalent hydrogen self-consumption)
@@ -63,17 +66,17 @@ class H2_properties:
         Parameters
         ----------
         T : float 
-            Temperature, Kelvins. Placeholder, as the calculation might use temeprature in the future
+            Temperature. Placeholder, as the calculation might use temperature in the future
         P : float 
-            Pressure, Pascals. Placeholder, as the calculation might use pressure in the future
+            Pressure. Placeholder, as the calculation might use pressure in the future
 
         Returns
         -------
         H_mass: float 
-            Mass-specific combustion enthalpy of H2 in J/kg   
+            Mass-specific combustion enthalpy of H2 (energy/mass)
         '''
 
         H = 142.5e6 # value under standard conditions, we can implement a correlation that depends on T, P later
 
-        return H
+        return Quantity(H, 'J/kg')
   

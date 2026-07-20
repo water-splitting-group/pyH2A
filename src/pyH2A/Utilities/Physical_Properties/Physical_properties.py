@@ -7,18 +7,17 @@ import numpy as np
 class Physical_properties:
     '''
     This class defines multiple constants (e.g. the ideal gas constant) as well as material properties characteristics (e.g. molecular weight).
-    It also defines methods that calcualte thermophysical properties of a mixture (e.g. enthalpy) from literature correlations.
+    It also defines methods that calculate thermophysical properties of a mixture (e.g. enthalpy) using correlations derived from literature data.
     Input and oputput variables are Quantity objects to make them easy to handle in plugins. 
-    Internal variables are however defined with fixed units, generally impsoed by the correlations.
+    Internal variables are however defined with fixed units, generally imposed by the correlations.
     '''
     
-
     # Universal constants
 
     # Ideal gas constant
     IG_constant = Quantity(8.314, 'J/(mol*delta_K)') 
 
-    # Ideal gas molar heat capacities a constant volume and pressure
+    # Ideal gas molar heat capacities at constant volume and pressure
     IG_monoatomic_Cv = Quantity(1.5, 'J/(mol*delta_K)')
     IG_monoatomic_Cp = Quantity(2.5, 'J/(mol*delta_K)')
     IG_diatomic_Cv = Quantity(2.5, 'J/(mol*delta_K)')
@@ -27,7 +26,6 @@ class Physical_properties:
     # Heat capacity ratio of ideal gas
     IG_monoatomic_heat_capacity_ratio = Quantity(5/3, '-')     
     IG_diatomic_heat_capacity_ratio = Quantity(7/5, '-')    
-
 
     # Material-specific constants
 
@@ -122,9 +120,9 @@ class Physical_properties:
     def Enthalpy(T, P, amount, phase = 'V', composition_basis = 'mass'):
         '''
         Calculating the enthalpy of individual species at the specified temperature and pressure, and returning the mixture enthalpy, assuming ideal mixture.
-        The calculation is based on extensive quantities to keep it general; 
-        if the specific enthalpy (per kg or per mole of mixture) is desired, the specified "amount" in the upper level should be the mass | molar fraction.
-        Only single-phase (S | L | V) calculation is allowed for the moment; when a mixture involves multiple phases, the upper level model must call the rpesent method for each phase.
+        The calculation is based on extensive quantities to keep it general, which is standard practice in properties packages; 
+        if the specific enthalpy (per kg or per mole of mixture) is desired, the specified "amount" in the upper level should simply be the mass | molar fraction.
+        Only single-phase (S | L | V) calculation is allowed for the moment; when a mixture involves multiple phases, the upper level model must call the present method for each phase.
 
         Parameters
         ----------
@@ -160,12 +158,11 @@ class Physical_properties:
         Cp_total = 0
 
         for species, quantity in mass.items():
-            H[species], Cp[species] = Physical_properties.species_properties[species].calc_enthalpy(T.unit['K'], P.unit['bar'], quantity.unit['kg'], phase = phase)
-            H_total += H[species]
-            Cp_total += Cp[species]
+            H[species], Cp[species] = Physical_properties.species_properties[species].calc_enthalpy(T, P, quantity, phase = phase)
+            H_total += H[species].unit['J']
+            Cp_total += Cp[species].unit['J/delta_K']
 
         return Quantity(H_total, 'J'), Quantity(Cp_total, 'J/delta_K')
-
 
     # Saturation pressure of pure water 
     @staticmethod
@@ -183,7 +180,7 @@ class Physical_properties:
         saturation pressure: float 
             Saturation pressure of water under the specified temperature 
         '''
-        return Quantity(water_prop.Water_properties.calc_psat(T.unit['K']), 'bar')     
+        return water_prop.Water_properties.calc_psat(T)     
     
 
     # Combustion enthalpy of a hydrogen - we can extend it to a mixture in the future
@@ -204,4 +201,4 @@ class Physical_properties:
         Combustion_enthalpy: float 
             Mass-specific combustion enthalpy of hydrogen 
         '''
-        return Quantity(H2_prop.H2_properties.calc_combustion_enthalpy(T.unit['K'], P.unit['bar']), "J/kg") 
+        return H2_prop.H2_properties.calc_combustion_enthalpy(T, P) 
