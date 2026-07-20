@@ -43,6 +43,7 @@ class H2_properties:
         V = v*m.unit['kg']
         return Quantity(V, 'm3')
     
+    
     @staticmethod
     def calc_enthalpy(T, P, m, phase):
         '''
@@ -71,8 +72,8 @@ class H2_properties:
         # thermal coefficients, with imposed units due to the correlation they originate from:
         T_ref = 298.15 # reference temperature, K
         linear_vapour = 6.86e3 # J/kg/K
-        quadratic_vapour = 0.46 # J/kg/K^2
-        cubic_vapour = - 3.33e-4 # J/kg/K^3
+        quadratic_vapour = 0.46 # J/kg/K2
+        cubic_vapour = - 3.33e-4 # J/kg/K3
         offset_liquid = - 2.65e6 # vapourization enthalpy of liquid H2, J/kg
         linear_liquid = 10e3 # heat capacity of liquid, J/kg/K
         

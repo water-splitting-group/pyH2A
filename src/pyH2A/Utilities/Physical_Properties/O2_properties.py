@@ -73,8 +73,8 @@ class O2_properties:
         # thermal coefficients, with imposed units due to the correlation they originate from:
         T_ref = 298.15 # reference temperature, K
         linear_vapour = 9.453e2 # J/kg/K
-        quadratic_vapour = 3.207 # J/kg/K^2
-        cubic_vapour = - 1.37e-3  # J/kg/K^3
+        quadratic_vapour = 3.207 # J/kg/K2
+        cubic_vapour = - 1.37e-3  # J/kg/K3
         offset_liquid = - 6.17e5 # vapourization enthalpy of liquid O2, J/kg
         linear_liquid = 1.67e3 # heat capacity of liquid, J/kg/K
         

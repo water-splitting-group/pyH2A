@@ -34,9 +34,9 @@ class Water_properties:
         # thermal coefficients, with imposed units due to the correlation they originate from:
         offset_liquid =  9.99806282e-04 # m3/kg
         linear_liquid = -2.33664305e-09 # m3/kg/degC
-        quadratic_liquid =  5.74608202e-09 # m3/kg/degC^2
-        cubic_liquid = -1.80098558e-11 # m3/kg/degC^3
-        quartic_liquid =  4.45840291e-14 # m3/kg/degC^4
+        quadratic_liquid =  5.74608202e-09 # m3/kg/degC2
+        cubic_liquid = -1.80098558e-11 # m3/kg/degC3
+        quartic_liquid =  4.45840291e-14 # m3/kg/degC4
 
         # Calculation of the mass-specific volume
         if phase == 'V':
@@ -83,8 +83,8 @@ class Water_properties:
         std_H_formation = -15860e3 # Standard formation enthalpy of liquid water at 25°C, J/kg 
         offset_vapour = 2443e3 # vapourization enthalpy at 25°C, since the reference is liquid at 298.15 K, J/kg
         linear_vapour = -2.36e3 + 1.864e3 # dependency of the vapourization enthalpy + dependency of the vapour itself, J/kg/K
-        quadratic_vapour = 0.23 # J/kg/K^2
-        cubic_vapour = - 5e-5 # J/kg/K^3
+        quadratic_vapour = 0.23 # J/kg/K2
+        cubic_vapour = - 5e-5 # J/kg/K3
         linear_liquid = 4.18e3 # heat capacity of liquid, J/kg/K
         offset_solid = -385.79e3 # freezing enthalpy, J/kg
         linear_solid = 2098 # heat capacity of ice, J/kg/K
@@ -107,9 +107,10 @@ class Water_properties:
         Cp = cp*m.unit['kg']
         return Quantity(H, 'J'), Quantity(Cp, 'J/delta_K')
     
+    
     def calc_psat(T):
         '''
-        Antoine equation for water-vapour equilibrium:
+        Saturation pressure as a function of temperature, using Antoine equation for water-vapour equilibrium:
         log10(P_sat) = A - B/(C+T)
         with Antoine constants A, B and C from NIST SRD 69 
         https://webbook.nist.gov/cgi/cbook.cgi?ID=C7732185&Mask=4&Type=ANTOINE#ANTOINE

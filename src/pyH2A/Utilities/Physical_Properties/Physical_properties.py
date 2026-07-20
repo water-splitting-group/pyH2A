@@ -8,8 +8,7 @@ class Physical_properties:
     '''
     This class defines multiple constants (e.g. the ideal gas constant) as well as material properties characteristics (e.g. molecular weight).
     It also defines methods that calculate thermophysical properties of a mixture (e.g. enthalpy) using correlations derived from literature data.
-    Input and oputput variables are Quantity objects to make them easy to handle in plugins. 
-    Internal variables are however defined with fixed units, generally imposed by the correlations.
+    The variables are Quantity objects to make them easy to handle in plugins. 
     '''
     
     # Universal constants
@@ -26,6 +25,7 @@ class Physical_properties:
     # Heat capacity ratio of ideal gas
     IG_monoatomic_heat_capacity_ratio = Quantity(5/3, '-')     
     IG_diatomic_heat_capacity_ratio = Quantity(7/5, '-')    
+
 
     # Material-specific constants
 
@@ -89,6 +89,7 @@ class Physical_properties:
 
         return mass_amount, mass_fraction
 
+
     @staticmethod
     def mass_to_substance(mass_amounts):
         '''
@@ -124,12 +125,14 @@ class Physical_properties:
 
         return molar_amount, molar_fraction    
 
+
     # Mixture volume
     @staticmethod
     def Volume(T, P, amount, phase = 'V', composition_basis = 'mass'):
         '''
         Calculating the volume of individual species at the specified temperature and pressure, and returning the mixture volume, assuming ideal mixture.
-        If the specific volume (per kg or per mole of mixture), or its inverse (the density) is desired, the specified "amount" in the upper level should simply be the mass | molar fraction.
+        The calculation is based on extensive quantities to keep it general, which is standard practice in properties packages;         
+        if the specific volume (per kg or per mole of mixture), or its inverse (the density) is desired, the specified "amount" in the upper level should simply be the mass | molar fraction.
         Only single-phase (S | L | V) calculation is allowed for the moment; when a mixture involves multiple phases, the upper level model must call the present method for each phase.
 
         Parameters
@@ -149,7 +152,8 @@ class Physical_properties:
         -------
         Volume: float 
             Volume of the specified amount of mixture under the specified temperature and pressure
-            '''
+        '''
+
         if composition_basis == 'mass':
             mass = {}
             for species, quant in amount.items(): 
@@ -161,7 +165,7 @@ class Physical_properties:
         V_total = 0.      
 
         for species, quantity in mass.items():
-            # Amagat's law: the partial volume of each species is calculated as said species was subject to the total pressure, and the total volume is obtained as the sum oof partial volumes 
+            # Amagat's law: the partial volume of each species is calculated as if said species was subject to the total pressure, and the total volume is obtained as the sum of partial volumes 
             V[species] = Physical_properties.species_properties[species].calc_volume(T, P, quantity, phase = phase, r = Physical_properties.specific_IG_constant[species])
             V_total += V[species].unit['m3']
             
@@ -216,6 +220,7 @@ class Physical_properties:
             Cp_total += Cp[species].unit['J/delta_K']
 
         return Quantity(H_total, 'J'), Quantity(Cp_total, 'J/delta_K')
+
 
     # Saturation pressure of pure water 
     @staticmethod
