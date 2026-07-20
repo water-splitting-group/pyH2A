@@ -1,10 +1,58 @@
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
+
 class Water_properties:
     '''
     This class calculates properties of pure water
     '''
 
+    @staticmethod
+    def calc_volume(T, P, m, phase, r):
+        '''
+        Calculating the volume of pure water at the specified temperature and pressure, in the specified phase.
+        Polynomial for liquid established from NIST chemistry webbook SRD69 https://webbook.nist.gov/chemistry/fluid/ 
+
+        Parameters
+        ----------
+        T : float 
+            Temperature
+        P : float 
+            Pressure.
+        m : float 
+            Mass of water 
+        phase : str
+            S, L or V 
+        r : float
+            Mass-based specific ideal gas constant (R/MW)
+
+        Returns
+        -------
+        V: float 
+            Volume of the mass m of water under the specified conditions  
+        '''
+
+        # thermal coefficients, with imposed units due to the correlation they originate from:
+        offset_liquid =  9.99806282e-04 # m3/kg
+        linear_liquid = -2.33664305e-09 # m3/kg/degC
+        quadratic_liquid =  5.74608202e-09 # m3/kg/degC^2
+        cubic_liquid = -1.80098558e-11 # m3/kg/degC^3
+        quartic_liquid =  4.45840291e-14 # m3/kg/degC^4
+
+        # Calculation of the mass-specific volume
+        if phase == 'V':
+            # using ideal gas law v = rT/P
+            v = r.unit['J/(kg*delta_K)'] * T.unit['K'] / P.unit['Pa']
+
+        elif phase == 'L':
+            v = offset_liquid + linear_liquid * T.unit['degC'] + quadratic_liquid * T.unit['degC']**2 + cubic_liquid * T.unit['degC']**3 + quartic_liquid * T.unit['degC']**4
+            
+        else: # ice
+            v = 0.00109 # assumed to be insensitive to pressure and temperature in our range of use
+        
+        V = v*m.unit['kg']
+        return Quantity(V, 'm3')
+    
+    
     @staticmethod
     def calc_enthalpy(T, P, m, phase):
         '''
@@ -58,7 +106,7 @@ class Water_properties:
         H = h*m.unit['kg']
         Cp = cp*m.unit['kg']
         return Quantity(H, 'J'), Quantity(Cp, 'J/delta_K')
-
+    
     def calc_psat(T):
         '''
         Antoine equation for water-vapour equilibrium:

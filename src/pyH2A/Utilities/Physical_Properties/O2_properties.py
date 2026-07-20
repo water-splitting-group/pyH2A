@@ -6,6 +6,46 @@ class O2_properties:
     '''
 
     @staticmethod
+    def calc_volume(T, P, m, phase, r):
+        '''
+        Calculating the volume of pure O2 at the specified temperature and pressure, in the specified phase.
+        Liquid value established from NIST chemistry webbook SRD69 https://webbook.nist.gov/chemistry/fluid/ 
+
+        Parameters
+        ----------
+        T : float 
+            Temperature
+        P : float 
+            Pressure.
+        m : float 
+            Mass of O2 
+        phase : str
+            S, L or V 
+        r : float
+            Mass-based specific ideal gas constant (R/MW)
+
+        Returns
+        -------
+        V: float 
+            Volume of the mass m of O2 under the specified conditions  
+        '''
+
+        # Calculation of the mass-specific volume
+        if phase == 'V':
+            # using ideal gas law v = rT/P
+            v = r.unit['J/(kg*delta_K)'] * T.unit['K'] / P.unit['Pa']
+
+        elif phase == 'L':
+            v = 0.00087 # assumed to be constant
+            
+        else: # ice
+            raise ValueError("Solid O2 is not supported")
+        
+        V = v*m.unit['kg']
+        return Quantity(V, 'm3')
+    
+
+    @staticmethod
     def calc_enthalpy(T, P, m, phase):
         '''
         Calculating the enthalpy of pure O2 at the specified temperature and pressure, in the specified phase.
