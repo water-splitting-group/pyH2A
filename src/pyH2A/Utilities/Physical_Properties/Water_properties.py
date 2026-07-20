@@ -43,7 +43,7 @@ class Water_properties:
             # using ideal gas law v = rT/P
             v = r.unit['J/(kg*delta_K)'] * T.unit['K'] / P.unit['Pa']
 
-        elif phase == 'L':
+        elif phase == 'L': # assumed to be insensitive to pressure in our range of use
             v = offset_liquid + linear_liquid * T.unit['degC'] + quadratic_liquid * T.unit['degC']**2 + cubic_liquid * T.unit['degC']**3 + quartic_liquid * T.unit['degC']**4
             
         else: # ice
@@ -107,7 +107,7 @@ class Water_properties:
         Cp = cp*m.unit['kg']
         return Quantity(H, 'J'), Quantity(Cp, 'J/delta_K')
     
-    
+
     def calc_psat(T):
         '''
         Saturation pressure as a function of temperature, using Antoine equation for water-vapour equilibrium:
