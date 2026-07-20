@@ -2,19 +2,13 @@
 Smartphone_1Layer, Smartphone_2Layer, and Smartphone_3Layer toy models.
 
 Each scenario is run through ``pyH2A.run_pyH2A.pyH2A`` (the same entry point
-as the command-line pipeline), not by instantiating ``LCA`` directly. This
-means every scenario input file also carries the full mandatory default
-Workflow (production/capital/replacement/labor/fixed/variable-cost plugins,
-merged in unconditionally by ``convert_input_to_dictionary``) satisfied with
-trivial placeholder values, plus a small ``# Workflow`` block registering the
-``GT_Circuit_Board_Plugin``, ``GT_Display_Plugin``, and ``GT_Battery_Plugin``
-dummy plugins. For 2-layer and 3-layer models, these three plugins compute
-the Circuit Board / Display / Battery quantities (base quantity * scenario
-factor) and insert them into dedicated output tables; the
+as the command-line pipeline). ``GT_Circuit_Board_Plugin``, ``GT_Display_Plugin``,
+and ``GT_Battery_Plugin``are introduced as dummy plugins. For 2-layer and 3-layer 
+models, these three plugins compute the Circuit Board / Display / Battery quantities
+(base quantity * scenario factor) and insert them into dedicated output tables; the
 ``LCA - Smartphone GT Components`` table then references those outputs via
-path syntax (e.g. ``{GT Display Output > Display > Value, kg}``) instead of
-hardcoding the quantity as a literal. The Smartphone row itself (the
-functional-unit reference flow) stays a literal ``1.0``, and the 1-layer
+path syntax (e.g. ``{GT Display Output > Display > Value, kg}``). The Smartphone row 
+itself (the functional-unit reference flow) stays a literal ``1.0``, and the 1-layer
 model -- which has no sub-components -- carries no GT plugins at all.
 
 Model summary
@@ -95,8 +89,7 @@ def _load_scenario(input_file_stem):
 
 def _run_pyH2A(input_file_stem):
     """Run the full pyH2A pipeline (Discounted_Cash_Flow + LCA) against a
-    scenario input file, as-is (no cache management -- caller is responsible
-    for cache state). Returns the LCA object with populated lca_results."""
+    scenario input file. Returns the LCA object with populated lca_results."""
     input_file = _INPUT_FILES_DIR / f'{input_file_stem}.md'
     result = pyH2A(str(input_file), str(_INPUT_FILES_DIR))
     return result.base_case.lca
@@ -127,23 +120,19 @@ def _run_pyH2A_cold(input_file_stem):
     return _run_pyH2A(input_file_stem)
 
 
-def _assert_matches(lca, impact_name, expected_value, expected_impact_unit):
-    """``expected_impact_unit`` is the raw openLCA unit string (e.g. 'kg CO2-eq'),
-    used as a CONFIG lookup key to check the resolved unit stored on the result
+def _run_and_assert(input_file_stem, impact_name, expected_value, expected_unit):
+    """``expected_unit`` is the raw openLCA unit string (e.g. 'kg CO2-eq'), used
+    as a CONFIG lookup key to check the resolved unit stored on the result
     Quantity, expressed as ``<impact unit> / <functional unit>``."""
+    lca = _run_pyH2A(input_file_stem)
     quantity = lca.lca_results[impact_name]
     result = quantity.supplied_value
     diff_pct = (result - expected_value) / expected_value * 100
     print(f'\n  pyH2A={result:.6f}  reference={expected_value:.6f}  diff={diff_pct:+.4f}%')
     assert result == pytest.approx(expected_value, rel=1e-3)
-    expected = CONFIG[expected_impact_unit]
+    expected = CONFIG[expected_unit]
     functional_unit_unit = str(LCA._cache['A0_column'][2][0])
     assert quantity.supplied_unit == f"{expected['unit']} / {functional_unit_unit}"
-
-
-def _run_and_assert(input_file_stem, impact_name, expected_value, expected_unit):
-    lca = _run_pyH2A(input_file_stem)
-    _assert_matches(lca, impact_name, expected_value, expected_unit)
 
 
 # ── Scenario data ────────────────────────────────────────────────────────────
@@ -209,7 +198,14 @@ def _cleanup_disk_caches_after_module():  # noqa: F841
 def test_1layer_result_matches_reference(input_file_stem, impact_name, expected_value, expected_unit):
     """Smartphone_1Layer: one foreground process, no sub-components."""
     lca = _run_pyH2A_cold(input_file_stem)
-    _assert_matches(lca, impact_name, expected_value, expected_unit)
+    quantity = lca.lca_results[impact_name]
+    result = quantity.supplied_value
+    diff_pct = (result - expected_value) / expected_value * 100
+    print(f'\n  pyH2A={result:.6f}  reference={expected_value:.6f}  diff={diff_pct:+.4f}%')
+    assert result == pytest.approx(expected_value, rel=1e-3)
+    expected = CONFIG[expected_unit]
+    functional_unit_unit = str(LCA._cache['A0_column'][2][0])
+    assert quantity.supplied_unit == f"{expected['unit']} / {functional_unit_unit}"
 
 
 # ── 2-layer: single scenario per method ─────────────────────────────────────
@@ -223,7 +219,14 @@ def test_2layer_result_matches_reference(input_file_stem, impact_name, expected_
     """Smartphone_2Layer: Smartphone directly consumes Display, Circuit Board,
     and Battery (no further sub-components)."""
     lca = _run_pyH2A_cold(input_file_stem)
-    _assert_matches(lca, impact_name, expected_value, expected_unit)
+    quantity = lca.lca_results[impact_name]
+    result = quantity.supplied_value
+    diff_pct = (result - expected_value) / expected_value * 100
+    print(f'\n  pyH2A={result:.6f}  reference={expected_value:.6f}  diff={diff_pct:+.4f}%')
+    assert result == pytest.approx(expected_value, rel=1e-3)
+    expected = CONFIG[expected_unit]
+    functional_unit_unit = str(LCA._cache['A0_column'][2][0])
+    assert quantity.supplied_unit == f"{expected['unit']} / {functional_unit_unit}"
 
 
 # ── 3-layer: five component-quantity scenarios per method ───────────────────
