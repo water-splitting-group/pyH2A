@@ -8,8 +8,8 @@ File A | src/tests/end_to_end/Photocatalytic/Photocatalytic_Base_test.md
 
 Name | Value | Unit | Comment
 --- | --- | --- | ---
-Module tilt | 30 | deg | Flat baggies on the ground. (Reference value is 0.)
-Array azimuth | 30 | deg | Flat baggies on the ground. (Reference value is 0.)
-Nominal operating temperature | 95 | degC | (2.11× the reference value.)
-Mismatch derating | 48% | - | Values taken from Chang 2020, analogues to silicon PV. (0.49× the reference value.)
-Dirt derating | 48% | - | Values taken from Chang 2020, analogues to silicon PV. (0.49× the reference value.)
+Module tilt | 30 | deg | Reference value is 0. (Flat baggies on the ground)
+Array azimuth | 30 | deg | Reference value is 0. (Flat baggies on the ground)
+Nominal operating temperature | 55 | degC | (10 degC above the reference temperature.)
+Mismatch derating | 88% | - | Values taken from Chang 2020, analogues to silicon PV. (0.90× the reference value.)
+Dirt derating | 88% | - | Values taken from Chang 2020, analogues to silicon PV. (0.90× the reference value.)

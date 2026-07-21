@@ -8,11 +8,11 @@ File A | src/tests/end_to_end/Photocatalytic/Photocatalytic_Base_test.md
 
 Name | Value | Unit | Comment 
 --- | --- | --- | --- 
-Lifetime | 1 | year | Kang 2015, 45 days continuous irradiation, 200 days with recycling  (2× the reference value.)
+Lifetime | 1 | year | 2x the reference value from Kang 2015.
 Molar weight | 1000 | g/mol | Assumption for calculation of hypothetical homogeneous water splitting catalyst. (2× the reference value.)
 
 # Catalyst Separation
 
 Name | Value | Unit | Comment 
 --- | --- | --- | --- 
-Filtration cost | 0.50 | USD/m3 | Cost of nanofiltration per m3 of water based on Costa 2006. Nanofiltration as a proxy for cost of actual catalyst separation (about 2.08× the reference value.)
+Filtration cost | 0.50 | USD/m3 | 2.08 x the reference value that was based on Costa 2006
