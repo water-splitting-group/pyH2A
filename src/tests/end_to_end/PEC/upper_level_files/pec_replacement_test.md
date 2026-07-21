@@ -8,4 +8,4 @@ File A | src/tests/end_to_end/PEC/PEC_Base_test.md
 
 Name | Value | Path | Unit | Comment 
 --- | --- | --- | --- | --- 
-Unplanned replacement | 3.7% | {Depreciable Capital Costs > Inflated > Value, USD} | USD | Based on Pinaud 2013, Total unplanned replacement capital cost factor (fraction of total direct depreciable costs per year)
+Unplanned replacement | 3.7% | {Depreciable Capital Costs > Inflated > Value, USD} | USD | Based on Pinaud 2013, Total unplanned replacement capital cost factor (fraction of total direct depreciable costs per year) (7.40× the reference value.)
