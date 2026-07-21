@@ -24,7 +24,7 @@ from pyH2A.run_pyH2A import pyH2A
         },
         {
             "input": {
-                "input_file": "src/tests/end_to_end/PEC/upper_level_files/pec_hourly_irradition_test.md",
+                "input_file": "src/tests/end_to_end/PEC/upper_level_files/pec_hourly_irradiation_test.md",
                 "output_directory": "src/tests/end_to_end/",
             },
             "expected": {
