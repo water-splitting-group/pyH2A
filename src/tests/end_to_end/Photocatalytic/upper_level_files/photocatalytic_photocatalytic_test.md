@@ -16,7 +16,7 @@ Cost material bottom | 0.97 | USD/m2 | (2.06× the reference value.)
 Number of ports per baggie | 22 | - | (1.83× the reference value.)
 Cost of port | 60 | USD | Cost per port. (2× the reference value.)
 Other costs per baggie | 1210.7 | USD | (1.98× the reference value.)
-Markup factor | 3.5 | - | Markup factor of baggies. (2.33× the reference value.)
+Markup factor | 3.5 | - | (2.33× the reference value.)
 Additional land area | 60% | - | Land area required in addition to area occupied by baggies. (2× the reference value.)
 Lifetime | 15 | year | Lifetime of reactor baggies. (3× the reference value.)
 
