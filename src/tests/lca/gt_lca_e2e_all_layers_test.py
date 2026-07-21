@@ -2,9 +2,10 @@
 Smartphone_1Layer, Smartphone_2Layer, and Smartphone_3Layer toy models.
 
 Each scenario is run through ``pyH2A.run_pyH2A.pyH2A`` (the same entry point
-as the command-line pipeline). ``GT_Circuit_Board_Plugin``, ``GT_Display_Plugin``,
-and ``GT_Battery_Plugin``are introduced as dummy plugins. For 2-layer and 3-layer 
-models, these three plugins compute the Circuit Board / Display / Battery quantities
+as the command-line pipeline). ``Test_Plugin_C``, ``Test_Plugin_D``, and
+``Test_Plugin_E`` are introduced as dummy plugins (for Circuit Board, Display,
+and Battery respectively). For 2-layer and 3-layer models, these three plugins
+compute the Circuit Board / Display / Battery quantities
 (base quantity * scenario factor) and insert them into dedicated output tables; the
 ``LCA - Smartphone GT Components`` table then references those outputs via
 path syntax (e.g. ``{GT Display Output > Display > Value, kg}``). The Smartphone row 
