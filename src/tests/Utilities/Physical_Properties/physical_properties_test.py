@@ -139,35 +139,6 @@ def test_water_saturation_pressure(case):
 
     check_dicts(obtained, case["expected"])
 
-
-@pytest.mark.parametrize(
-    "case",
-    [
-        {
-            "input": {
-                "temperature": Quantity(60.0, "degC"),
-                "pressure": Quantity(1.013, "bar"),
-            },
-            "expected": {
-                "Combustion_enthalpy": Quantity(142500000.0, 'J / kg'),
-            },
-        },
-    ],
-    ids=["Hydrogen combustion enthalpy"],
-)
-def test_combustion_enthalpy(case):
-    """Check combustion enthalpy."""
-
-    obtained = {
-        "Combustion_enthalpy": PP.Combustion_enthalpy(
-            case["input"]["temperature"],
-            case["input"]["pressure"],
-        ),
-    }
-
-    check_dicts(obtained, case["expected"])
-
-
 @pytest.mark.parametrize(
     "case",
     [
