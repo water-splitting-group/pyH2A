@@ -17,7 +17,7 @@ Uses Cumulative energy demand, since 'Cumulative energy demand' is already
 registered in DEPENDENT_VARIABLE_CONFIG (Monte_Carlo_Analysis/config.py).
 
 Matrix: src/tests/lca/data/matrix_folders/smartphone_3layer_ced_base
-Input:  src/tests/lca/data/input_files/Smartphone_3Layer_CED_MC_seed42.md
+Input:  src/tests/lca/data/input_files/smartphone_3layer_mc_ced_seed42.md
 
 Plugin/path-driven GT components
 ---------------------------------
@@ -62,8 +62,8 @@ from pyH2A.Utilities.input_modification import convert_input_to_dictionary
 from pyH2A.Utilities.lca_utils import get_cache_paths
 
 _HERE = Path(__file__).parent
-_INPUT_FILE = _HERE / 'data' / 'input_files' / 'Smartphone_3Layer_CED_MC_seed42.md'
-_OUTPUT_FILE = _HERE / 'data' / 'input_files' / 'Smartphone_3Layer_CED_MC_seed42_output.csv'
+_INPUT_FILE = _HERE / 'data' / 'input_files' / 'smartphone_3layer_mc_ced_seed42.md'
+_OUTPUT_FILE = _HERE / 'data' / 'input_files' / 'smartphone_3layer_mc_ced_seed42_output.csv'
 
 
 _MATRIX_FOLDER = convert_input_to_dictionary(str(_INPUT_FILE))['Life Cycle Assessment']['Matrix Folder']['Value']
