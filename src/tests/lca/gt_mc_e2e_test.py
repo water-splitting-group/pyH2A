@@ -1,36 +1,17 @@
-"""pyH2A + Monte Carlo + LCA pipeline test — seed=42, against smartphone_3layer_ced_base.
-
-Runs the input file through ``pyH2A.run_pyH2A.pyH2A`` -- the real top-level
-entry point -- exactly as a normal run would. ``pyH2A.__init__`` first builds a
-deterministic ``base_case`` (a single ``Discounted_Cash_Flow`` run at the
-GT plugins' fixed Scenario Factor = 1.0), then ``meta_workflow`` detects the
-``# Monte_Carlo_Analysis`` table (its name contains ``"Analysis"``) and
-executes ``Monte_Carlo_Analysis(input_file)`` as a meta module, storing the
-instance at ``result.meta_modules['Monte_Carlo_Analysis']['Module']``. No
-code in ``Discounted_Cash_Flow`` or any ``Plugins`` module touches
-``np.random``, so building ``base_case`` first does not perturb the seeded
-random stream that ``Monte_Carlo_Analysis.process_parameters`` consumes
-afterward -- the sampled values are identical to calling
-``Monte_Carlo_Analysis(input_file)`` directly.
-
-Uses Cumulative energy demand, since 'Cumulative energy demand' is already
-registered in DEPENDENT_VARIABLE_CONFIG (Monte_Carlo_Analysis/config.py).
-
+"""
 Matrix: src/tests/lca/data/matrix_folders/smartphone_3layer_ced_base
 Input:  src/tests/lca/data/input_files/smartphone_3layer_mc_ced_seed42.md
 
 Plugin/path-driven GT components
 ---------------------------------
-Like the gt_lca_e2e_all_layers_test.py scenarios, the Circuit Board, Display,
-and Battery quantities are not written directly into the ``LCA - Smartphone
-GT Components`` table. Instead, the Monte Carlo `Parameters -
-Monte_Carlo_Analysis` table targets each component's own plugin input cell
+The Monte Carlo `Parameters - Monte_Carlo_Analysis` table targets each 
+component's own plugin input cell
 (``GT Circuit Board Input > Scenario Factor > Value`` / ``GT Display Input >
 Scenario Factor > Value`` / ``GT Battery Input > Scenario Factor > Value``).
 ``Test_Plugin_C`` / ``Test_Plugin_D`` / ``Test_Plugin_E`` (Circuit Board /
 Display / Battery, respectively) read the sampled factor on every Monte
 Carlo sample (each sample deep-copies `inp` and reconstructs
-`Discounted_Cash_Flow` from scratch, so the plugins genuinely re-run every
+`Discounted_Cash_Flow` from scratch, so the plugins re-run every
 time) and multiply it by their fixed Base Quantity
 into a dedicated output table; the LCA GT Components table then references
 that output via path syntax (e.g. ``{GT Display Output > Display > Value,
@@ -72,12 +53,16 @@ _SEED = 42
 
 # Precalculated results (Circuit Board [item], Display [kg], Battery [kg],
 # CED [kWh/kg Smartphone]) for 10 samples, produced by running
-# pyH2A(input_file, output_directory) with np.random.seed(42) against the
-# plugin/path-driven input file above (verified identical to calling
-# Monte_Carlo_Analysis(input_file) directly, since building pyH2A's
-# deterministic base_case first does not touch np.random).
-# Update only when the Monte Carlo pipeline or LCA computation intentionally
-# changes.
+# pyH2A(input_file, output_directory) with np.random.seed(42). Each of the 10
+# sampled (Circuit Board, Display, Battery) triplets was fed into openLCA to
+# independently compute the reference CED value used below, so this array
+# doubles as ground truth for validating that the Monte Carlo pipeline
+# reproduces openLCA's results. The corresponding openLCA model for each
+# sample point is zipped up in its own matrix folder:
+# src/tests/lca/data/matrix_folders/smartphone_3layer_ced_mc_spN/smartphone_3layer_ced_mc_spN.zip,
+# where N (1-10) is the sample point number, matching this array's row order
+# (row 0 -> sp1, row 1 -> sp2, etc.).
+
 _REFERENCE_RESULTS = np.array([
     [1.37454012, 1.02058449, 1.61185289, 70.17907215],
     [1.95071431, 1.96990985, 1.13949386, 75.90150093],
