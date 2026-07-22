@@ -44,9 +44,9 @@ Scenario Factor | 1.0 | -
 
 # Construction
 
-Name | Full Name | Value
---- | --- | ---
-capital perc 1st | % of capital spent in 1st year of construction | 100%
+Name | Full Name | Value | Unit
+--- | --- | --- | ---
+capital perc 1st | % of capital spent in 1st year of construction | 100% | -
 
 # Technical Operating Parameters and Specifications
 
