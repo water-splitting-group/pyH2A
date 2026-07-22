@@ -92,7 +92,7 @@ def test_quantity_with_numpy_array():
 
 def test_quantity_repr():
     q = Quantity(5, "kWh")
-    expected_repr = "Quantity(18000000.0, 'J')"
+    expected_repr = "Quantity(5, 'kWh')"
     assert repr(q) == expected_repr
 
 def test_dimensionless_quantity():

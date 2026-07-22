@@ -12,21 +12,25 @@ Other_Fixed_Operating_Cost_Plugin | plugin | 700 | Calculation of other fixed op
 Variable_Operating_Cost_Plugin | plugin | 800 | Calculation of variable operating costs, including utilities
 Discounted_Cash_Flow_Plugin | plugin | 900 | Performs discounted cash flow analysis to determine the levelized cost of hydrogen
 
+# Functional Unit
+
+Name | Unit | Comment
+--- | --- | ---
+Functional Unit | kg | kg[H2] is functional unit
+
 # Financial Input Values
 
-Name | Value | Unit
---- | --- | ---
+Name | Value | Unit | Comment
+--- | --- | --- | ---
 Reference year | 2016 | -
 Assumed start-up year | 2020 | -
 Basis year | 2016 | -
 Current year for capital costs | 2016 | -
 Start-up time | 1 | year
 Plant life | 20 | year
-Depreciation schedule Length | 20 | year
-Depreciation type | MACRS | -
+Depreciation schedule length | 20 | year | MACRS depreciation
 Fraction equity financing | 40% | -
-Interest rate on debt | 3.7% | -
-Debt period | Constant | -
+Interest rate on debt | 3.7% | - | Constant debt period
 Fraction of fixed operating costs during start-up | 100% | -
 Fraction of variable operating costs during start-up | 75% | -
 Fraction of revenues during start-up | 75% | -

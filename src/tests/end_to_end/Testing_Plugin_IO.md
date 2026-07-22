@@ -11,12 +11,6 @@ Name | Type | Position
 Test_Plugin_A | plugin | 201
 Test_Plugin_B | plugin | 202
 
-# Functional Unit
-
-Name | Value | Unit | Comment
---- | --- | --- | ---
-Functional Unit | {Technical Operating Parameters and Specifications > Total output at gate > Value, kg} | kg | kg[H2] is functional unit
-
 # Plugin A - Photovoltaic Input
 
 Name | Value | Unit

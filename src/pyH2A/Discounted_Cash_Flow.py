@@ -203,30 +203,17 @@ class Discounted_Cash_Flow:
 
 		self.print_info = print_info
 
-		self.npv_dict = {}	
 		self.plugs = {}
 
 		self.workflow(self.inp, self.plugs)  # execution of all functions and plugins specified in "Workflow"
 
 		##################### This section is to be changed (LCA should also be executed as a plugin)
-		######################## And removing dcf attributes ################
-
-		# The actual discounted cash flow analysis is performed by "Discounted_Cash_Flow_Plugin"
-		# (executed as part of "Workflow" above). Its results are exposed directly on this object
-		# for convenience and backwards compatibility.
-		dcf_plugin = self.plugs['Discounted_Cash_Flow_Plugin']
-		self.h2_cost = dcf_plugin.h2_cost
-		self.contributions = dcf_plugin.contributions
-		self.npv_dict.update(dcf_plugin.npv_dict)
-
 		if 'Life Cycle Assessment' in self.inp:
 			self.lca = LCA(self.inp['Life Cycle Assessment']['Matrix Folder']['Value'], self)
-
 		###################################################################
 
 		if check_processing is True:
 			self.check_processing()
-
 
 	def workflow(self, inp, plugs_dict):
 		'''Executing plugins and functions for discounted cash flow.
@@ -250,11 +237,13 @@ class Discounted_Cash_Flow:
 
 		exceptions = ['Workflow', 
 					  'Display Parameters', 
-					  'Life Cycle Assessment',
+					  'Functional Unit',
 					  'Input files to merge']
+		
+		exception_group = 'Analysis'  # tables with this term in their name are also exempted
 
 		for top_key in self.inp:
-			if top_key not in exceptions and 'Analysis' not in top_key:
+			if top_key not in exceptions and exception_group not in top_key:
 				for middle_key in self.inp[top_key]:
 					if 'Processed' not in self.inp[top_key][middle_key]:
 						print('Warning: "{0} > {1}" has not been processed'.format(top_key, middle_key))
