@@ -33,18 +33,17 @@ LCA._cache is a single process-wide class attribute (shared by every LCA
 instance for the lifetime of the pytest process, not reset between tests or
 even between test files run in the same session), and it is not keyed by
 matrix folder, so running more than one matrix folder within the same
-process requires manually clearing both the RAM cache and that folder's
+process (such as when running multiple scenarios within one pytest session)
+requires manually clearing both the RAM cache and that folder's
 on-disk Initial_Artifacts cache before switching folders (otherwise a later
 folder would silently reuse an earlier folder's cached artifacts, producing
-incorrect results). This is unchanged by routing through ``pyH2A(...)``
-instead of ``LCA(...)`` directly, since ``Discounted_Cash_Flow.__init__``
-still ultimately instantiates the same process-wide ``LCA`` class.
+incorrect results).
 
 All groups (1-layer, 2-layer, and 3-layer per impact method) are driven by a
 single parametrized test, ``test_scenarios``, that exercises all three LCA
 caching paths across each group's scenarios in parametrize-list (execution)
-order: scenario 0 (base) clears both caches itself before running (cold
-disk+RAM); scenario 1 (S2), where present, clears only RAM (warm disk); any
+order: scenario labeled "base" clears both caches itself before running (cold
+disk+RAM); scenario labeled "S2", where present, clears only RAM (warm disk); any
 remaining scenarios (S3-S5), where present, rely on RAM staying warm from the
 previous scenario. 1-layer and 2-layer groups only have a base scenario, so
 they always take the cold-disk+RAM path -- structurally identical to a
@@ -87,22 +86,6 @@ def _load_scenario(input_file_stem):
     inp = convert_input_to_dictionary(str(_INPUT_FILES_DIR / f'{input_file_stem}.md'))
     matrix_folder = inp['Life Cycle Assessment']['Matrix Folder']['Value']
     return inp, matrix_folder
-
-def _run_and_assert(input_file_stem, impact_name, expected_value, expected_unit):
-    """``expected_unit`` is the raw openLCA unit string (e.g. 'kg CO2-eq'), used
-    as a CONFIG lookup key to check the resolved unit stored on the result
-    Quantity, expressed as ``<impact unit> / <functional unit>``."""
-    input_file = _INPUT_FILES_DIR / f'{input_file_stem}.md'
-    result = pyH2A(str(input_file), str(_INPUT_FILES_DIR))
-    lca = result.base_case.lca
-    quantity = lca.lca_results[impact_name]
-    result = quantity.supplied_value
-    diff_pct = (result - expected_value) / expected_value * 100
-    print(f'\n  pyH2A={result:.6f}  reference={expected_value:.6f}  diff={diff_pct:+.4f}%')
-    assert result == pytest.approx(expected_value, rel=1e-3)
-    expected = CONFIG[expected_unit]
-    functional_unit_unit = str(LCA._cache['A0_column'][2][0])
-    assert quantity.supplied_unit == f"{expected['unit']} / {functional_unit_unit}"
 
 
 # ── Scenario data ────────────────────────────────────────────────────────────
@@ -154,9 +137,9 @@ _SCENARIO_LABELS = ['base', 'S2', 'S3', 'S4', 'S5']
 # path.
 
 @pytest.mark.parametrize(
-    'group, scenario_index, scenario_id',
+    'group, scenario_index',
     [
-        (group, scenario_index, _SCENARIO_LABELS[scenario_index])
+        (group, scenario_index)
         for group, scenarios in _SCENARIOS_BY_GROUP.items()
         for scenario_index in range(len(scenarios))
     ],
@@ -166,7 +149,7 @@ _SCENARIO_LABELS = ['base', 'S2', 'S3', 'S4', 'S5']
         for scenario_index in range(len(scenarios))
     ],
 )
-def test_scenarios(group, scenario_index, scenario_id):
+def test_scenarios(group, scenario_index):
     """Exercises all three LCA caching paths across every group's scenarios,
     in parametrize-list (execution) order: scenario 0 (base) is cold RAM+disk
     (compute_all_artifacts_from_scratch runs the full LU factorization and
@@ -175,7 +158,15 @@ def test_scenarios(group, scenario_index, scenario_id):
     reads the artifacts saved above, bypassing factorization); scenarios 2-4
     (S3-S5), where present, rely on RAM staying warm from the previous
     scenario (initialize_all_artifacts exits on the early-exit guard without
-    any disk I/O)."""
+    any disk I/O).
+
+    Note: The disk cache is cleared unconditionally on scenario 0, even though
+    ``_cleanup_disk_caches_after_module`` also clears it at the end of the
+    module: that fixture won't have run yet the first time a fresh checkout
+    runs these tests, may not run at all if the module is interrupted before
+    it finishes, and clearing here is what guarantees a scenario 0 run reads
+    artifacts produced by the current code rather than stale ones left over
+    from a previous session or from before a refactor."""
     scenarios = _SCENARIOS_BY_GROUP[group]
 
     if scenario_index == 0:
@@ -186,8 +177,21 @@ def test_scenarios(group, scenario_index, scenario_id):
     elif scenario_index == 1:
         _clear_ram_only()
 
-    input_file_stem, impact_name, expected, expected_unit = scenarios[scenario_index]
-    _run_and_assert(input_file_stem, impact_name, expected, expected_unit)
+    input_file_stem, impact_name, expected_value, expected_unit = scenarios[scenario_index]
+    # ``expected_unit`` is the raw openLCA unit string (e.g. 'kg CO2-eq'), used
+    # as a CONFIG lookup key to check the resolved unit stored on the result
+    # Quantity, expressed as ``<impact unit> / <functional unit>``.
+    input_file = _INPUT_FILES_DIR / f'{input_file_stem}.md'
+    result = pyH2A(str(input_file), str(_INPUT_FILES_DIR))
+    lca = result.base_case.lca
+    quantity = lca.lca_results[impact_name]
+    result = quantity.supplied_value
+    diff_pct = (result - expected_value) / expected_value * 100
+    print(f'\n  pyH2A={result:.6f}  reference={expected_value:.6f}  diff={diff_pct:+.4f}%')
+    assert result == pytest.approx(expected_value, rel=1e-3)
+    expected = CONFIG[expected_unit]
+    functional_unit_unit = str(LCA._cache['A0_column'][2][0])
+    assert quantity.supplied_unit == f"{expected['unit']} / {functional_unit_unit}"
 
 
 # ── Cleanup: runs once after every test above has finished ─────────────────
