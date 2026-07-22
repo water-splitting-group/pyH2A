@@ -66,6 +66,9 @@ class DummyDCF:
 # case 1: this is baseline case without energy density (battery mass not calculated)
 # we define a second case with energy density to test battery mass calculation
 _CASE_1_INPUT = {
+    "operation_years_relative": {
+        "Operation years relative": np.array([2027, 2028])
+    },
     "available_power": {
         2027: np.array([10.2, 5.2, 12.2, 12.2]),
         2028: np.array([22.2, 6.2, 8.2, 9.2]),
@@ -79,12 +82,12 @@ _CASE_1_INPUT = {
 
 _CASE_1_EXPECTED = {
     "yearly_recovered_energy": {
-        2027: Quantity(np.array([0.00090933, 0.00090933, 0.00090933, 0.00090933]), "kWh"),
-        2028: Quantity(np.array([0.00090023, 0.00090023, 0.00090023, 0.00090023]), "kWh"),
+        2027: Quantity(np.array([0.0009093256112687591, 0.0009093256112687591, 0.0009093256112687591, 0.0009093256112687591]), "kWh"),
+        2028: Quantity(np.array([0.0009002323551560716, 0.0009002323551560716, 0.0009002323551560716, 0.0009002323551560716]), "kWh"),
     },
     "yearly_unstored_energy": {
-        2027: Quantity(np.array([10.19909067, 5.19909067, 12.19909067, 12.19909067]), "kWh"),
-        2028: Quantity(np.array([22.19909977, 6.19909977, 8.19909977, 9.19909977]), "kWh"),
+        2027: Quantity(np.array([10.199090674388732, 5.1990906743887315, 12.199090674388732, 12.199090674388732]), "kWh"),
+        2028: Quantity(np.array([22.199099767644846, 6.199099767644844, 8.199099767644842, 9.199099767644842]), "kWh"),
     },
     "battery_mass": None,
 }
@@ -151,6 +154,7 @@ def test_battery_plugin_zero_energy_density_raises():
     """Battery mass calculation must raise when energy density is zero, to avoid division by zero."""
 
     dcf = DummyDCF(
+        operation_years_relative={"Operation years relative": np.array([2027])},
         available_power={2027: np.array([10.2, 5.2, 12.2, 12.2])},
         design_capacity=800000.0,
         lowest_discharge_level=0.20,
