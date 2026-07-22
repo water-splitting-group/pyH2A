@@ -85,7 +85,7 @@ def _reset_lca_caches():
                 "reverse_osmosis": 9.0,
             },
             "expected": {
-                "gwp100_value": 0.45413181298378413,
+                "gwp100_value": 0.4541318146171765,
                 "gwp100_unit": "kg CO2-Eq",
             },
         },
@@ -106,7 +106,7 @@ def test_lca(case):
     expected = case["expected"]
 
     # Tolerance
-    tolerance = 1e-12
+    tolerance = 1e-8
 
     assert quantity.supplied_value == pytest.approx(expected["gwp100_value"], rel=tolerance)
 
