@@ -178,83 +178,51 @@ def test_1_2layer_result_matches_reference(input_file_stem, impact_name, expecte
 
 # ── 3-layer: five component-quantity scenarios per method ───────────────────
 #
-# Each impact method's three tests below run consecutively (relying on
-# file-definition order) and exercise all three LCA caching paths: cold
+# Each method's five scenarios below run consecutively (relying on
+# parametrize-list order) and exercise all three LCA caching paths: cold
 # disk+RAM on the first scenario, warm disk / cold RAM on the second, and
 # warm RAM (no disk I/O) on the three remaining scenarios.
 
+_SCENARIOS_3LAYER_BY_METHOD = {
+    'gwp': _SCENARIOS_3LAYER_GWP,
+    'ced': _SCENARIOS_3LAYER_CED,
+    'acid': _SCENARIOS_3LAYER_ACID,
+}
+
 @pytest.mark.parametrize(
-    'scenario_index, scenario_id',
-    [(0, 'base'), (1, 'S2'), (2, 'S3'), (3, 'S4'), (4, 'S5')],
+    'method, scenario_index, scenario_id',
+    [
+        (method, scenario_index, scenario_id)
+        for method in ('gwp', 'ced', 'acid')
+        for scenario_index, scenario_id in enumerate(['base', 'S2', 'S3', 'S4', 'S5'])
+    ],
+    ids=[
+        f'{method}-{scenario_id}'
+        for method in ('gwp', 'ced', 'acid')
+        for scenario_id in ['base', 'S2', 'S3', 'S4', 'S5']
+    ],
 )
-def test_3layer_gwp_scenarios(scenario_index, scenario_id):
-    """Exercises all three LCA caching paths across the five GWP scenarios, in
-    parametrize-list (execution) order: scenario 0 (base) is cold RAM+disk
-    (compute_all_artifacts_from_scratch runs the full LU factorization and
-    writes artifacts to disk and RAM); scenario 1 (S2) explicitly clears RAM
-    while leaving disk warm (load_all_from_disk_to_ram reads the artifacts
-    saved above, bypassing factorization); scenarios 2-4 (S3-S5) rely on RAM
-    staying warm from the previous scenario (initialize_all_artifacts exits on
-    the early-exit guard without any disk I/O)."""
+def test_3layer_scenarios(method, scenario_index, scenario_id):
+    """Exercises all three LCA caching paths across the five scenarios of each
+    impact method, in parametrize-list (execution) order: scenario 0 (base) is
+    cold RAM+disk (compute_all_artifacts_from_scratch runs the full LU
+    factorization and writes artifacts to disk and RAM); scenario 1 (S2)
+    explicitly clears RAM while leaving disk warm (load_all_from_disk_to_ram
+    reads the artifacts saved above, bypassing factorization); scenarios 2-4
+    (S3-S5) rely on RAM staying warm from the previous scenario
+    (initialize_all_artifacts exits on the early-exit guard without any disk
+    I/O)."""
+    scenarios = _SCENARIOS_3LAYER_BY_METHOD[method]
+
     if scenario_index == 0:
         _clear_ram_only()
         get_cache_paths.cache_clear()
-        _, matrix_folder = _load_scenario(_SCENARIOS_3LAYER_GWP[0][0])
+        _, matrix_folder = _load_scenario(scenarios[0][0])
         _clear_disk(matrix_folder)
     elif scenario_index == 1:
         _clear_ram_only()
 
-    input_file_stem, impact_name, expected, expected_unit = _SCENARIOS_3LAYER_GWP[scenario_index]
-    _run_and_assert(input_file_stem, impact_name, expected, expected_unit)
-
-
-@pytest.mark.parametrize(
-    'scenario_index, scenario_id',
-    [(0, 'base'), (1, 'S2'), (2, 'S3'), (3, 'S4'), (4, 'S5')],
-)
-def test_3layer_ced_scenarios(scenario_index, scenario_id):
-    """Exercises all three LCA caching paths across the five CED scenarios, in
-    parametrize-list (execution) order: scenario 0 (base) is cold RAM+disk
-    (compute_all_artifacts_from_scratch runs the full LU factorization and
-    writes artifacts to disk and RAM); scenario 1 (S2) explicitly clears RAM
-    while leaving disk warm (load_all_from_disk_to_ram reads the artifacts
-    saved above, bypassing factorization); scenarios 2-4 (S3-S5) rely on RAM
-    staying warm from the previous scenario (initialize_all_artifacts exits on
-    the early-exit guard without any disk I/O)."""
-    if scenario_index == 0:
-        _clear_ram_only()
-        get_cache_paths.cache_clear()
-        _, matrix_folder = _load_scenario(_SCENARIOS_3LAYER_CED[0][0])
-        _clear_disk(matrix_folder)
-    elif scenario_index == 1:
-        _clear_ram_only()
-
-    input_file_stem, impact_name, expected, expected_unit = _SCENARIOS_3LAYER_CED[scenario_index]
-    _run_and_assert(input_file_stem, impact_name, expected, expected_unit)
-
-
-@pytest.mark.parametrize(
-    'scenario_index, scenario_id',
-    [(0, 'base'), (1, 'S2'), (2, 'S3'), (3, 'S4'), (4, 'S5')],
-)
-def test_3layer_acid_scenarios(scenario_index, scenario_id):
-    """Exercises all three LCA caching paths across the five ACID scenarios, in
-    parametrize-list (execution) order: scenario 0 (base) is cold RAM+disk
-    (compute_all_artifacts_from_scratch runs the full LU factorization and
-    writes artifacts to disk and RAM); scenario 1 (S2) explicitly clears RAM
-    while leaving disk warm (load_all_from_disk_to_ram reads the artifacts
-    saved above, bypassing factorization); scenarios 2-4 (S3-S5) rely on RAM
-    staying warm from the previous scenario (initialize_all_artifacts exits on
-    the early-exit guard without any disk I/O)."""
-    if scenario_index == 0:
-        _clear_ram_only()
-        get_cache_paths.cache_clear()
-        _, matrix_folder = _load_scenario(_SCENARIOS_3LAYER_ACID[0][0])
-        _clear_disk(matrix_folder)
-    elif scenario_index == 1:
-        _clear_ram_only()
-
-    input_file_stem, impact_name, expected, expected_unit = _SCENARIOS_3LAYER_ACID[scenario_index]
+    input_file_stem, impact_name, expected, expected_unit = scenarios[scenario_index]
     _run_and_assert(input_file_stem, impact_name, expected, expected_unit)
 
 
