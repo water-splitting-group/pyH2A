@@ -3,7 +3,11 @@ from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
 def calc_water_saturation_pressure(T):
     """
-    Calculates the saturation pressure of pure water.
+    Calculates the saturation pressure of pure water as a function of temperature, using Antoine equation for water-vapour equilibrium:
+    log10(P_sat) = A - B/(C+T)
+    with Antoine constants A, B and C from NIST SRD 69 
+    https://webbook.nist.gov/cgi/cbook.cgi?ID=C7732185&Mask=4&Type=ANTOINE#ANTOINE
+            
 
     Parameters
     ----------

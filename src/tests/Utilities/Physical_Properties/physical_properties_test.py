@@ -30,8 +30,8 @@ from tests.Utilities.check_dicts_for_testing import check_dicts
                     'H2': Quantity(0.5355734713344887, '-'), 
                     'O2': Quantity(0.26778673494521277, '-')
                 },         
-                "enthalpy": Quantity(-3528243.162551281, 'J'),           
-                "cp": Quantity(2186.8090932746004, 'J / delta_K'),                 
+                "enthalpy": Quantity(-3527830.3799919076, 'J'),           
+                "cp": Quantity(2285.9011465963235, 'J / delta_K'),                 
                 "volume": Quantity(2.0728531423410006, 'm3'),             
             },
         },
@@ -58,8 +58,8 @@ from tests.Utilities.check_dicts_for_testing import check_dicts
                     'H2': Quantity(0.08185358822495777, '-'), 
                     'O2': Quantity(0.6495910627296315, '-')
                 }, 
-                "enthalpy": Quantity(-46540.426428525454, 'J'),    
-                "cp": Quantity(28.8458098109924, 'J / delta_K'),  
+                "enthalpy": Quantity(-46534.9815012528, 'J'),    
+                "cp": Quantity(30.152915000642132, 'J / delta_K'),  
                 "volume": Quantity(0.027342636722606124, 'm3'),   
                 
             },
@@ -93,13 +93,21 @@ def test_physical_properties(case):
         obtained["mass"] = mass
         obtained["mass_fraction"] = mass_fraction
 
-    H, Cp = PP.Enthalpy(
+    H = PP.Enthalpy(
         T,
         P,
         amount,
         phase=inp["phase"],
         composition_basis=inp["composition_basis"],
     )
+
+    Cp = PP.Heat_capacity(
+        T,
+        P,
+        amount,
+        phase=inp["phase"],
+        composition_basis=inp["composition_basis"],
+    )    
 
     V = PP.Volume(
         T,
