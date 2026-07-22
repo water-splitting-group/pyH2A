@@ -1,0 +1,11 @@
+index,provider ID,provider name,provider category,provider location,flow ID,flow name,flow category,flow unit,flow type
+0,7fd0343b-223f-487d-896f-905adcf33231,Smartphone_3Layer_MC_SP2,Smartphone_3Layer,,23f5f6bc-7b98-4c8a-9ae6-8014462d0351,Smartphone,,kg,product
+1,86c3e6eb-2103-4a36-87e0-5abaa79ee289,Circuit Board_3Layer,Smartphone_3Layer,,24ec0744-f9a1-49c8-ae80-927c41a70819,Circuit Board,,Item(s),product
+2,91c3199d-cf4c-452e-979a-c467fc9c8404,Battery_3Layer,Smartphone_3Layer,,0e65c7b5-0cb2-4c0d-b6bc-7b0c98dddee9,Battery,,kg,product
+3,5322c024-6c5e-4771-9098-294a1d964455,LED Cells,Smartphone_3Layer,,64e72a3a-cc94-46b2-9741-a7b18a66b719,LED Cells,Smartphone_3Layer,kg,product
+4,88968665-bed5-4b28-a13b-48b90524204c,Lithium,Smartphone_3Layer,,4dc25a0f-4781-4cf2-9213-5b7d7b383610,Lithium,Smartphone_3Layer,kg,product
+5,1b67332a-6a27-4257-9108-7eca43a06e1d,Silicon Chip,Smartphone_3Layer,,572e79e6-fa07-45a2-a2f1-b9d814975d3a,Silicon Chip,Smartphone_3Layer,kg,product
+6,49092338-ccb5-4102-8d7b-d9a55ebecdaf,Display_3Layer,Smartphone_3Layer,,cabe1a62-4ee6-4d7e-955d-6f4c91c1ed80,Display,,kg,product
+7,65112f2e-6005-4613-9671-feba274d4d53,Glass Panel,Smartphone_3Layer,,f6580df1-99b2-4671-9ff4-8fd76e3b5e29,Glass Panel,Smartphone_3Layer,kg,product
+8,91dc745f-9730-4a83-8b4a-9dd43d4fa6b0,Cobalt,Smartphone_3Layer,,04dadc98-50a7-44bc-a236-88cf525294a3,Cobalt,Smartphone_3Layer,kg,product
+9,cf908cc0-91b7-4e3e-9805-0eb598951585,Copper wiring,Smartphone_3Layer,,2629a4b0-08f9-4925-acae-881aab656378,Copper wiring,Smartphone_3Layer,kg,product
