@@ -2,7 +2,7 @@
 
 Name | Value
 --- | ---
-Base | src/tests/lca/data/input_files/smartphone_2layer_acid.md
+Base | src/tests/lca/data/input_files/smartphone_2layer_acid_base.md
 
 # Life Cycle Assessment
 
