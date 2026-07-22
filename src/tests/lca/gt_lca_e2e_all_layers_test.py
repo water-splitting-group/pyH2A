@@ -168,10 +168,13 @@ def test_scenarios(group, scenario_index):
     artifacts produced by the current code rather than stale ones left over
     from a previous session or from before a refactor."""
     scenarios = _SCENARIOS_BY_GROUP[group]
-
     if scenario_index == 0:
+        # since one pytest session runs in one process, LCA._cache should be deleted for every group's first scenario (cold start) 
+        # to avoid reusing another group's cached matrices.
         _clear_ram_only()
+        # clear the disk cache path, so that the LCA run will recompute all artifacts from scratch between groups.
         get_cache_paths.cache_clear()
+        # clear the disk cache as explained in the docstring note above
         _, matrix_folder = _load_scenario(scenarios[0][0])
         _clear_disk(matrix_folder)
     elif scenario_index == 1:
@@ -185,10 +188,9 @@ def test_scenarios(group, scenario_index):
     result = pyH2A(str(input_file), str(_INPUT_FILES_DIR))
     lca = result.base_case.lca
     quantity = lca.lca_results[impact_name]
-    result = quantity.supplied_value
-    diff_pct = (result - expected_value) / expected_value * 100
-    print(f'\n  pyH2A={result:.6f}  reference={expected_value:.6f}  diff={diff_pct:+.4f}%')
-    assert result == pytest.approx(expected_value, rel=1e-3)
+    diff_pct = (quantity.supplied_value - expected_value) / expected_value * 100
+    print(f'\n  pyH2A={quantity.supplied_value:.6f}  reference={expected_value:.6f}  diff={diff_pct:+.4f}%')
+    assert quantity.supplied_value == pytest.approx(expected_value, rel=1e-3)
     expected = CONFIG[expected_unit]
     functional_unit_unit = str(LCA._cache['A0_column'][2][0])
     assert quantity.supplied_unit == f"{expected['unit']} / {functional_unit_unit}"
