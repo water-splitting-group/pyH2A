@@ -1,47 +1,37 @@
+from dataclasses import dataclass
 from pyH2A.Utilities.Unit_Handler import config
 
-class _FunctionalUnit:
-    def __getattr__(self, name):
-        raise RuntimeError(
-            f"Functional unit not set yet: tried to read {name!r} before "
-            f"set_functional_unit() was called."
-        )
+@dataclass(frozen=True)
+class FunctionalUnit:
+    unit: str
+    dimension: str
+    unit_SI: str
+    dimension_per_time: str
+    unit_SI_per_s: str
+    unit_per_year: str
 
-FUNCTIONAL_UNIT = _FunctionalUnit()
-
-def set_functional_unit(unit):
-    """
-    Sets the functional unit for the current simulation.
-
-    Parameters
-    ----------
-    unit : str
-        The functional unit to set.
-    """
-
-    FUNCTIONAL_UNIT.unit = unit
-
+def resolve_functional_unit(unit):
+    '''Compute functional-unit-derived quantities (dimension, SI unit, etc.) for the
+    given unit string. Pure function — no global state; call fresh wherever the
+    functional unit is needed (e.g. once per Discounted_Cash_Flow_Plugin instance).
+    '''
     try:
-        FUNCTIONAL_UNIT.dimension = config.FLAT_DIMENSIONS[unit]
+        dimension = config.FLAT_DIMENSIONS[unit]
     except KeyError:
         raise ValueError(f"Unknown unit specified for functional unit: {unit}")
 
-    FUNCTIONAL_UNIT.unit_SI = config.DIMENSIONS[FUNCTIONAL_UNIT.dimension]['base']
+    unit_SI = config.DIMENSIONS[dimension]['base']
 
-    if FUNCTIONAL_UNIT.dimension == 'energy':  # special case: energy per time is power
-        FUNCTIONAL_UNIT.dimension_per_time = 'power'
-        FUNCTIONAL_UNIT.unit_SI_per_s = 'W'
-        FUNCTIONAL_UNIT.unit_per_year = FUNCTIONAL_UNIT.unit + '_per_year'
+    if dimension == 'energy':  # special case: energy per time is power
+        dimension_per_time = 'power'
+        unit_SI_per_s = 'W'
+        unit_per_year = unit + '_per_year'
     else:
-        FUNCTIONAL_UNIT.dimension_per_time = FUNCTIONAL_UNIT.dimension + '/time'
-        FUNCTIONAL_UNIT.unit_SI_per_s = FUNCTIONAL_UNIT.unit_SI + '/s'
-        FUNCTIONAL_UNIT.unit_per_year = FUNCTIONAL_UNIT.unit + '/year'
+        dimension_per_time = dimension + '/time'
+        unit_SI_per_s = unit_SI + '/s'
+        unit_per_year = unit + '/year'
 
-
-
-
-
-
+    return FunctionalUnit(unit, dimension, unit_SI, dimension_per_time, unit_SI_per_s, unit_per_year)
 
 
 

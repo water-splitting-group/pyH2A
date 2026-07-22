@@ -21,7 +21,7 @@ input_dict = {
 	"Inflation": {
 		"Inflation correction": {
 			"Value": {
-				"type": {float},
+				"type": {int, float},
 				"bounds": (0, None)
 			},
 			"Unit": {
@@ -32,7 +32,7 @@ input_dict = {
 		}, 
 		"Chemical inflator": {
 			"Value": {
-				"type": {float},
+				"type": {int, float},
 				"bounds": (0, None)
 			},
 			"Unit": {
@@ -40,8 +40,43 @@ input_dict = {
 			},
 			"optional": False,
 			"description": "Inflation factor for chemicals"
-		}, 		
-	},			
+		},
+		"Inflation factor full": {
+			"Value": {
+				"type": {np.ndarray},
+				"bounds": (0, None)
+			},
+			"Unit": {
+				"dimension": "dimensionless"
+			},
+			"optional": False,
+			"description": "Inflation factor of each year"
+		},
+	},
+	"Financial Input Values": {
+		"Start-up time": {
+			"Value": {
+				"type": {int, float},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "time",
+			},
+			"optional": False,
+			"description": "Start-up time in years."
+		},
+		"Fraction of variable operating costs during start-up": {
+			"Value": {
+				"type": {int, float},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "dimensionless",
+			},
+			"optional": False,
+			"description": "Fraction of variable operating costs incurred during start-up."
+		},
+	},
 	"Technical Operating Parameters and Specifications": {
 		"Design output by year": {
 			"Value": {
@@ -157,6 +192,19 @@ output_dict = {
 			"optional": False,
 			"description": "Total variable operating costs for other variable operating costs."
 		},
+		"Annual": {
+			"Value": {
+				"inserted_value": "annual_variable_operating_cost",
+				"type": {np.ndarray},
+				"dimension": "currency",
+			},
+			"optional": False,
+			"description": "Total variable operating cost for each year of the analysis, expanded to "
+						   "the full analysis period (non-zero only from the start of operation "
+						   "onward), corrected for inflation, reduced by the applicable fraction "
+						   "during the start-up years, and set to zero before the start of operation "
+						   "(i.e. during construction). Used by the discounted cash flow analysis."
+		},
 	},
     "special_insertions":
         {"sum_all_tables": {
@@ -179,7 +227,7 @@ output_dict = {
 				},
                 "Summed group total": {
                     "Value": {
-                        "type": {float},
+                        "type": {int, float},
 						"dimension": "currency"
                     },
                     "description": "Summed total of other variable operating costs across all tables"
@@ -241,6 +289,12 @@ class Variable_Operating_Cost_Plugin:
 		Sum of inflation corrected utilities costs.
 	Variable Operating Costs > Other > Value : float
 		Sum of `Other Variable Operating Cost` entries.
+	Variable Operating Costs > Annual > Value : ndarray
+		Total variable operating cost for each year of the analysis, expanded to the full
+		analysis period (non-zero only from the start of operation onward), corrected for
+		inflation, reduced by the applicable fraction during the start-up years, and set to
+		zero before the start of operation (i.e. during construction). Used by the discounted
+		cash flow analysis.
 	'''
 
 	def __init__(self, dcf, print_info):
@@ -250,9 +304,11 @@ class Variable_Operating_Cost_Plugin:
 		self.calculate_utilities_cost()
 		self.other_variable_costs()
 
-		self.total_variable_costs = Quantity(self.utilities.unit['USD'] + self.other.unit['USD'], 'USD')	
+		self.total_variable_costs = Quantity(self.utilities.unit['USD'] + self.other.unit['USD'], 'USD')
 
-		output_inserter_function(output_dict, self, dcf, 'Variable_Operating_Cost_Plugin')   
+		self.annual_variable_operating_cost = self.calculate_annual_variable_operating_cost()
+
+		output_inserter_function(output_dict, self, dcf, 'Variable_Operating_Cost_Plugin')
 
 	def calculate_utilities_cost(self):
 		'''Iterating over all utilities and computing summed yearly costs.
@@ -274,9 +330,39 @@ class Variable_Operating_Cost_Plugin:
 		Applying inflation correct to summed other variable operating costs
 		'''
 		self.other = Quantity(
-						self.input_dict_resolved['Inflation']['Chemical inflator']['Value'].unit['-'] 
-						* self.input_dict_resolved['Other Variable Operating Cost']['Summed group total']['Value'].unit['USD'], 
-					 'USD') 
+						self.input_dict_resolved['Inflation']['Chemical inflator']['Value'].unit['-']
+						* self.input_dict_resolved['Other Variable Operating Cost']['Summed group total']['Value'].unit['USD'],
+					 'USD')
+
+	def calculate_annual_variable_operating_cost(self):
+		'''Calculation of total variable operating cost for each year of the analysis, required by
+		the discounted cash flow analysis. `Variable Operating Costs > Total` (covering only the
+		operation years) is expanded to the full analysis period, corrected for inflation, and
+		reduced by the applicable fraction during the start-up years.
+		'''
+
+		# Reading time and inflation information from input dictionary
+		time_dict = self.input_dict_resolved['Time']['Years']['Value']
+		analysis_years_ones = time_dict['Analysis years ones']
+		start_idx = int(round(time_dict['Start index'].unit['-']))
+
+		inflation_factor_full = self.input_dict_resolved['Inflation']['Inflation factor full']['Value']
+		start_up_time = self.input_dict_resolved['Financial Input Values']['Start-up time']['Value']
+		fraction_during_start_up = self.input_dict_resolved['Financial Input Values']['Fraction of variable operating costs during start-up']['Value']
+
+		# Expanding total variable operating costs to the full analysis period 
+		expanded_total = np.zeros_like(analysis_years_ones.unit['-'])
+		expanded_total[start_idx:] = self.total_variable_costs.unit['USD']
+
+		annual_variable_operating_cost = expanded_total * inflation_factor_full.unit['-']
+
+		start_up_time_idx = start_idx + int(round(start_up_time.unit['year']))
+
+		annual_variable_operating_cost[:start_up_time_idx] = (annual_variable_operating_cost[:start_up_time_idx]
+															  * fraction_during_start_up.unit['-'])
+		annual_variable_operating_cost[:start_idx] = 0
+
+		return Quantity(annual_variable_operating_cost, 'USD')
 
 class Utility:
 	'''Individual utility objects.

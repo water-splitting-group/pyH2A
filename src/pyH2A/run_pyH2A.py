@@ -2,7 +2,6 @@ import sys
 import ast
 import os
 from pyH2A.Discounted_Cash_Flow import Discounted_Cash_Flow
-from pyH2A.Utilities import functional_unit as fu
 from pyH2A.Utilities.input_modification import (convert_input_to_dictionary, 
 												execute_plugin, 
 												convert_dict_to_kwargs_dict, 
@@ -46,9 +45,6 @@ class pyH2A:
 		self.file_name = os.path.basename(input_file).split('.')[0]
 		self.output_directory = output_directory
 		self.inp = convert_input_to_dictionary(self.input_file)
-
-		self.functional_unit = self.inp['Functional Unit']['Functional Unit']['Unit']
-		fu.set_functional_unit(self.functional_unit)
 
 		self.base_case = Discounted_Cash_Flow(self.input_file, print_info = print_info)
 

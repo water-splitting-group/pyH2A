@@ -3,7 +3,8 @@ import numbers
 from pyH2A.Utilities.input_modification import (convert_input_to_dictionary,
 												set_by_path,
 												execute_plugin)
-from pyH2A.LCA.LCA import LCA
+
+from pyH2A.Utilities.functional_unit import resolve_functional_unit
 
 def discounted_cash_flow_function(inp, 
 								  values, 
@@ -129,14 +130,8 @@ class Discounted_Cash_Flow:
 
 	Attributes
 	----------
-	h2_cost : float
-		Levelized H2 cost per kg.
-	contributions : dict
-		Cost contributions to H2 price.
 	plugs : dict 
 		Dictionary containing plugin class objects used during analysis.
-	lca : LCA object
-		Life cycle assessment object, containing life cycle assessment results 
 	
 	Notes
 	-----
@@ -202,15 +197,10 @@ class Discounted_Cash_Flow:
 			self.inp = input_file
 
 		self.print_info = print_info
-
 		self.plugs = {}
+		self.functional_unit = resolve_functional_unit(self.inp['Functional Unit']['Functional Unit']['Unit'])
 
 		self.workflow(self.inp, self.plugs)  # execution of all functions and plugins specified in "Workflow"
-
-		##################### This section is to be changed (LCA should also be executed as a plugin)
-		if 'Life Cycle Assessment' in self.inp:
-			self.lca = LCA(self.inp['Life Cycle Assessment']['Matrix Folder']['Value'], self)
-		###################################################################
 
 		if check_processing is True:
 			self.check_processing()

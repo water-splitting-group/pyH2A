@@ -3,7 +3,6 @@ import numpy as np
 from pyH2A.Utilities.input_modification import sum_all_tables_quantity
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler import Quantity
-#from pyH2A.Utilities.functional_unit import FUNCTIONAL_UNIT
 
 input_dict = {
     'Plugin A - Photovoltaic Input': {
@@ -219,8 +218,6 @@ class Test_Plugin_A:
         self.inp = input_resolver_function(input_dict, dcf, __name__)
 
         self.method_A()
-
-        #print(FUNCTIONAL_UNIT.unit)
 
         output_inserter_function(output_dict, self, dcf, __name__)
 
