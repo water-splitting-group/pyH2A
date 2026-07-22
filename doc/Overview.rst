@@ -46,7 +46,7 @@ The structure below can be read as a map indicating where each of these elements
    │
    ├── Discounted_Cash_Flow.py
    │   Core of the techno-economic calculation:
-   │   - Defines the pre_workflow, workflow and post_workflow (see section 2 below)
+   │   - Defines the workflow (see section 2 below)
    │
    ├── LCA/
    │   └── LCA.py
@@ -174,12 +174,6 @@ The use and calculation of these variables proceeds in the following order:
 
      ``self.inp = convert_input_to_dictionary(self.input_file)``
 
-- Financial input values such as the reference year or the inflation factor are loaded from the ``Defaults.md`` file or computed.
-
-  .. admonition:: Code implementation
-
-     In ``Discounted_Cash_Flow`` class, this step is part of the ``pre_workflow`` method call.
-
 
 2.2. Plugin workflow
 --------------------
@@ -217,10 +211,6 @@ The execution order therefore defines the logical dependency structure of the mo
 
 The final financial quantities of interest (e.g. levelized cost of product) are calculated.
 
-.. admonition:: Code implementation
-
-   In the ``Discounted_Cash_Flow`` class, this step is part of the ``post_workflow`` method call.
-
 
 
 3. Default plugins and Scenario-specific plugins
@@ -232,7 +222,7 @@ The calculation sequence used in pyH2A is based on two categories of plugins:
 2. Scenario-specific plugins, which introduce calculations particular to a given production pathway or study.
 
 The default plugins are specified in the ``Defaults.md`` file. They are always included in a calculation and provide the general discounted cash flow framework. 
-This includes the construction of capital costs, operating costs, replacement costs, and the financial evaluation that leads to metrics such as annual cash flows and the levelized cost of the delivered product. 
+This includes the construction of time and inflation-related constants, capital costs, operating costs, replacement costs, and the financial evaluation that leads to metrics such as annual cash flows and the levelized cost of the delivered product. 
 Note that the default Workflow (as defined in the ``Defaults.md`` file) also calls functions after each default plugin execution. These functions can be found as methods of the Discounted_Cash_Flow class.
 
 Scenario-specific plugins are specified in the user-defined input (.md) file. They typically introduce technical calculations (e.g., production performance, equipment sizing, technology-dependent costs) whose results enter the financial structure defined by the defaults.
