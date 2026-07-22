@@ -2,6 +2,7 @@ import pytest
 import numpy as np
 from pyH2A.Plugins.Replacement_Plugin import Replacement_Plugin
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+from tests.Utilities.check_dicts_for_testing import check_dicts
 
 class DummyDCF:
     """Minimal DCF object for Replacement_Plugin with simple variable-value inputs."""
@@ -18,10 +19,11 @@ class DummyDCF:
             "Time": {
                 "Years": {
                     "Value": plant_years_relative,
-                    "Unit": "-",   
-                    "Processed": "Yes",                    
+                    "Unit": "-",
+                    "Processed": "Yes",
                 },
-            },    
+            },
+
             "Inflation": {
                 "Combined inflator": {
                     "Value": combined_inflator,
@@ -57,7 +59,9 @@ class DummyDCF:
     [
         {
             "input": {
-                "plant_years_relative":{"Plant years relative":np.arange(1, 11)},
+                "plant_years_relative":{
+                    "Plant years relative": np.arange(1, 11), 
+                    "Start index": 2},
                 "combined_inflator": 1.0,
                 "inflation_correction": 1.0,
                 "inflation_factor": np.ones(10),
@@ -76,7 +80,25 @@ class DummyDCF:
                 },
             },
             "expected": {
-                "total": Quantity(26000.0, "USD"),
+                "yearly": Quantity(np.array([0.,
+                                             0., 
+                                              3000., 
+                                              1000., 
+                                              6000., 
+                                              3000., 
+                                              1000., 
+                                              1000., 
+                                              3000., 
+                                              6000.]), "USD"),
+                "contributions": {
+                    'Data': {
+                        'Electrolyzer Stack': Quantity(10000.0, 'USD'),
+                        'Unplanned Replacement': Quantity(10000.0, 'USD'),
+                        'Valve': Quantity(6000.0, 'USD')
+                    },
+                    'Table Group': 'Replacement Costs',
+                    'Total': Quantity(26000.0, 'USD')
+                }
             },
         }
     ]
@@ -93,8 +115,11 @@ def test_replacement_plugin(case):
 
     # Tolerance (very small)
     tolerance = 1e-12
-    
-    assert np.sum(plugin.yearly) == pytest.approx(
-        expected["total"].unit["USD"],
-        abs=tolerance
+
+    np.testing.assert_allclose(
+        plugin.yearly_inflated.unit['USD'],
+        expected["yearly"].unit['USD'],
+        atol=tolerance
     )
+
+    check_dicts(plugin.contributions, expected["contributions"], tolerance)

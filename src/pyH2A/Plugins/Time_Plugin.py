@@ -8,7 +8,7 @@ input_dict = {
         "<...>": {
             "Value": {
                 "type": {int, float},
-                "bounds": (0, None),
+                "bounds": (0, 1),
             },
             "Unit": {
                 "dimension": "dimensionless",

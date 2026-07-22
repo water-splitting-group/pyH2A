@@ -110,7 +110,18 @@ output_dict = {
 			"optional": False,
 			"description": "Total replacement costs for each year, "
 						   "including both planned and unplanned replacement costs, "
-						   "and corrected for inflation."
+						   "and corrected for inflation. Set to zero for the years before "
+						   "the start of operation (i.e. during construction)."
+		},
+		"Contributions": {
+			"Value": {
+				"inserted_value": "contributions",
+				"type": {dict,},
+				"dimension": "currency",
+			},
+			"optional": False,
+			"description": "Contributions of each entry in `Planned Replacement` and the summed total of `Unplanned Replacement`"
+						   " to the total replacement costs."
 		},
 	},
 	"special_insertions":
@@ -184,7 +195,8 @@ class Replacement_Plugin:
 		Summed group total for all the tables in "Unplanned Replacement" group.		
 	Replacement > Total > Value : ndarray
 		Total inflated replacement costs (sum of `Planned Replacement` entries and
-		unplanned replacement costs).
+		unplanned replacement costs), set to zero for the years before the start of operation
+		(i.e. during construction).
 	'''
 
 	def __init__(self, dcf, print_info):
@@ -199,7 +211,7 @@ class Replacement_Plugin:
 		self.contributions['Table Group'] = 'Replacement Costs'
 
 		self.calculate_planned_replacement()
-		self.unplanned_replacement()
+		self.calculate_unplanned_replacement()
 		self.calculate_total()
 
 		output_inserter_function(output_dict, self, dcf, 'Replacement_Plugin') 
@@ -211,29 +223,37 @@ class Replacement_Plugin:
 
 		for key in self.input_dict_resolved['Planned Replacement']:
 			planned_replacement = Planned_Replacement(self.input_dict_resolved['Planned Replacement'][key], 
-													self.input_dict_resolved['Time']['Years']['Value']['Plant years relative'].unit['-'], 
-													self.input_dict_resolved['Inflation']['Combined inflator']['Value'].unit['-'])
+													  self.input_dict_resolved['Time']['Years']['Value']['Plant years relative'].unit['-'], 
+													  self.input_dict_resolved['Inflation']['Combined inflator']['Value'].unit['-'])
 			
 			self.yearly[planned_replacement.years_idx] += planned_replacement.cost.unit['USD']
 			self.contributions['Data'][key] = planned_replacement.total_cost
 
-	def unplanned_replacement(self):
+	def calculate_unplanned_replacement(self):
 		'''Calculating unplanned replacement costs 
 		'''
 
 		self.unplanned = self.input_dict_resolved['Unplanned Replacement']['Summed group total']['Value'] # Calculated by sum_tables
 		self.yearly += self.unplanned.unit['USD']
-		self.contributions['Data']['Unplanned Replacement'] = np.sum(np.ones_like(self.yearly) * self.unplanned.unit['USD'])
+		self.contributions['Data']['Unplanned Replacement'] = Quantity(np.sum(np.ones_like(self.yearly) 
+																	   * self.unplanned.unit['USD']), 
+															  'USD')
 	
 	def calculate_total(self):
-		'''Calculating total replacement costs
+		'''Calculating total replacement costs. Replacement costs occurring before the start of
+		operation (i.e. during construction) are set to zero, as no replacements are performed
+		while the plant is not yet operational.
 		'''
 
 		self.contributions['Total'] = Quantity(np.sum(self.yearly), 'USD')
-		self.yearly_inflated = Quantity(self.yearly 
-								  		* self.input_dict_resolved['Inflation']['Inflation correction']['Value'].unit['-']
-										* self.input_dict_resolved['Inflation']['Inflation factor full']['Value'].unit['-'], 
-								'USD')
+		yearly_inflated = (self.yearly
+						   * self.input_dict_resolved['Inflation']['Inflation correction']['Value'].unit['-']
+						   * self.input_dict_resolved['Inflation']['Inflation factor full']['Value'].unit['-'])
+
+		start_idx = int(round(self.input_dict_resolved['Time']['Years']['Value']['Start index'].unit['-']))
+		yearly_inflated[:start_idx] = 0
+
+		self.yearly_inflated = Quantity(yearly_inflated, 'USD')
 
 class Planned_Replacement:
 	'''
