@@ -118,27 +118,28 @@ _SCENARIOS_2LAYER = [
     ('smartphone_2layer_acid', 'Acidification', 4.0, 'kg SO2-eq'),
 ]
 
-# Each list is (input_file_stem, expected_value) in base, S2, S3, S4, S5 order.
+# Each list is (input_file_stem, impact_name, expected_value, expected_unit)
+# in base, S2, S3, S4, S5 order.
 _SCENARIOS_3LAYER_GWP = [
-    ('smartphone_3layer_gwp_base', 10.0),
-    ('smartphone_3layer_gwp_s2', 8.0),
-    ('smartphone_3layer_gwp_s3', 12.0),
-    ('smartphone_3layer_gwp_s4', 11.2),
-    ('smartphone_3layer_gwp_s5', 9.2),
+    ('smartphone_3layer_gwp_base', 'Global warming potential', 10.0, 'kg CO2-eq'),
+    ('smartphone_3layer_gwp_s2', 'Global warming potential', 8.0, 'kg CO2-eq'),
+    ('smartphone_3layer_gwp_s3', 'Global warming potential', 12.0, 'kg CO2-eq'),
+    ('smartphone_3layer_gwp_s4', 'Global warming potential', 11.2, 'kg CO2-eq'),
+    ('smartphone_3layer_gwp_s5', 'Global warming potential', 9.2, 'kg CO2-eq'),
 ]
 _SCENARIOS_3LAYER_CED = [
-    ('smartphone_3layer_ced_base', 50.0),
-    ('smartphone_3layer_ced_s2', 39.5),
-    ('smartphone_3layer_ced_s3', 60.5),
-    ('smartphone_3layer_ced_s4', 54.4),
-    ('smartphone_3layer_ced_s5', 47.4),
+    ('smartphone_3layer_ced_base', 'Cumulative energy demand', 50.0, 'kWh'),
+    ('smartphone_3layer_ced_s2', 'Cumulative energy demand', 39.5, 'kWh'),
+    ('smartphone_3layer_ced_s3', 'Cumulative energy demand', 60.5, 'kWh'),
+    ('smartphone_3layer_ced_s4', 'Cumulative energy demand', 54.4, 'kWh'),
+    ('smartphone_3layer_ced_s5', 'Cumulative energy demand', 47.4, 'kWh'),
 ]
 _SCENARIOS_3LAYER_ACID = [
-    ('smartphone_3layer_acid_base', 4.0),
-    ('smartphone_3layer_acid_s2', 3.2),
-    ('smartphone_3layer_acid_s3', 4.8),
-    ('smartphone_3layer_acid_s4', 4.66),
-    ('smartphone_3layer_acid_s5', 3.46),
+    ('smartphone_3layer_acid_base', 'Acidification', 4.0, 'kg SO2-eq'),
+    ('smartphone_3layer_acid_s2', 'Acidification', 3.2, 'kg SO2-eq'),
+    ('smartphone_3layer_acid_s3', 'Acidification', 4.8, 'kg SO2-eq'),
+    ('smartphone_3layer_acid_s4', 'Acidification', 4.66, 'kg SO2-eq'),
+    ('smartphone_3layer_acid_s5', 'Acidification', 3.46, 'kg SO2-eq'),
 ]
 
 
@@ -182,85 +183,79 @@ def test_1_2layer_result_matches_reference(input_file_stem, impact_name, expecte
 # disk+RAM on the first scenario, warm disk / cold RAM on the second, and
 # warm RAM (no disk I/O) on the three remaining scenarios.
 
-def test_3layer_gwp_base_computes_from_scratch():
-    """Cold RAM + cold disk -> compute_all_artifacts_from_scratch runs the
-    full LU factorization and writes artifacts to disk and RAM."""
-    _clear_ram_only()
-    get_cache_paths.cache_clear()
-    _, matrix_folder = _load_scenario(_SCENARIOS_3LAYER_GWP[0][0])
-    _clear_disk(matrix_folder)
-    input_file_stem, expected = _SCENARIOS_3LAYER_GWP[0]
-    _run_and_assert(input_file_stem, 'Global warming potential', expected, 'kg CO2-eq')
+@pytest.mark.parametrize(
+    'scenario_index, scenario_id',
+    [(0, 'base'), (1, 'S2'), (2, 'S3'), (3, 'S4'), (4, 'S5')],
+)
+def test_3layer_gwp_scenarios(scenario_index, scenario_id):
+    """Exercises all three LCA caching paths across the five GWP scenarios, in
+    parametrize-list (execution) order: scenario 0 (base) is cold RAM+disk
+    (compute_all_artifacts_from_scratch runs the full LU factorization and
+    writes artifacts to disk and RAM); scenario 1 (S2) explicitly clears RAM
+    while leaving disk warm (load_all_from_disk_to_ram reads the artifacts
+    saved above, bypassing factorization); scenarios 2-4 (S3-S5) rely on RAM
+    staying warm from the previous scenario (initialize_all_artifacts exits on
+    the early-exit guard without any disk I/O)."""
+    if scenario_index == 0:
+        _clear_ram_only()
+        get_cache_paths.cache_clear()
+        _, matrix_folder = _load_scenario(_SCENARIOS_3LAYER_GWP[0][0])
+        _clear_disk(matrix_folder)
+    elif scenario_index == 1:
+        _clear_ram_only()
+
+    input_file_stem, impact_name, expected, expected_unit = _SCENARIOS_3LAYER_GWP[scenario_index]
+    _run_and_assert(input_file_stem, impact_name, expected, expected_unit)
 
 
-def test_3layer_gwp_warm_disk_path_loads_correctly():
-    """Explicitly clear RAM while leaving disk warm -> load_all_from_disk_to_ram
-    reads the artifacts saved above, bypassing factorization."""
-    _clear_ram_only()
-    input_file_stem, expected = _SCENARIOS_3LAYER_GWP[1]
-    _run_and_assert(input_file_stem, 'Global warming potential', expected, 'kg CO2-eq')
+@pytest.mark.parametrize(
+    'scenario_index, scenario_id',
+    [(0, 'base'), (1, 'S2'), (2, 'S3'), (3, 'S4'), (4, 'S5')],
+)
+def test_3layer_ced_scenarios(scenario_index, scenario_id):
+    """Exercises all three LCA caching paths across the five CED scenarios, in
+    parametrize-list (execution) order: scenario 0 (base) is cold RAM+disk
+    (compute_all_artifacts_from_scratch runs the full LU factorization and
+    writes artifacts to disk and RAM); scenario 1 (S2) explicitly clears RAM
+    while leaving disk warm (load_all_from_disk_to_ram reads the artifacts
+    saved above, bypassing factorization); scenarios 2-4 (S3-S5) rely on RAM
+    staying warm from the previous scenario (initialize_all_artifacts exits on
+    the early-exit guard without any disk I/O)."""
+    if scenario_index == 0:
+        _clear_ram_only()
+        get_cache_paths.cache_clear()
+        _, matrix_folder = _load_scenario(_SCENARIOS_3LAYER_CED[0][0])
+        _clear_disk(matrix_folder)
+    elif scenario_index == 1:
+        _clear_ram_only()
+
+    input_file_stem, impact_name, expected, expected_unit = _SCENARIOS_3LAYER_CED[scenario_index]
+    _run_and_assert(input_file_stem, impact_name, expected, expected_unit)
 
 
-@pytest.mark.parametrize('scenario_index, scenario_id', [(2, 'S3'), (3, 'S4'), (4, 'S5')])
-def test_3layer_gwp_remaining_scenarios_use_ram_cache(scenario_index, scenario_id):
-    """RAM is warm from the previous test -> initialize_all_artifacts exits
-    on the early-exit guard without any disk I/O."""
-    input_file_stem, expected = _SCENARIOS_3LAYER_GWP[scenario_index]
-    _run_and_assert(input_file_stem, 'Global warming potential', expected, 'kg CO2-eq')
+@pytest.mark.parametrize(
+    'scenario_index, scenario_id',
+    [(0, 'base'), (1, 'S2'), (2, 'S3'), (3, 'S4'), (4, 'S5')],
+)
+def test_3layer_acid_scenarios(scenario_index, scenario_id):
+    """Exercises all three LCA caching paths across the five ACID scenarios, in
+    parametrize-list (execution) order: scenario 0 (base) is cold RAM+disk
+    (compute_all_artifacts_from_scratch runs the full LU factorization and
+    writes artifacts to disk and RAM); scenario 1 (S2) explicitly clears RAM
+    while leaving disk warm (load_all_from_disk_to_ram reads the artifacts
+    saved above, bypassing factorization); scenarios 2-4 (S3-S5) rely on RAM
+    staying warm from the previous scenario (initialize_all_artifacts exits on
+    the early-exit guard without any disk I/O)."""
+    if scenario_index == 0:
+        _clear_ram_only()
+        get_cache_paths.cache_clear()
+        _, matrix_folder = _load_scenario(_SCENARIOS_3LAYER_ACID[0][0])
+        _clear_disk(matrix_folder)
+    elif scenario_index == 1:
+        _clear_ram_only()
 
-
-def test_3layer_ced_base_computes_from_scratch():
-    """Cold RAM + cold disk -> compute_all_artifacts_from_scratch runs the
-    full LU factorization and writes artifacts to disk and RAM."""
-    _clear_ram_only()
-    get_cache_paths.cache_clear()
-    _, matrix_folder = _load_scenario(_SCENARIOS_3LAYER_CED[0][0])
-    _clear_disk(matrix_folder)
-    input_file_stem, expected = _SCENARIOS_3LAYER_CED[0]
-    _run_and_assert(input_file_stem, 'Cumulative energy demand', expected, 'kWh')
-
-
-def test_3layer_ced_warm_disk_path_loads_correctly():
-    """Explicitly clear RAM while leaving disk warm -> load_all_from_disk_to_ram
-    reads the artifacts saved above, bypassing factorization."""
-    _clear_ram_only()
-    input_file_stem, expected = _SCENARIOS_3LAYER_CED[1]
-    _run_and_assert(input_file_stem, 'Cumulative energy demand', expected, 'kWh')
-
-
-@pytest.mark.parametrize('scenario_index, scenario_id', [(2, 'S3'), (3, 'S4'), (4, 'S5')])
-def test_3layer_ced_remaining_scenarios_use_ram_cache(scenario_index, scenario_id):
-    """RAM is warm from the previous test -> initialize_all_artifacts exits
-    on the early-exit guard without any disk I/O."""
-    input_file_stem, expected = _SCENARIOS_3LAYER_CED[scenario_index]
-    _run_and_assert(input_file_stem, 'Cumulative energy demand', expected, 'kWh')
-
-
-def test_3layer_acid_base_computes_from_scratch():
-    """Cold RAM + cold disk -> compute_all_artifacts_from_scratch runs the
-    full LU factorization and writes artifacts to disk and RAM."""
-    _clear_ram_only()
-    get_cache_paths.cache_clear()
-    _, matrix_folder = _load_scenario(_SCENARIOS_3LAYER_ACID[0][0])
-    _clear_disk(matrix_folder)
-    input_file_stem, expected = _SCENARIOS_3LAYER_ACID[0]
-    _run_and_assert(input_file_stem, 'Acidification', expected, 'kg SO2-eq')
-
-
-def test_3layer_acid_warm_disk_path_loads_correctly():
-    """Explicitly clear RAM while leaving disk warm -> load_all_from_disk_to_ram
-    reads the artifacts saved above, bypassing factorization."""
-    _clear_ram_only()
-    input_file_stem, expected = _SCENARIOS_3LAYER_ACID[1]
-    _run_and_assert(input_file_stem, 'Acidification', expected, 'kg SO2-eq')
-
-
-@pytest.mark.parametrize('scenario_index, scenario_id', [(2, 'S3'), (3, 'S4'), (4, 'S5')])
-def test_3layer_acid_remaining_scenarios_use_ram_cache(scenario_index, scenario_id):
-    """RAM is warm from the previous test -> initialize_all_artifacts exits
-    on the early-exit guard without any disk I/O."""
-    input_file_stem, expected = _SCENARIOS_3LAYER_ACID[scenario_index]
-    _run_and_assert(input_file_stem, 'Acidification', expected, 'kg SO2-eq')
+    input_file_stem, impact_name, expected, expected_unit = _SCENARIOS_3LAYER_ACID[scenario_index]
+    _run_and_assert(input_file_stem, impact_name, expected, expected_unit)
 
 
 # ── Cleanup: runs once after every test above has finished ─────────────────
