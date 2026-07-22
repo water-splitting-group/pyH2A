@@ -236,7 +236,7 @@ class Electrolyzer_Plugin:
     def _run(self, dcf):
         self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Electrolyzer_Plugin')
 
-        self.calculate_H2_production(dcf)
+        self.calculate_H2_production()
         unit_power_resolved = self.input_dict_resolved['Electrolyzer'].get('Unit nominal power')
         if unit_power_resolved is not None:
            self.calculate_number_of_electrolyzers_required(unit_power_resolved)

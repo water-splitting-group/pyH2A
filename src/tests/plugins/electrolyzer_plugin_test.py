@@ -73,7 +73,9 @@ class DummyDCF:
 # based on case 1, is tested except the unit power is provided as an input, so number of
 # electrolyzers required is calculated.
 _CASE_1_INPUT = {
-    "construction_time": 2,
+    "operation_years_relative": {
+        "Operation years relative": np.array([2026, 2027])
+    },
     "nominal_power": 5500.0,
     "power_increase": 0.003,
     "min_capacity": 0.10,
@@ -141,7 +143,7 @@ _CASE_1_INPUT = {
 }
 
 _CASE_1_EXPECTED = {
-    "h2_production": Quantity(np.array([0.0, 0.0, 2035.0, 2035.0]), 'kg'),
+    "h2_production": Quantity(np.array([2035.0, 2035.0]), 'kg'),
     "replacement_frequency": Quantity(2.0, 'year'),
     "yearly_data_year": Quantity(np.array([2026.0, 2027.0]), '-'),
     "yearly_data_production": Quantity(np.array([2035.0, 2035.0]), 'kg'),
@@ -309,7 +311,7 @@ def test_electrolyzer_plugin_zero_unit_power_raises():
     to avoid division by zero."""
 
     dcf = DummyDCF(
-        construction_time=0,
+        operation_years_relative={"Operation years relative": np.array([2026])},
         nominal_power=5500.0,
         power_increase=0.003,
         min_capacity=0.10,
