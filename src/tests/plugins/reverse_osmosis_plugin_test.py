@@ -78,15 +78,15 @@ class DummyDCF:
             "input": {
                 "design_output_by_year": np.array([0.0, 2250.0, 2375.0]),
                 "operating_capacity_factor": 0.8,
-                "construction_time": 1,
                 "power_demand_kWh_per_m3": 10.0,
                 "operating_time_fraction": 1.,
                 "recovery_rate": 0.1,
                 "device_throughput": 100.0,
             },
             "expected": {
-                "electricity_demand_kWh": Quantity(np.array([1613.3471844103742,
-                                                             1702.977583544284]),
+                "electricity_demand_kWh": Quantity(np.array([0.0,
+                                                             1613.3471844103742,
+                                                             1702.9775835442838]),
                                                    "kWh"),
                 "max_capacity_m3_per_hour": Quantity(0.019440383373793193, "m3/h"),
                 "number_of_devices_required": Quantity(1.7029775835442837, "-"),
@@ -141,7 +141,6 @@ def test_reverse_osmosis_plugin_zero_device_throughput_raises():
     dcf = DummyDCF(
         design_output_by_year=np.array([0.0, 2250.0, 2375.0]),
         operating_capacity_factor=0.8,
-        construction_time=1,
         power_demand_kWh_per_m3=10.0,
         operating_time_fraction=1.,
         recovery_rate=0.1,
