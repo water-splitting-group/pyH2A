@@ -12,9 +12,9 @@ Smartphone | 1.0 | kg | 72d897ed-5c61-44d0-9ee0-f057dc981e58
 
 # Construction
 
-Name | Full Name | Value
---- | --- | ---
-capital perc 1st | % of capital spent in 1st year of construction | 100%
+Name | Full Name | Value | Unit
+--- | --- | --- | ---
+capital perc 1st | % of capital spent in 1st year of construction | 100% | -
 
 # Technical Operating Parameters and Specifications
 
