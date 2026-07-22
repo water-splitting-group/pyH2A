@@ -2,7 +2,7 @@
 
 Name | Value
 --- | ---
-Matrix Folder | src/tests/lca/data/matrix_folders/smartphone_2layer_acid
+Matrix Folder | src/tests/lca/data/matrix_folders/smartphone_2layer_acid_base
 
 # LCA - Smartphone GT Components
 
