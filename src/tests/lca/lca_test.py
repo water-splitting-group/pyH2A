@@ -1,17 +1,3 @@
-"""Drives the LCA calculation engine directly via a DummyDCF with pre-resolved
-component values and compares the GWP100 result to a reference value.
-
-Matrix folder: src/tests/lca/data/matrix_folders/pve_unit_test
-Foreground processes (A-matrix column-0 indices):
-  - H2 Production        (index 0)     — A[0,0]     > 0  (diagonal reference flow)
-  - PV Electricity       (index 3560)  — A[3560,0]  < 0  (input to H2 process)
-  - Electrolyzer Mfg     (index 16413) — A[16413,0] < 0  (input to H2 process)
-  - Reverse Osmosis      (index 16415) — A[16415,0] < 0  (input to H2 process)
-
-Sign convention: apply_component_updates enforces
-  component_values[i] = sign(A[i,0]) * abs(user_value)
-so table inputs are always positive magnitudes; the sign is taken from the matrix.
-"""
 import shutil
 from pathlib import Path
 
@@ -99,7 +85,7 @@ def _reset_lca_caches():
                 "reverse_osmosis": 9.0,
             },
             "expected": {
-                "gwp100_value": 0.454132,
+                "gwp100_value": 0.45413181298378413,
                 "gwp100_unit": "kg CO2-Eq",
             },
         },
@@ -109,8 +95,7 @@ def _reset_lca_caches():
     ],
 )
 def test_lca(case):
-    """Check LCA computes a GWP100 result matching the independently-computed
-    openLCA reference, with the correct composite unit."""
+    """Check LCA computes a GWP100 result expected value and the correct composite unit."""
 
     # Unpack inputs from case
     dcf = DummyDCF(**case["input"])
@@ -121,7 +106,7 @@ def test_lca(case):
     expected = case["expected"]
 
     # Tolerance
-    tolerance = 1e-3
+    tolerance = 1e-12
 
     assert quantity.supplied_value == pytest.approx(expected["gwp100_value"], rel=tolerance)
 
