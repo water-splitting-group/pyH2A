@@ -51,14 +51,14 @@ Monte_Carlo_Analysis table
 	--- | ---
 	Samples | 50000
 	Dependent Variable | h2_cost
-	Target Response Range | 1.5; 1.6
+	Target Response Range | 1.5; 2.6
 	Output File | examples/PV_E_example/Monte_Carlo_Output.csv
 
 - **Samples** — number of random parameter combinations to evaluate. Every sample re-runs the
   entire model from scratch, so the run time scales roughly linearly with this number (samples
   are distributed across all available CPU cores, see :ref:`mc_performance_label`).
 - **Dependent Variable** — the single model output that Monte Carlo analysis tracks for every
-  sample. Supported values are:
+  sample, such as:
 
   - ``h2_cost`` — the levelized cost of hydrogen (:attr:`~pyH2A.Discounted_Cash_Flow.Discounted_Cash_Flow.h2_cost`).
   - ``Climate change``, ``Cumulative energy demand``, or
@@ -71,14 +71,11 @@ Monte_Carlo_Analysis table
   H2 cost respond to this uncertainty?" versus "how does this technology's carbon footprint
   respond?". Only one dependent variable can be tracked per Monte Carlo run — running both cost
   and an LCA metric requires two separate runs (with two separate ``Output File`` values).
-- **Target Response Range** — two values (``lower; upper``, order doesn't matter) bounding the
-  outcome you're interested in, in the same unit as the dependent variable. Samples whose
-  dependent-variable value falls inside this range are used for the development-distance
-  analysis (see below); it has no effect on which samples are generated, only on which ones are
-  selected afterwards. Choose this range around whatever target/threshold value motivates the
-  analysis, e.g. a target future H2 cost or an emissions target.
+- **Target Response Range** — two values (``lower; upper``) bounding the outcome you're
+  interested in, in the same unit as the dependent variable. Samples whose dependent-variable
+  value falls inside this range are used for the development-distance analysis (see below).
 - **Output File** — where the raw results (every sample's parameter values and dependent-variable
-  outcome) are written as a tab-delimited file, for later reuse or manual inspection.
+  outcome) are written for later reuse or manual inspection.
 - **Input File** *(optional, alternative to Output File)* — if set, no new samples are
   generated. Instead, results are read back from a file previously written by ``Output File``
   (e.g. from an earlier long run), letting you re-plot the same data without re-running the
@@ -97,9 +94,10 @@ Each row of this table defines one input parameter to vary and the range to samp
 
 	Parameter | Name | Type | Values | File Index | Comment
 	--- | --- | --- | --- | --- | ---
-	Direct Capital Costs - PV > PV CAPEX ($/kW) > Value | \$ / kW(PV) | value | Base; 220 | 0 | 2050 learning-curve projection.
-	Electrolyzer > Conversion efficiency (kg H2/kWh) > Value | kg($H_{2}$) / kWh | value | Base; 0.025 | 1 | Efficiency ceiling from reaction enthalpy.
-	Planned Replacement > Electrolyzer Stack Replacement > Cost ($) | Stack repl. (fr. E-CAPEX) | factor | 1.0; 0.5 | 2 | Stack replacement cost shrinks by up to 50%.
+{Photovoltaic > Efficiency > Value, -} | PV efficiency (%) | value | Base; 0.4 | 0 | PV module efficiency uncertainty range.
+{Battery > Energy density > Value, kWh/kg} |Battery density kWh / kg | value | 0.1; 0.2 | 1 | Battery specific energy uncertainty range.
+{Reverse Osmosis > Recovery rate > Value, -} | Reverse osmosis recovery rate | value | 0.4; 0.9 | 2 | Reverse osmosis recovery range.
+{Electrolyzer > Hydrogen yield per unit energy > Value, kg/kWh} | Electrolyzer efficiency kg($H_{2}$) / kWh | value | Base; 0.025 | 3 | Same Monte Carlo range convention as other PV_E files.
 
 - **Parameter** — the ``top key > middle key > bottom key`` path to the value being varied
   (identical path syntax used everywhere else in pyH2A input files).
@@ -112,19 +110,15 @@ Each row of this table defines one input parameter to vary and the range to samp
 
   ``factor`` is convenient for keeping a parameter's uncertainty proportional to whatever its
   base-case value happens to be (e.g. "50% to 100% of current cost"), while ``value`` is more
-  direct for absolute targets (e.g. "somewhere between $150/kW and $220/kW").
-- **Values** — the two bounds of the sampling range, separated by ``;`` (order is irrelevant,
-  pyH2A sorts them). Each bound is either:
+  direct for absolute targets (e.g. "somewhere between 0.1 kWh/kg and 0.2 kWh/kg").
+- **Values** — the two bounds of the sampling range, separated by ``;``. Each bound is either:
 
   - a plain number (interpreted according to ``Type``, so for a ``factor`` row ``1.0`` means "no
     change" and ``0.5`` means "half of base"), or
   - the special keyword ``Base`` or ``Reference`` — resolves to the parameter's current value in
     the input file, so one side of the range is always exactly the base case. This is the most
     common pattern: one bound is ``Base`` (today's value) and the other is a projected future
-    value, describing "how might this parameter move from where it is today". When a special
-    keyword is used, ``Parameter`` must be written with the bracketed path-with-unit syntax
-    (e.g. ``{Electrolyzer > Conversion efficiency (kg H2/kWh) > Value, kg/kWh}``) so the base
-    value can be resolved with a known unit.
+    value, describing "how might this parameter move from where it is today". 
 - **File Index** *(optional)* — only relevant when reading results back via ``Input File``
   (above). If a parameter's ``Name`` has since been changed, ``File Index`` maps it back to the
   column position it had when the results file was written, so old runs stay reusable after
@@ -143,7 +137,7 @@ Choosing parameters and ranges
 There's no automatic parameter selection — the modeler picks which inputs to vary. Good
 candidates are usually the parameters with the largest known uncertainty or the ones a
 techno-economic projection most depends on (e.g. capital cost learning curves, conversion
-efficiencies, replacement costs). A useful starting point is to vary the same parameters already
+efficiencies, replacement costs). A useful starting point might be to vary the same parameters already
 covered by a sensitivity analysis, since those are, by construction, the ones the base case is
 most sensitive to.
 
