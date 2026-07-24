@@ -130,11 +130,11 @@ def test_quantity_reference_dimension_mismatch_still_raises():
 
 def test_parse_reference_multiple_brackets():
     result = parse_reference('kg[H2]/J[electricity]')
-    assert result == ('kg / J', ['H2', None, 'electricity'])
+    assert result == ('kg/J', ['H2', 'electricity'])
 
 def test_parse_reference_multiple_brackets_spaced():
     result = parse_reference('J[energy] / kg[H2]')
-    assert result == ('J / kg', ['energy', None, 'H2'])
+    assert result == ('J / kg', ['energy', 'H2'])
 
 def test_parse_reference_malformed_bracket_order():
     result = parse_reference('[kg]H2')
@@ -142,7 +142,7 @@ def test_parse_reference_malformed_bracket_order():
 
 def test_quantity_composite_reference():
     q = Quantity(10, 'kg[H2]/J[electricity]')
-    assert q.reference == ['H2', None, 'electricity']
+    assert q.reference == ['H2', 'electricity']
     assert q.dimension == 'mass / energy'
 
 def test_quantity_composite_reference_repr():
@@ -152,7 +152,7 @@ def test_quantity_composite_reference_repr():
 
 def test_quantity_composite_reference_real_pattern():
     q = Quantity(10, 'kWh[solar]/m2[area]')
-    assert q.reference == ['solar', None, 'area']
+    assert q.reference == ['solar', 'area']
     assert q.unit['J / m2'] == pytest.approx(3.6e7)
 
 def test_quantity_lca_unit_with_reference():
@@ -184,16 +184,16 @@ def test_quantity_lca_composite_conversion_with_reference():
 
 def test_quantity_leading_numeric_reference():
     q = Quantity(1, '1/day[TOF]')
-    assert q.reference == [None, None, 'TOF']
+    assert q.reference == [None, 'TOF']
     assert q.unit['1 / s'] == pytest.approx(1/86400)
 
 def test_quantity_duplicate_unit_different_labels():
     q = Quantity(1, 'kg[H2] / kg[H2O]')
-    assert q.reference == ['H2', None, 'H2O']
+    assert q.reference == ['H2', 'H2O']
 
 def test_quantity_three_token_duplicate_unit():
     q = Quantity(1, 'kg[H2] / m2 / kg[H2O]')
-    assert q.reference == ['H2', None, None, None, 'H2O']
+    assert q.reference == ['H2', None, 'H2O']
 
 def test_quantity_multiword_label():
     q = Quantity(1, 'MJ[impact category]')
@@ -202,7 +202,7 @@ def test_quantity_multiword_label():
 
 def test_quantity_multiword_label_composite():
     q = Quantity(1, 'kg[sea water] / m3[fresh water]')
-    assert q.reference == ['sea water', None, 'fresh water']
+    assert q.reference == ['sea water', 'fresh water']
     assert repr(q) == "Quantity(1.0, 'kg[sea water] / m3[fresh water]')"
 
 def test_unit_lookup_reference_match():
@@ -236,7 +236,7 @@ def test_unit_lookup_reference_mismatch_names_correct_token():
 
 def test_quantity_reference_kwarg_basic():
     q = Quantity(1, 'J / kg', reference=['H2', 'H2'])
-    assert q.reference == ['H2', None, 'H2']
+    assert q.reference == ['H2', 'H2']
     assert repr(q) == "Quantity(1.0, 'J[H2] / kg[H2]')"
 
 def test_quantity_reference_kwarg_length_mismatch_raises():
@@ -253,43 +253,43 @@ def test_quantity_no_reference_and_no_kwarg():
 
 def test_parse_reference_composite_multiply():
     result = parse_reference('kW[grid] * h[duration]')
-    assert result == ('kW * h', ['grid', None, 'duration'])
+    assert result == ('kW * h', ['grid', 'duration'])
 
 def test_quantity_composite_multiply():
     q = Quantity(1, 'kW[grid] * h[duration]')
-    assert q.reference == ['grid', None, 'duration']
+    assert q.reference == ['grid', 'duration']
     assert q.dimension == 'power * time'
     assert repr(q) == "Quantity(3600000.0, 'W[grid] * s[duration]')"
 
 def test_quantity_composite_parens_then_divide():
     q = Quantity(1, '(kg[H2] * m[distance]) / s[time]')
-    assert q.reference == [None, 'H2', None, 'distance', None, None, 'time']
+    assert q.reference == ['H2', 'distance', 'time']
     assert q.dimension == '( mass * length ) / time'
     assert repr(q) == "Quantity(1.0, '( kg[H2] * m[distance] ) / s[time]')"
 
 def test_parse_reference_composite_triple_divide():
     result = parse_reference('kWh[solar] / m2[area] / day[production]')
-    assert result == ('kWh / m2 / day', ['solar', None, 'area', None, 'production'])
+    assert result == ('kWh / m2 / day', ['solar', 'area', 'production'])
 
 def test_quantity_composite_triple_divide():
     q = Quantity(1, 'kWh[solar] / m2[area] / day[production]')
-    assert q.reference == ['solar', None, 'area', None, 'production']
+    assert q.reference == ['solar', 'area', 'production']
     assert q.dimension == 'energy / area / time'
     assert repr(q) == "Quantity(41.666666666666664, 'J[solar] / m2[area] / s[production]')"
 
 def test_quantity_composite_divide_by_parens():
     q = Quantity(1, 'kg[H2] / (m[length] * s[time])')
-    assert q.reference == ['H2', None, None, 'length', None, 'time', None]
+    assert q.reference == ['H2', 'length', 'time']
     assert q.dimension == 'mass / ( length * time )'
     assert repr(q) == "Quantity(1.0, 'kg[H2] / ( m[length] * s[time] )')"
 
 def test_parse_reference_composite_nested_duplicate_tokens():
     result = parse_reference('(kg[H2] * m[distance]) / (s[t1] * s[t2])')
-    assert result == ('( kg * m ) / ( s * s )', [None, 'H2', None, 'distance', None, None, None, 't1', None, 't2', None])
+    assert result == ('(kg * m) / (s * s)', ['H2', 'distance', 't1', 't2'])
 
 def test_quantity_composite_nested_duplicate_tokens():
     q = Quantity(1, '(kg[H2] * m[distance]) / (s[t1] * s[t2])')
-    assert q.reference == [None, 'H2', None, 'distance', None, None, None, 't1', None, 't2', None]
+    assert q.reference == ['H2', 'distance', 't1', 't2']
     assert q.dimension == '( mass * length ) / ( time * time )'
     assert repr(q) == "Quantity(1.0, '( kg[H2] * m[distance] ) / ( s[t1] * s[t2] )')"
 
@@ -325,6 +325,6 @@ def test_quantity_frequency_with_reference():
 
 def test_quantity_substance_composite_real_pattern():
     q = Quantity(1, 'mol[H2]/h/kg[catalyst]')
-    assert q.reference == ['H2', None, None, None, 'catalyst']
+    assert q.reference == ['H2', None, 'catalyst']
     assert q.dimension == 'substance / time / mass'
     assert q.unit['mol[H2] / h / kg[catalyst]'] == 1.0

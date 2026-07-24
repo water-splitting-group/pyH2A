@@ -81,17 +81,19 @@ def parse_composite_unit(unit_str):
     return combined_multiplier, combined_base_str, combined_dim_str
 
 
+REFERENCE_PATTERN = re.compile(r'(\w+)(?:\[([^\[\]]*)\])?')
+
+
 def parse_reference(unit_str):
     """
     Split a composite unit string into its clean unit expression and a
-    position-aligned list of per-token bracketed reference labels.
+    compact list of per-real-unit-token bracketed reference labels.
 
-    Scans `unit_str` once, left to right, using plain string methods
-    (`.find('[')` / `.find(']')`) to locate bracket segments, and reuses
-    `TOKEN_PATTERN` (the same tokenizer `parse_composite_unit` itself uses)
-    only on the bracket-free stretches of text between brackets. Because
-    tokenizing never runs on bracket contents, a multi-word label (e.g.
-    `kg[grid electricity]`) is never torn apart by whitespace-splitting.
+    Uses a single regex, REFERENCE_PATTERN, whose bracket group is
+    optional, so one finditer pass walks through every real unit token
+    in the string -- labeled or not -- while operator characters (*,
+    /, (, )) are never matched at all and so never appear in the
+    output.
 
     Parameters
     ----------
@@ -106,60 +108,23 @@ def parse_reference(unit_str):
     clean_unit_str : str
         Unit expression with all bracketed references removed.
     reference : list
-        One entry per token, in the same order as `clean_unit_str`'s own
-        tokens (operator tokens included as `None`). Each entry is the
-        bracketed label for that token, or `None` if that token had no (or
-        an empty) label. Empty if no `[` is present. If any bracket is
-        malformed (unclosed, or has no unit token immediately before it),
-        `unit_str` is returned unmodified with an empty list, so that it
-        fails naturally downstream during unit parsing.
+        One entry per REAL unit token only (operator tokens are never
+        represented at all, not even as None), in the order those
+        units appear. Each entry is that token's label, or None if it
+        had no (or an empty) label. Empty if no [ is present. If any
+        bracket character survives after substitution -- an unclosed
+        bracket, a bracket with no unit token before it, or any other
+        malformed placement -- unit_str is returned unmodified with an
+        empty list, so it fails naturally downstream during unit parsing.
     """
-    # Fast path: keeps bracket-free calls (the vast majority of ~122 real production call sites) cheap
-    # by skipping the scan entirely when there's nothing to parse.
     if '[' not in unit_str:
         return unit_str.strip(), []
 
-    segments = []
-    pos = 0
+    reference = [m.group(2).strip() if m.group(2) else None for m in REFERENCE_PATTERN.finditer(unit_str)]
+    clean_unit_str = REFERENCE_PATTERN.sub(r'\1', unit_str).strip()
 
-    while True:
-        open_idx = unit_str.find('[', pos)
-        if open_idx == -1:
-            for tok in [t.strip() for t in TOKEN_PATTERN.split(unit_str[pos:]) if t and t.strip()]:
-                segments.append(('token', tok))
-            break
-
-        stretch_tokens = [t.strip() for t in TOKEN_PATTERN.split(unit_str[pos:open_idx]) if t and t.strip()]
-
-        # Covers a bracket with nothing preceding it and a bracket attached to an operator instead of a
-        # unit token — in both cases we deliberately don't guess, letting parse_composite_unit raise its
-        # own clear error downstream.
-        if not stretch_tokens or stretch_tokens[-1] in ('*', '/', '(', ')'):
-            return unit_str, []
-
-        for tok in stretch_tokens[:-1]:
-            segments.append(('token', tok))
-
-        close_idx = unit_str.find(']', open_idx)
-        if close_idx == -1:
-            return unit_str, []
-
-        label = unit_str[open_idx + 1:close_idx].strip()
-        segments.append(('labeled', stretch_tokens[-1], label if label else None))
-
-        pos = close_idx + 1
-
-    clean_tokens = []
-    reference = []
-    for segment in segments:
-        if segment[0] == 'token':
-            clean_tokens.append(segment[1])
-            reference.append(None)
-        else:
-            clean_tokens.append(segment[1])
-            reference.append(segment[2])
-
-    clean_unit_str = ' '.join(clean_tokens)
+    if '[' in clean_unit_str or ']' in clean_unit_str:
+        return unit_str, []
 
     return clean_unit_str, reference
 
@@ -167,7 +132,8 @@ def parse_reference(unit_str):
 def check_reference_match(requested_reference, stored_reference, unit_tokens):
     """
     Confirm a requested lookup's reference labels don't conflict with a
-    Quantity's own stored reference labels, position by position.
+    Quantity's own stored reference labels, compact position by compact
+    position.
 
     Only positions where the *requested* side has an actual (non-`None`)
     label are checked — the caller wasn't asking about any other position,
@@ -177,15 +143,20 @@ def check_reference_match(requested_reference, stored_reference, unit_tokens):
     Parameters
     ----------
     requested_reference : list or None
-        Position-aligned reference labels parsed from the requested lookup
-        unit string. Empty/`None` if the lookup carried no labels.
+        Compact, real-unit-token-aligned reference labels parsed from the
+        requested lookup unit string (one entry per real unit token;
+        operator positions are never represented). Empty/`None` if the
+        lookup carried no labels.
     stored_reference : list or None
-        Position-aligned reference labels already stored on the `Quantity`
-        being looked up on. Empty/`None` if it was constructed without any.
+        Compact, real-unit-token-aligned reference labels already stored
+        on the `Quantity` being looked up on (same shape as
+        `requested_reference`). Empty/`None` if it was constructed
+        without any.
     unit_tokens : list
-        Clean unit-token strings for the requested lookup, position-aligned
-        with `requested_reference` (e.g. `['g', '/', 'kg']`), used only to
-        name the mismatched token in error messages.
+        Clean, real-unit-token strings for the requested lookup, in the
+        same compact order as `requested_reference` (operator tokens
+        excluded, e.g. `['g', 'kg']` for `'g / kg'`), used only to name
+        the mismatched token in error messages.
 
     Returns
     -------
@@ -279,7 +250,10 @@ class UnitDictionary(dict):
         # before any unit math runs, and confirm they don't conflict (by position, not by unit name)
         # with this Quantity's own stored reference. Propagates as-is if it raises.
         clean_target_unit, requested_reference = parse_reference(target_unit)
-        unit_tokens = [t.strip() for t in TOKEN_PATTERN.split(clean_target_unit) if t and t.strip()]
+        unit_tokens = [
+            t.strip() for t in TOKEN_PATTERN.split(clean_target_unit)
+            if t and t.strip() and t.strip() not in ('*', '/', '(', ')')
+        ]
         check_reference_match(requested_reference, self._quantity.reference, unit_tokens)
 
         # 1. Absolute Temperature Handling Path
@@ -365,15 +339,9 @@ class Quantity:
                     f"{unit_token_count} unit token(s) - lengths must match."
                 )
 
-            # Expand the compact, unit-tokens-only reference= list into the same full,
-            # position-aligned form (operators included as None) that bracket-derived
-            # references already use, so __repr__ and check_reference_match need no
-            # special-casing for where the labels came from.
-            reference_iter = iter(reference)
-            self.reference = [
-                None if tok in ('*', '/', '(', ')') else next(reference_iter)
-                for tok in raw_tokens
-            ]
+            # reference= is already in the same compact, real-tokens-only shape parse_reference
+            # itself now produces -- no expansion needed, just take a defensive copy.
+            self.reference = list(reference)
 
         self.supplied_unit = clean_unit_str
         self.is_absolute_temp = False
@@ -405,48 +373,23 @@ class Quantity:
             String form `Quantity(<base_value>, '<base_unit>')`. If
             reference labels were supplied, each labeled unit token in
             `base_unit` is reattached with its bracketed label, e.g.
-            `'J / kg'` with reference list `['energy', None, 'H2']`
-            becomes `'J[energy] / kg[H2]'`.
+            `'J / kg'` with reference list `['energy', 'H2']` becomes
+            `'J[energy] / kg[H2]'`.
         """
         if self.reference:
-            # base_unit can be a composite (multiple tokens) and self.reference is now a position-aligned
-            # list, so each token's label is looked up by its position (via zip), not by name — this
-            # correctly distinguishes repeated unit names (e.g. two 'kg' tokens) carrying different labels.
+            # self.reference is now compact (one entry per REAL unit token only, no operator
+            # slots), while base_unit.split(' ') still includes operators -- walk base_unit's
+            # own tokens and only advance through self.reference at non-operator positions.
+            reference_iter = iter(self.reference)
             labeled_base_unit = ' '.join(
-                f"{token}[{label}]" if label else token
-                for token, label in zip(self.base_unit.split(' '), self.reference)
+                token if token in ('*', '/', '(', ')') else (
+                    f"{token}[{label}]" if (label := next(reference_iter)) else token
+                )
+                for token in self.base_unit.split(' ')
             )
             return f"Quantity({self.base_value}, '{labeled_base_unit}')"
 
         return f"Quantity({self.base_value}, '{self.base_unit}')"
-
-    @property
-    def unit_labels(self):
-        """
-        Reference labels for real unit tokens only, with operator positions removed.
-
-        `self.reference` has one entry per raw token from
-        `self.base_unit.split(' ')`, including a `None` placeholder for
-        every operator token (`*`, `/`, `(`, `)`). This property zips
-        `self.base_unit.split(' ')` with `self.reference` by position and
-        filters out any pair whose token is an operator, returning just
-        the remaining labels (still `None` for any unlabeled real unit
-        token) in order. It is not the same as a hypothetical "actual
-        labels only" view either: an unlabeled unit token still
-        contributes a `None` entry here — only the operator-position
-        entries are dropped, not every `None`.
-
-        Returns
-        -------
-        unit_labels : list
-            One entry per real unit token in `self.base_unit`, in order,
-            each either that token's label or `None`.
-        """
-        return [
-            label
-            for token, label in zip(self.base_unit.split(' '), self.reference)
-            if token not in ('*', '/', '(', ')')
-        ]
 
 
 
