@@ -81,6 +81,119 @@ def parse_composite_unit(unit_str):
     return combined_multiplier, combined_base_str, combined_dim_str
 
 
+REFERENCE_PATTERN = re.compile(r'(\w+)(?:\[([^\[\]]*)\])?')
+
+
+def parse_reference(unit_str):
+    """
+    Split a composite unit string into its clean unit expression and a
+    compact list of per-real-unit-token bracketed reference labels.
+
+    Uses a single regex, REFERENCE_PATTERN, whose bracket group is
+    optional, so one finditer pass walks through every real unit token
+    in the string -- labeled or not -- while operator characters (*,
+    /, (, )) are never matched at all and so never appear in the
+    output.
+
+    Parameters
+    ----------
+    unit_str : str
+        Unit expression that may contain one or more bracketed reference
+        labels attached to individual unit tokens, e.g.
+        `kg[H2] / J[electricity]`. Brackets are purely descriptive and are
+        not considered during unit computations.
+
+    Returns
+    -------
+    clean_unit_str : str
+        Unit expression with all bracketed references removed.
+    reference : list
+        One entry per REAL unit token only (operator tokens are never
+        represented at all, not even as None), in the order those
+        units appear. Each entry is that token's label, or None if it
+        had no (or an empty) label. Empty if no [ is present. If any
+        bracket character survives after substitution -- an unclosed
+        bracket, a bracket with no unit token before it, or any other
+        malformed placement -- unit_str is returned unmodified with an
+        empty list, so it fails naturally downstream during unit parsing.
+    """
+    if '[' not in unit_str:
+        return unit_str.strip(), []
+
+    reference = [m.group(2).strip() if m.group(2) else None for m in REFERENCE_PATTERN.finditer(unit_str)]
+    clean_unit_str = REFERENCE_PATTERN.sub(r'\1', unit_str).strip()
+
+    if '[' in clean_unit_str or ']' in clean_unit_str:
+        return unit_str, []
+
+    return clean_unit_str, reference
+
+
+def check_reference_match(requested_reference, stored_reference, unit_tokens):
+    """
+    Confirm a requested lookup's reference labels don't conflict with a
+    Quantity's own stored reference labels, compact position by compact
+    position.
+
+    Only positions where the *requested* side has an actual (non-`None`)
+    label are checked — the caller wasn't asking about any other position,
+    so those are silently skipped regardless of what (if anything) is
+    stored there.
+
+    Parameters
+    ----------
+    requested_reference : list or None
+        Compact, real-unit-token-aligned reference labels parsed from the
+        requested lookup unit string (one entry per real unit token;
+        operator positions are never represented). Empty/`None` if the
+        lookup carried no labels.
+    stored_reference : list or None
+        Compact, real-unit-token-aligned reference labels already stored
+        on the `Quantity` being looked up on (same shape as
+        `requested_reference`). Empty/`None` if it was constructed
+        without any.
+    unit_tokens : list
+        Clean, real-unit-token strings for the requested lookup, in the
+        same compact order as `requested_reference` (operator tokens
+        excluded, e.g. `['g', 'kg']` for `'g / kg'`), used only to name
+        the mismatched token in error messages.
+
+    Returns
+    -------
+    True : bool
+        If every requested position either matches or had nothing stored
+        to conflict with a `None` entry.
+
+    Raises
+    ------
+    ValueError
+        If a requested position has no corresponding stored label, or has
+        a stored label that disagrees with it.
+    """
+    requested_reference = requested_reference or []
+    stored_reference = stored_reference or []
+
+    for i, requested_label in enumerate(requested_reference):
+        if requested_label is None:
+            continue
+
+        stored_label = stored_reference[i] if i < len(stored_reference) else None
+
+        if stored_label is None:
+            raise ValueError(
+                f"Reference mismatch for '{unit_tokens[i]}': requested '{requested_label}', but this "
+                f"Quantity has no stored reference at this position."
+            )
+
+        if requested_label != stored_label:
+            raise ValueError(
+                f"Reference mismatch for '{unit_tokens[i]}': requested '{requested_label}', but stored "
+                f"reference is '{stored_label}'."
+            )
+
+    return True
+
+
 class UnitDictionary(dict):
     """
     A custom dictionary class designed for lazy runtime unit evaluations.
@@ -128,29 +241,41 @@ class UnitDictionary(dict):
             If an absolute temperature conversion is requested for an
             unsupported unit.
         ValueError
-            If the requested unit has a mismatched dimension.
+            If the requested unit has a mismatched dimension, or a
+            requested reference label conflicts with this Quantity's own
+            stored reference.
 
         """
+        # 0. Reference-aware validation: strip any bracketed labels from the requested lookup key
+        # before any unit math runs, and confirm they don't conflict (by position, not by unit name)
+        # with this Quantity's own stored reference. Propagates as-is if it raises.
+        clean_target_unit, requested_reference = parse_reference(target_unit)
+        unit_tokens = [
+            t.strip() for t in TOKEN_PATTERN.split(clean_target_unit)
+            if t and t.strip() and t.strip() not in ('*', '/', '(', ')')
+        ]
+        check_reference_match(requested_reference, self._quantity.reference, unit_tokens)
+
         # 1. Absolute Temperature Handling Path
         if self._quantity.is_absolute_temp:
-            if target_unit not in ABSOLUTE_TEMPERATURE["supported_units"]:
-                raise KeyError(f"Unsupported absolute temperature unit: {target_unit}")
-                
-            from_base_func = ABSOLUTE_TEMPERATURE["from_base"][target_unit]
+            if clean_target_unit not in ABSOLUTE_TEMPERATURE["supported_units"]:
+                raise KeyError(f"Unsupported absolute temperature unit: {clean_target_unit}")
+
+            from_base_func = ABSOLUTE_TEMPERATURE["from_base"][clean_target_unit]
             val = from_base_func(self._quantity.base_value)
             self[target_unit] = val
             return val
-            
+
         # 2. Standard / Composite Units Handling Path
-        target_multiplier, target_base, target_dim = parse_composite_unit(target_unit)
-        
+        target_multiplier, target_base, target_dim = parse_composite_unit(clean_target_unit)
+
         # Verify dimension logic (light validation by stripping spaces)
         if target_dim.replace(" ", "") != self._quantity.dimension.replace(" ", ""):
             raise ValueError(
                 f"Dimension mismatch: original dimension '{self._quantity.dimension}', "
                 f"but requested dimension '{target_dim}' when mapping '{target_unit}'"
             )
-        
+
         # Compute final target value seamlessly using numpy (if given) or scalar types
         val = self._quantity.base_value / target_multiplier
         self[target_unit] = val
@@ -165,15 +290,16 @@ class Quantity:
     dimension string. Unit conversion is provided lazily through a
     `UnitDictionary` stored on `self.unit`.
     """
-    __slots__ = ['supplied_value', 
-                 'supplied_unit', 
-                 'base_value', 
-                 'base_unit', 
-                 'dimension', 
-                 'unit', 
-                 'is_absolute_temp']
+    __slots__ = ['supplied_value',
+                 'supplied_unit',
+                 'base_value',
+                 'base_unit',
+                 'dimension',
+                 'unit',
+                 'is_absolute_temp',
+                 'reference']
     
-    def __init__(self, value, unit_str):
+    def __init__(self, value, unit_str, reference=None):
         '''
         Create a `Quantity` from a numeric value and unit expression.
 
@@ -183,6 +309,10 @@ class Quantity:
             Supplied numeric value.
         unit_str : str
             Unit expression compatible with the unit handler configuration.
+        reference : list, optional
+            One label per real unit token in `unit_str` (excluding
+            operators), e.g. `['H2', 'H2']` for `'J / kg'`. Mutually
+            exclusive with bracketed labels already present in `unit_str`.
 
         Returns
         -------
@@ -191,9 +321,31 @@ class Quantity:
         '''
 
         self.supplied_value = value
-        self.supplied_unit = unit_str.strip()
+        clean_unit_str, self.reference = parse_reference(unit_str.strip())
+
+        if reference is not None:
+            if self.reference:
+                raise ValueError(
+                    "Cannot provide both bracketed labels in the unit string AND a separate "
+                    "reference= argument - choose one."
+                )
+
+            raw_tokens = [t.strip() for t in TOKEN_PATTERN.split(clean_unit_str) if t and t.strip()]
+            unit_token_count = len([t for t in raw_tokens if t not in ('*', '/', '(', ')')])
+
+            if len(reference) != unit_token_count:
+                raise ValueError(
+                    f"reference= has {len(reference)} entries, but '{clean_unit_str}' has "
+                    f"{unit_token_count} unit token(s) - lengths must match."
+                )
+
+            # reference= is already in the same compact, real-tokens-only shape parse_reference
+            # itself now produces -- no expansion needed, just take a defensive copy.
+            self.reference = list(reference)
+
+        self.supplied_unit = clean_unit_str
         self.is_absolute_temp = False
-        
+
         # Detect hardcoded offset pathway
         if self.supplied_unit in ABSOLUTE_TEMPERATURE["supported_units"]:
             self.is_absolute_temp = True
@@ -218,8 +370,25 @@ class Quantity:
         Returns
         -------
         representation : str
-            String form `Quantity(<base_value>, '<base_unit>')`.
+            String form `Quantity(<base_value>, '<base_unit>')`. If
+            reference labels were supplied, each labeled unit token in
+            `base_unit` is reattached with its bracketed label, e.g.
+            `'J / kg'` with reference list `['energy', 'H2']` becomes
+            `'J[energy] / kg[H2]'`.
         """
+        if self.reference:
+            # self.reference is now compact (one entry per REAL unit token only, no operator
+            # slots), while base_unit.split(' ') still includes operators -- walk base_unit's
+            # own tokens and only advance through self.reference at non-operator positions.
+            reference_iter = iter(self.reference)
+            labeled_base_unit = ' '.join(
+                token if token in ('*', '/', '(', ')') else (
+                    f"{token}[{label}]" if (label := next(reference_iter)) else token
+                )
+                for token in self.base_unit.split(' ')
+            )
+            return f"Quantity({self.base_value}, '{labeled_base_unit}')"
+
         return f"Quantity({self.base_value}, '{self.base_unit}')"
 
 
