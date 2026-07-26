@@ -94,10 +94,10 @@ Each row of this table defines one input parameter to vary and the range to samp
 
 	Parameter | Name | Type | Values | File Index | Comment
 	--- | --- | --- | --- | --- | ---
-{Photovoltaic > Efficiency > Value, -} | PV efficiency (%) | value | Base; 0.4 | 0 | PV module efficiency uncertainty range.
-{Battery > Energy density > Value, kWh/kg} |Battery density kWh / kg | value | 0.1; 0.2 | 1 | Battery specific energy uncertainty range.
-{Reverse Osmosis > Recovery rate > Value, -} | Reverse osmosis recovery rate | value | 0.4; 0.9 | 2 | Reverse osmosis recovery range.
-{Electrolyzer > Hydrogen yield per unit energy > Value, kg/kWh} | Electrolyzer efficiency kg($H_{2}$) / kWh | value | Base; 0.025 | 3 | Same Monte Carlo range convention as other PV_E files.
+	{Photovoltaic > Efficiency > Value, -} | PV efficiency (%) | value | Base; 0.4 | 0 | PV module efficiency uncertainty range.
+	{Battery > Energy density > Value, kWh/kg} | Battery density kWh / kg | value | 0.1; 0.2 | 1 | Battery specific energy uncertainty range.
+	{Reverse Osmosis > Recovery rate > Value, -} | Reverse osmosis recovery rate | value | 0.4; 0.9 | 2 | Reverse osmosis recovery range.
+	{Electrolyzer > Hydrogen yield per unit energy > Value, kg/kWh} | Electrolyzer efficiency kg($H_{2}$) / kWh | value | Base; 0.025 | 3 | Same Monte Carlo range convention as other PV_E files.
 
 - **Parameter** — the ``top key > middle key > bottom key`` path to the value being varied
   (identical path syntax used everywhere else in pyH2A input files).
@@ -163,14 +163,31 @@ parameter with a huge absolute range doesn't automatically dominate the distance
 its units). A distance of 0 means every varied parameter is still at its base-case value; a
 distance of 1 means every parameter has moved all the way to the edge of its sampled range.
 
-This is what
-:meth:`~pyH2A.Analysis.Monte_Carlo_Analysis.Monte_Carlo_Analysis.plot_distance_cost_relationship`
-plots: development distance on the x-axis against the dependent variable on the y-axis, with a
-smoothed trendline (Savitzky-Golay filter) showing the overall relationship, and the target range
-highlighted as a horizontal band. In plain terms, it answers "how much do these parameters need
-to collectively improve before the model lands in the target range?" — a small required distance
-suggests the target is achievable with modest, incremental progress; a distance close to 1
-suggests every parameter needs to move to its most optimistic assumption simultaneously.
+This distance is computed twice, over two different sets of samples, feeding two different plots:
+
+- :meth:`~pyH2A.Analysis.Monte_Carlo_Analysis.Monte_Carlo_Analysis.development_distance` computes
+  it only for the samples already inside ``Target Response Range`` — this feeds
+  :meth:`~pyH2A.Analysis.Monte_Carlo_Analysis.Monte_Carlo_Analysis.plot_distance_histogram`, a plain
+  histogram of how far the *qualifying* samples are from the base case.
+- :meth:`~pyH2A.Analysis.Monte_Carlo_Analysis.Monte_Carlo_Analysis.full_distance_response_relationship`
+  computes it for **every** sample (not just the ones inside the target range), sorts them by
+  distance, and fits a Savitzky-Golay smoothed trendline through the full distance-vs-dependent-variable
+  relationship. This feeds
+  :meth:`~pyH2A.Analysis.Monte_Carlo_Analysis.Monte_Carlo_Analysis.plot_distance_response_relationship`:
+  development distance on the x-axis, the dependent variable on the y-axis, the smoothed trendline
+  showing the overall trend, and the target range highlighted as a horizontal band so you can see
+  where the trend crosses into it. In plain terms, it answers "how much do these parameters need
+  to collectively improve before the model lands in the target range?" — a small required distance
+  suggests the target is achievable with modest, incremental progress; a distance close to 1
+  suggests every parameter needs to move to its most optimistic assumption simultaneously.
+
+.. warning::
+
+   ``full_distance_response_relationship`` is called unconditionally when ``Monte_Carlo_Analysis`` is
+   constructed, with its default smoothing window
+   (``window_length = int(Samples / 25)``, must exceed a polynomial order of 4). With too few
+   ``Samples`` (roughly under 100-125 with the defaults), ``scipy.signal.savgol_filter`` raises
+   ``ValueError``.
 
 Running Monte Carlo analysis
 ===============================
@@ -206,7 +223,7 @@ As with any analysis module, plotting methods are requested via a ``Methods`` ta
 
 	Name | Method Name | Arguments
 	--- | --- | ---
-	distance_cost_relationship | plot_distance_cost_relationship | {'show': True, 'save': True}
+	distance_cost_relationship | plot_distance_response_relationship | {'show': True, 'save': True}
 	colored_scatter | plot_colored_scatter | {'show': True, 'save': True}
 	complete_histogram | plot_complete_histogram | {'show': True, 'save': True}
 	distance_histogram | plot_distance_histogram | {'show': True, 'save': True}
