@@ -312,7 +312,7 @@ class Monte_Carlo_Analysis:
 		self.target_response_components()
 		self.determine_principal_components()
 		self.development_distance()
-		self.full_distance_cost_relationship()
+		self.full_distance_response_relationship()
 
 	def configure_dependent_variable(self):
 		'''Configure the dependent Monte Carlo response variable.
@@ -867,7 +867,6 @@ class Monte_Carlo_Analysis:
 		self.target_response_2D_region = {
 			'Grid Values': grid_values,
 			'Response 2D': response_values_2D,
-			'H2 Cost 2D': response_values_2D,
 		}
 
 	def development_distance(self, metric = 'cityblock', log_normalize = False, sum_distance = False):
@@ -906,7 +905,7 @@ class Monte_Carlo_Analysis:
 		self.shortest_target_distance[self.dependent_variable_label] = self.target_distances_sorted[0][-2]
 		self.shortest_target_distance['Distance'] = self.target_distances_sorted[0][-1]
 
-	def full_distance_cost_relationship(self, metric = 'cityblock', reduction_factor = 25, 
+	def full_distance_response_relationship(self, metric = 'cityblock', reduction_factor = 25,
 										poly_order = 4, log_normalize = False, sum_distance = False):
 		'''Calculation of development distance for all datapoints from Monte Carlo Analysis and
 		calculation of Savitzky-Golay filter.
@@ -914,7 +913,7 @@ class Monte_Carlo_Analysis:
 		Parameters
 		----------
 		metric : str, optional
-			Distance metric used for 
+			Distance metric used for
 			:func:`~pyH2A.Analysis.Monte_Carlo_Analysis.Monte_Carlo_Analysis.calculate_distance`
 		reduction_factor : int, optional
 			Determines window size for Savitzky-Golay filter.
@@ -925,7 +924,7 @@ class Monte_Carlo_Analysis:
 		-------
 		self.results_distances_sorted : ndarray
 			Sorted array of distances for all datapoints from Monte Carlo Analysis.
-		self.distances_cost_savgol : ndarray
+		self.distances_response_savgol : ndarray
 			Savitzky-Golay filter results.
 		'''
 
@@ -934,7 +933,7 @@ class Monte_Carlo_Analysis:
 		if window_length % 2 == 0:
 			window_length += 1
 
-		distances = calculate_distance(self.results, self.parameters, 
+		distances = calculate_distance(self.results, self.parameters,
 									   self.principal, metric = metric,
 									   log_normalize = log_normalize,
 									   sum_distance = sum_distance)
@@ -943,17 +942,17 @@ class Monte_Carlo_Analysis:
 		self.results_distances_sorted = results_distances[np.argsort(results_distances[:,-1])]
 
 		smoothed = savgol_filter(self.results_distances_sorted[:,-2], window_length, poly_order)
-	
-		self.distances_cost_savgol = np.c_[self.results_distances_sorted[:,-1], smoothed]
+
+		self.distances_response_savgol = np.c_[self.results_distances_sorted[:,-1], smoothed]
 
 	def plot_complete_histogram(self, bins = None, xlim_low = None, xlim_high = None,
-								xlabel_string = r'Levelized $H_{2}$ Cost / \$/kg', 
+								xlabel_string = None,
 								ylabel_string = 'Normalized Frequency',
 								image_kwargs = {}, plot_kwargs = {},
 								**kwargs):
 		'''Complete histogram of response distribution from Monte Carlo analysis
 
-		Parameters 
+		Parameters
 		----------
 		bins : int, optional
 			Number of bins for histogram. If `None`, bins is calculated
@@ -963,7 +962,8 @@ class Monte_Carlo_Analysis:
 		xlim_high : float or None, optional
 			Higher x axis limit.
 		xlabel_string : str, optional
-			String for x axis label.
+			String for x axis label. Defaults to the configured dependent variable's label
+			(``self.dependent_variable_label``) when not provided.
 		ylabel_string : str, optional
 			String for y axis label.
 		image_kwargs: dict, optional
@@ -982,9 +982,12 @@ class Monte_Carlo_Analysis:
 			matplotlib.fig is returned.
 		'''
 
+		if xlabel_string is None:
+			xlabel_string = self.dependent_variable_label
+
 		kwargs = {**{'right': 0.95, 'bottom': 0.15, 'top': 0.95,
 	 			     'fig_width': 7, 'fig_height': 4, 'font_size': 12,
-	 			     'name': 'Monte_Carlo_Complete_Histogram'}, 
+	 			     'name': 'Monte_Carlo_Complete_Histogram'},
 	 			  **kwargs, **plot_kwargs}
 
 		image_kwargs = {**{'path': None, 'x': 0.5, 'y': 0.8, 'zoom': 0.08}, 
@@ -1067,17 +1070,16 @@ class Monte_Carlo_Analysis:
 		cm = plt.get_cmap('plasma')
 
 		self.target_response_2D_region()
-		response_2D = self.target_response_2D_region.get('Response 2D',
-									  self.target_response_2D_region['H2 Cost 2D'])
+		response_2D = self.target_response_2D_region['Response 2D']
 
 		contour_fill = ax.contourf(*self.target_response_2D_region['Grid Values'], 
 						        response_2D,
 							        levels = [0., max(self.target_response_range)], 
 							        		  alpha = 0.1, colors = [cm(0.0)])
 
-		base_case_h2_cost_appended = np.r_[self.base_case, 0]
-		target_response_data_appended = np.vstack((self.target_response_data, 
-												base_case_h2_cost_appended))
+		base_case_response_appended = np.r_[self.base_case, 0]
+		target_response_data_appended = np.vstack((self.target_response_data,
+												base_case_response_appended))
 
 		scatter = ax.scatter(target_response_data_appended[:,par[pc[0]]['Index']], 
 							 target_response_data_appended[:,par[pc[1]]['Index']], 
@@ -1280,18 +1282,20 @@ class Monte_Carlo_Analysis:
 			figure.execute()
 			return figure.fig
 								
-	def plot_distance_cost_relationship(self, ax = None, ylim = None, xlim = None, 
-										figure_lean = True, 
-										parameter_table = True, 
+	def plot_distance_response_relationship(self, ax = None, ylim = None, xlim = None,
+										figure_lean = True,
+										parameter_table = True,
 	 									legend_loc = 'upper left',
-	 									log_scale = False, 
+	 									log_scale = False,
 	 									xlabel_string = 'Development distance',
-	 									ylabel_string = r'Levelized $H_{2}$ cost / \$/kg',
+	 									ylabel_string = None,
 	 									linewidth = 1.5,
 	 									markersize = 0.2, marker_alpha = 0.2,
 	 									table_kwargs = {}, image_kwargs = {}, plot_kwargs = {},
 	 									**kwargs):
-		'''Plotting relationship of development distance and H2 cost.
+		'''Plotting relationship of development distance and the configured dependent variable
+		(``h2_cost`` or an LCA impact category, see
+		:meth:`~pyH2A.Analysis.Monte_Carlo_Analysis.Monte_Carlo_Analysis.configure_dependent_variable`).
 
 		Parameters
 		----------
@@ -1312,7 +1316,8 @@ class Monte_Carlo_Analysis:
 		xlabel_string : str, optional
 			String for x axis label.
 		ylabel_string : str, optional
-			String for y axis label.
+			String for y axis label. Defaults to the configured dependent variable's label
+			(``self.dependent_variable_label``) when not provided.
 		linewidth : float, optional
 			Line width for smoothed trendline.
 		markersize : float, optional
@@ -1338,24 +1343,27 @@ class Monte_Carlo_Analysis:
 			matplotlib.fig is returned if `figure_lean` is True.
 		'''
 
+		if ylabel_string is None:
+			ylabel_string = self.dependent_variable_label
+
 		kwargs = {**{'left': 0.1, 'right': 0.9, 'bottom': 0.1, 'top': 0.95,
 	 			     'fig_width': 7, 'fig_height': 4, 'font_size': 12,
-	 			     'name': 'Monte_Carlo_Distance_Cost_Relationship'}, 
+	 			     'name': 'Monte_Carlo_Distance_Response_Relationship'},
 	 			  **kwargs, **plot_kwargs}
 
-		table_kwargs = {**{'xpos': 1.4, 'height': 0.23, 'edge_padding': 0.0}, 
+		table_kwargs = {**{'xpos': 1.4, 'height': 0.23, 'edge_padding': 0.0},
 						**table_kwargs}
 
-		image_kwargs = {**{'path': None, 'x': 0.5, 'y': 0.8, 'zoom': 0.08}, 
+		image_kwargs = {**{'path': None, 'x': 0.5, 'y': 0.8, 'zoom': 0.08},
 						**image_kwargs}
 
 		if ax is None:
 			figure = Figure_Lean(**kwargs)
 			ax = figure.ax
 
-		ax.plot(self.results_distances_sorted[:,-1], self.results_distances_sorted[:,-2], '.', 
+		ax.plot(self.results_distances_sorted[:,-1], self.results_distances_sorted[:,-2], '.',
 				markersize = markersize, color = self.color, alpha = marker_alpha)
-		ax.plot(self.distances_cost_savgol[:,0], self.distances_cost_savgol[:,1], color = self.color, 
+		ax.plot(self.distances_response_savgol[:,0], self.distances_response_savgol[:,1], color = self.color,
 			    label = self.display_name, linewidth = linewidth)
 
 		ax.axhspan(self.target_response_range[0], self.target_response_range[1], color = 'grey', alpha = 0.7)
@@ -1395,7 +1403,7 @@ class Monte_Carlo_Analysis:
 
 		kwargs = {**{'left': 0.1, 'right': 0.9, 'bottom': 0.1, 'top': 0.95,
 	 			     'fig_width': 7, 'fig_height': 4, 'font_size': 12,
-	 			     'name': 'Monte_Carlo_Distance_Cost_Relationship'}, 
+	 			     'name': 'Monte_Carlo_Target_Parameters_By_Distance'},
 	 			  **kwargs, **plot_kwargs}
 
 		table_kwargs = {**{'xpos': 1.4, 'height': 0.23, 'edge_padding': 0.0}, 
