@@ -84,9 +84,9 @@ Name | Usage per kg H2 | Usage Unit | Cost | Cost Unit | Price Conversion Factor
 
 Name | Value | Comment
 --- | --- | ---
-Samples | 10 | Small sample count for a fast test run. full_distance_cost_relationship's Savitzky-Golay smoothing (window_length = int(samples/reduction_factor), reduction_factor=25) would otherwise need >= 100 samples to exceed poly_order=4; Monte_Carlo_Analysis now skips that smoothing gracefully instead of raising when window_length <= poly_order, so a small sample count like this works fine.
-Dependent Variable | Cumulative energy demand | Already registered in _DEPENDENT_VARIABLE_CONFIG (unlike 'Global warming potential', which would require adding a new entry), and matches smartphone_3layer_ced_base's actual impact category key exactly.
-Target Response Range | 0; 100 | Brackets the expected CED range for Circuit Board, Display, and Battery each in [1,2] (CED = 9*CircuitBoard + 14*Display + 27*Battery gives 50.0-100.0 for this range).
+Samples | 10 | Small sample count for a fast test run. full_distance_response_relationship's Savitzky-Golay smoothing (window_length = int(samples/reduction_factor), reduction_factor=25) would otherwise need >= 100 samples to exceed poly_order=4; Monte_Carlo_Analysis now skips that smoothing gracefully instead of raising when window_length <= poly_order, so a small sample count like this works fine.
+Dependent Variable | Cumulative energy demand | Already registered in _DEPENDENT_VARIABLE_CONFIG 
+Target Response Range | 0; 100 | Brackets the expected CED range for Circuit Board, Display, and Battery each in [1,2]
 Output File | src/tests/lca/data/input_files/smartphone_3layer_mc_ced_seed42_output.csv
 
 # Parameters - Monte_Carlo_Analysis
