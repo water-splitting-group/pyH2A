@@ -23,7 +23,7 @@ changing the row order or the sample count changes every downstream value.
 Sample count
 ------------
 Samples is set to 10 for a fast test run. Monte_Carlo_Analysis.__init__
-unconditionally calls full_distance_cost_relationship(), whose
+unconditionally calls full_distance_response_relationship(), whose
 Savitzky-Golay smoothing needs window_length > poly_order (window_length =
 int(samples/reduction_factor), reduction_factor=25 by default) -- with only
 10 samples that would raise a ValueError from scipy.signal.savgol_filter.
@@ -51,10 +51,14 @@ _MATRIX_FOLDER = convert_input_to_dictionary(str(_INPUT_FILE))['Life Cycle Asses
 
 _SEED = 42
 
-# Precalculated results (Circuit Board [item], Display [kg], Battery [kg],
-# CED [kWh/kg Smartphone]) for 10 samples, produced by running
-# pyH2A(input_file, output_directory) with np.random.seed(42). Each of the 10
-# sampled (Circuit Board, Display, Battery) triplets was fed into openLCA to
+# Precalculated results (sampled Scenario Factor for Circuit Board, Display, and
+# Battery, followed by CED [kWh/kg Smartphone]) for 10 samples, produced by running
+# pyH2A(input_file, output_directory) with np.random.seed(42). Each factor is
+# dimensionless (see GT Circuit Board/Display/Battery Input > Scenario Factor);
+# it numerically equals the resulting Circuit Board [item] / Display [kg] /
+# Battery [kg] quantity fed into the LCA GT Components table only because each
+# component's Base Quantity is 1.0 here.
+# Each of the 10 sampled (Circuit Board, Display, Battery) triplets was fed into openLCA to
 # independently compute the reference CED value used below, so this array
 # doubles as ground truth for validating that the Monte Carlo pipeline
 # reproduces openLCA's results. The corresponding openLCA model for each
@@ -109,13 +113,13 @@ def _manage_lca_cache():
 
 def test_monte_carlo_pipeline_matches_seed42_reference(monkeypatch):
     # Monte_Carlo_Analysis.__init__ unconditionally calls
-    # full_distance_cost_relationship(), whose Savitzky-Golay smoothing needs
+    # full_distance_response_relationship(), whose Savitzky-Golay smoothing needs
     # window_length > poly_order (window_length = int(samples/reduction_factor),
     # reduction_factor=25 by default) -- with only 10 samples that raises a
     # ValueError from scipy.signal.savgol_filter. That smoothing only feeds the
-    # optional plot_distance_cost_relationship plotting method, unused here, so
+    # optional plot_distance_response_relationship plotting method, unused here, so
     # it is monkeypatched to a no-op for this test only.
-    monkeypatch.setattr(Monte_Carlo_Analysis, 'full_distance_cost_relationship', lambda self, *args, **kwargs: None)
+    monkeypatch.setattr(Monte_Carlo_Analysis, 'full_distance_response_relationship', lambda self, *args, **kwargs: None)
 
     np.random.seed(_SEED)
     result = pyH2A(str(_INPUT_FILE), str(_HERE / 'data' / 'input_files'))
