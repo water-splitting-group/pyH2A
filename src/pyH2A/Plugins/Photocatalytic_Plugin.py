@@ -1,6 +1,8 @@
 import numpy as np
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+from pyH2A.Utilities.Physical_Properties.Physical_properties import Physical_properties as PP
+
 
 input_dict = {
 	"Technical Operating Parameters and Specifications": {
@@ -330,6 +332,53 @@ output_dict = {
 			"description": "Total water volume"
 		},
 	},
+    "Main Stream": {
+        "Temperature": {
+            "Value": {
+                "inserted_value": "outlet_temperature",
+                "type": {float,},
+                "dimension": "absolute_temperature",
+            },
+            "optional": False,
+            "description": "Mixture outlet temperature."
+        },
+        "Pressure": {
+            "Value": {
+                "inserted_value": "outlet_pressure",
+                "type": {float,},
+                "dimension": "pressure",
+            },
+            "optional": False,
+            "description": "Mixture outlet pressure."
+        },
+        "Specific enthalpy": {
+            "Value": {
+                "inserted_value": "outlet_enthalpy",
+                "type": {float,},
+                "dimension": "energy/mass",
+            },
+            "optional": False,
+            "description": "Mixture outlet specific enthalpy."
+        },  
+        "Mass fraction": {
+            "Value": {
+                "inserted_value": "outlet_mass_fraction",
+                "type": {dict,},
+                "dimension": "dimensionless",
+            },
+            "optional": False,
+            "description": "Mixture outlet mass fraction."
+        },   
+        "Mass flowrate": {
+            "Value": {
+                "inserted_value": "outlet_mass_flowrate",
+                "type": {float,},
+                "dimension": "mass/time",
+            },
+            "optional": False,
+            "description": "Mixture outlet mass flowrate."
+        },   					                
+    },
 }
 
 class Photocatalytic_Plugin:
@@ -405,7 +454,18 @@ class Photocatalytic_Plugin:
 		Number of individual baggies required for design H2 production capacity.
 	Water Volume > Volume > Value : float
 		Total water volume.
+	Main Stream > Temperature > Value : float
+		Temperature of the gas mixture leaving the reactor
+	Main Stream > Pressure > Value : float
+		Pressure of the gas mixture leaving the reactor		
+	Main Stream > Specific enthalpy > Value : float
+		Mass-specific enthalpy of the gas mixture leaving the reactor	
+	Main Stream > Mass fraction > Value : dict
+		Mass fraction of the gas mixture leaving the reactor			
+	Main Stream > Mass flowrate > Value : float
+		Mass flowrate of the gas mixture leaving the reactor		
 	'''
+
 
 	def __init__(self, dcf, print_info):
 		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Photocatalytic_Plugin')
@@ -421,6 +481,7 @@ class Photocatalytic_Plugin:
 		self.catalyst_cost()
 		self.land_area()
 		self.catalyst_activity()
+		self.outlet_flow_properties()
 		
 		output_inserter_function(output_dict, self, dcf, 'Photocatalytic_Plugin') 
 
@@ -570,3 +631,41 @@ class Photocatalytic_Plugin:
 										'm2')
 
 
+	def outlet_flow_properties(self):
+		'''Establishes the thermophysical characteristics of the fluid leaving the reactor, for downstream process sizing'''
+
+		self.outlet_temperature = Quantity(60., 'degC') # hardcoded for the moment, could become an input later
+		self.outlet_pressure = Quantity(1.01315e5, 'Pa') # hardcoded for the moment, could become an input later
+
+		# Assuming water vapour is saturated in the baggie, determination of the water vapour pressure
+		psat = PP.Water_saturation_pressure(self.outlet_temperature)
+
+		mol_fraction = {} # molar fraction of the gas mixture, assuming ideal gas, expressed in mol of species for a total amount of 1 mol 
+		mol_fraction['H2O'] = Quantity(
+								psat.unit['Pa']/self.outlet_pressure.unit['Pa'], 
+								 '-') 
+		# The pressure that is not due to water is due for 2/3 to H2, and for 1/3 to O2 (stoichiometry)
+		mol_fraction['H2'] = Quantity(
+								(2/3)*(1-mol_fraction['H2O'].unit['-']), 
+								'-')
+		mol_fraction['O2'] = Quantity(
+								1 - mol_fraction['H2'].unit['-'] - mol_fraction['H2O'].unit['-'], 
+								'-')
+
+		_, self.outlet_mass_fraction = PP.Substance_to_mass(mol_fraction)
+
+
+		self.outlet_mass_flowrate = Quantity(self.input_dict_resolved['Technical Operating Parameters and Specifications']['Plant design capacity']['Value'].unit['kg/s']
+									   / 
+									   self.outlet_mass_fraction['H2'].unit['-']
+									   ,
+									   'kg/s')
+
+		# specific enthalpy at the outlet of the baggie
+		h = PP.Enthalpy(T = self.outlet_temperature,
+						P = self.outlet_pressure, 
+						amount = self.outlet_mass_fraction,
+						phase = 'V', 
+						composition_basis = 'mass'
+						)
+		self.outlet_enthalpy = Quantity(h.unit['J'], 'J/kg')
