@@ -613,16 +613,17 @@ class Monte_Carlo_Analysis:
 				self.parameters[parameter['Name']]['Input Index'] = counter # Identical name, storing Input Index
 
 			elif 'File Index' in parameter:   # Non-identical name, looking for File Index to map
-				for self_key, self_parameter in self.parameters.items():
+				success = False
 
-					sucess = False
+				for self_key, self_parameter in list(self.parameters.items()):
 
 					if self_parameter['Index'] == parameter['File Index']:
 						self_parameter['Input Index'] = counter
 						self.parameters[parameter['Name']] = self.parameters.pop(self_key)
-						sucess = True
+						success = True
+						break
 
-				if sucess is False:  # Raise error it not all parameters with different names could be mapped
+				if success is False:  # Raise error it not all parameters with different names could be mapped
 					raise KeyError('Input Parameter {0} could not be mapped.'.format(key))
 
 			else:
