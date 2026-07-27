@@ -17,6 +17,10 @@ def substance_to_mass(molar_amounts, species_data):
     mass_fraction: dict 
         Dictionary of species and their respective mass fractions             
     '''     
+
+    # If the molar_amounts input has the dimension of a fraction, we want to convert it into a quantity with relevant dimension
+    molar_amounts = {species: Quantity(molar_amounts[species].base_value, 'mol') for species in molar_amounts.keys()}
+    
     denominator = 0
     mass_amount = {}
     mass_fraction = {}
@@ -63,10 +67,14 @@ def mass_to_substance(mass_amounts, species_data):
     molar_fraction: dict 
         Dictionary of species and their respective molar fractions             
     '''   
+
+    # If the mass_amounts input has the dimension of a fraction, we want to convert it into a quantity with mass dimension
+    mass_amounts = {species: Quantity(mass_amounts[species].base_value, 'kg') for species in mass_amounts.keys()}
+
     denominator = 0
     molar_amount = {}
     molar_fraction = {}
-
+    
     for species, quantity in mass_amounts.items():
 
         mol = (
@@ -102,13 +110,16 @@ def calculate_mixture_property(
         property_function):
     
     '''
-    Calls the properties function of each individual species and calculates the the properties of an ideal mixture
+    Calls the properties function of each individual species and calculates the properties of an ideal mixture
     '''
 
     if composition_basis == 'mass':
-        mass = amount
+        # If the amount input has the dimension of a fraction, we want to convert it into a quantity with mass dimension
+        mass = {species: Quantity(amount[species].base_value, 'kg') for species in amount.keys()}        
     else:
-        mass, _ = substance_to_mass(amount, species_data)
+        # If the amount input has the dimension of a fraction, we want to convert it into a quantity with substance dimension
+        substance = {species: Quantity(amount[species].base_value, 'mol') for species in amount.keys()}        
+        mass, _ = substance_to_mass(substance, species_data)
 
     total = 0
 
