@@ -2,14 +2,14 @@
 
 Name | Type | Position
 --- | --- | ---
-Hourly_Irradiation_Plugin | plugin | 0
-Photovoltaic_Plugin | plugin | 0
-Electrolyzer_Plugin | plugin | 0
-Battery_Plugin | plugin | 0
-Stored_Power_Electrolysis_Plugin | plugin | 0
-Reverse_Osmosis_Plugin | plugin | 2
-Power_Management_Plugin | plugin | 2
-Multiple_Modules_Plugin | plugin | 3
+Hourly_Irradiation_Plugin | plugin | 150
+Photovoltaic_Plugin | plugin | 150
+Electrolyzer_Plugin | plugin | 150
+Battery_Plugin | plugin | 150
+Stored_Power_Electrolysis_Plugin | plugin | 150
+Reverse_Osmosis_Plugin | plugin | 160
+Power_Management_Plugin | plugin | 160
+Multiple_Modules_Plugin | plugin | 170
 
 # Display Parameters
 
@@ -49,9 +49,9 @@ Fraction of output that reaches gate | 100% | - | No gate losses assumed.
 
 # Construction
 
-Name | Full Name | Value
---- | --- | ---
-capital perc 1st | % of capital spent in 1st year of construction | 100%
+Name | Full Name | Value | Unit
+--- | --- | --- | ---
+capital perc 1st | % of capital spent in 1st year of construction | 100% | -
 
 # Electrolyzer
 
@@ -227,7 +227,7 @@ waterfall_chart | plot_waterfall_chart | {'show': True, 'save': False, 'fig_widt
 
 Name | Method Name | Arguments
 --- | --- | ---
-distance_cost_relationship | plot_distance_cost_relationship | Arguments - MC Analysis - distance_cost
+distance_cost_relationship | plot_distance_response_relationship | Arguments - MC Analysis - distance_cost
 distance_histogram | plot_distance_histogram | {'show': False, 'xlabel': True, 'save': False, 'pdf': True, 'image_kwargs': {'path': 'pyH2A.Other~PV_E_Clipart.png'}}
 colored_scatter | plot_colored_scatter | Arguments - MC Analysis - colored_scatter
 target_parameters | plot_target_parameters_by_distance | {'show': False}
