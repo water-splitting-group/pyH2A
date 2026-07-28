@@ -18,7 +18,7 @@ def substance_to_mass(molar_amounts, species_data):
         Dictionary of species and their respective mass fractions             
     '''     
 
-    # If the molar_amounts input has the dimension of a fraction, we want to convert it into a quantity with relevant dimension
+    # If the molar_amounts input has the dimension of a fraction, we want to convert it into a quantity with substance dimension
     molar_amounts = {species: Quantity(molar_amounts[species].base_value, 'mol') for species in molar_amounts.keys()}
     
     denominator = 0
@@ -114,25 +114,21 @@ def calculate_mixture_property(
     '''
 
     if composition_basis == 'mass':
-        # If the amount input has the dimension of a fraction, we want to convert it into a quantity with mass dimension
-        mass = {species: Quantity(amount[species].base_value, 'kg') for species in amount.keys()}        
+        mass = amount
     else:
-        # If the amount input has the dimension of a fraction, we want to convert it into a quantity with substance dimension
-        substance = {species: Quantity(amount[species].base_value, 'mol') for species in amount.keys()}        
-        mass, _ = substance_to_mass(substance, species_data)
+        mass, _ = substance_to_mass(amount, species_data)
 
     total = 0
 
     for species, quantity in mass.items():
 
-        property_value = property_function(
+        specific_property = property_function(
             species_data[species],
             T,
             P,
-            quantity,
             phase
         )
 
-        total += property_value.base_value
+        total += quantity.base_value*specific_property.base_value
 
     return total

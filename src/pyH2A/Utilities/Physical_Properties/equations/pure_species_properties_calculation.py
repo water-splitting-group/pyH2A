@@ -3,7 +3,7 @@ from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 from pyH2A.Utilities.Physical_Properties.data.Constants import IDEAL_GAS_CONSTANT
 
 
-def calc_enthalpy(species_data, T, P, m, phase):
+def calc_enthalpy(species_data, T, P, phase):
     '''
     Selects the relevant polynomial coefficients of the desired species, for the specified phase, and builds the polynomial calculation accordingly
     '''
@@ -24,12 +24,12 @@ def calc_enthalpy(species_data, T, P, m, phase):
 
     h = evaluate_polynomial(coefficients, T.unit['K'])
 
-    H = Quantity(h * m.unit['kg'], 'J')
+    H = Quantity(h, 'J/kg')
 
     return H
 
 
-def calc_heat_capacity(species_data, T, P, m, phase):
+def calc_heat_capacity(species_data, T, P, phase):
     '''
     Selects the relevant polynomial coefficients of the desired species, for the specified phase, and builds the polynomial calculation accordingly.
     '''
@@ -49,12 +49,12 @@ def calc_heat_capacity(species_data, T, P, m, phase):
 
     cp = evaluate_polynomial_derivative(coefficients, T.unit['K'])
 
-    Cp = Quantity(cp * m.unit['kg'], 'J/delta_K')
+    Cp = Quantity(cp, 'J/kg/delta_K')
 
     return Cp
 
 
-def calc_volume(species_data, T, P, m, phase):
+def calc_volume(species_data, T, P, phase):
     '''
     Selects the relevant polynomial coefficients of the desired species, for the specified phase, and builds the polynomial calculation accordingly
     '''
@@ -77,7 +77,7 @@ def calc_volume(species_data, T, P, m, phase):
 
         v = evaluate_polynomial(coefficients, T.unit['degC'])
 
-    return Quantity(v * m.unit['kg'], 'm3')
+    return Quantity(v, 'm3/kg')
 
 
 def evaluate_polynomial(coefficients, T):
