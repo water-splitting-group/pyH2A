@@ -28,4 +28,5 @@ Plugins allow for modelling of different hydrogen production pathways. They proc
    Stored_Power_Electrolysis_Plugin
    Time_Plugin
    Variable_Operating_Cost_Plugin
+   Wind_Plugin
 
