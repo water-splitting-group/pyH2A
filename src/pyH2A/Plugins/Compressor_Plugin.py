@@ -43,7 +43,7 @@ input_dict = {
     "Main Stream": {
         "Temperature": {
             "Value": {
-                "type": {float,},
+                "type": {int, float,},
                 "bounds": (0, None),
             },
             "Unit": {
@@ -54,7 +54,7 @@ input_dict = {
         },
         "Pressure": {
             "Value": {
-                "type": {float,},
+                "type": {int, float,},
                 "bounds": (0, None),
             },
             "Unit": {
@@ -65,7 +65,7 @@ input_dict = {
         },      
         "Specific enthalpy": {
             "Value": {
-                "type": {float,},
+                "type": {int, float,},
                 "bounds": (None, None),
             },
             "Unit": {
@@ -87,7 +87,7 @@ input_dict = {
         }, 
         "Mass flowrate": {
             "Value": {
-                "type": {float,},
+                "type": {int, float,},
                 "bounds": (0, None),
             },
             "Unit": {
@@ -101,6 +101,15 @@ input_dict = {
 
 output_dict = {
     "Compressor": {
+        "Compression power": {
+            "Value": {
+                "inserted_value": "compression_power",
+                "type": {float,},
+                "dimension": "power",
+            },
+            "optional": False,
+            "description": "Power associated to the compression."
+        },         
         "Shaft power": {
             "Value": {
                 "inserted_value": "shaft_power",
@@ -109,7 +118,7 @@ output_dict = {
             },
             "optional": False,
             "description": "Shaft power required to drive the compressor."
-        },
+        },       
     },
     "Main Stream": {
         "Temperature": {
@@ -170,6 +179,8 @@ class Compressor_Plugin:
 
     Returns
     -------
+    Compressor > Compression power > Value : float
+        Power associated to the compression.
     Compressor > Shaft power > Value : float
         Shaft power to provide to run the compressor.
 	Main Stream > Temperature > Value : float
@@ -191,7 +202,7 @@ class Compressor_Plugin:
 
 
     def calculate_compression(self):
-        '''Using inlet stream and compressor characteristics, shaft work and outlet stream porperties are calculated.
+        '''Using inlet stream and compressor characteristics, shaft work and outlet stream properties are calculated.
         '''
         if 'Polytropic coefficient' in self.input_dict_resolved['Compressor']:
             k = self.input_dict_resolved['Compressor']['Polytropic coefficient']['Value'].unit['-']
@@ -217,9 +228,15 @@ class Compressor_Plugin:
         
         self.outlet_enthalpy = Quantity(h.unit['J'], 'J/kg')
 
+        self.compression_power = Quantity(
+                                            self.input_dict_resolved['Main Stream']['Mass flowrate']['Value'].unit['kg/s']
+                                            *
+                                            (self.outlet_enthalpy.unit['J/kg']-self.input_dict_resolved['Main Stream']['Specific enthalpy']['Value'].unit['J/kg']), 
+                                            'W'
+                                        )
+
         self.shaft_power = Quantity(
-                                    self.input_dict_resolved['Main Stream']['Mass flowrate']['Value'].unit['kg/s']
-                                    *(self.outlet_enthalpy.unit['J/kg']-self.input_dict_resolved['Main Stream']['Specific enthalpy']['Value'].unit['J/kg'])
+                                    self.compression_power.unit['W']
                                     /
                                     (self.input_dict_resolved['Compressor']['Efficiency']['Value'].unit['-']), 
                                     'W')

@@ -48,7 +48,18 @@ input_dict = {
             },
             "optional": False,
             "description": "Heat transfer coefficient of the cooler-condenser."
-        },               
+        },  
+        "Material weight per area": {
+            "Value": {
+                "type": {int,float,},
+                "bounds": (0, None),
+            },
+            "Unit": {
+                "dimension": "mass/area",
+            },
+            "optional": False,
+            "description": "Mass of metal constituting the exchanger per heat exchange area."
+        },   
     },
     "Main Stream": {
         "Temperature": {
@@ -192,7 +203,9 @@ class Cooler_Condenser_Plugin:
     Cooler Condenser > Hot outlet temperature > Value : float
         Temperature of the hot fluid outlet.        
     Cooler Condenser > Heat transfer coefficient > Value : float
-        Heat transfer coefficient of the exchanger        
+        Heat transfer coefficient of the exchanger 
+    Cooler Condenser > Material weight per area > Value : float
+        Mass of metal constituting the exchanger per heat exchange area     
 	Main Stream > Temperature > Value : float
 		Temperature of the gas mixture at compressor inlet
 	Main Stream > Pressure > Value : float
@@ -229,7 +242,7 @@ class Cooler_Condenser_Plugin:
         self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Cooler_Condenser_Plugin')
 
         self.outlet_stream_properties()
-        self.energy_balance()
+        self.cooler_condenser_sizing()
 
         output_inserter_function(output_dict, self, dcf, 'Cooler_Condenser_Plugin') 
 
@@ -322,10 +335,10 @@ class Cooler_Condenser_Plugin:
             self.condensed_water_enthalpy = Quantity(h.unit['J'], 'J/kg')
 
 
-    def energy_balance(self):
+    def cooler_condenser_sizing(self):
         '''
         Calculates the thermal power transfer between the hot and the cold fluid and subsequent heat exchange area.
-        Also calculates the cooling fluid flowrate
+        Also calculates the cooling fluid flowrate andthe mass of stainless steel constituting the exchanger.
         '''
 
         heat_duty = (
@@ -380,5 +393,10 @@ class Cooler_Condenser_Plugin:
                                          /
                                          (outlet_coolant_h.unit['J']-inlet_coolant_h.unit['J']), 
                                          'kg/s')
+
+        self.material_mass = Quantity(self.input_dict_resolved['Cooler Condenser']['Material weight per area']['Value'].unit['kg/m2']
+                                      *  self.heat_exchange_area.unit['m2'],
+                                        'kg')
+
 
 

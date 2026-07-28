@@ -211,3 +211,4 @@ Cold inlet temperature | 20. | degC
 Cold outlet temperature | 35. | degC
 Hot outlet temperature | 40. | degC
 Heat transfer coefficient | 300. | W/m2/delta_K
+Material weight per area | 34. | kg/m2
