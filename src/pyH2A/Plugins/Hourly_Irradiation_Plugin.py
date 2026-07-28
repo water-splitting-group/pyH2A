@@ -5,7 +5,7 @@ from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
 input_dict = {
-	"Hourly Irradiation": {		
+	"Meteorological Data": {		
 		"File": {
 			"Value": {	
 				"type": {str,},
@@ -148,7 +148,7 @@ class Hourly_Irradiation_Plugin:
 	
 	Parameters
 	----------
-	Hourly Irradiation > File > Value : str
+	Meteorological Data > File > Value : str
 		Path to a `.csv` file containing hourly irradiance data as provided by
 		https://re.jrc.ec.europa.eu/pvg_tools/en/#TMY.
 	Irradiance Area Parameters > Module tilt > Value : float, optional
@@ -197,7 +197,7 @@ class Hourly_Irradiation_Plugin:
 		 self.yearly_averaged_power, 
 		 self.yearly_averaged_power_sat, 
 		 self.yearly_averaged_power_dat) = calculate_PV_power_ratio(
-												self.input_dict_resolved['Hourly Irradiation']['File']['Value'],
+												self.input_dict_resolved['Meteorological Data']['File']['Value'],
 												tilt, 
 												pv['Array azimuth']['Value'],
 												pv['Nominal operating temperature']['Value'], 
@@ -241,7 +241,7 @@ def import_hourly_data(file_name):
 	'''
 
 	data = np.genfromtxt(file_import(file_name, mode = 'r'), 
-						  delimiter = ',', skip_header = 17, 
+						  delimiter = ',', skip_header = 18, 
 						  skip_footer = 9, converters = {0: converter_function})
 
 	strings = ['Latitude (decimal degrees)', 'Longitude (decimal degrees)']

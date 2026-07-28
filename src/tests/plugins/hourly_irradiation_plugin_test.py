@@ -21,7 +21,7 @@ class DummyDCF:
         temp_coeff,
     ):
         self.inp = {
-            "Hourly Irradiation": {"File": {"Value": hourly_file}},
+            "Meteorological Data": {"File": {"Value": hourly_file}},
             "Irradiance Area Parameters": {
                 "Module tilt": {"Value": module_tilt, "Unit" : "deg"}, # we can actually comment-out this line, it's just the latitude, which is the default
                 "Array azimuth": {"Value": array_azimuth, "Unit" : "deg"},

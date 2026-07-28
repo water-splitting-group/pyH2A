@@ -10,9 +10,10 @@ Name | Type | Position
 --- | --- | --- 
 Hourly_Irradiation_Plugin | plugin | 201 |
 Photovoltaic_Plugin | plugin | 202 |
-Electrolyzer_Plugin | plugin | 203 |
-Battery_Plugin | plugin | 204 |
-Stored_Power_Electrolysis_Plugin | plugin | 205 |
+Wind_Plugin | plugin | 203 |
+Electrolyzer_Plugin | plugin | 204 |
+Battery_Plugin | plugin | 205 |
+Stored_Power_Electrolysis_Plugin | plugin | 206 |
 Reverse_Osmosis_Plugin | plugin | 301 |
 Power_Management_Plugin | plugin | 302 |
 Multiple_Modules_Plugin | plugin | 401 |
@@ -24,11 +25,11 @@ Name | Value
 Name | PV + E 
 Color | darkblue 
 
-# Hourly Irradiation
+# Meteorological Data
 
 Name | Value | Comment 
 --- | --- | --- | --- 
-File | pyH2A.Lookup_Tables.Hourly_Irradiation_Data~tmy_34.859_-116.889_2006_2015.csv | Location: Dagget, CA, USA 
+File | pyH2A.Lookup_Tables.Hourly_Meteorological_Data~Jena.615_2005_2023.csv | Location: Jena, DE
 
 # Irradiance Area Parameters
 
@@ -45,6 +46,14 @@ Temperature coefficient | -0.4% | 1/delta_degC | Based on Chang 2020
 Name | Value | Unit | Comment 
 --- | --- | --- | --- 
 Data | {Hourly Irradiation > Horizontal single axis tracking > Value, kWh/m2} | kWh/m2 | Single axis tracking based on Chang 2020
+
+# Wind Turbine
+
+Name | Value | Unit | Comment 
+--- | --- | --- | --- 
+Installed wind capacity | 20 | MW
+Power per wind turbine | 4 | MW | Typical value for land-based turbines (Older ones tend to be below, new ones are higher)
+Power loss per year | 0.5% | -
 
 # Technical Operating Parameters and Specifications
 
