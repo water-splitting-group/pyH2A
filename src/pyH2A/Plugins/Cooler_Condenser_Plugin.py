@@ -64,7 +64,7 @@ input_dict = {
     "Main Stream": {
         "Temperature": {
             "Value": {
-                "type": {float,},
+                "type": {int,float,},
                 "bounds": (0, None),
             },
             "Unit": {
@@ -75,7 +75,7 @@ input_dict = {
         },
         "Pressure": {
             "Value": {
-                "type": {float,},
+                "type": {int,float,},
                 "bounds": (0, None),
             },
             "Unit": {
@@ -86,7 +86,7 @@ input_dict = {
         },      
         "Specific enthalpy": {
             "Value": {
-                "type": {float,},
+                "type": {int,float,},
                 "bounds": (None, None),
             },
             "Unit": {
@@ -108,7 +108,7 @@ input_dict = {
         }, 
         "Mass flowrate": {
             "Value": {
-                "type": {float,},
+                "type": {int,float,},
                 "bounds": (0, None),
             },
             "Unit": {
