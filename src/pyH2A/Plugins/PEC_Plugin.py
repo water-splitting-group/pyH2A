@@ -64,7 +64,7 @@ class PEC_Plugin:
 						"dimension": "mass / time",
 					},
 					"optional": False,
-					"description": "Design output in mass per unit time."
+					"description": "Plant design capacity, in mass of hydrogen/time."
 				},
 			},
 			"PEC Cells": {

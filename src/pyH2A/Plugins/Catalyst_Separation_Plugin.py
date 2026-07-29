@@ -39,7 +39,7 @@ class Catalyst_Separation_Plugin:
 						"dimension": "volume",
 					},	
 					"optional": False,
-					"description": "Total water volume."
+					"description": "Total water volume of plant (water/catalyst mixture)."
 				},
 			},
 			"Catalyst": {

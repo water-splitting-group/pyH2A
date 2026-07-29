@@ -61,10 +61,10 @@ class Production_Plugin:
 						"bounds": (0, None),
 					},
 					"Unit": {
-						"dimension": "mass/time",
+						"dimension": f"{self.functional_unit.dimension}/time",
 					},
 					"optional": True,
-					"description": "Plant design capacity in mass of product / time."
+					"description": "Plant design capacity in functional unit of product / time."
 				},
 				"Design output by year": { 
 					"Value": {
@@ -72,7 +72,7 @@ class Production_Plugin:
 						"bounds": (0, None),
 					},
 					"Unit": {
-						"dimension": "mass",
+						"dimension": self.functional_unit.dimension,
 					},
 					"optional": True,
 					"description": "Yearly production of product, ignoring the capacity factor"
@@ -108,7 +108,7 @@ class Production_Plugin:
 					"Value": {
 						"inserted_value": "design_output_by_year",
 						"type": {np.ndarray,},
-						"dimension": "mass",
+						"dimension": self.functional_unit.dimension,
 					},
 					"optional": False,
 					"description": "Yearly output, ignoring the capacity factor."
@@ -117,7 +117,7 @@ class Production_Plugin:
 					"Value": {
 						"inserted_value": "sum_design_output",
 						"type": {float, int},
-						"dimension": "mass",
+						"dimension": self.functional_unit.dimension,
 					},
 					"optional": False,
 					"description": "Cumulated output during plant lifetime, ignoring the capacity factor."
@@ -126,7 +126,7 @@ class Production_Plugin:
 					"Value": {
 						"inserted_value": "output_per_year_at_gate",
 						"type": {np.ndarray,},
-						"dimension": "mass",
+						"dimension": self.functional_unit.dimension,
 					},
 					"optional": False,
 					"description": "Actual output at gate by year."
@@ -135,7 +135,7 @@ class Production_Plugin:
 					"Value": {
 						"inserted_value": "sum_output_gate",
 						"type": {float, int},
-						"dimension": "mass",
+						"dimension": self.functional_unit.dimension,
 					},
 					"optional": False,
 					"description": "Cumulated output at gate during plant lifetime."
@@ -163,18 +163,18 @@ class Production_Plugin:
 
 		# Otherwise fall back to plant design capacity
 		else:
-			design_output_by_year_kg = (operating_parameters['Plant design capacity']['Value'].unit['kg/year']
-							   			* self.input_dict_resolved['Time']['Years']['Value']['Operation years ones'].unit['-'])
-			self.design_output_by_year = Quantity(design_output_by_year_kg, 'kg')
+			design_output_by_year_funct_units = (operating_parameters['Plant design capacity']['Value'].unit[self.functional_unit.unit_per_year]
+							   			         * self.input_dict_resolved['Time']['Years']['Value']['Operation years ones'].unit['-'])
+			self.design_output_by_year = Quantity(design_output_by_year_funct_units, self.functional_unit.unit)
 
 		# Calculation of output at gate by year array,
 		# by multiplying design output with operating capacity factor (what fraction of time is the plant operating)
 		# and with the fraction of output that reaches the gate (what fraction of the raw production reaches the gate after losses)
-		self.output_per_year_at_gate = Quantity(self.design_output_by_year.unit['kg']
+		self.output_per_year_at_gate = Quantity(self.design_output_by_year.unit[self.functional_unit.unit]
 										        * operating_parameters['Operating capacity factor']['Value'].unit['-']
 										        * operating_parameters['Fraction of output that reaches gate']['Value'].unit['-'],
-												'kg')
+												self.functional_unit.unit)
 
 		# Computing sum of design output and output at gate
-		self.sum_design_output = Quantity(np.sum(self.design_output_by_year.unit['kg']), 'kg')
-		self.sum_output_gate = Quantity(np.sum(self.output_per_year_at_gate.unit['kg']), 'kg')
+		self.sum_design_output = Quantity(np.sum(self.design_output_by_year.unit[self.functional_unit.unit]), self.functional_unit.unit)
+		self.sum_output_gate = Quantity(np.sum(self.output_per_year_at_gate.unit[self.functional_unit.unit]), self.functional_unit.unit)

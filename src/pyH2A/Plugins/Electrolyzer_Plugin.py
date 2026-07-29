@@ -153,8 +153,8 @@ class Electrolyzer_Plugin:
                         "dimension": "mass",
                     },
                     "optional": False,
-                    "description": "Design output by year calculated from installed \
-                            electrolysis power capacity and hourly power generation data."
+                    "description": "Design output by year calculated from installed "
+                                   "electrolysis power capacity and hourly power generation data."
                 },
                 "Operating capacity factor": {
                     "Value": {

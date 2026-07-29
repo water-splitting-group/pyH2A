@@ -102,7 +102,15 @@ class Time_Plugin:
                         "type": {dict},
         				"dimension": "dimensionless",                     
                     },
-                    "description": "Dictionary containing all the year-related variables that are needed in other plugins.",
+                    "description": "Dictionary containing all the year-related variables that are needed in other plugins."
+                                    "Startup time offset: the offset between the reference year and the startup year (scalar)"
+                                    "Plant years relative: array of indexes representing the years involved in the plant life, 0 being the year production starts"
+                                    "Operation years: Array containing the calendar years during which production takes place"
+                                    "Operation years relative: array of indexes representing the years during which production takes place, 0 being the year production starts"
+                                    "Start index: relative year of startup"
+                                    "Operation years ones: array of ones, of length equal to the number of production years"
+                                    "Analysis years ones: array of ones, of length equal to the construciton time + the number of production years"
+                                    "Construction years ones: array of ones, of length equal to the number of construction years ",
                     "optional": False,
                 },   
             }

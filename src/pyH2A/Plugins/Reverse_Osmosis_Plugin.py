@@ -49,7 +49,7 @@ class Reverse_Osmosis_Plugin:
                         "dimension": "mass",
                     },
                     "optional": False,
-                    "description": "Yearly output ignoring capacity factor."
+                    "description": "Yearly output of hydrogen production (from water), ignoring capacity factor."
                 },
         		"Operating capacity factor": { 
         			"Value": {

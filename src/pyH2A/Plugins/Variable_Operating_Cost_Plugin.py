@@ -130,7 +130,7 @@ class Variable_Operating_Cost_Plugin:
 				"Fraction of variable operating costs during start-up": {
 					"Value": {
 						"type": {int, float},
-						"bounds": (0, None),
+						"bounds": (0, 1),
 					},
 					"Unit": {
 						"dimension": "dimensionless",
@@ -146,10 +146,10 @@ class Variable_Operating_Cost_Plugin:
 						"bounds": (0, None)
 					},
 					"Unit": {
-						"dimension": "mass"
+						"dimension": self.functional_unit.dimension,
 					},
 					"optional": False,
-					"description": "Yearly output taking operating capacity factor into account"
+					"description": "Yearly production of product, ignoring the capacity factor"
 				},
 				"Operating capacity factor": { 
 					"Value": {
@@ -171,7 +171,7 @@ class Variable_Operating_Cost_Plugin:
 						"path": "Cost_Path"
 					},
 					"Cost_Unit": {
-						"dimension": "currency" # we omit the basis on purpose, at it is transparent, and will simplify with the basis per kg; the raito is precisely what the conversion factor is there for
+						"dimension": "currency" # we omit the basis on purpose, at it is transparent, and will simplify with the basis per functional unit; the ratio is precisely what the conversion factor is there for
 					},			
 					"Usage_Value": {
 						"type": {int, float},
@@ -179,7 +179,7 @@ class Variable_Operating_Cost_Plugin:
 						"path": "Usage_Path"
 					},
 					"Usage_Unit": {
-						"dimension": "1/mass" # basis per kg of product
+						"dimension": f"1/{self.functional_unit.dimension}" # basis per functional unit of product
 					},			
 					"Price_Conversion_Factor_Value": {
 						"type": {int, float},
@@ -191,7 +191,7 @@ class Variable_Operating_Cost_Plugin:
 					"optional": True,
 					"description": "Utilities are specified by specifying the cost of "
 								   "a given utility (e.g. USD of each kWh of electricity) and"
-								   " specifying the usage of the utility per mass of product"
+								   " specifying the usage of the utility per functional dimension of product"
 								   " (e.g. kWh of electricity consumption /kg (H2). "
 								   "The cost of the utility may be either a float, "
 								   "a ndarray with the same length as `dcf.inflation_correction` "
@@ -325,11 +325,11 @@ class Variable_Operating_Cost_Plugin:
 		self.utilities = 0.
 
 		for key in self.input_dict_resolved['Utilities']:
-			utility = Utility(self.input_dict_resolved['Utilities'][key], self.input_dict_resolved)
-			self.utilities += utility.cost_per_unit_of_product.unit['USD/kg']
+			utility = Utility(self.input_dict_resolved['Utilities'][key], self.input_dict_resolved, self.functional_unit)
+			self.utilities += utility.cost_per_unit_of_product.unit[f'USD/{self.functional_unit.unit}']
 
 		self.utilities = (self.utilities 
-						  * self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output by year']['Value'].unit['kg']
+						  * self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output by year']['Value'].unit[f'{self.functional_unit.unit}']
 						  * self.input_dict_resolved['Technical Operating Parameters and Specifications']['Operating capacity factor']['Value'].unit['-'])
 		self.utilities = Quantity(self.utilities, 'USD')
 
@@ -378,13 +378,13 @@ class Utility:
 	Methods 
 	-------
 	calculate_cost_per_unit_of_product:
-		Calculation of utility cost per kg of H2 with inflation correction.
+		Calculation of utility cost per functional unit of product with inflation correction.
 	'''
 
-	def __init__(self, dictionary, full_dict):
-		self.calculate_cost_per_unit_of_product(dictionary, full_dict)
+	def __init__(self, dictionary, full_dict, functional_unit):
+		self.calculate_cost_per_unit_of_product(dictionary, full_dict, functional_unit)
 
-	def calculate_cost_per_unit_of_product(self, dictionary, full_dict):
+	def calculate_cost_per_unit_of_product(self, dictionary, full_dict, functional_unit):
 		'''Calculation of utility cost per unit of product with inflation correction.
 		'''
 		
@@ -396,19 +396,19 @@ class Utility:
 			self.cost_per_unit_of_product = Quantity(prices[:,1] 
 													 * full_dict['Inflation']['Inflation correction']['Value'].unit['-']
 													 * dictionary['Price_Conversion_Factor_Value'].unit['-'] 
-													 * dictionary['Usage_Value'].unit['1/kg'], 
-											 'USD/kg') 
+													 * dictionary['Usage_Value'].unit[f'1/{functional_unit.unit}'], 
+											 f'USD/{functional_unit.unit}') 
 
 		elif isinstance(dictionary['Cost_Value'], Quantity):
 
 			annual_cost_per_unit_of_product = (dictionary['Cost_Value'].unit['USD'] 
 											   * full_dict['Inflation']['Inflation correction']['Value'].unit['-']
 											   * dictionary['Price_Conversion_Factor_Value'].unit['-']
-											   * dictionary['Usage_Value'].unit['1/kg'])
+											   * dictionary['Usage_Value'].unit[f'1/{functional_unit.unit}'])
 			
 			self.cost_per_unit_of_product = Quantity(full_dict['Time']['Years']['Value']['Operation years ones'].unit['-'] 
 													 * annual_cost_per_unit_of_product, 
-											'USD/kg')
+											f'USD/{functional_unit.unit}')
 
 		else:
 			raise ValueError(f"Unsupported type for Cost_Value ({dictionary['Cost_Value']}): {type(dictionary['Cost_Value'])}. Must be either str or Quantity.")
