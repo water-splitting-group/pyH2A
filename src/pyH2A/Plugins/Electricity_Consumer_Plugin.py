@@ -38,7 +38,7 @@ input_dict = {
 			"Unit": {
 				"dimension": "energy",
 			},
-			"optional": True, 
+			"optional": False, 
 			"description": "Available energy, hourly basis, dictionary of years."
 		},
 	},
