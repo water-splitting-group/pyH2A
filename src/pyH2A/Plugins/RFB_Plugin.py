@@ -1,0 +1,322 @@
+import numpy as np
+from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
+from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+
+
+input_dict = {
+    "Time": {
+        "Years": {
+            "Value": {
+                "type": {dict,},
+                "bounds": (None, None),
+            },
+            "Unit": {
+                "dimension": "dimensionless",
+            },
+            "optional": False,
+            "description": "Dictionary containing all time-related quantities."
+        }, 
+    },  	
+	"RFB": {	
+		"Battery power": {
+			"Value": {
+				"type": {float, int,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "power",
+			},
+			"description": "Total power of the battery."
+		},
+		"Power per cell stack": {
+			"Value": {
+				"type": {float, int,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "power",
+			},
+			"description": "Power of each stack."
+		},
+		"Storage capacity": {
+			"Value": {
+				"type": {float, int,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "energy",
+			},
+			"description": "Storage capacity of the battery."
+		},		
+		"Energy density": {
+			"Value": {
+				"type": {float, int,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "energy/mass",
+			},
+			"description": "Capacity per mass of electrolyte."
+		},	
+		"Capacity fade": {
+			"Value": {
+				"type": {float, int,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "dimensionless",
+			},
+			"description": "Yearly capacity loss of the electrolyte."
+		},		
+	},
+	"Electrolyte Impact": {		
+		"Specific GWP": {
+			"Value": {
+				"type": {float, int,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "mass/mass", # I didn't make it dimensionless because it'S a typical case where at some point we might want to have a matrix operation where this value, and the next ones, are multiplies by the mass of product
+			},
+            "optional": True,						
+			"description": "Mass of CO2 equivalent per mass of electrolyte produced."
+		},		
+		"Energy intensity": {
+			"Value": {
+				"type": {float, int,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "energy/mass",
+			},
+            "optional": True,						
+			"description": "Energy consumed per mass of electrolyte produced."
+		},	
+		"Specific toxicity": {
+			"Value": {
+				"type": {float, int,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "1/mass", 
+			},
+			"description": "Toxicity in Comparative Toxic Unit per mass of electrolyte produced."
+		},	
+		"Specific resource use": {
+			"Value": {
+				"type": {float, int,},
+				"bounds": (0, None),
+			},
+			"Unit": {
+				"dimension": "mass/mass", # same remark as for GWP
+			},
+            "optional": True,			
+			"description": "Resource use per mass of electrolyte produced."
+		},													
+	},
+}
+
+output_dict = {
+	"RFB": {	
+		"Number of cell stacks": {
+			"Value": {
+				"inserted_value": "number_cell_stacks",
+				"type": {float,},
+				"dimension": "dimensionless",
+			},
+			"description": "Number of cell stacks to provide the required power.",
+			"optional": False,
+		},			
+		"Initial amount of electrolyte": {
+			"Value": {
+				"inserted_value": "initial_electrolyte_amount",
+				"type": {float,},
+				"dimension": "mass",
+			},
+			"description": "Mass of electrolyte present in the battery upon startup.",
+			"optional": False,
+		},
+		"Yearly amount of replacement electrolyte": {     # defining a yearly amount to replace, as it will enable to point to that amount in the Planned Replacement table (for Replacement_Plugin), so we can assess the inflation-adjusted cost correctly
+			"Value": {
+				"inserted_value": "yearly_electrolyte_amount",
+				"type": {float,},
+				"dimension": "mass",
+			},
+			"description": "Mass of electrolyte needed during each operation year to maintain capacity fade.",
+			"optional": False,
+		},
+		"Total amount of electrolyte": {
+			"Value": {
+				"inserted_value": "total_electrolyte_amount",
+				"type": {float,},
+				"dimension": "mass",
+			},
+			"description": "Mass of electrolyte needed during the entire battery lifetime.",
+			"optional": False,
+		},			
+	},	
+	"Electrolyte Impact": {
+		"Total GWP": {
+			"Value": {
+				"inserted_value": "total_gwp",
+				"type": {float,},
+				"dimension": "mass",
+			},
+			"description": "GWP associated to the electolyte amount used during the entire battery lifetime.",
+			"optional": True,
+		},	
+		"Total energy": {
+			"Value": {
+				"inserted_value": "total_energy",
+				"type": {float,},
+				"dimension": "energy",
+			},
+			"description": "Energy consumption associated to the electolyte amount used during the entire battery lifetime.",
+			"optional": True,
+		},	
+		"Total toxicity": {
+			"Value": {
+				"inserted_value": "total_toxicity",
+				"type": {float,},
+				"dimension": "dimensionless",
+			},
+			"description": "Toxicity associated to the electolyte amount used during the entire battery lifetime.",
+			"optional": True,
+		},	
+		"total resource use": {
+			"Value": {
+				"inserted_value": "total_resource_use",
+				"type": {float,},
+				"dimension": "mass",
+			},
+			"description": "Resource use associated to the electolyte amount used during the entire battery lifetime.",
+			"optional": True,
+		},										
+	},	
+}
+
+class RFB_Plugin:
+	'''Calculation of Redox Flow Battery amount of electrolytes and their total impact, as well as the number of stack cells.
+	
+	Parameters
+	----------
+    Time > Years > Value : dict
+        Dictionary containing plant life time-related quantities
+    RFB > Battery power > Value : float or int
+        Total power of the battery
+    RFB > Power per cell stack > Value : float or int
+        Power of each stack	
+	RFB > Storage capacity > Value : float or int
+		Storage capacity of the battery	
+	RFB > Energy density > Value : float or int
+		Capacity per mass of electrolyte
+	RFB > Capacity fade > Value : float or int
+		Yearly capacity loss of the electrolyte		
+	Electrolyte Impact > Specific GWP > Value : float or int, optional
+		Mass of CO2 equivalent per mass of electrolyte produced
+	Electrolyte Impact > Energy intensity > Value : float or int, optional
+		Energy consumed per mass of electrolyte produced
+	Electrolyte Impact > Specific toxicity > Value : float or int, optional
+		Toxicity in Comparative Toxic Unit per mass of electrolyte produced
+	Electrolyte Impact > Specific resource use > Value : float or int, optional
+		Resource use per mass of electrolyte produced
+
+	Returns
+	-------
+	RFB > Number of cell stacks > Value : float
+		Number of cell stacks to provide the required power
+	RFB > Initial amount of electrolyte > Value : float
+		Mass of electrolyte present in the battery upon startup
+	RFB > Yearly amount of replacement electrolyte > Value : float
+		Mass of electrolyte needed during each operation year to maintain capacity fade
+	RFB > Total amount of electrolyte > Value : float
+		Mass of electrolyte needed during the entire battery lifetime
+	Electrolyte Impact > Total GWP > Value : float, optional
+		GWP associated to the electolyte amount used during the entire battery lifetime	
+	Electrolyte Impact > Total energy > Value : float, optional
+		Energy consumption associated to the electolyte amount used during the entire battery lifetime
+	Electrolyte Impact > Total toxicity > Value : float, optional
+		Toxicity associated to the electolyte amount used during the entire battery lifetime
+	Electrolyte Impact > Total resource use > Value : float, optional
+		Resource use associated to the electolyte amount used during the entire battery lifetime
+				
+	'''
+
+	def __init__(self, dcf, print_info):
+
+		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'RFB_Plugin')
+
+		self.calculate_cell_number()
+		self.calculate_electrolyte_amount()
+		self.calculate_impact()
+
+		output_inserter_function(output_dict, self, dcf, 'RFB_Plugin') 
+
+
+
+	def calculate_cell_number(self):
+
+		self.number_cell_stacks = Quantity(
+										self.input_dict_resolved['RFB']['Battery power']['Value'].unit['W']
+										/
+										self.input_dict_resolved['RFB']['Power per cell stack']['Value'].unit['W'], 
+										'-'
+										)
+
+	def calculate_electrolyte_amount(self):
+
+		self.initial_electrolyte_amount = Quantity(
+												self.input_dict_resolved['RFB']['Storage capacity']['Value'].unit['J']
+												/
+												self.input_dict_resolved['RFB']['Energy density']['Value'].unit['J/kg'], 
+												'kg')
+
+		# Assumption: the electrolyte that lost x % of its capacity is a mixture of x % damaged molecules and (1-x) % fully functional molecules, which can be separated
+		# The fraction of fresh electrolyte to inject each year is therefore equal to the yearly relative capacity loss (x %)
+		self.yearly_electrolyte_amount = Quantity(
+												self.input_dict_resolved['RFB']['Capacity fade']['Value'].unit['-']
+												*
+												self.initial_electrolyte_amount.unit['kg'], 
+												'kg')
+
+		self.total_electrolyte_amount = Quantity(
+												np.sum(self.input_dict_resolved['Time']['Years']['Value']['Operation years ones'].unit['-'])
+												*
+												self.yearly_electrolyte_amount.unit['kg']
+												+
+												self.initial_electrolyte_amount.unit['kg']
+												, 
+												'kg')
+
+	def calculate_impact(self):
+		if 'Specific GWP' in self.input_dict_resolved['Electrolyte Impact']:
+			self.total_gwp = Quantity(
+									self.input_dict_resolved['Electrolyte Impact']['Specific GWP']['Value'].unit['kg/kg']
+									*
+									self.total_electrolyte_amount.unit['kg'], 
+									'kg'
+									) 
+			
+		if 'Energy intensity' in self.input_dict_resolved['Electrolyte Impact']:
+			self.total_energy = Quantity(
+									self.input_dict_resolved['Electrolyte Impact']['Energy intensity']['Value'].unit['J/kg']
+									*
+									self.total_electrolyte_amount.unit['kg'], 
+									'J'
+									) 			
+
+		if 'Specific toxicity' in self.input_dict_resolved['Electrolyte Impact']:
+			self.total_toxicity = Quantity(
+									self.input_dict_resolved['Electrolyte Impact']['Specific toxicity']['Value'].unit['1/kg']
+									*
+									self.total_electrolyte_amount.unit['kg'], 
+									'-'
+									) 
+			
+		if 'Specific resource use' in self.input_dict_resolved['Electrolyte Impact']:
+			self.total_resource_use = Quantity(
+									self.input_dict_resolved['Electrolyte Impact']['Specific resource use']['Value'].unit['kg/kg']
+									*
+									self.total_electrolyte_amount.unit['kg'], 
+									'kg'
+									) 
