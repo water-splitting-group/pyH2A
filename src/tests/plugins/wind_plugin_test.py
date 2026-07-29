@@ -1,10 +1,7 @@
 import pytest
 import numpy as np
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
-from pyH2A.Plugins.Wind_Plugin import (
-    Wind_Plugin,
-    import_hourly_data,
-)
+from pyH2A.Plugins.Wind_Plugin import Wind_Plugin
 
 
 class DummyDCF:
