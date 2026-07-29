@@ -20,7 +20,7 @@ input_dict = {
             "description": "Dictionary containing all time-related quantities."
         }, 
     },  	
-	"Meteorological Data": {		
+	"Hourly Wind": {		
 		"File": {
 			"Value": {	
 				"type": {str,},
@@ -38,7 +38,7 @@ input_dict = {
 			"Unit": {
 				"dimension": "energy",
 			},
-			"optional": False, 
+			"optional": True, 
 			"description": "Available energy, hourly basis, dictionary of years."
 		},
 	},
@@ -120,10 +120,10 @@ class Wind_Plugin:
 	----------
     Time > Years > Value : dict
         Dictionary containing plant life time-related quantities
-	Meteorological Data > File > Value : str
+	Hourly Wind > File > Value : str
 		Path to a `.csv` file containing hourly wind data as provided by
 		https://re.jrc.ec.europa.eu/pvg_tools/en/#TMY.			
-	Power Generation > Available energy (hourly) > Value : dict
+	Power Generation > Available energy (hourly) > Value : dict, optional
 		Available power, hourly basis, dictionary of years
 	Wind Turbine > Installed wind capacity > Value : int or float
 		Installed power
@@ -150,7 +150,7 @@ class Wind_Plugin:
 
 		(self.curtailed_hourly_wind_speed, 
    		self.hourly_density) = calculate_hourly_effective_wind_properties(
-			   												self.input_dict_resolved['Meteorological Data']['File']['Value'])
+			   												self.input_dict_resolved['Hourly Wind']['File']['Value'])
 
 		self.calculate_wind_power_production()
 
@@ -191,13 +191,19 @@ class Wind_Plugin:
 																		, 
 																		'Wh'
 																	)
-			self.total_electric_energy_generation_yearly_data[year] = Quantity(
-																		self.wind_electric_energy_generation_yearly_data[year].unit['J']
-																		+
-																		self.input_dict_resolved['Power Generation']['Available energy (hourly)']['Value'][year].unit['J']
-																		,
-																		'J'
-																	)
+			if 'Power Generation' in self.input_dict_resolved and 'Available energy (hourly)' in self.input_dict_resolved['Power Generation']:
+				self.total_electric_energy_generation_yearly_data[year] = Quantity(
+																			self.wind_electric_energy_generation_yearly_data[year].unit['J']
+																			+
+																			self.input_dict_resolved['Power Generation']['Available energy (hourly)']['Value'][year].unit['J']
+																			,
+																			'J'
+																		)
+			else: # Wind is used as a standalone, without PV
+				self.total_electric_energy_generation_yearly_data[year] = Quantity(
+																			self.wind_electric_energy_generation_yearly_data[year].unit['J'],
+																			'J'
+																		)
 
 
 	
@@ -207,7 +213,23 @@ def import_hourly_data(file_name):
 	by: https://re.jrc.ec.europa.eu/pvg_tools/en/tools.html.
 	``@lru_cache`` is used for fast repeated reads
 	'''
+	file_read = file_import(file_name, mode='r')
 
+	for row_counter, line in enumerate(file_read):
+
+		if line.startswith("time(UTC)"):
+			skip_header = row_counter + 1
+			break
+
+	file_read.close()
+
+	data = np.genfromtxt(
+		file_import(file_name, mode='r'),
+		delimiter=',',
+		skip_header=skip_header,
+		skip_footer=9,
+		converters={0: converter_function}
+	)
 	data = np.genfromtxt(file_import(file_name, mode = 'r'), 
 						  delimiter = ',', skip_header = 18, 
 						  skip_footer = 9, converters = {0: converter_function})
@@ -227,7 +249,7 @@ def calculate_hourly_effective_wind_properties(file_name):
 
 	data = import_hourly_data(file_name)
 
-	# Wind speed at 100 m (usual altitude for wind turbines sizing) is deduced from the speed at 10 m (available meteorological data) according to: 
+	# Wind speed at 100 m (usual altitude for wind turbines sizing) is deduced from the speed at 10 m (available Hourly Wind) according to: 
 	# v(100m) = v(10m) * (100 m / 10 m)**alpha with alpha = 0.14 (Wind Energy Handbook, Burton et al, Wiley (2001), section 2.6.2)
 	wind_speed_100m = data['Wind Speed'].unit['m/s']*(100/10)**0.14
 

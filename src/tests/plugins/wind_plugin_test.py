@@ -8,7 +8,7 @@ from pyH2A.Plugins.Wind_Plugin import (
 
 
 class DummyDCF:
-    """DCF object for Hourly_Irradiation_Plugin with configurable inputs."""
+    """DCF object for Hourly_Wind_Plugin with configurable inputs."""
 
     def __init__(
         self,
@@ -27,7 +27,7 @@ class DummyDCF:
                     "Processed": "Yes",                    
                 },
             },            
-            "Meteorological Data": {"File": {"Value": hourly_file}},
+            "Hourly Wind": {"File": {"Value": hourly_file}},
             "Power Generation": {
                 "Available energy (hourly)": {"Value": available_energy_hourly, "Unit" : "kWh"},
             },
@@ -45,7 +45,7 @@ class DummyDCF:
         {
             "input": {
                 "operation_years_relative": {'Operation years relative': np.arange(0, 2)},       
-                "hourly_file": "pyH2A.Lookup_Tables.Hourly_Meteorological_Data~Jena.615_2005_2023.csv",
+                "hourly_file": "pyH2A.Lookup_Tables.Hourly_Wind_Data~Jena.615_2005_2023.csv",
                 "available_energy_hourly": {0: np.arange(0, 8760), 1:np.arange(0, 8760)},
                 "installed_wind_capacity": 20.,
                 "power_per_wind_turbine": 4.,

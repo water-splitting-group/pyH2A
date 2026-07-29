@@ -25,11 +25,17 @@ Name | Value
 Name | PV + E 
 Color | darkblue 
 
-# Meteorological Data
+# Hourly Irradiation
 
 Name | Value | Comment 
 --- | --- | --- | --- 
-File | pyH2A.Lookup_Tables.Hourly_Meteorological_Data~Jena.615_2005_2023.csv | Location: Jena, DE
+File | pyH2A.Lookup_Tables.Hourly_Irradiation_Data~tmy_34.859_-116.889_2006_2015.csv | Location: Dagget, CA, USA 
+
+# Hourly Wind
+
+Name | Value | Comment 
+--- | --- | --- | --- 
+File | pyH2A.Lookup_Tables.Hourly_Wind_Data~Jena.615_2005_2023.csv | Location: Jena, DE
 
 # Irradiance Area Parameters
 
