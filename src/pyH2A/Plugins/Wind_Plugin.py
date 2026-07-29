@@ -231,7 +231,7 @@ def import_hourly_data(file_name):
 		converters={0: converter_function}
 	)
 	data = np.genfromtxt(file_import(file_name, mode = 'r'), 
-						  delimiter = ',', skip_header = 18, 
+						  delimiter = ',', skip_header = skip_header, 
 						  skip_footer = 9, converters = {0: converter_function})
 
 
