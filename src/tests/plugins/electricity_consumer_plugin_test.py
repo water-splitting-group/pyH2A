@@ -1,9 +1,7 @@
 import pytest
 import numpy as np
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
-from pyH2A.Plugins.Electricity_Consumer_Plugin import (
-    Electricity_Consumer_Plugin
-)
+from pyH2A.Plugins.Electricity_Consumer_Plugin import Electricity_Consumer_Plugin
 
 
 class DummyDCF:
