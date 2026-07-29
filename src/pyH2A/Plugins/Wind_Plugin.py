@@ -230,10 +230,6 @@ def import_hourly_data(file_name):
 		skip_footer=9,
 		converters={0: converter_function}
 	)
-	data = np.genfromtxt(file_import(file_name, mode = 'r'), 
-						  delimiter = ',', skip_header = skip_header, 
-						  skip_footer = 9, converters = {0: converter_function})
-
 
 	data_dict = {
 		'Time': Quantity(data[:,0], '-'),
