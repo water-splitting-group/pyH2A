@@ -2,8 +2,6 @@ from pyH2A.Utilities.input_modification import insert
 from pyH2A.Utilities.check_functions import check_type, check_dimension
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
-from tests.Utilities.Output_Inserter.output_inserter_test_data import DummyDCF, DummyPlugin, output_dict
-
 # Properties of rows (middle level)
 OPTIONAL_KEY = 'optional'
 ADD_PROCESSED_KEY = 'add_processed'
@@ -311,20 +309,5 @@ def output_inserter_function(output_dict,
     except Exception as error:
         error_message = error.args[0] if getattr(error, 'args', None) else str(error)
         raise type(error)(f"[Plugin: {plugin_name}] {error_message}") from error
-
-
-if __name__ == "__main__":
-
-    import pprint as pp
-
-    DummyDCF_instance = DummyDCF()
-    DummyPlugin_instance = DummyPlugin(DummyDCF_instance, print_info = False)
-
-    output_inserter_function(output_dict, 
-                             DummyPlugin_instance, 
-                             DummyDCF_instance, 
-                             'Test_Plugin')
-    
-    pp.pprint(DummyDCF_instance.inp)
     
     

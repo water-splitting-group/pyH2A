@@ -1,6 +1,8 @@
 import pytest
+import numpy as np
 from pyH2A.Plugins.Capital_Cost_Plugin import Capital_Cost_Plugin
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+from pyH2A.Utilities.functional_unit import resolve_functional_unit
 
 
 class DummyDCF:
@@ -15,9 +17,22 @@ class DummyDCF:
         other_non_depreciable_costs,
         combined_inflator,
         ci_inflator,
+        analysis_years_ones,
+        inflation_correction,
+        inflation_factor_full,
+        construction_fractions,
+        fraction_equity_financing,
     ):
 
+        self.functional_unit = resolve_functional_unit('kg')
         self.inp = {
+            "Time": {
+                "Years": {
+                    "Value": {"Analysis years ones": analysis_years_ones},
+                    "Unit": "-",
+                    "Processed": "Yes",
+                },
+            },
             "Inflation": {
                 "Combined inflator": {
                     "Value": combined_inflator,
@@ -27,12 +42,34 @@ class DummyDCF:
                     "Value": ci_inflator,
                     "Unit": "-"
                 },
-            },              
+                "Inflation correction": {
+                    "Value": inflation_correction,
+                    "Unit": "-"
+                },
+                "Inflation factor full": {
+                    "Value": inflation_factor_full,
+                    "Unit": "-",
+                    "Processed": "Yes",
+                },
+            },
+            "Construction": {
+                key: {
+                    "Value": value,
+                    "Unit": "-"
+                }
+                for key, value in construction_fractions.items()
+            },
+            "Financial Input Values": {
+                "Fraction equity financing": {
+                    "Value": fraction_equity_financing,
+                    "Unit": "-"
+                },
+            },
             "<...> Direct Capital Cost <...>": {
                 key: {
                     "Value": value,
                     "Unit": "USD"
-                } 
+                }
                 for key, value in direct_costs.items()
             },
             "<...> Indirect Capital Cost <...>": {
@@ -51,7 +88,7 @@ class DummyDCF:
                     "Value": land_required_acres,
                     "Unit": "acre"
                 },
-            },  
+            },
             "Dummy Left Other Non-Depreciable Capital Cost Dummy Right": {
                 key: {
                     "Value": value,
@@ -84,6 +121,14 @@ class DummyDCF:
                 },
                 "combined_inflator": 1.10,
                 "ci_inflator": 1.05,
+                "analysis_years_ones": np.ones(5),
+                "inflation_correction": 1.02,
+                "inflation_factor_full": np.array([1.0, 1.05, 1.10, 1.15, 1.20]),
+                "construction_fractions": {
+                    "Year 1": 0.6,
+                    "Year 2": 0.4,
+                },
+                "fraction_equity_financing": 0.6,
             },
             "expected": {
                 "direct": Quantity(9400000.0, "USD"),
@@ -95,7 +140,12 @@ class DummyDCF:
                 "non_depreciable": Quantity(251000.0, "USD"),
                 "non_depreciable_inflated": Quantity(263550.0, "USD"),
                 "total": Quantity(11651000.0, "USD"),
-                "total_inflated": Quantity(12803550.0, "USD")
+                "total_inflated": Quantity(12803550.0, "USD"),
+                "depreciable_capital_dcf_inflation_corrected": Quantity(12790800.0, "USD"),
+                "initial_equity_depreciable_capital": Quantity(7827969.6, "USD"),
+                "annual_initial_equity_depreciable_capital": np.array([4604688.0, 3223281.6, 0.0, 0.0, 0.0]),
+                "non_depreciable_capital_dcf_inflation_corrected": Quantity(268821.0, "USD"),
+                "annual_non_depreciable_capital": np.array([268821.0, 0.0, 0.0, 0.0, 0.0]),
             },
         }
     ],
@@ -155,4 +205,31 @@ def test_capital_cost_plugin(case):
     assert plugin.total_inflated.unit["USD"] == pytest.approx(
         expected["total_inflated"].unit["USD"],
         abs=tolerance
-    )   
+    )
+
+    assert plugin.depreciable_capital_dcf_inflation_corrected.unit["USD"] == pytest.approx(
+        expected["depreciable_capital_dcf_inflation_corrected"].unit["USD"],
+        abs=tolerance
+    )
+
+    assert plugin.initial_equity_depreciable_capital.unit["USD"] == pytest.approx(
+        expected["initial_equity_depreciable_capital"].unit["USD"],
+        abs=tolerance
+    )
+
+    np.testing.assert_allclose(
+        plugin.annual_initial_equity_depreciable_capital.unit["USD"],
+        expected["annual_initial_equity_depreciable_capital"],
+        atol=tolerance
+    )
+
+    assert plugin.non_depreciable_capital_dcf_inflation_corrected.unit["USD"] == pytest.approx(
+        expected["non_depreciable_capital_dcf_inflation_corrected"].unit["USD"],
+        abs=tolerance
+    )
+
+    np.testing.assert_allclose(
+        plugin.annual_non_depreciable_capital.unit["USD"],
+        expected["annual_non_depreciable_capital"],
+        atol=tolerance
+    )

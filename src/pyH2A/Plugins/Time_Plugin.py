@@ -3,72 +3,6 @@ from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import pyH2A.Utilities.find_nearest as fn
 import numpy as np
 
-input_dict = {
-    "Construction": {
-        "<...>": {
-            "Value": {
-                "type": {int, float},
-                "bounds": (0, None),
-            },
-            "Unit": {
-                "dimension": "dimensionless",
-            },
-            "optional": False,
-            "description": "Fraction of capital spent during each construction year."
-        },
-    }, 
-    "Financial Input Values": {
-        "Plant life": {
-            "Value": {
-                "type": {int, float},
-                "bounds": (0, None),
-            },
-            "Unit": {
-                "dimension": "time",
-            },
-            "optional": False,
-            "description": "Operating lifetime of the plant."
-        },
-        "Assumed start-up year": {
-            "Value": {
-                "type": {int},
-                "bounds": (0, None),
-            },
-            "Unit": {
-                "dimension": "dimensionless",
-            },
-            "optional": False,
-            "description": "Year the operation starts"
-        },      
-        "Reference year": {
-            "Value": {
-                "type": {int},
-                "bounds": (0, None),
-            },
-            "Unit": {
-                "dimension": "dimensionless",
-            },
-            "optional": False,
-            "description": "Reference year for startup"
-        },             
-    },
-}
-
-output_dict = {
-    "Time": {
-        "Years": {
-            "Value": {
-                "inserted_value": "time_quantities_dict",
-                "type": {dict},
-				"dimension": "dimensionless",                     
-            },
-            "description": "Dictionary containing all the year-related variables that are needed in other plugins.",
-            "optional": False,
-        },   
-    }
-}
-
-          
 class Time_Plugin:
     '''Generation of a unique dictionary contianing all the necessary time-related arrays and values for other plugins.
     All the quantities are dimensionless, no conversion being expected, and the years play the role of indexes rather than durations.
@@ -100,12 +34,94 @@ class Time_Plugin:
 
     '''
 
-    def __init__(self, dcf, print_info):
-        self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Time_Plugin')
+    def __init__(self, dcf, print_info, run = True):
+        self._set_up(dcf)
+        if run:
+            self._run(dcf)
+
+    def _set_up(self, dcf):
+
+        self.functional_unit = dcf.functional_unit
+
+        self.input_dict = {
+            "Construction": {
+                "<...>": {
+                    "Value": {
+                        "type": {int, float},
+                        "bounds": (0, 1),
+                    },
+                    "Unit": {
+                        "dimension": "dimensionless",
+                    },
+                    "optional": False,
+                    "description": "Fraction of capital spent during each construction year."
+                },
+            }, 
+            "Financial Input Values": {
+                "Plant life": {
+                    "Value": {
+                        "type": {int, float},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "time",
+                    },
+                    "optional": False,
+                    "description": "Operating lifetime of the plant."
+                },
+                "Assumed start-up year": {
+                    "Value": {
+                        "type": {int},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "dimensionless",
+                    },
+                    "optional": False,
+                    "description": "Year the operation starts"
+                },      
+                "Reference year": {
+                    "Value": {
+                        "type": {int},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "dimensionless",
+                    },
+                    "optional": False,
+                    "description": "Reference year for startup"
+                },             
+            },
+        }
+
+        self.output_dict = {
+            "Time": {
+                "Years": {
+                    "Value": {
+                        "inserted_value": "time_quantities_dict",
+                        "type": {dict},
+        				"dimension": "dimensionless",                     
+                    },
+                    "description": "Dictionary containing all the year-related variables that are needed in other plugins."
+                                    "Startup time offset: the offset between the reference year and the startup year (scalar)"
+                                    "Plant years relative: array of indexes representing the years involved in the plant life, 0 being the year production starts"
+                                    "Operation years: Array containing the calendar years during which production takes place"
+                                    "Operation years relative: array of indexes representing the years during which production takes place, 0 being the year production starts"
+                                    "Start index: relative year of startup"
+                                    "Operation years ones: array of ones, of length equal to the number of production years"
+                                    "Analysis years ones: array of ones, of length equal to the construciton time + the number of production years"
+                                    "Construction years ones: array of ones, of length equal to the number of construction years ",
+                    "optional": False,
+                },   
+            }
+        }
+
+    def _run(self, dcf):
+        self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Time_Plugin')
 
         self.generate_time()
 
-        output_inserter_function(output_dict,self, dcf, 'Time_Plugin')
+        output_inserter_function(self.output_dict,self, dcf, 'Time_Plugin')
 
     def generate_time(self):
         # Getting finance dict data and construction time in year (by getting length of construction table)

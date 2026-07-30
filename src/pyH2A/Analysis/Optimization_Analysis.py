@@ -1,13 +1,29 @@
 import numpy as np
-from scipy.optimize import minimize, dual_annealing, differential_evolution, shgo
+from scipy.optimize import (minimize, 
+							dual_annealing, 
+							differential_evolution, 
+							shgo)
 import matplotlib.pyplot as plt
 
 from timeit import default_timer as timer
 
 import pyH2A.Utilities.find_nearest as fn
-from pyH2A.Utilities.input_modification import convert_input_to_dictionary,parse_parameter, parse_parameter_to_array, get_by_path, set_by_path, read_textfile, file_import, reverse_parameter_to_string
-from pyH2A.Discounted_Cash_Flow import Discounted_Cash_Flow, discounted_cash_flow_function, discounted_cash_flow_function_1D
-from pyH2A.Utilities.output_utilities import make_bold, format_scientific, dynamic_value_formatting, insert_image, Figure_Lean
+from pyH2A.Utilities.input_modification import (convert_input_to_dictionary,
+												parse_parameter, 
+												parse_parameter_to_array, 
+												get_by_path, 
+												set_by_path, 
+												read_textfile, 
+												file_import, 
+												reverse_parameter_to_string)
+from pyH2A.Discounted_Cash_Flow import (Discounted_Cash_Flow, 
+										discounted_cash_flow_function, 
+										discounted_cash_flow_function_1D)
+from pyH2A.Utilities.output_utilities import (make_bold, 
+											  format_scientific, 
+											  dynamic_value_formatting, 
+											  insert_image, 
+											  Figure_Lean)
 
 class Optimization_Analysis:
 	'''Optimization of pyH2A models.

@@ -85,11 +85,11 @@ def test_arbitrary_input_merger(case, request):
     # Case 2: Missing reference merges should raise FileNotFoundError
     if test_id == "missing_reference":
         with pytest.raises(expected_data["Error"]):
-            convert_input_to_dictionary(file_path, merge_default=False)
+            convert_input_to_dictionary(file_path)
         return
 
     # Run conversion on the selected input file
-    merged_result = convert_input_to_dictionary(file_path, merge_default=False)
+    merged_result = convert_input_to_dictionary(file_path)
 
     # Case 1: Full base-file merge
     check_dicts(merged_result, expected_data)

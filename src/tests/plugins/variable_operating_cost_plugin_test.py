@@ -2,29 +2,34 @@ import pytest
 import numpy as np
 from pyH2A.Plugins.Variable_Operating_Cost_Plugin import Variable_Operating_Cost_Plugin
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+from pyH2A.Utilities.functional_unit import resolve_functional_unit
 
 
 class DummyDCF:
     """Minimal DCF for Variable_Operating_Cost_Plugin with variable-value inputs."""
 
     def __init__(
-        self, 
+        self,
         time_values,
         inflation_correction,
         chemical_inflator,
+        inflation_factor_full,
+        start_up_time,
+        fraction_during_start_up,
         plant_output_per_year,
-        capacity_factor, 
-        utilities, 
+        capacity_factor,
+        utilities,
         other_variable_costs
-    ):  
+    ):
+        self.functional_unit = resolve_functional_unit('kg')
         self.inp = {
             "Time": {
                 "Years": {
                     "Value": time_values,
-                    "Unit": "-",   
-                    "Processed": "Yes",                    
+                    "Unit": "-",
+                    "Processed": "Yes",
                 },
-            },    
+            },
             "Inflation": {
                 "Inflation correction": {
                     "Value": inflation_correction,
@@ -34,7 +39,22 @@ class DummyDCF:
                     "Value": chemical_inflator,
                     "Unit": "-"
                 },
-            },                          
+                "Inflation factor full": {
+                    "Value": inflation_factor_full,
+                    "Unit": "-",
+                    "Processed": "Yes",
+                },
+            },
+            "Financial Input Values": {
+                "Start-up time": {
+                    "Value": start_up_time,
+                    "Unit": "year"
+                },
+                "Fraction of variable operating costs during start-up": {
+                    "Value": fraction_during_start_up,
+                    "Unit": "-"
+                },
+            },
             "Technical Operating Parameters and Specifications": {
                 "Design output by year": {
                     "Value": plant_output_per_year, 
@@ -74,10 +94,16 @@ class DummyDCF:
             "input": {
                 "time_values":{
                     "Operation years":np.arange(2026, 2036),
-                    "Operation years ones": np.ones(10)
+                    "Operation years ones": np.ones(10),
+                    "Analysis years ones": np.ones(12),
+                    "Start index": 2,
                 },
                 "inflation_correction": 1.2,
                 "chemical_inflator": 1.0,
+                "inflation_factor_full": np.array([1.00, 1.01, 1.02, 1.03, 1.04, 1.05,
+                                                    1.06, 1.07, 1.08, 1.09, 1.10, 1.11]),
+                "start_up_time": 1,
+                "fraction_during_start_up": 0.6,
                 "plant_output_per_year": np.array([125_000.0,
                                                    125_000.0,
                                                    125_000.0,
@@ -121,7 +147,11 @@ class DummyDCF:
                                                 612000.0, 
                                                 612000.0]), 
                                         "USD"),
-                "other": Quantity(np.array(1500.), "USD")                                      
+                "other": Quantity(np.array(1500.), "USD"),
+                "annual_variable_operating_cost": Quantity(
+                    np.array([0., 0., 375462., 631905., 638040., 644175., 650310.,
+                              656445., 662580., 668715., 674850., 680985.]),
+                    "USD"),
             }
         }
     ]
@@ -146,7 +176,13 @@ def test_variable_operating_cost_plugin(case):
     )
     
     np.testing.assert_allclose(
-        plugin.other.unit["USD"], 
-        expected["other"].unit["USD"], 
+        plugin.other.unit["USD"],
+        expected["other"].unit["USD"],
         rtol=tolerance
+    )
+
+    np.testing.assert_allclose(
+        plugin.annual_variable_operating_cost.unit["USD"],
+        expected["annual_variable_operating_cost"].unit["USD"],
+        atol=tolerance
     )

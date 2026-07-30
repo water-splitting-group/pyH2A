@@ -1,11 +1,17 @@
+# Input files to merge
+
+Name | Value
+--- | ---
+Default TEA | pyH2A.Config~Defaults_TEA.md
+
 # Workflow
 
-Name | Type | Description | Position 
---- | --- | --- | --- 
-Hourly_Irradiation_Plugin | plugin | Plugin to calculate solar irradiation from typical meteorological year data | 401 |
-PEC_Plugin | plugin | Plugin to model photoelectrochemical water splitting | 601 |
-Solar_Concentrator_Plugin | plugin | Plugin to model solar concentration | 602 |
-Multiple_Modules_Plugin | plugin | Modelling of module plant modules, adjustment of labor requirement | 701 |
+Name | Description | Position 
+--- | --- | --- 
+Hourly_Irradiation_Plugin | Plugin to calculate solar irradiation from typical meteorological year data | 201 |
+PEC_Plugin | Plugin to model photoelectrochemical water splitting | 301 |
+Solar_Concentrator_Plugin | Plugin to model solar concentration | 302 |
+Multiple_Modules_Plugin | Modelling of module plant modules, adjustment of labor requirement | 401 |
 
 # Display Parameters
 

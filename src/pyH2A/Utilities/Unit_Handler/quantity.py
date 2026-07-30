@@ -220,7 +220,7 @@ class Quantity:
         representation : str
             String form `Quantity(<base_value>, '<base_unit>')`.
         """
-        return f"Quantity({self.base_value}, '{self.base_unit}')"
+        return f"Quantity({self.supplied_value}, '{self.supplied_unit}')"
 
 
 

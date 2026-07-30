@@ -2,11 +2,13 @@ import sys
 import ast
 import os
 from pyH2A.Discounted_Cash_Flow import Discounted_Cash_Flow
-from pyH2A.Utilities.input_modification import convert_input_to_dictionary, execute_plugin, convert_dict_to_kwargs_dict, check_for_meta_module
+from pyH2A.Utilities.input_modification import (convert_input_to_dictionary, 
+												execute_plugin, 
+												convert_dict_to_kwargs_dict, 
+												check_for_meta_module)
 
 from timeit import default_timer as timer
-
-import pprint
+import pprint as pp
 
 class pyH2A:
 	'''pyH2A class that performs discounted cash flow analysis and executes analysis modules.
@@ -43,12 +45,18 @@ class pyH2A:
 		self.file_name = os.path.basename(input_file).split('.')[0]
 		self.output_directory = output_directory
 		self.inp = convert_input_to_dictionary(self.input_file)
+
 		self.base_case = Discounted_Cash_Flow(self.input_file, print_info = print_info)
 
 		self.meta_modules = {}
 		self.meta_workflow(self.meta_modules)
 
-		print(f'Levelized cost of hydrogen (base case): {self.base_case.h2_cost} $/kg')
+		# Print levelized cost of product for base case (if available, meaning that discounted cash flow analysis was performed)
+		try:
+			levelized_cost = self.base_case.inp['Dependent Variables']['Levelized cost']['Value']
+			print(f'Levelized cost of product (base case): {levelized_cost}')
+		except KeyError:
+			pass
 
 	def meta_workflow(self, meta_dict):
 		'''Meta modules (analysis modules) are identified and executed

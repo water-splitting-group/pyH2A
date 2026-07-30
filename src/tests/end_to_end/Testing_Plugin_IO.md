@@ -1,9 +1,15 @@
+# Input files to merge
+
+Name | Value
+--- | ---
+Default TEA | pyH2A.Config~Defaults_TEA.md
+
 # Workflow
 
-Name | Type | Position
---- | --- | ---
-Test_Plugin_A | plugin | 400
-Test_Plugin_B | plugin | 400
+Name | Position
+--- |  ---
+Test_Plugin_A | 201
+Test_Plugin_B | 202
 
 # Plugin A - Photovoltaic Input
 
