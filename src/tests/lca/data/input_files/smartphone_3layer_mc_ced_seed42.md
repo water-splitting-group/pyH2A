@@ -1,3 +1,9 @@
+# Input files to merge
+
+Name | Value
+--- | ---
+Defaults | pyH2A.Config~Defaults_TEA_LCA.md
+
 # Life Cycle Assessment
 
 Name | Value

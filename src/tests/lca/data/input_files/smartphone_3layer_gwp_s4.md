@@ -3,6 +3,7 @@
 Name | Value
 --- | ---
 Base | src/tests/lca/data/input_files/smartphone_3layer_gwp_base.md
+Defaults | pyH2A.Config~Defaults_TEA_LCA.md
 
 # GT Circuit Board Input
 
