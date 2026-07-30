@@ -145,27 +145,6 @@ class Electrolyzer_Plugin:
         }
 
         self.output_dict = {
-            "Technical Operating Parameters and Specifications": {
-                "Design output by year": {
-                    "Value": {
-                        "inserted_value": "h2_production",
-                        "type": {np.ndarray,},
-                        "dimension": "mass",
-                    },
-                    "optional": False,
-                    "description": "Design output by year calculated from installed "
-                                   "electrolysis power capacity and hourly power generation data."
-                },
-                "Operating capacity factor": {
-                    "Value": {
-                        "inserted_value": Quantity(1., '-'),
-                        "type": {float,},
-                        "dimension": "dimensionless",
-                    },
-                    "optional": False,
-                    "description": "Operating capacity factor is set to 1."
-                },
-            },
             "Electrolyzer": {
                 "Yearly operation data": {
                     "Year_Value": {

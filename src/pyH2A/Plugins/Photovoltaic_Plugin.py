@@ -121,6 +121,15 @@ class Photovoltaic_Plugin:
 					"description": "Hourly power generation of PV array (dictionary of years).",
 					"optional": False,
 				},
+				"PV yearly power generation": {
+					"Value": {
+						"inserted_value": "electric_energy_generation_yearly_array",
+						"type": {np.ndarray,},
+						"dimension": "energy",
+					},
+					"description": "Yearly power generation of PV array (array).",
+					"optional": False,
+				},
 				"Available energy (hourly)": {
 					"Value": {
 						"inserted_value": "electric_energy_generation_yearly_data",
@@ -183,6 +192,7 @@ class Photovoltaic_Plugin:
 
 		yearly_data = {}
 		yearly_data_daily_energy = {}
+		yearly_energy_generation = []
 
 		for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']:
 			data_loss_corrected = self.calculate_photovoltaic_loss_correction(data, year)
@@ -196,9 +206,11 @@ class Photovoltaic_Plugin:
 
 			yearly_data[year] = Quantity(electric_energy_generation, 'J') 
 			yearly_data_daily_energy[year] = Quantity(hourly_to_daily_power(electric_energy_generation), 'J')			
+			yearly_energy_generation.append(electric_energy_generation.sum())
 
 		self.electric_energy_generation_yearly_data = yearly_data
 		self.electric_energy_generation_yearly_data_daily_energy = yearly_data_daily_energy
+		self.electric_energy_generation_yearly_array = Quantity(np.array(yearly_energy_generation), 'J')
 
 	def calculate_photovoltaic_loss_correction(self, data, year):
 		'''Calculation of yearly reduction in electricity production by PV array.

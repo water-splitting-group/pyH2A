@@ -192,17 +192,6 @@ class Stored_Power_Electrolysis_Plugin:
         }
 
         self.output_dict = {
-            "Technical Operating Parameters and Specifications": {
-                "Design output by year": {
-                    "Value": {
-                        "inserted_value": "new_h2_production",
-                        "type": {np.ndarray, },
-                        "dimension": "mass",
-                    }, 
-                    "optional": False,
-                    "description": "Plant design output in mass of H2 calculated from installed electrolysis power capacity and hourly power generation data."
-                },
-            },
             "Electrolyzer": {
                 "Actual stack replacement time": {
                     "Value": {
@@ -213,6 +202,16 @@ class Stored_Power_Electrolysis_Plugin:
                     "description": "Actual stack replacement time, \
                             calculated from replacement time and operation data."
                 },
+                "H2 production (yearly)": {
+                    "Value": {
+                        "inserted_value": "new_h2_production",
+                        "type": {np.ndarray, },
+                        "dimension": "mass",
+                    },
+                    "optional": False,
+                    "description": "Yearly hydrogen production, updated with additional hydrogen production from stored power."
+                },
+
             },
             "Power Consumption": {
                 "Stored energy electrolysis (yearly)": {
@@ -257,7 +256,8 @@ class Stored_Power_Electrolysis_Plugin:
                                                 self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-'])
 
         maximum_consumable_energy = remaining_run_time_per_year_in_seconds * electrolyzer_power_demand # result in Joules
-        
+
+        # Converting quantity of stored energy from daily to yearly
         stored_energy = {}
         for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']:
             stored_energy[year] = self.input_dict_resolved['Power Generation']['Stored energy (daily)']['Value'][year].unit['J']
