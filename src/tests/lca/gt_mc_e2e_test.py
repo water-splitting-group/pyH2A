@@ -36,7 +36,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-from pyH2A.LCA.LCA import LCA
+from pyH2A.Plugins.Life_Cycle_Assessment_Plugin import Life_Cycle_Assessment_Plugin
 from pyH2A.run_pyH2A import pyH2A
 from pyH2A.Analysis.Monte_Carlo_Analysis import Monte_Carlo_Analysis
 from pyH2A.Utilities.input_modification import convert_input_to_dictionary
@@ -82,8 +82,8 @@ _REFERENCE_RESULTS = np.array([
 
 
 def _clear_ram_cache():
-    for k in LCA._cache:
-        LCA._cache[k] = None
+    for k in Life_Cycle_Assessment_Plugin._cache:
+        Life_Cycle_Assessment_Plugin._cache[k] = None
     get_cache_paths.cache_clear()
 
 

@@ -2,8 +2,9 @@ import shutil
 from pathlib import Path
 
 import pytest
-from pyH2A.LCA.LCA import LCA
-from pyH2A.LCA.config import CONFIG
+from pyH2A.Plugins.Life_Cycle_Assessment_Plugin import Life_Cycle_Assessment_Plugin
+from pyH2A.Plugins.Life_Cycle_Assessment_Plugin.config import CONFIG
+from pyH2A.Utilities.functional_unit import resolve_functional_unit
 from pyH2A.Utilities.lca_utils import get_cache_paths
 
 
@@ -27,7 +28,13 @@ class DummyDCF:
     """DCF object for LCA with configurable PVE-GT foreground component values."""
 
     def __init__(self, h2_production, pv_electricity, electrolyzer, reverse_osmosis):
+        self.functional_unit = resolve_functional_unit('kg')
         self.inp = {
+            'Life Cycle Assessment': {
+                'Matrix Folder': {
+                    'Value': _MATRIX_FOLDER,
+                },
+            },
             'LCA - PVE GT Components': {
                 'H2 Production': {
                     'UUID': _UUID_H2_PRODUCTION,
@@ -58,10 +65,11 @@ class DummyDCF:
 
 
 def _clear_caches():
-    """LCA._cache is a process-wide class attribute, not per-instance, so it
-    must be cleared to avoid reusing another test's cached matrices."""
-    for k in LCA._cache:
-        LCA._cache[k] = None
+    """Life_Cycle_Assessment_Plugin._cache is a process-wide class attribute, not
+    per-instance, so it must be cleared to avoid reusing another test's cached
+    matrices."""
+    for k in Life_Cycle_Assessment_Plugin._cache:
+        Life_Cycle_Assessment_Plugin._cache[k] = None
     get_cache_paths.cache_clear()
     if _DISK_CACHE_DIR.exists():
         shutil.rmtree(_DISK_CACHE_DIR)
@@ -101,7 +109,7 @@ def test_lca(case):
     dcf = DummyDCF(**case["input"])
 
     # Run LCA
-    lca = LCA(_MATRIX_FOLDER, dcf)
+    lca = Life_Cycle_Assessment_Plugin(dcf, print_info=False)
     quantity = lca.lca_results[_GWP100_KEY]
     expected = case["expected"]
 
@@ -111,5 +119,5 @@ def test_lca(case):
     assert quantity.supplied_value == pytest.approx(expected["gwp100_value"], rel=tolerance)
 
     expected_unit = CONFIG[expected["gwp100_unit"]]
-    functional_unit_unit = str(LCA._cache['A0_column'][2][0])
+    functional_unit_unit = str(Life_Cycle_Assessment_Plugin._cache['A0_column'][2][0])
     assert quantity.supplied_unit == f"{expected_unit['unit']} / {functional_unit_unit}"

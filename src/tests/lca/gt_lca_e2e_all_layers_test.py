@@ -1,4 +1,4 @@
-"""Combined ground-truth end-to-end tests for pyH2A.LCA.LCA across the
+"""Combined ground-truth end-to-end tests for pyH2A.Plugins.Life_Cycle_Assessment_Plugin across the
 Smartphone_1Layer, Smartphone_2Layer, and Smartphone_3Layer toy models.
 
 Each scenario is run through ``pyH2A.run_pyH2A.pyH2A`` (the same entry point
@@ -29,7 +29,7 @@ breakdown of the same underlying bill of materials and elementary flows.
 
 Caching note
 ------------
-LCA._cache is a single process-wide class attribute (shared by every LCA
+Life_Cycle_Assessment_Plugin._cache is a single process-wide class attribute (shared by every LCA
 instance for the lifetime of the pytest process, not reset between tests or
 even between test files run in the same session), and it is not keyed by
 matrix folder, so running more than one matrix folder within the same
@@ -55,8 +55,8 @@ import shutil
 from pathlib import Path
 
 import pytest
-from pyH2A.LCA.LCA import LCA
-from pyH2A.LCA.config import CONFIG
+from pyH2A.Plugins.Life_Cycle_Assessment_Plugin import Life_Cycle_Assessment_Plugin
+from pyH2A.Plugins.Life_Cycle_Assessment_Plugin.config import CONFIG
 from pyH2A.run_pyH2A import pyH2A
 from pyH2A.Utilities.input_modification import convert_input_to_dictionary
 from pyH2A.Utilities.lca_utils import get_cache_paths
@@ -71,8 +71,8 @@ _INPUT_FILES_DIR = _HERE / 'data' / 'input_files'
 # ── Shared helpers ─────────────────────────────────────────────────────────
 
 def _clear_ram_only():
-    for k in LCA._cache:
-        LCA._cache[k] = None
+    for k in Life_Cycle_Assessment_Plugin._cache:
+        Life_Cycle_Assessment_Plugin._cache[k] = None
 
 
 def _clear_disk(matrix_folder):
@@ -169,7 +169,7 @@ def test_scenarios(group, scenario_index):
     from a previous session or from before a refactor."""
     scenarios = _SCENARIOS_BY_GROUP[group]
     if scenario_index == 0:
-        # since one pytest session runs in one process, LCA._cache should be deleted for every group's first scenario (cold start) 
+        # since one pytest session runs in one process, Life_Cycle_Assessment_Plugin._cache should be deleted for every group's first scenario (cold start)
         # to avoid reusing another group's cached matrices.
         _clear_ram_only()
         # clear the disk cache path, so that the LCA run will recompute all artifacts from scratch between groups.
@@ -192,7 +192,7 @@ def test_scenarios(group, scenario_index):
     print(f'\n  pyH2A={quantity.supplied_value:.6f}  reference={expected_value:.6f}  diff={diff_pct:+.4f}%')
     assert quantity.supplied_value == pytest.approx(expected_value, rel=1e-3)
     expected = CONFIG[expected_unit]
-    functional_unit_unit = str(LCA._cache['A0_column'][2][0])
+    functional_unit_unit = str(Life_Cycle_Assessment_Plugin._cache['A0_column'][2][0])
     assert quantity.supplied_unit == f"{expected['unit']} / {functional_unit_unit}"
 
 
