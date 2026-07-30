@@ -61,8 +61,9 @@ class Life_Cycle_Assessment_Plugin:
         Raised when no LCA input tables are found in ``dcf.inp``, when a UUID
         present in the technosphere matrix is absent from the LCA input tables,
         when the declared Functional Unit's dimension does not match the LCA
-        matrix export's functional-flow dimension (see :meth:`_run`), or when
-        that flow's unit is not recognized by the unit handler.
+        matrix export's functional-flow dimension (see
+        :meth:`apply_component_updates`), or when that flow's unit is not
+        recognized by the unit handler.
     ZeroDivisionError
         Raised when the Sherman-Morrison denominator is too small for a stable
         rank-1 update.
@@ -105,31 +106,12 @@ class Life_Cycle_Assessment_Plugin:
         }
 
     def _run(self, dcf):
-        '''Resolve the matrix folder, run the full LCA calculation workflow, and
-        cross-check the declared Functional Unit against the matrix's own
-        functional flow.
+        '''Resolve the matrix folder and run the full LCA calculation workflow.
 
         Loads all matrices, prepares the class-level cache, cross-checks the
-        Functional Unit, builds the scenario scaling vector via Sherman-Morrison
-        update, and computes LCIA results.
-
-        Raises
-        ------
-        ValueError
-            Raised when the LCA matrix export's functional-flow unit is not
-            recognized by the unit handler, or when its dimension does not match
-            ``dcf.functional_unit.dimension``.
-
-        Notes
-        -----
-        The Functional Unit cross-check compares physical dimension (e.g.
-        ``'mass'``), not exact unit string, so a Functional Unit of ``kg`` is
-        considered consistent with an LCA matrix export whose functional flow is
-        in ``g`` (both ``'mass'``), but not with one whose functional flow is in
-        ``item`` or ``MJ``. It runs right after :meth:`initialize_all_artifacts`
-        populates ``A0_column``, so a mismatch is caught before the
-        (comparatively cheap) remaining steps (:meth:`apply_component_updates`,
-        :meth:`build_scaling_vector`, :meth:`perform_lca`) run.
+        declared Functional Unit against the matrix's own functional flow (see
+        :meth:`apply_component_updates`), builds the scenario scaling vector via
+        Sherman-Morrison update, and computes LCIA results.
         '''
 
         self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Life_Cycle_Assessment_Plugin')
@@ -137,30 +119,6 @@ class Life_Cycle_Assessment_Plugin:
         self.matrix_folder = self.input_dict_resolved['Life Cycle Assessment']['Matrix Folder']['Value']
 
         self.initialize_all_artifacts()
-
-        # openLCA flow units sometimes carry a pluralization suffix (e.g. "Item(s)")
-        # that the unit parser cannot handle, since parentheses are grouping syntax.
-        lca_flow_unit = str(Life_Cycle_Assessment_Plugin._cache['A0_column'][2][0]).replace('(s)', '')
-
-        try:
-            lca_flow_dimension = unit_config.FLAT_DIMENSIONS[lca_flow_unit]
-        except KeyError:
-            raise ValueError(
-                f"Unrecognized unit '{lca_flow_unit}' for the LCA matrix export's functional flow; "
-                f"cannot cross-check against the declared Functional Unit '{dcf.functional_unit.unit}'."
-            )
-
-        if lca_flow_dimension != dcf.functional_unit.dimension:
-            raise ValueError(
-                f"Functional Unit mismatch: the input file declares Functional Unit "
-                f"'{dcf.functional_unit.unit}' (dimension '{dcf.functional_unit.dimension}'), but the "
-                f"LCA matrix export's functional flow is in '{lca_flow_unit}' (dimension "
-                f"'{lca_flow_dimension}'). Cost results (per {dcf.functional_unit.unit}) and LCA results "
-                f"(per {lca_flow_unit}) would otherwise be silently expressed on two different physical "
-                "bases. Update the '# Functional Unit' table's Unit to a unit with the same dimension as "
-                "the LCA matrix's functional flow, or use a different matrix export."
-            )
-
         self.apply_component_updates(dcf)
         self.build_scaling_vector()
         self.perform_lca()
@@ -311,7 +269,8 @@ class Life_Cycle_Assessment_Plugin:
             pass
 
     def apply_component_updates(self, dcf):
-        '''Resolve LCA input values and store them aligned to the technosphere column.
+        '''Cross-check the declared Functional Unit, then resolve LCA input values
+        and store them aligned to the technosphere column.
 
         Reads all LCA input tables from ``dcf.inp``, resolves path-based
         references via :func:`process_table`, then matches each component to
@@ -324,23 +283,62 @@ class Life_Cycle_Assessment_Plugin:
         ----------
         dcf : pyH2A.Discounted_Cash_Flow
             Discounted cash flow object whose input dictionary contains at
-            least one table whose name starts with ``"LCA"`` (case-insensitive).
+            least one table whose name starts with ``"LCA"`` (case-insensitive),
+            and whose resolved ``functional_unit`` is cross-checked against the
+            LCA matrix export's functional flow (see
+            :func:`~pyH2A.Utilities.functional_unit.resolve_functional_unit`).
 
         Raises
         ------
         ValueError
-            Raised when no LCA tables are found in ``dcf.inp``, or when a
-            UUID present in the cached technosphere column is absent from the
-            input tables (every nonzero entry must be explicitly specified).
+            Raised when the LCA matrix export's functional-flow unit is not
+            recognized by the unit handler, when its dimension does not match
+            ``dcf.functional_unit.dimension``, when no LCA tables are found in
+            ``dcf.inp``, or when a UUID present in the cached technosphere
+            column is absent from the input tables (every nonzero entry must be
+            explicitly specified).
 
         Notes
         -----
+        The Functional Unit cross-check compares physical dimension (e.g.
+        ``'mass'``), not exact unit string, so a Functional Unit of ``kg`` is
+        considered consistent with an LCA matrix export whose functional flow is
+        in ``g`` (both ``'mass'``), but not with one whose functional flow is in
+        ``item`` or ``MJ``. It runs first, before any other work in this method,
+        so a mismatch is caught before the LCA component matching below and the
+        remaining (comparatively cheap) steps (:meth:`build_scaling_vector`,
+        :meth:`perform_lca`) run.
+
         Array-like ``Value`` entries are reduced to a scalar by summation.
         The ordering of ``self.component_values`` follows ``A0_column``, not
         the order of rows in the input tables. Each component's declared
         ``Unit`` is converted to the flow unit cached in ``A0_column`` via
         :class:`~pyH2A.Utilities.Unit_Handler.quantity.Quantity`.
         '''
+
+        # openLCA flow units sometimes carry a pluralization suffix (e.g. "Item(s)")
+        # that the unit parser cannot handle, since parentheses are grouping syntax.
+        lca_flow_unit = str(Life_Cycle_Assessment_Plugin._cache['A0_column'][2][0]).replace('(s)', '')
+
+        try:
+            lca_flow_dimension = unit_config.FLAT_DIMENSIONS[lca_flow_unit]
+        except KeyError:
+            raise ValueError(
+                f"Unrecognized unit '{lca_flow_unit}' for the LCA matrix export's functional flow; "
+                f"cannot cross-check against the declared Functional Unit '{dcf.functional_unit.unit}'."
+            )
+
+        if lca_flow_dimension != dcf.functional_unit.dimension:
+            raise ValueError(
+                f"Functional Unit mismatch: the input file declares Functional Unit "
+                f"'{dcf.functional_unit.unit}' (dimension '{dcf.functional_unit.dimension}'), but the "
+                f"LCA matrix export's functional flow is in '{lca_flow_unit}' (dimension "
+                f"'{lca_flow_dimension}'). Cost results (per {dcf.functional_unit.unit}) and LCA results "
+                f"(per {lca_flow_unit}) would otherwise be silently expressed on two different physical "
+                "bases. Update the '# Functional Unit' table's Unit to a unit with the same dimension as "
+                "the LCA matrix's functional flow, or use a different matrix export."
+            )
+
         lca_table_names = [table_name for table_name in dcf.inp if table_name.lower().startswith('lca')]
         if not lca_table_names:
             raise ValueError("No LCA component tables found in input. Define at least one table whose name starts with 'LCA'.")
