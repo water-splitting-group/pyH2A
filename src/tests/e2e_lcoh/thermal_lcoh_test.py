@@ -1,6 +1,6 @@
 import pytest
 from pyH2A.run_pyH2A import pyH2A
-
+from pyH2A.Utilities.Unit_Handler import Quantity
 
 @pytest.mark.parametrize(
     "case",
@@ -10,49 +10,49 @@ from pyH2A.run_pyH2A import pyH2A
                 "input_file": "src/tests/end_to_end/Thermal/Thermal_Base_test.md",
                 "output_directory": "src/tests/end_to_end/",
             },
-            "expected": {"lcoh": 3.270581409704611},
+            "expected": {"lcoh":  Quantity(3.270581409704611, "USD/kg")},
         },
         {
             "input": {
                 "input_file": "src/tests/end_to_end/Thermal/upper_level_files/thermal_capital_cost_test.md",
                 "output_directory": "src/tests/end_to_end/",
             },
-            "expected": {"lcoh": 3.7271856030880977},
+            "expected": {"lcoh":  Quantity(3.7271856030880977, "USD/kg")},
         },
         {
             "input": {
                 "input_file": "src/tests/end_to_end/Thermal/upper_level_files/thermal_labor_operating_cost_test.md",
                 "output_directory": "src/tests/end_to_end/",
             },
-            "expected": {"lcoh": 10.202394944067255},
+            "expected": {"lcoh":  Quantity(10.202394944067255, "USD/kg")},
         },
         {
             "input": {
                 "input_file": "src/tests/end_to_end/Thermal/upper_level_files/thermal_production_test.md",
                 "output_directory": "src/tests/end_to_end/",
             },
-            "expected": {"lcoh": 3.6789953252124796},
+            "expected": {"lcoh":  Quantity(3.6789953252124796, "USD/kg")},
         },
         {
             "input": {
                 "input_file": "src/tests/end_to_end/Thermal/upper_level_files/thermal_replacement_test.md",
                 "output_directory": "src/tests/end_to_end/",
             },
-            "expected": {"lcoh": 3.2544152106369726},
+            "expected": {"lcoh":  Quantity(3.2544152106369726, "USD/kg")},
         },
         {
             "input": {
                 "input_file": "src/tests/end_to_end/Thermal/upper_level_files/thermal_solar_thermal_test.md",
                 "output_directory": "src/tests/end_to_end/",
             },
-            "expected": {"lcoh": 1.6440086736860908},
+            "expected": {"lcoh":  Quantity(1.6440086736860908, "USD/kg")},
         },
         {
             "input": {
                 "input_file": "src/tests/end_to_end/Thermal/upper_level_files/thermal_variable_operating_cost_test.md",
                 "output_directory": "src/tests/end_to_end/",
             },
-            "expected": {"lcoh": 8.671474184241813},
+            "expected": {"lcoh":  Quantity(8.671474184241813, "USD/kg")},
         },
     ],
     ids=[
@@ -86,6 +86,10 @@ def test_e2e_lcoh(case):
     # Very strict tolerance to detect economic regression
     tolerance = 1e-13
 
-    assert result.base_case.h2_cost == pytest.approx(
-        case["expected"]["lcoh"], abs=tolerance
+    obtained = result.base_case.inp['Dependent Variables']['Levelized cost']['Value'].unit['USD/kg']
+    expected = case["expected"]["lcoh"].unit['USD/kg']
+    
+    assert obtained == pytest.approx(
+        expected,
+        abs=tolerance
     )
