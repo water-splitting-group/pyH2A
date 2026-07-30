@@ -2,7 +2,8 @@
 
 Name | Value
 --- | ---
-File A | src/tests/end_to_end/Photocatalytic/Photocatalytic_Base_test.md
+Default TEA | pyH2A.Config~Defaults_TEA.md
+File A | src/tests/end_to_end/Photocatalytic_Base_test.md
 
 # Reactor Baggies
 
