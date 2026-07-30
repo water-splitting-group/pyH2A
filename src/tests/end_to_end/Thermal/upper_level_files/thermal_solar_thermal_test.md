@@ -8,7 +8,7 @@ File A | src/tests/end_to_end/Thermal/Thermal_Base_test.md
 
 Name | Value | Unit | Comment 
 --- | --- | --- 
-Plant design capacity | 2,000 | kg/day | 2.0x change from reference value
+Plant design capacity | 2,000.0 | kg/day | 2.0x change from reference value
 
 # Solar-to-Hydrogen Efficiency
 
