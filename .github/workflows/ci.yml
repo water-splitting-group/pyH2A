@@ -35,29 +35,36 @@ jobs:
           uv pip install --system -e .
 
       - name: Run tests with coverage
+        if: github.event_name == 'push'
         run: |
-          uv run pytest --cov=pyH2A --cov-report=xml:coverage.xml --cov-report=term-missing src/tests/ -v
+          mkdir -p coverage
+          uv run pytest \
+            --cov=pyH2A \
+            --cov-report=xml:coverage/coverage.xml \
+            --cov-report=term-missing \
+            src/tests/ -v
 
       - name: Generate coverage badge
+        if: github.event_name == 'push'
         run: |
-          uv pip install --system "genbadge[coverage]"
           mkdir -p badges
+          uv pip install --system "genbadge[coverage]"
           genbadge coverage \
-            -i coverage.xml \
+            -i coverage/coverage.xml \
             -o badges/coverage_badge.svg
 
-      - name: Commit badge
+      - name: Commit coverage report and badge
         if: github.event_name == 'push'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git add badges/coverage_badge.svg
+          git add coverage.xml badges/coverage_badge.svg
 
           if git diff --cached --quiet; then
-            echo "No badge changes"
+            echo "No coverage changes"
             exit 0
           fi
 
-          git commit -m "chore: update coverage badge"
+          git commit -m "chore: update coverage report and badge"
           git push
