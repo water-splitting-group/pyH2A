@@ -2,7 +2,8 @@
 
 Name | Value
 --- | ---
-File A | src/tests/end_to_end/PEC/PEC_Base_test.md
+File A | src/tests/end_to_end/PEC_Base_test.md
+Default TEA | pyH2A.Config~Defaults_TEA.md
 
 # Fixed Operating Costs
 
