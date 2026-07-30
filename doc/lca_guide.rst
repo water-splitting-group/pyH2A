@@ -359,8 +359,8 @@ tens of seconds for a full factorisation.
 For a system with four foreground components, ``basis_component`` has shape ``(n, 4)`` where
 ``n`` is the total number of processes. The ``(n, 4)`` multiply replaces an ``(n³)`` factorisation.
 
-See :class:`~pyH2A.LCA.LCA.LCA` for the complete API reference and full mathematical
-derivation.
+See :class:`~pyH2A.Plugins.Life_Cycle_Assessment_Plugin.Life_Cycle_Assessment_Plugin` for the
+complete API reference and full mathematical derivation.
 
 Troubleshooting
 ===============

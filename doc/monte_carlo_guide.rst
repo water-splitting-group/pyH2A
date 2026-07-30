@@ -63,7 +63,8 @@ Monte_Carlo_Analysis table
   - ``h2_cost`` — the levelized cost of hydrogen (:attr:`~pyH2A.Discounted_Cash_Flow.Discounted_Cash_Flow.h2_cost`).
   - ``Climate change``, ``Cumulative energy demand``, or
     ``Climate change no LT - Global warming potential (GWP100) no LT`` — an LCA impact category
-    result (:attr:`~pyH2A.LCA.LCA.LCA.lca_results`). Requires an active ``# Life Cycle
+    result (:attr:`~pyH2A.Plugins.Life_Cycle_Assessment_Plugin.Life_Cycle_Assessment_Plugin.lca_results`).
+    Requires an active ``# Life Cycle
     Assessment`` section (see :doc:`lca_guide`); the string must match one of the impact names
     produced by the openLCA matrix export in use.
 
