@@ -1,16 +1,17 @@
 import pytest
 from pyH2A.run_pyH2A import pyH2A
+from pyH2A.Utilities.Unit_Handler import Quantity
 
 @pytest.mark.parametrize(
     "case",
     [
         {
             "input": {
-                "input_file": "src/tests/end_to_end/PV_E/PV_E_Base_test.md",
+                "input_file": "src/tests/end_to_end/PV_E_Base_test.md",
                 "output_directory": "src/tests/end_to_end/",
             },
             "expected": {
-                "lcoh": 4.194302976489675
+                "lcoh": Quantity(4.194302976489675, "USD/kg")
             },
         },
         {
@@ -19,7 +20,7 @@ from pyH2A.run_pyH2A import pyH2A
                 "output_directory": "src/tests/end_to_end/",
             },
             "expected": {
-                "lcoh": 40.1548227860604
+                "lcoh": Quantity(40.1548227860604, "USD/kg")
             },
         },
         {
@@ -28,7 +29,7 @@ from pyH2A.run_pyH2A import pyH2A
                 "output_directory": "src/tests/end_to_end/",
             },
             "expected": {
-                "lcoh": 6.859428387742992
+                "lcoh": Quantity(6.859428387742992, "USD/kg")
             },
         },
         {
@@ -37,7 +38,7 @@ from pyH2A.run_pyH2A import pyH2A
                 "output_directory": "src/tests/end_to_end/",
             },
             "expected": {
-                "lcoh": 19.8641278811002
+                "lcoh": Quantity(19.8641278811002, "USD/kg")
             },
         },
         {
@@ -46,7 +47,7 @@ from pyH2A.run_pyH2A import pyH2A
                 "output_directory": "src/tests/end_to_end/",
             },
             "expected": {
-                "lcoh": 4.148928019459272
+                "lcoh": Quantity(4.148928019459272, "USD/kg")
             },
         },
         {
@@ -55,7 +56,7 @@ from pyH2A.run_pyH2A import pyH2A
                 "output_directory": "src/tests/end_to_end/",
             },
             "expected": {
-                "lcoh": 2.657467777523577
+                "lcoh": Quantity(2.657467777523577, "USD/kg")
             },
         },
         {
@@ -64,7 +65,7 @@ from pyH2A.run_pyH2A import pyH2A
                 "output_directory": "src/tests/end_to_end/",
             },
             "expected": {
-                "lcoh": 3.7923599041471188
+                "lcoh": Quantity(3.7923599041471188, "USD/kg")
             },
         },
         {
@@ -73,7 +74,7 @@ from pyH2A.run_pyH2A import pyH2A
                 "output_directory": "src/tests/end_to_end/",
             },
             "expected": {
-                "lcoh": 3.3857936137606788
+                "lcoh": Quantity(3.3857936137606788, "USD/kg")
             },
         },
         {
@@ -82,7 +83,7 @@ from pyH2A.run_pyH2A import pyH2A
                 "output_directory": "src/tests/end_to_end/",
             },
             "expected": {
-                "lcoh": 7.397009679328874
+                "lcoh": Quantity(7.397009679328874, "USD/kg")
             },
         },
     ],
@@ -115,14 +116,17 @@ def test_e2e_lcoh(case):
     input_data = case["input"]
     
     result = pyH2A(
-       input_data["input_file"], 
+        input_data["input_file"], 
         input_data["output_directory"]
     )
     
     # Very strict tolerance to detect economic regression
     tolerance = 1e-13
+
+    obtained = result.base_case.inp['Dependent Variables']['Levelized cost']['Value'].unit['USD/kg']
+    expected = case["expected"]["lcoh"].unit['USD/kg']
     
-    assert result.base_case.h2_cost == pytest.approx(
-        case["expected"]["lcoh"],
+    assert obtained == pytest.approx(
+        expected,
         abs=tolerance
     )
