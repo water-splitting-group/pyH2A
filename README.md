@@ -58,7 +58,7 @@ Unit tests for all functions and classes in `src/pyH2A/Utilities/lca_utils.py`:
 | `_FactorizedSolver` | solver wrapper for repeated solves |
 
 ### test_lca.py — 59 tests
-Unit tests for all public methods in `src/pyH2A/LCA/LCA.py`:
+Unit tests for all public methods in `src/pyH2A/Plugins/Life_Cycle_Assessment_Plugin/Life_Cycle_Assessment_Plugin.py`:
 
 | Test Class | What is tested |
 |---|---|
