@@ -3,6 +3,7 @@
 Name | Value
 --- | ---
 File A | data/PV_E/Base/PV_E_Base.md
+Defaults | pyH2A.Config~Defaults_TEA_LCA.md
 
 # Life Cycle Assessment 
 
