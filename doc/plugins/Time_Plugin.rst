@@ -173,5 +173,5 @@ which contains:
 These quantities are subsequently used by other plugins whenever time indexing, yearly arrays, inflation corrections, or project scheduling information are required.    
 
 
-.. automodule:: pyH2A.Plugins.Time_Plugin
+.. automodule:: pyH2A.Plugins.Core.Time_Plugin
     :members:
