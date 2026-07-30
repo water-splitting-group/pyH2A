@@ -41,14 +41,28 @@ def import_plugin(plugin_name, plugin_module):
 	'''
 
 	if plugin_module is True:
-		prefix = 'pyH2A.Plugins.'
+		prefix = 'pyH2A.Plugins'
 	else:
-		prefix = 'pyH2A.Analysis.'
+		prefix = 'pyH2A.Analysis'
 
-	plugin = import_module(prefix + plugin_name)
-	plugin_class = getattr(plugin, plugin_name)
+	PLUGIN_FOLDERS = [
+		"Core",
+		"Energy",
+		"Finance",
+		"Hydrogen",
+		"Process_Units",
+		"Testing",
+	]
 
-	return plugin_class
+
+	for folder in PLUGIN_FOLDERS:
+		try:
+			module = import_module(
+				f"{prefix}.{folder}.{plugin_name}"
+			)
+			return getattr(module, plugin_name)
+		except ModuleNotFoundError:
+			continue
 
 def execute_plugin(plugin_name, plugs_dict, plugin_module = True, 
 				   nested_dictionary = False, **kwargs):
