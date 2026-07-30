@@ -116,7 +116,7 @@ def test_lca(case):
     # Tolerance
     tolerance = 1e-8
 
-    assert quantity.supplied_value == pytest.approx(expected["gwp100_value"], rel=tolerance)
+    assert quantity.supplied_value == pytest.approx(expected["gwp100_value"], rel=1e-8)
 
     expected_unit = CONFIG[expected["gwp100_unit"]]
     functional_unit_unit = str(Life_Cycle_Assessment_Plugin._cache['A0_column'][2][0])

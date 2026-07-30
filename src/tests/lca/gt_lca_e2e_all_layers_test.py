@@ -190,7 +190,7 @@ def test_scenarios(group, scenario_index):
     quantity = lca.lca_results[impact_name]
     diff_pct = (quantity.supplied_value - expected_value) / expected_value * 100
     print(f'\n  pyH2A={quantity.supplied_value:.6f}  reference={expected_value:.6f}  diff={diff_pct:+.4f}%')
-    assert quantity.supplied_value == pytest.approx(expected_value, rel=1e-3)
+    assert quantity.supplied_value == pytest.approx(expected_value, rel=1e-8)
     expected = CONFIG[expected_unit]
     functional_unit_unit = str(Life_Cycle_Assessment_Plugin._cache['A0_column'][2][0])
     assert quantity.supplied_unit == f"{expected['unit']} / {functional_unit_unit}"

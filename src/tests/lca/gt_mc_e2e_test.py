@@ -124,4 +124,4 @@ def test_monte_carlo_pipeline_matches_seed42_reference(monkeypatch):
     np.random.seed(_SEED)
     result = pyH2A(str(_INPUT_FILE), str(_HERE / 'data' / 'input_files'))
     mc = result.meta_modules['Monte_Carlo_Analysis']['Module']
-    np.testing.assert_allclose(mc.results, _REFERENCE_RESULTS, rtol=1e-5)
+    np.testing.assert_allclose(mc.results, _REFERENCE_RESULTS, rtol=1e-8)
