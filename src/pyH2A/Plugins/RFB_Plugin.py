@@ -17,8 +17,8 @@ input_dict = {
             "description": "Dictionary containing all time-related quantities."
         }, 
     },  	
-	"RFB": {	
-		"Battery power": {
+	"Battery": {	
+		"Power": {
 			"Value": {
 				"type": {float, int,},
 				"bounds": (0, None),
@@ -38,7 +38,7 @@ input_dict = {
 			},
 			"description": "Power of each stack."
 		},
-		"Storage capacity": {
+		"Design capacity": {
 			"Value": {
 				"type": {float, int,},
 				"bounds": (0, None),
@@ -46,7 +46,7 @@ input_dict = {
 			"Unit": {
 				"dimension": "energy",
 			},
-			"description": "Storage capacity of the battery."
+			"description": "Design capacity of the battery."
 		},		
 		"Energy density": {
 			"Value": {
@@ -58,7 +58,7 @@ input_dict = {
 			},
 			"description": "Capacity per mass of electrolyte."
 		},	
-		"Capacity fade": {
+		"Capacity loss per year": {
 			"Value": {
 				"type": {float, int,},
 				"bounds": (0, None),
@@ -117,7 +117,7 @@ input_dict = {
 }
 
 output_dict = {
-	"RFB": {	
+	"Battery": {	
 		"Number of cell stacks": {
 			"Value": {
 				"inserted_value": "number_cell_stacks",
@@ -142,7 +142,7 @@ output_dict = {
 				"type": {float,},
 				"dimension": "mass",
 			},
-			"description": "Mass of electrolyte needed during each operation year to maintain capacity fade.",
+			"description": "Mass of electrolyte needed during each operation year to maintain capacity.",
 			"optional": False,
 		},
 		"Total amount of electrolyte": {
@@ -202,15 +202,15 @@ class RFB_Plugin:
 	----------
     Time > Years > Value : dict
         Dictionary containing plant life time-related quantities
-    RFB > Battery power > Value : float or int
+    Battery > Power > Value : float or int
         Total power of the battery
-    RFB > Power per cell stack > Value : float or int
+    Battery > Power per cell stack > Value : float or int
         Power of each stack	
-	RFB > Storage capacity > Value : float or int
-		Storage capacity of the battery	
-	RFB > Energy density > Value : float or int
+	Battery > Design capacity > Value : float or int
+		Design capacity of the battery	
+	Battery > Energy density > Value : float or int
 		Capacity per mass of electrolyte
-	RFB > Capacity fade > Value : float or int
+	Battery > Capacity loss per year > Value : float or int
 		Yearly capacity loss of the electrolyte		
 	Electrolyte Impact > Specific GWP > Value : float or int, optional
 		Mass of CO2 equivalent per mass of electrolyte produced
@@ -223,13 +223,13 @@ class RFB_Plugin:
 
 	Returns
 	-------
-	RFB > Number of cell stacks > Value : float
+	Battery > Number of cell stacks > Value : float
 		Number of cell stacks to provide the required power
-	RFB > Initial amount of electrolyte > Value : float
+	Battery > Initial amount of electrolyte > Value : float
 		Mass of electrolyte present in the battery upon startup
-	RFB > Yearly amount of replacement electrolyte > Value : float
-		Mass of electrolyte needed during each operation year to maintain capacity fade
-	RFB > Total amount of electrolyte > Value : float
+	Battery > Yearly amount of replacement electrolyte > Value : float
+		Mass of electrolyte needed during each operation year to maintain capacity 
+	Battery > Total amount of electrolyte > Value : float
 		Mass of electrolyte needed during the entire battery lifetime
 	Electrolyte Impact > Total GWP > Value : float, optional
 		GWP associated to the electolyte amount used during the entire battery lifetime	
@@ -257,24 +257,24 @@ class RFB_Plugin:
 	def calculate_cell_number(self):
 
 		self.number_cell_stacks = Quantity(
-										self.input_dict_resolved['RFB']['Battery power']['Value'].unit['W']
+										self.input_dict_resolved['Battery']['Power']['Value'].unit['W']
 										/
-										self.input_dict_resolved['RFB']['Power per cell stack']['Value'].unit['W'], 
+										self.input_dict_resolved['Battery']['Power per cell stack']['Value'].unit['W'], 
 										'-'
 										)
 
 	def calculate_electrolyte_amount(self):
 
 		self.initial_electrolyte_amount = Quantity(
-												self.input_dict_resolved['RFB']['Storage capacity']['Value'].unit['J']
+												self.input_dict_resolved['Battery']['Design capacity']['Value'].unit['J']
 												/
-												self.input_dict_resolved['RFB']['Energy density']['Value'].unit['J/kg'], 
+												self.input_dict_resolved['Battery']['Energy density']['Value'].unit['J/kg'], 
 												'kg')
 
 		# Assumption: the electrolyte that lost x % of its capacity is a mixture of x % damaged molecules and (1-x) % fully functional molecules, which can be separated
 		# The fraction of fresh electrolyte to inject each year is therefore equal to the yearly relative capacity loss (x %)
 		self.yearly_electrolyte_amount = Quantity(
-												self.input_dict_resolved['RFB']['Capacity fade']['Value'].unit['-']
+												self.input_dict_resolved['Battery']['Capacity loss per year']['Value'].unit['-']
 												*
 												self.initial_electrolyte_amount.unit['kg'], 
 												'kg')

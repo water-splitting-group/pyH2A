@@ -28,12 +28,12 @@ class DummyDCF:
                     "Processed": "Yes",                    
                 },
             },            
-            "RFB": {
-                "Battery power": {"Value": Battery_power, "Unit" : "MW"},
+            "Battery": {
+                "Power": {"Value": Battery_power, "Unit" : "MW"},
                 "Power per cell stack": {"Value": Power_per_cell_stack, "Unit" : "kW"},
-                "Storage capacity": {"Value": Storage_capacity, "Unit" : "MWh"},
+                "Design capacity": {"Value": Storage_capacity, "Unit" : "MWh"},
                 "Energy density": {"Value": Energy_density, "Unit" : "Wh/kg"},
-                "Capacity fade": {"Value": Capacity_fade, "Unit" : "-"},
+                "Capacity loss per year": {"Value": Capacity_fade, "Unit" : "-"},
             },  
             "Electrolyte Impact": {
                 "Specific GWP": {"Value": Specific_GWP, "Unit" : "kg/kg"},

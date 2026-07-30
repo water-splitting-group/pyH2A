@@ -88,10 +88,14 @@ Efficiency | 22% | None | - | Only used for area calculation
 
 Name | Value | Unit | Comment
 --- | --- | --- | ---
-Design capacity | 800 | MWh | Full design capacity
+Design capacity | 200 | MWh | Full design capacity
 Lowest discharge level | 20% | - | Lowest level to which battery can be discharged
 Capacity loss per year | 1% | - | Loss of capacity per year
 Round trip efficiency | 100% | - | For lithium ion battery
+Power | 5 | MW
+Power per cell stack | 10 | kW
+Energy density | 40 | Wh/kg
+
 
 # Reverse Osmosis
 
@@ -171,16 +175,6 @@ Name | Cost_Value | Cost_Path | Cost_Unit | Frequency_Value | Frequency_Unit | C
 --- | --- | --- | --- | ---
 Electrolyzer stack replacement | 40% | {Direct Capital Costs - Electrolyzer > Electrolyzer CAPEX > Value, USD} | USD | {Electrolyzer > Actual stack replacement time > Value, year} | year | Based on Chang 2020
 Electrolyte replacement | 20 | {RFB > Yearly amount of replacement electrolyte > Value, kg} | USD | 1 | year | assuming alactrolyte cost is 20 USD per kg
-
-# RFB
-
-Name | Value | Unit
---- | --- | ---
-Battery power | 5 | MW
-Power per cell stack | 10 | kW
-Storage capacity | 200 | MWh
-Energy density | 40 | Wh/kg
-Capacity fade | 1% | -
 
 # Electrolyte Impact
 
