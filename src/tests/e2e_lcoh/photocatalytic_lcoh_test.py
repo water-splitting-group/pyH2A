@@ -1,16 +1,17 @@
 import pytest
 from pyH2A.run_pyH2A import pyH2A
+from pyH2A.Utilities.Unit_Handler import Quantity
 
 @pytest.mark.parametrize(
     "case",
     [
         {
             "input": {
-                "input_file": "src/tests/end_to_end/Photocatalytic/Photocatalytic_Base_test.md",
+                "input_file": "src/tests/end_to_end/Photocatalytic_Base_test.md",
                 "output_directory": "src/tests/end_to_end/",
             },
             "expected": {
-                "lcoh": 185.44329282256822
+                "lcoh":  Quantity(185.44329282256822, "USD/kg")
             },
         },
         {
@@ -19,7 +20,7 @@ from pyH2A.run_pyH2A import pyH2A
                 "output_directory": "src/tests/end_to_end/",
             },
             "expected": {
-                "lcoh": 99.6855777266403
+                "lcoh": Quantity(99.6855777266403, "USD/kg")
             },
         },
         {
@@ -28,7 +29,7 @@ from pyH2A.run_pyH2A import pyH2A
                 "output_directory": "src/tests/end_to_end/",
             },
             "expected": {
-                "lcoh": 376.5146709131457
+                "lcoh": Quantity(376.5146709131457, "USD/kg")
             },
         },
         {
@@ -37,7 +38,7 @@ from pyH2A.run_pyH2A import pyH2A
                 "output_directory": "src/tests/end_to_end/",
             },
             "expected": {
-                "lcoh": 184.47274187266245
+                "lcoh": Quantity(184.47274187266245, "USD/kg")
             },
         },
         {
@@ -46,7 +47,7 @@ from pyH2A.run_pyH2A import pyH2A
                 "output_directory": "src/tests/end_to_end/",
             },
             "expected": {
-                "lcoh": 642.6546026635854
+                "lcoh": Quantity(642.6546026635854, "USD/kg")
             },
         },
     ],
@@ -81,8 +82,11 @@ def test_e2e_lcoh(case):
     
     # Very strict tolerance to detect economic regression
     tolerance = 1e-13
+
+    obtained = result.base_case.inp['Dependent Variables']['Levelized cost']['Value'].unit['USD/kg']
+    expected = case["expected"]["lcoh"].unit['USD/kg']
     
-    assert result.base_case.h2_cost == pytest.approx(
-        case["expected"]["lcoh"],
+    assert obtained == pytest.approx(
+        expected,
         abs=tolerance
     )
