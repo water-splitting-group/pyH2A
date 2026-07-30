@@ -1,5 +1,5 @@
 import pytest
-from pyH2A.Plugins.Battery_Plugin import Battery_Plugin
+from pyH2A.Plugins.Energy.Battery_Plugin import Battery_Plugin
 import numpy as np
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 from pyH2A.Utilities.functional_unit import resolve_functional_unit
