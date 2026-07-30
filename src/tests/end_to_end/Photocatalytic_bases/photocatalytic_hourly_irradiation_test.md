@@ -44,7 +44,7 @@ Array Azimuth (degrees) | 30 | Flat baggies on the ground.
 Nominal Operating Temperature (Celsius) | 55
 Mismatch Derating | 88%
 Dirt Derating | 88% | Values taken from Chang 2020, analogues to silicon PV.
-Temperature Coefficient (per Celsius) | 0.0% | No decrease on photocatalyst activity with higher temperature assumed.
+Temperature Coefficient (per Celsius) | 0% | No decrease on photocatalyst activity with higher temperature assumed.
 
 # Solar Input
 
