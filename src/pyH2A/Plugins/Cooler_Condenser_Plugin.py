@@ -248,7 +248,7 @@ class Cooler_Condenser_Plugin:
 
 
     def outlet_stream_properties(self):
-        '''Using inlet stream and compressor characteristics, shaft work and outlet stream porperties are calculated.
+        '''Calculate the mass flowrate, composition and enthalpy at the outlet of the main stream and the eventual condensed water stream.
         '''
 
         # outlet temperature of the main stream is imposed:
