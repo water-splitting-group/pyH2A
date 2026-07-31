@@ -2,7 +2,7 @@
 
 Name | Value
 --- | ---
-Defaults | pyH2A.Config~Defaults_TEA_LCA.md
+Defaults | pyH2A.Config~Defaults_LCA.md
 
 # Life Cycle Assessment
 
@@ -61,30 +61,6 @@ Name | Value | Unit | Comment
 Plant design capacity | 1.0 | kg/day | Reference production for GT LCA tests
 Operating capacity factor | 90% | - | Capacity factor
 Fraction of output that reaches gate | 100% | - | No gate losses assumed for minimal LCA test
-
-# Non-Depreciable Capital Costs
-
-Name | Value | Unit | Comment
---- | --- | --- | ---
-Cost of land | 0 | USD/m2 | No land cost for LCA test
-Land required | 0 | m2 | No land for LCA test
-
-# Fixed Operating Costs
-
-Name | Value | Unit | Comment
---- | --- | --- | ---
-Staff | 0 | - | No staff for minimal LCA test
-Hourly labor cost | 0 | USD/h | No labor cost
-
-# Planned Replacement
-
-Name | Cost ($) | Path | Comment
---- | --- | --- | ---
-
-# Utilities
-
-Name | Usage per kg H2 | Usage Unit | Cost | Cost Unit | Price Conversion Factor | Comment
---- | --- | --- | --- | --- | --- | ---
 
 # Monte_Carlo_Analysis
 

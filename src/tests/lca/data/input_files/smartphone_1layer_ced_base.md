@@ -3,7 +3,7 @@
 Name | Value
 --- | ---
 Base | src/tests/lca/data/input_files/smartphone_1layer_acid_base.md
-Defaults | pyH2A.Config~Defaults_TEA_LCA.md
+Defaults | pyH2A.Config~Defaults_LCA.md
 
 # Life Cycle Assessment
 
