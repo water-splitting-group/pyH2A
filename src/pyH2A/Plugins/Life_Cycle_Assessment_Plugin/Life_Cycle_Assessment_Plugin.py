@@ -296,24 +296,6 @@ class Life_Cycle_Assessment_Plugin:
             functional-flow row's declared dimension does not match
             ``dcf.functional_unit.dimension``.
 
-        Notes
-        -----
-        The functional-flow row is ``A0_column`` index 0 (the technosphere
-        matrix's own product-output entry, always present and always the
-        lowest row index, see :meth:`perform_lca`). The Functional Unit
-        cross-check compares this row's user-declared ``Unit`` (what the user
-        is expected to set consistently with the ``# Functional Unit`` table)
-        against ``dcf.functional_unit``, by physical dimension (e.g.
-        ``'mass'``) rather than exact unit string, so a Functional Unit of
-        ``kg`` is considered consistent with a functional-flow row declared in
-        ``g`` (both ``'mass'``), but not with one declared in ``item`` or
-        ``MJ``. This is deliberately checked against the input file's own
-        declared unit rather than the raw openLCA matrix export's internal
-        unit string for that row - the latter is already cross-checked for
-        dimension compatibility against the declared unit for every row
-        (including this one) in the component-matching loop below, via the
-        ``Quantity`` unit conversion.
-
         Array-like ``Value`` entries are reduced to a scalar by summation.
         The ordering of ``self.component_values`` follows ``A0_column``, not
         the order of rows in the input tables. Each component's declared
@@ -349,19 +331,17 @@ class Life_Cycle_Assessment_Plugin:
             )
         uuid_to_quantity = {str(uuid): Quantity(val, unit) for uuid, val, unit in rows}
 
+        # Dimension of functional flow declared in the '# LCA' table is cross-checked against
+        # the Functional Unit declared in the '# Functional Unit' table. The functional flow
+        # is always the first row of the technosphere column, so we can use its UUID to look
+        # up the corresponding Quantity.
         functional_flow_uuid = str(A0_uuids[0])
-        if functional_flow_uuid not in uuid_to_quantity:
-            raise ValueError(
-                f"UUID '{functional_flow_uuid}' from the technosphere matrix's functional flow "
-                "(A0_column row 0) is missing from the input LCA component tables. All UUIDs must "
-                "be present for a complete scenario definition."
-            )
         functional_flow_quantity = uuid_to_quantity[functional_flow_uuid]
         if functional_flow_quantity.dimension != dcf.functional_unit.dimension:
             raise ValueError(
                 f"Functional Unit mismatch: the input file declares Functional Unit "
                 f"'{dcf.functional_unit.unit}' (dimension '{dcf.functional_unit.dimension}'), but the "
-                f"LCA component table declares the functional flow's Unit as "
+                f"'# LCA' table declares the functional flow's Unit as "
                 f"'{functional_flow_quantity.supplied_unit}' (dimension '{functional_flow_quantity.dimension}'). "
                 f"Cost results (per {dcf.functional_unit.unit}) and LCA results (per "
                 f"{functional_flow_quantity.supplied_unit}) would otherwise be silently expressed on two "
