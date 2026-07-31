@@ -12,7 +12,6 @@ from pyH2A.Utilities.lca_utils import (
     load_matrices_from_folder,
     matrix_of,
 )
-from pyH2A.Utilities.Unit_Handler import config as unit_config
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
 
@@ -285,29 +284,35 @@ class Life_Cycle_Assessment_Plugin:
             Discounted cash flow object whose input dictionary contains at
             least one table whose name starts with ``"LCA"`` (case-insensitive),
             and whose resolved ``functional_unit`` is cross-checked against the
-            LCA matrix export's functional flow (see
+            ``Unit`` declared for the functional-flow row in that table (see
             :func:`~pyH2A.Utilities.functional_unit.resolve_functional_unit`).
 
         Raises
         ------
         ValueError
-            Raised when the LCA matrix export's functional-flow unit is not
-            recognized by the unit handler, when its dimension does not match
-            ``dcf.functional_unit.dimension``, when no LCA tables are found in
-            ``dcf.inp``, or when a UUID present in the cached technosphere
-            column is absent from the input tables (every nonzero entry must be
-            explicitly specified).
+            Raised when no LCA tables are found in ``dcf.inp``, when a UUID
+            present in the cached technosphere column (including the
+            functional-flow row) is absent from the input tables, or when the
+            functional-flow row's declared dimension does not match
+            ``dcf.functional_unit.dimension``.
 
         Notes
         -----
-        The Functional Unit cross-check compares physical dimension (e.g.
-        ``'mass'``), not exact unit string, so a Functional Unit of ``kg`` is
-        considered consistent with an LCA matrix export whose functional flow is
-        in ``g`` (both ``'mass'``), but not with one whose functional flow is in
-        ``item`` or ``MJ``. It runs first, before any other work in this method,
-        so a mismatch is caught before the LCA component matching below and the
-        remaining (comparatively cheap) steps (:meth:`build_scaling_vector`,
-        :meth:`perform_lca`) run.
+        The functional-flow row is ``A0_column`` index 0 (the technosphere
+        matrix's own product-output entry, always present and always the
+        lowest row index, see :meth:`perform_lca`). The Functional Unit
+        cross-check compares this row's user-declared ``Unit`` (what the user
+        is expected to set consistently with the ``# Functional Unit`` table)
+        against ``dcf.functional_unit``, by physical dimension (e.g.
+        ``'mass'``) rather than exact unit string, so a Functional Unit of
+        ``kg`` is considered consistent with a functional-flow row declared in
+        ``g`` (both ``'mass'``), but not with one declared in ``item`` or
+        ``MJ``. This is deliberately checked against the input file's own
+        declared unit rather than the raw openLCA matrix export's internal
+        unit string for that row - the latter is already cross-checked for
+        dimension compatibility against the declared unit for every row
+        (including this one) in the component-matching loop below, via the
+        ``Quantity`` unit conversion.
 
         Array-like ``Value`` entries are reduced to a scalar by summation.
         The ordering of ``self.component_values`` follows ``A0_column``, not
@@ -316,28 +321,9 @@ class Life_Cycle_Assessment_Plugin:
         :class:`~pyH2A.Utilities.Unit_Handler.quantity.Quantity`.
         '''
 
-        # openLCA flow units sometimes carry a pluralization suffix (e.g. "Item(s)")
-        # that the unit parser cannot handle, since parentheses are grouping syntax.
-        lca_flow_unit = str(Life_Cycle_Assessment_Plugin._cache['A0_column'][2][0]).replace('(s)', '')
-
-        try:
-            lca_flow_dimension = unit_config.FLAT_DIMENSIONS[lca_flow_unit]
-        except KeyError:
-            raise ValueError(
-                f"Unrecognized unit '{lca_flow_unit}' for the LCA matrix export's functional flow; "
-                f"cannot cross-check against the declared Functional Unit '{dcf.functional_unit.unit}'."
-            )
-
-        if lca_flow_dimension != dcf.functional_unit.dimension:
-            raise ValueError(
-                f"Functional Unit mismatch: the input file declares Functional Unit "
-                f"'{dcf.functional_unit.unit}' (dimension '{dcf.functional_unit.dimension}'), but the "
-                f"LCA matrix export's functional flow is in '{lca_flow_unit}' (dimension "
-                f"'{lca_flow_dimension}'). Cost results (per {dcf.functional_unit.unit}) and LCA results "
-                f"(per {lca_flow_unit}) would otherwise be silently expressed on two different physical "
-                "bases. Update the '# Functional Unit' table's Unit to a unit with the same dimension as "
-                "the LCA matrix's functional flow, or use a different matrix export."
-            )
+        A0_uuids = Life_Cycle_Assessment_Plugin._cache['A0_column'][0]
+        A0_values = Life_Cycle_Assessment_Plugin._cache['A0_column'][1]
+        A0_units = Life_Cycle_Assessment_Plugin._cache['A0_column'][2]
 
         lca_table_names = [table_name for table_name in dcf.inp if table_name.lower().startswith('lca')]
         if not lca_table_names:
@@ -356,15 +342,33 @@ class Life_Cycle_Assessment_Plugin:
             scalar_value = float(np.sum(raw_value) if isinstance(raw_value, (np.ndarray, list, tuple)) else raw_value)
             rows.append((uuid, scalar_value, unit))
 
-        A0_uuids = Life_Cycle_Assessment_Plugin._cache['A0_column'][0]
-        A0_values = Life_Cycle_Assessment_Plugin._cache['A0_column'][1]
-        A0_units = Life_Cycle_Assessment_Plugin._cache['A0_column'][2]
         if len(rows) > len(A0_uuids):
             raise ValueError(
                 f"Expected {len(A0_uuids)} LCA components (one per nonzero column-0 entry), "
                 f"but got {len(rows)}."
             )
         uuid_to_quantity = {str(uuid): Quantity(val, unit) for uuid, val, unit in rows}
+
+        functional_flow_uuid = str(A0_uuids[0])
+        if functional_flow_uuid not in uuid_to_quantity:
+            raise ValueError(
+                f"UUID '{functional_flow_uuid}' from the technosphere matrix's functional flow "
+                "(A0_column row 0) is missing from the input LCA component tables. All UUIDs must "
+                "be present for a complete scenario definition."
+            )
+        functional_flow_quantity = uuid_to_quantity[functional_flow_uuid]
+        if functional_flow_quantity.dimension != dcf.functional_unit.dimension:
+            raise ValueError(
+                f"Functional Unit mismatch: the input file declares Functional Unit "
+                f"'{dcf.functional_unit.unit}' (dimension '{dcf.functional_unit.dimension}'), but the "
+                f"LCA component table declares the functional flow's Unit as "
+                f"'{functional_flow_quantity.supplied_unit}' (dimension '{functional_flow_quantity.dimension}'). "
+                f"Cost results (per {dcf.functional_unit.unit}) and LCA results (per "
+                f"{functional_flow_quantity.supplied_unit}) would otherwise be silently expressed on two "
+                "different physical bases. Update the '# Functional Unit' table's Unit, or the functional-flow "
+                "row's Unit in the LCA component table, so both share the same dimension."
+            )
+
         self.component_values = A0_values.copy()
         for i, uuid in enumerate(A0_uuids):
             if str(uuid) in uuid_to_quantity:
