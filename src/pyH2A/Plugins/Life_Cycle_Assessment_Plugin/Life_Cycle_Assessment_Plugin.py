@@ -59,10 +59,10 @@ class Life_Cycle_Assessment_Plugin:
     ValueError
         Raised when no LCA input tables are found in ``dcf.inp``, when a UUID
         present in the technosphere matrix is absent from the LCA input tables,
-        when the declared Functional Unit's dimension does not match the LCA
-        matrix export's functional-flow dimension (see
-        :meth:`apply_component_updates`), or when that flow's unit is not
-        recognized by the unit handler.
+        or when the declared Functional Unit's dimension does not match the
+        dimension of the Unit declared for the functional flow (the UUID at
+        ``A0_column`` index 0) in the LCA input tables (see
+        :meth:`apply_component_updates`).
     ZeroDivisionError
         Raised when the Sherman-Morrison denominator is too small for a stable
         rank-1 update.
@@ -268,8 +268,8 @@ class Life_Cycle_Assessment_Plugin:
             pass
 
     def apply_component_updates(self, dcf):
-        '''Cross-check the declared Functional Unit, then resolve LCA input values
-        and store them aligned to the technosphere column.
+        '''Resolve LCA input values, store them aligned to the technosphere column,
+        then cross-check the declared Functional Unit.
 
         Reads all LCA input tables from ``dcf.inp``, resolves path-based
         references via :func:`process_table`, then matches each component to
@@ -291,10 +291,12 @@ class Life_Cycle_Assessment_Plugin:
         ------
         ValueError
             Raised when no LCA tables are found in ``dcf.inp``, when a UUID
-            present in the cached technosphere column (including the
-            functional-flow row) is absent from the input tables, or when the
-            functional-flow row's declared dimension does not match
-            ``dcf.functional_unit.dimension``.
+            present in the cached technosphere column is absent from the
+            input tables, or when the functional-flow row's declared
+            dimension does not match ``dcf.functional_unit.dimension``. The
+            UUID-presence check runs first for every row (including the
+            functional-flow row), so the Functional Unit cross-check can
+            assume that UUID is already present by the time it runs.
 
         Array-like ``Value`` entries are reduced to a scalar by summation.
         The ordering of ``self.component_values`` follows ``A0_column``, not
@@ -331,24 +333,6 @@ class Life_Cycle_Assessment_Plugin:
             )
         uuid_to_quantity = {str(uuid): Quantity(val, unit) for uuid, val, unit in rows}
 
-        # Dimension of functional flow declared in the '# LCA' table is cross-checked against
-        # the Functional Unit declared in the '# Functional Unit' table. The functional flow
-        # is always the first row of the technosphere column, so we can use its UUID to look
-        # up the corresponding Quantity.
-        functional_flow_uuid = str(A0_uuids[0])
-        functional_flow_quantity = uuid_to_quantity[functional_flow_uuid]
-        if functional_flow_quantity.dimension != dcf.functional_unit.dimension:
-            raise ValueError(
-                f"Functional Unit mismatch: the input file declares Functional Unit "
-                f"'{dcf.functional_unit.unit}' (dimension '{dcf.functional_unit.dimension}'), but the "
-                f"'# LCA' table declares the functional flow's Unit as "
-                f"'{functional_flow_quantity.supplied_unit}' (dimension '{functional_flow_quantity.dimension}'). "
-                f"Cost results (per {dcf.functional_unit.unit}) and LCA results (per "
-                f"{functional_flow_quantity.supplied_unit}) would otherwise be silently expressed on two "
-                "different physical bases. Update the '# Functional Unit' table's Unit, or the functional-flow "
-                "row's Unit in the LCA component table, so both share the same dimension."
-            )
-
         self.component_values = A0_values.copy()
         for i, uuid in enumerate(A0_uuids):
             if str(uuid) in uuid_to_quantity:
@@ -362,6 +346,24 @@ class Life_Cycle_Assessment_Plugin:
                     f"UUID '{uuid}' from the technosphere matrix is missing from the input "
                     "LCA component tables. All UUIDs must be present for a complete scenario definition."
                 )
+
+        # Dimension of the functional flow declared in the '# LCA' table is cross-checked
+        # against the Functional Unit declared in the '# Functional Unit' table. The
+        # functional flow is always the first row of the technosphere column; its presence
+        # in uuid_to_quantity is already guaranteed by the loop above, which would have
+        # raised ValueError otherwise.
+        functional_flow_quantity = uuid_to_quantity[str(A0_uuids[0])]
+        if functional_flow_quantity.dimension != dcf.functional_unit.dimension:
+            raise ValueError(
+                f"Functional Unit mismatch: the input file declares Functional Unit "
+                f"'{dcf.functional_unit.unit}' (dimension '{dcf.functional_unit.dimension}'), but the "
+                f"'# LCA' table declares the functional flow's Unit as "
+                f"'{functional_flow_quantity.supplied_unit}' (dimension '{functional_flow_quantity.dimension}'). "
+                f"Cost results (per {dcf.functional_unit.unit}) and LCA results (per "
+                f"{functional_flow_quantity.supplied_unit}) would otherwise be silently expressed on two "
+                "different physical bases. Update the '# Functional Unit' table's Unit, or the functional-flow "
+                "row's Unit in the LCA component table, so both share the same dimension."
+            )
 
     def build_scaling_vector(self):
         '''Compute the scenario scaling vector using a Sherman-Morrison rank-1 update.
