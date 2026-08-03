@@ -1064,8 +1064,8 @@ def retrieve_base_unit(table_dictionary):
 
 
 
-def daily_to_yearly_power_quantity(dictionary):
-	'''Convert dictionary with daily power values to array with yearly power values.
+def hourly_to_yearly_power_quantity(dictionary):
+	'''Convert dictionary with hourly power values to array with yearly power values.
 	(when values are Quantity objects)
 	'''
 
