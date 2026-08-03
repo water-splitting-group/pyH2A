@@ -158,8 +158,7 @@ class Power_Management_Explicit_Battery_Plugin:
         self.remaining_available, secondary_unfulfilled = allocate_power(self.input_dict_resolved['Power Consumption'], available_energy_yearly)
 
         self.total_unfulfilled = Quantity(secondary_unfulfilled.unit['J'] + main_unfulfilled_yearly.unit['J'],'J')
-
-        
+   
 
     def calculate_electricity_cost(self):
 
