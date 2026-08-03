@@ -166,7 +166,7 @@ output_dict = {
         },            
     },
     "Hourly Consumer Profile":{
-        "Unsatisfied demand (hourly)": {
+        "Unsatisfied demand": {
             "Value": {
                 "inserted_value": "hourly_unsatisfied_demand",
                  "type": {dict,},
@@ -246,7 +246,7 @@ class Battery_Calculation_Plugin:
         Excess energy that was not stored, dictionary of years
     Power Generation > Total available energy > Value : float
         Total excess energy that was not stored during the plant operating years.
-    Hourly Consumer Profile > Unsatisfied demand (hourly) > Value : dict
+    Hourly Consumer Profile > Unsatisfied demand > Value : dict
         Energy demand that is not met after the battery supply, dictionary of years.
     Hourly Consumer Profile > Total unsatisfied demand > Value : float
         Total energy demand that is not met after the battery supply during the plant operating time.        
