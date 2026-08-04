@@ -195,23 +195,28 @@ class Hourly_Irradiation_Plugin:
 		pv = self.input_dict_resolved['Irradiance Area Parameters']
 		
 		if 'Module tilt' in pv:
-			tilt = pv['Module tilt']['Value']
+			tilt = pv['Module tilt']['Value'].unit['deg']
 		else: # if we want to make the tilt equal to latitude, we don't point it through a path in the input fiale, we let it be the default
-			tilt = 'Default' 
+			tilt = 'Default'
 
-		(self.hourly_energy, 
-		 self.hourly_energy_sat, 
-		 self.hourly_energy_dat, 
-		 self.yearly_averaged_power, 
-		 self.yearly_averaged_power_sat, 
+		# calculate_PV_power_ratio is @lru_cache'd, so every argument besides
+		# file_name is unpacked here into a plain float (in the unit used
+		# inside that function) rather than passed as a Quantity object.
+		# Quantity has no __eq__/__hash__, so it would hash by object
+		# identity and never produce a cache hit for equal values.
+		(self.hourly_energy,
+		 self.hourly_energy_sat,
+		 self.hourly_energy_dat,
+		 self.yearly_averaged_power,
+		 self.yearly_averaged_power_sat,
 		 self.yearly_averaged_power_dat) = calculate_PV_power_ratio(
 												self.input_dict_resolved['Hourly Irradiation']['File']['Value'],
-												tilt, 
-												pv['Array azimuth']['Value'],
-												pv['Nominal operating temperature']['Value'], 
-												pv['Temperature coefficient']['Value'],
-												pv['Mismatch derating']['Value'], 
-			 									pv['Dirt derating']['Value']
+												tilt,
+												pv['Array azimuth']['Value'].unit['deg'],
+												pv['Nominal operating temperature']['Value'].unit['degC'],
+												pv['Temperature coefficient']['Value'].unit['1/delta_degC'],
+												pv['Mismatch derating']['Value'].unit['-'],
+			 									pv['Dirt derating']['Value'].unit['-']
 												)
 
 		output_inserter_function(self.output_dict, self, dcf, 'Hourly_Irradiation_Plugin') 
@@ -285,12 +290,27 @@ def calculate_PV_power_ratio(file_name,
 	'''Calculation based on Chang 2020, https://doi.org/10.1016/j.xcrp.2020.100209
 	SAT: horzontal single axis tracking
 	DAT: dual axis tracking, no diffuse radiation
+
+	Notes
+	-----
+	This function is ``@lru_cache``'d, so every argument besides `file_name`
+	arrives as a plain float (or the string `'Default'` for `module_tilt`),
+	in the unit named by its parameter, rather than as a `Quantity` object -
+	`Quantity` has no `__eq__`/`__hash__`, so caching on `Quantity`
+	arguments directly would hash by object identity and never hit for
+	equal values. They are converted back into `Quantity` objects here.
 	'''
 
 	data, location = import_hourly_data(file_name)
 	#data, location = import_Chang_data(file_name)
 
-	# all the arguments, except the file_name, are Quantity objects
+	# Reconstruct Quantity objects from the raw, cache-friendly arguments.
+	array_azimuth = Quantity(array_azimuth, 'deg')
+	nominal_operating_temperature = Quantity(nominal_operating_temperature, 'degC')
+	temperature_coefficient = Quantity(temperature_coefficient, '1/delta_degC')
+	mismatch_derating = Quantity(mismatch_derating, '-')
+	dirt_derating = Quantity(dirt_derating, '-')
+
 	# all the angles below are Quantity objects, without the need to be 'self.'
 
 	latitude = Quantity(location['Latitude (decimal degrees)'], 'deg')
@@ -298,6 +318,8 @@ def calculate_PV_power_ratio(file_name,
 
 	if module_tilt == 'Default':
 		module_tilt = Quantity(np.abs(location['Latitude (decimal degrees)']), 'deg')
+	else:
+		module_tilt = Quantity(module_tilt, 'deg')
 
 	day_number = np.arange(1, len(data['Time'].unit['-']) + 1) / 24
 	#day_number = np.arange(0, len(data['Time'])) / 24
