@@ -63,64 +63,46 @@ class DummyDCF:
 
         self.operation_years = list(available_power.keys())
 
+# case 1: this is baseline case without energy density (battery mass not calculated)
+# we define a second case with energy density to test battery mass calculation
+_CASE_1_INPUT = {
+    "operation_years_relative": {
+        "Operation years relative": np.array([2027, 2028])
+    },
+    "available_power": {
+        2027: np.array([10.2, 5.2, 12.2, 12.2]),
+        2028: np.array([22.2, 6.2, 8.2, 9.2]),
+    },
+    "design_capacity": 800000.0,
+    "lowest_discharge_level": 0.20,
+    "loss_of_capacity": 0.01,
+    "round_trip_efficiency": 1.0,
+    "energy_density": None,
+}
+
+_CASE_1_EXPECTED = {
+    "yearly_recovered_energy": {
+        2027: Quantity(np.array([0.0009093256112687591, 0.0009093256112687591, 0.0009093256112687591, 0.0009093256112687591]), "kWh"),
+        2028: Quantity(np.array([0.0009002323551560716, 0.0009002323551560716, 0.0009002323551560716, 0.0009002323551560716]), "kWh"),
+    },
+    "yearly_unstored_energy": {
+        2027: Quantity(np.array([10.199090674388732, 5.1990906743887315, 12.199090674388732, 12.199090674388732]), "kWh"),
+        2028: Quantity(np.array([22.199099767644846, 6.199099767644844, 8.199099767644842, 9.199099767644842]), "kWh"),
+    },
+    "battery_mass": None,
+}
+
 
 @pytest.mark.parametrize(
     "case",
     [
         {
-            "input": {
-                "operation_years_relative": {
-                    # in the plugin logic, years are relative to startup year, not calendar year
-                    'Operation years relative': np.arange(5, 7) 
-                },                 
-                "available_power": {
-                    5: np.array([10.2, 5.2, 12.2, 12.2]),
-                    6: np.array([22.2, 6.2, 8.2, 9.2]),
-                },
-                "design_capacity": 8.0,
-                "lowest_discharge_level": 0.20,
-                "loss_of_capacity": 0.01,
-                "round_trip_efficiency": 1.0,
-                "energy_density": None,
-            },
-           "expected": {
-                "yearly_recovered_energy": {
-                    5: Quantity(np.array([6.086336319359999, 5.2, 6.086336319359999, 6.086336319359999]), "kWh"),
-                    6: Quantity(np.array([6.0254729561664, 6.0254729561664, 6.0254729561664, 6.0254729561664]), "kWh"),
-                },
-                "yearly_unstored_energy": {
-                    5: Quantity(np.array([4.11366368064, 0.0, 6.11366368064, 6.11366368064]), "kWh"),
-                    6: Quantity(np.array([16.1745270438336, 0.17452704383360015, 2.1745270438335993, 3.1745270438335993]), "kWh"),
-                },
-                "battery_mass": None,
-            },
+            "input": _CASE_1_INPUT,
+            "expected": _CASE_1_EXPECTED,
         },
         {
-            "input": {
-                "operation_years_relative": {
-                    "Operation years relative": np.array([2027, 2028])
-                },
-                "available_power": {
-                    2027: np.array([10.2, 5.2, 12.2, 12.2]),
-                    2028: np.array([22.2, 6.2, 8.2, 9.2]),
-                },
-                "design_capacity": 800000.0,
-                "lowest_discharge_level": 0.20,
-                "loss_of_capacity": 0.01,
-                "round_trip_efficiency": 1.0,
-                "energy_density": 0.2,
-            },
-           "expected": {
-                "yearly_recovered_energy": {
-                    2027: Quantity(np.array([0.0009093256112687591, 0.0009093256112687591, 0.0009093256112687591, 0.0009093256112687591]), "kWh"),
-                    2028: Quantity(np.array([0.0009002323551560716, 0.0009002323551560716, 0.0009002323551560716, 0.0009002323551560716]), "kWh"),
-                },
-                "yearly_unstored_energy": {
-                    2027: Quantity(np.array([10.199090674388732, 5.1990906743887315, 12.199090674388732, 12.199090674388732]), "kWh"),
-                    2028: Quantity(np.array([22.199099767644846, 6.199099767644844, 8.199099767644842, 9.199099767644842]), "kWh"),
-                },
-                "battery_mass": Quantity(4_000_000.0, "kg"),
-            },
+            "input": {**_CASE_1_INPUT, "energy_density": 0.2},
+            "expected": {**_CASE_1_EXPECTED, "battery_mass": Quantity(4_000_000.0, "kg")},
         },
     ],
     ids=[
@@ -159,11 +141,12 @@ def test_battery_plugin(case):
         # No energy density provided: battery mass should not be calculated.
         assert not hasattr(plugin, "battery_mass")
     else:
-        np.testing.assert_allclose(
-            plugin.battery_mass.unit["kg"],
+        # Tolerance (very small)
+        tolerance = 1e-12
+
+        assert plugin.battery_mass.unit["kg"] == pytest.approx(
             expected["battery_mass"].unit["kg"],
-            rtol=1e-5,
-            atol=1e-9,
+            abs=tolerance
         )
 
 
