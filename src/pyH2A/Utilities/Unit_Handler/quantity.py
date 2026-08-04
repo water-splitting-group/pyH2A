@@ -1,12 +1,13 @@
 import re
 import numpy as np
-
+from functools import lru_cache
 from pyH2A.Utilities.Unit_Handler.config import FLAT_MULTIPLIERS, FLAT_BASES, FLAT_DIMENSIONS, ABSOLUTE_TEMPERATURE
 
 # Regex pattern for lenient parsing. Splits by math operators and keeps them as tokens.
 # Filters out spaces and empty strings automatically based on regex logic.
 TOKEN_PATTERN = re.compile(r'([*/()])|\s+')
 
+@lru_cache(maxsize=None)
 def parse_composite_unit(unit_str):
     """
     Parse a composite unit (like 'kWh / cm2' or '(kWh * m)/m2') string into conversion multiplier, 
