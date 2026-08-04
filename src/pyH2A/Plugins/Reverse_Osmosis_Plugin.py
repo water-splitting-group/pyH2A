@@ -2,120 +2,6 @@ from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import numpy as np
 
-input_dict = {
-    "Technical Operating Parameters and Specifications": {
-        "Design output by year": {
-            "Value": {
-                "type": {np.ndarray},
-                "bounds": (0, None),
-            },
-            "Unit": {
-                "dimension": "mass",
-            },
-            "optional": False,
-            "description": "Yearly output ignoring capacity factor."
-        },
-		"Operating capacity factor": { 
-			"Value": {
-				"type": {float, int},
-				"bounds": (0, 1),
-            },
-			"Unit": {
-				"dimension": "dimensionless",
-			},
-			"optional": False,
-			"description": "Operating capacity factor value between 0 and 1 or percentage value."
-		},	        
-    },
-    "Reverse Osmosis": {
-        "Power demand": {
-            "Value": {
-                "type": {float,},
-                "bounds": (0, None),
-            },
-            "Unit": {
-                "dimension": "energy / volume",
-            },
-            "optional": False,
-            "description": "Power demand of reverse osmosis plant of sea water in energy / volume (of feed water)."
-        },
-        "Average operating time fraction": {
-            "Value": {
-                "type": {float,},
-                "bounds": (0, 1),
-            },
-            "Unit": {
-                "dimension": "dimensionless",
-            },
-            "optional": False,
-            "description": "Fraction of time during which reverse osmosis plant is operating, "
-                           "a value of 1 (100%) is corresponding to 24/7 (continuous) operation."
-        },
-        "Recovery rate": {
-            "Value": {
-                "type": {float,},
-                "bounds": (0, 1),
-            },
-            "Unit": {
-                "dimension": "dimensionless",
-            },
-            "optional": False,
-            "description": "Fraction of fresh water obtained from given volume of sea water."
-        },
-        "Device throughput": {
-            "Value": {
-                "type": {float,},
-                "bounds": (0, None),
-            },
-            "Unit": {
-                "dimension": "volume / time",
-            },
-            "optional": True,
-            "description": "Sea-water processing throughput of one reverse osmosis device."
-        },
-    },
-}
-
-output_dict = {
-    "Power Consumption": {
-        "Reverse osmosis consumption (yearly)": {
-            "Value": {
-                "inserted_value": "electricity_demand_by_year",
-                "type": {np.ndarray,}, 
-                "dimension": "energy",
-            },
-            "Type": {
-                "inserted_value": "consumption_type",
-                "type": {str,},
-            },
-            "description": "Electricity demand of reverse osmosis plant per year.",
-            "optional": False,
-        },
-    },
-    "Reverse Osmosis": {
-        "Capacity": {
-            "Value": {
-                "inserted_value": "maximum_sea_water_processing_flowrate",
-                "type": {float,int,},
-                "dimension": "volume / time",
-            },
-            "description": "Maximum sea water processing capacity per hour of reverse osmosis plant.",
-            "optional": False,
-        },
-
-        "Number of devices required": {
-            "Value": {
-                "inserted_value": "number_of_devices_required",
-                "type": {int,float,},
-                "dimension": "dimensionless",
-            },
-            "description": "Number of reverse osmosis devices required, calculated as "
-                           "maximum yearly sea-water demand divided by throughput of one device.",
-            "optional": True,
-        },
-    },
-}
-
 class Reverse_Osmosis_Plugin:
     '''Simulation of purified water production using reverse osmosis.
     
@@ -218,6 +104,17 @@ class Reverse_Osmosis_Plugin:
                     "optional": False,
                     "description": "Fraction of fresh water obtained from given volume of sea water."
                 },
+                "Device throughput": {
+                    "Value": {
+                        "type": {float,},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "volume / time",
+                    },
+                    "optional": True,
+                    "description": "Sea-water processing throughput of one reverse osmosis device."
+                },
             },
         }
 
@@ -246,6 +143,16 @@ class Reverse_Osmosis_Plugin:
                     },
                     "description": "Maximum sea water processing capacity per hour of reverse osmosis plant.",
                     "optional": False,
+                },
+                "Number of devices required": {
+                    "Value": {
+                        "inserted_value": "number_of_devices_required",
+                        "type": {int,float,}, 
+                        "dimension": "dimensionless",
+                    },
+                    "description": "Number of reverse osmosis devices required, calculated as "
+                                   "maximum yearly sea-water demand divided by throughput of one device.",
+                    "optional": True,
                 },
             },
         }
