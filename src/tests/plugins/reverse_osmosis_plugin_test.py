@@ -54,43 +54,39 @@ class DummyDCF:
                 "Unit": "m3/year",
             }
 
+# case 1 is a realistic case for Reverse Osmosis Plugin, with no device throughput provided
+# (so number of devices required is not calculated). However, the second case, which is defined 
+# based on case 1, is tested except the device throughput is provided as an input, so number of
+# devices required is calculated.
+_CASE_1_INPUT = {
+    "design_output_by_year": np.array([0.0, 2250.0, 2375.0]),
+    "operating_capacity_factor": 0.8,
+    "power_demand_kWh_per_m3": 10.0,
+    "operating_time_fraction": 1.,
+    "recovery_rate": 0.1,
+    "device_throughput": None,
+}
+
+_CASE_1_EXPECTED = {
+    "electricity_demand_kWh": Quantity(np.array([0.0,
+                                                 1613.3471844103742,
+                                                 1702.9775835442838]),
+                                       "kWh"),
+    "max_capacity_m3_per_hour": Quantity(0.019440383373793193, "m3/h"),
+    "number_of_devices_required": None,
+}
+
 
 @pytest.mark.parametrize(
     "case",
     [
         {
-            "input": {
-                "design_output_by_year": np.array([2250.0, 2375.0]),
-                "operating_capacity_factor": 0.8,
-                "power_demand_kWh_per_m3": 10.0,          
-                "operating_time_fraction": 1.,                  
-                "recovery_rate": 0.1,                    
-            },
-            "expected": {
-                "electricity_demand_kWh": Quantity(np.array([1613.3471844103742, 
-                                                             1702.977583544284]), 
-                                                   "kWh"),
-                "max_capacity_m3_per_hour": Quantity(0.019440383373793193, "m3/h"),
-                "number_of_devices_required": None,
-            },
+            "input": _CASE_1_INPUT,
+            "expected": _CASE_1_EXPECTED,
         },
         {
-            "input": {
-                "design_output_by_year": np.array([0.0, 2250.0, 2375.0]),
-                "operating_capacity_factor": 0.8,
-                "power_demand_kWh_per_m3": 10.0,
-                "operating_time_fraction": 1.,
-                "recovery_rate": 0.1,
-                "device_throughput": 100.0,
-            },
-            "expected": {
-                "electricity_demand_kWh": Quantity(np.array([0.0,
-                                                             1613.3471844103742,
-                                                             1702.9775835442838]),
-                                                   "kWh"),
-                "max_capacity_m3_per_hour": Quantity(0.019440383373793193, "m3/h"),
-                "number_of_devices_required": Quantity(1.7029775835442837, "-"),
-            },
+            "input": {**_CASE_1_INPUT, "device_throughput": 100.0},
+            "expected": {**_CASE_1_EXPECTED, "number_of_devices_required": Quantity(1.7029775835442837, "-")},
         },
     ],
     ids=[
