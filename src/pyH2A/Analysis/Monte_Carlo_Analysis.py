@@ -15,7 +15,7 @@ import pyH2A.Utilities.find_nearest as fn
 from pyH2A.Utilities.input_modification import convert_input_to_dictionary,parse_parameter, parse_parameter_to_array, parse_path_with_unit, get_by_path, set_by_path, read_textfile, file_import, reverse_parameter_to_string
 from pyH2A.Discounted_Cash_Flow import Discounted_Cash_Flow
 from pyH2A.Utilities.output_utilities import make_bold, format_scientific, dynamic_value_formatting, insert_image, Figure_Lean
-from pyH2A.Analysis.Monte_Carlo_Analysis.config import DEPENDENT_VARIABLE_CONFIG
+from pyH2A.Analysis.config import DEPENDENT_VARIABLE_CONFIG
 
 
 def _mc_response_worker(value_batch, inp, parameters, dependent_variable):
