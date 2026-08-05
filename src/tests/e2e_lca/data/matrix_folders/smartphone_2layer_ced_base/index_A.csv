@@ -1,0 +1,5 @@
+index,provider ID,provider name,provider category,provider location,flow ID,flow name,flow category,flow unit,flow type
+0,0c81c05f-a6ed-4f17-a399-43eb698a3b59,Smartphone_2Layer,Smartphone_2Layer,,23f5f6bc-7b98-4c8a-9ae6-8014462d0351,Smartphone,,kg,product
+1,a3c98060-7b10-4ba2-abb2-0ea0ddfbd3c2,Display,Smartphone_2Layer,,cabe1a62-4ee6-4d7e-955d-6f4c91c1ed80,Display,,kg,product
+2,47760afd-6a67-454a-98a8-03063250f4aa,Circuit Board,Smartphone_2Layer,,24ec0744-f9a1-49c8-ae80-927c41a70819,Circuit Board,,Item(s),product
+3,042f97ea-dbbe-4ef4-ab8f-3a2d23084b73,Battery,Smartphone_2Layer,,0e65c7b5-0cb2-4c0d-b6bc-7b0c98dddee9,Battery,,kg,product
