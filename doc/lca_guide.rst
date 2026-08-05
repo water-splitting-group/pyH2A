@@ -368,7 +368,7 @@ Troubleshooting
 ``ValueError: No LCA component tables found in input``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-No section whose name starts with ``LCA`` was found in the input file. Check that the
+No section whose name contains ``LCA`` (case-sensitive) was found in the input file. Check that the
 ``# LCA - ...`` section header is spelled correctly and that the file was loaded without
 parsing errors.
 
