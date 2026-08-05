@@ -8,7 +8,7 @@ Defaults | pyH2A.Config~Defaults_LCA.md
 
 Name | Value
 --- | ---
-Matrix Folder | src/tests/lca/data/matrix_folders/smartphone_1layer_acid_base
+Matrix Folder | src/tests/e2e_lca/data/matrix_folders/smartphone_1layer_acid_base
 
 # LCA - Smartphone GT Components
 

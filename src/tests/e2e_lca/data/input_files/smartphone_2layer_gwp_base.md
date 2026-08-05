@@ -1,0 +1,12 @@
+# Input files to merge
+
+Name | Value
+--- | ---
+Base | src/tests/e2e_lca/data/input_files/smartphone_2layer_acid_base.md
+Defaults | pyH2A.Config~Defaults_LCA.md
+
+# Life Cycle Assessment
+
+Name | Value
+--- | ---
+Matrix Folder | src/tests/e2e_lca/data/matrix_folders/smartphone_2layer_gwp_base

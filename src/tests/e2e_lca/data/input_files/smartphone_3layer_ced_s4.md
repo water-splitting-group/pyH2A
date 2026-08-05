@@ -2,23 +2,23 @@
 
 Name | Value
 --- | ---
-Base | src/tests/lca/data/input_files/smartphone_3layer_ced_base.md
+Base | src/tests/e2e_lca/data/input_files/smartphone_3layer_ced_base.md
 Defaults | pyH2A.Config~Defaults_LCA.md
 
 # GT Circuit Board Input
 
 Name | Value | Unit
 --- | --- | ---
-Scenario Factor | 1.3 | -
+Scenario Factor | 0.9 | -
 
 # GT Display Input
 
 Name | Value | Unit
 --- | --- | ---
-Scenario Factor | 1.2 | -
+Scenario Factor | 0.8 | -
 
 # GT Battery Input
 
 Name | Value | Unit
 --- | --- | ---
-Scenario Factor | 0.7 | -
+Scenario Factor | 1.3 | -

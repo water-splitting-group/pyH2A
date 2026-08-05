@@ -8,7 +8,7 @@ Defaults | pyH2A.Config~Defaults_LCA.md
 
 Name | Value
 --- | ---
-Matrix Folder | src/tests/lca/data/matrix_folders/smartphone_3layer_ced_base
+Matrix Folder | src/tests/e2e_lca/data/matrix_folders/smartphone_3layer_ced_base
 
 # LCA - Smartphone GT Components
 
@@ -69,7 +69,7 @@ Name | Value | Comment
 Samples | 10 | Small sample count for a fast test run. full_distance_response_relationship's Savitzky-Golay smoothing (window_length = int(samples/reduction_factor), reduction_factor=25) would otherwise need >= 100 samples to exceed poly_order=4; Monte_Carlo_Analysis now skips that smoothing gracefully instead of raising when window_length <= poly_order, so a small sample count like this works fine.
 Dependent Variable | Cumulative energy demand | Already registered in _DEPENDENT_VARIABLE_CONFIG 
 Target Response Range | 0; 100 | Brackets the expected CED range for Circuit Board, Display, and Battery each in [1,2]
-Output File | src/tests/lca/data/input_files/smartphone_3layer_mc_ced_seed42_output.csv
+Output File | src/tests/e2e_lca/data/input_files/smartphone_3layer_mc_ced_seed42_output.csv
 
 # Parameters - Monte_Carlo_Analysis
 

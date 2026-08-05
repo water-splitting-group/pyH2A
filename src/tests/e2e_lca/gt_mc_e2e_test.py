@@ -1,6 +1,6 @@
 """
-Matrix: src/tests/lca/data/matrix_folders/smartphone_3layer_ced_base
-Input:  src/tests/lca/data/input_files/smartphone_3layer_mc_ced_seed42.md
+Matrix: src/tests/e2e_lca/data/matrix_folders/smartphone_3layer_ced_base
+Input:  src/tests/e2e_lca/data/input_files/smartphone_3layer_mc_ced_seed42.md
 
 Plugin/path-driven GT components
 ---------------------------------
@@ -63,7 +63,7 @@ _SEED = 42
 # doubles as ground truth for validating that the Monte Carlo pipeline
 # reproduces openLCA's results. The corresponding openLCA model for each
 # sample point is zipped up in its own matrix folder:
-# src/tests/lca/data/matrix_folders/smartphone_3layer_ced_mc_spN/smartphone_3layer_ced_mc_spN.zip,
+# src/tests/e2e_lca/data/matrix_folders/smartphone_3layer_ced_mc_spN/smartphone_3layer_ced_mc_spN.zip,
 # where N (1-10) is the sample point number, matching this array's row order
 # (row 0 -> sp1, row 1 -> sp2, etc.).
 
