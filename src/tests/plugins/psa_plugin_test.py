@@ -11,15 +11,15 @@ class DummyDCF:
     def __init__(
         self,
         design_capacity,
-        contaminant_mole_fraction,
-        contaminant_molar_mass,
+        feed_adsorbate_mole_fraction,
+        adsorbate_molar_mass,
         recovery,
         adsorption_time,
         number_of_beds,
         bed_void_fraction,
         bed_usage_fraction,
         uptake_fraction,
-        purge_fraction,
+        residual_loading_fraction,
         bulk_density,
         reference_bed_volume,
         reference_cost,
@@ -34,12 +34,12 @@ class DummyDCF:
                 },
             },
             "PSA": {
-                "Contaminant mole fraction": {
-                    "Value": contaminant_mole_fraction,
+                "Feed adsorbate mole fraction": {
+                    "Value": feed_adsorbate_mole_fraction,
                     "Unit": "-"
                 },
-                "Contaminant molar mass": {
-                    "Value": contaminant_molar_mass,
+                "Adsorbate molar mass": {
+                    "Value": adsorbate_molar_mass,
                     "Unit": "g/mol"
                 },
                 "Recovery": {
@@ -68,8 +68,8 @@ class DummyDCF:
                     "Value": uptake_fraction,
                     "Unit": "-"
                 },
-                "Purge fraction": {
-                    "Value": purge_fraction,
+                "Residual loading fraction": {
+                    "Value": residual_loading_fraction,
                     "Unit": "-"
                 },
                 "Bulk density": {
@@ -77,7 +77,7 @@ class DummyDCF:
                     "Unit": "kg/m3"
                 },
             },
-            "H2A Reference PSA System": {
+            "Reference PSA System": {
                 "Reference bed volume": {
                     "Value": reference_bed_volume,
                     "Unit": "L"
@@ -100,22 +100,22 @@ class DummyDCF:
         {
             "input": {
                 "design_capacity": 1500.0,
-                "contaminant_mole_fraction": 0.33,
-                "contaminant_molar_mass": 32.0,
+                "feed_adsorbate_mole_fraction": 0.33,
+                "adsorbate_molar_mass": 32.0,
                 "recovery": 0.85,
                 "adsorption_time": 10.0,
                 "number_of_beds": 4,
                 "bed_void_fraction": 0.36,
                 "bed_usage_fraction": 0.769,
                 "uptake_fraction": 0.0390,
-                "purge_fraction": 0.00188,
+                "residual_loading_fraction": 0.00188,
                 "bulk_density": 700.0,
                 "reference_bed_volume": 6065.0,
                 "reference_cost": 100000.0,
                 "scaling_exponent": 0.5,
             },
             "expected": {
-                "contaminant_mass_flow": Quantity(0.1596824467763889, "kg/s"),
+                "adsorbate_mass_flow": Quantity(0.1596824467763889, "kg/s"),
                 "adsorbent_mass": Quantity(13425.61264991387, "kg"),
                 "bed_volume": Quantity(29.96788537927203, "m3"),
                 "psa_cost": Quantity(222286.2743505983, "USD"),
@@ -135,8 +135,8 @@ def test_psa_plugin(case):
 
     tolerance = 1e-12
 
-    assert plugin.contaminant_mass_flow.unit['kg/s'] == pytest.approx(
-        expected["contaminant_mass_flow"].unit['kg/s'],
+    assert plugin.adsorbate_mass_flow.unit['kg/s'] == pytest.approx(
+        expected["adsorbate_mass_flow"].unit['kg/s'],
         abs=tolerance
     )
 
