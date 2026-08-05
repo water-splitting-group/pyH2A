@@ -1,0 +1,31 @@
+# Input files to merge
+
+Name | Value
+--- | ---
+Defaults | pyH2A.Config~Defaults_LCA.md
+
+# Life Cycle Assessment
+
+Name | Value
+--- | ---
+Matrix Folder | src/tests/e2e_lca/data/matrix_folders/smartphone_1layer_acid_base
+
+# LCA - Smartphone GT Components
+
+Name | Value | Unit | UUID
+--- | --- | --- | ---
+Smartphone | 1.0 | kg | 72d897ed-5c61-44d0-9ee0-f057dc981e58
+
+# Construction
+
+Name | Full Name | Value | Unit
+--- | --- | --- | ---
+capital perc 1st | % of capital spent in 1st year of construction | 100% | -
+
+# Technical Operating Parameters and Specifications
+
+Name | Value | Unit | Comment
+--- | --- | --- | ---
+Plant design capacity | 1.0 | kg/day | Reference production for GT LCA tests
+Operating capacity factor | 90% | - | Capacity factor
+Fraction of output that reaches gate | 100% | - | No gate losses assumed for minimal LCA test
