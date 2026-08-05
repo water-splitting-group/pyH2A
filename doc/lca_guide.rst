@@ -86,7 +86,7 @@ LCA component table
 
 One or more ``# LCA - ...`` sections list the foreground processes whose exchange amounts will
 be updated for each scenario. Below is an example of a complete LCA input file for the foreground
- process of PV + Electrolysis (PVE).
+process of PV + Electrolysis (PVE).
 
 .. code-block:: markdown
 
@@ -366,42 +366,42 @@ Troubleshooting
 ===============
 
 ``ValueError: No LCA component tables found in input``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------------------------------------
 
 No section whose name contains ``LCA`` (case-sensitive) was found in the input file. Check that the
 ``# LCA - ...`` section header is spelled correctly and that the file was loaded without
 parsing errors.
 
 ``ValueError: UUID '...' ... is missing from the input LCA component tables``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------------------------------------------------------------
 
 A UUID in the nonzero entries of the technosphere matrix first column has no matching entry in
 any ``# LCA - ...`` table. Every foreground component must be listed. Find the missing UUID in
 ``index_A.csv`` to identify the process.
 
 ``ValueError: Expected N LCA components ... but got M``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------------------------------------
 
 More rows were found across all ``# LCA - ...`` tables than there are nonzero entries in
 column 0 of the technosphere matrix. Remove the extra rows or check that the correct matrix
 export folder is specified.
 
 ``ZeroDivisionError: Sherman-Morrison denominator is too small``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------------------------------------------------
 
 The scenario values caused the functional unit production amount to approach zero, making the
 rank-1 update numerically singular. Verify that the exchange amount for the H2 production
 foreground process is non-zero.
 
 ``KeyError: 'Unit'``
-~~~~~~~~~~~~~~~~~~~~~
+-----------------------
 
 An ``# LCA - ...`` table row is missing its ``Unit`` column. Every row must declare a ``Unit`` —
 it is required to convert the resolved ``Value`` into the flow unit recorded in ``index_A.csv``,
 not merely informational. Add a ``Unit`` entry for the affected row.
 
 ``ValueError: Dimension mismatch: original dimension '...', but requested dimension '...'``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------------------------------------------------------------------------
 
 The ``Unit`` declared for an LCA component does not share a physical dimension with the flow's
 unit in ``index_A.csv`` (e.g. supplying a mass unit for a flow whose unit is energy). Check the
