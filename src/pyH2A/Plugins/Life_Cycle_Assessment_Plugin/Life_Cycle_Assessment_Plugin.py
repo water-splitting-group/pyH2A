@@ -2,8 +2,7 @@ import shutil
 import numpy as np
 
 from pyH2A.Plugins.Life_Cycle_Assessment_Plugin.config import CONFIG
-from pyH2A.Utilities.IO import input_resolver_function
-from pyH2A.Utilities.input_modification import process_table
+from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.lca_utils import (
     atomic_savez,
     factorize,
@@ -30,11 +29,22 @@ class Life_Cycle_Assessment_Plugin:
     Life Cycle Assessment > Matrix Folder > Value : str
         Path to the openLCA matrix export folder containing the technosphere
         (A), intervention (B), characterization (C), and demand (f) matrices.
-        Tables in ``dcf.inp`` whose names start with ``"LCA"`` are used to update
-        technosphere component values.
+    <...>LCA<...> >> Value : float, int, or ndarray
+        Value of an individual LCA technosphere component entry, in a
+        component-specific unit. Every table in ``dcf.inp`` whose name
+        contains ``"LCA"`` is matched (``sum_all_tables()``-style wildcard
+        table group; see :class:`~pyH2A.Plugins.Capital_Cost_Plugin.Capital_Cost_Plugin`
+        for the same pattern), and every row within each matched table is
+        resolved regardless of its name.
+    <...>LCA<...> >> UUID : str
+        openLCA technosphere UUID identifying which technosphere column entry
+        this component value updates.
 
     Returns
     -------
+    Life Cycle Assessment > Results > Value : dict
+        LCIA results keyed by impact name (identical to ``self.lca_results``,
+        inserted into ``dcf.inp`` for downstream/path-based consumers).
     self.matrix_folder : str
         Path to the openLCA matrix export folder.
     self.component_values : numpy.ndarray
@@ -102,6 +112,40 @@ class Life_Cycle_Assessment_Plugin:
                     "description": "Path to the openLCA matrix export folder."
                 },
             },
+            "<...>LCA<...>": {
+                "<...>": {
+                    "Value": {
+                        "type": {int, float, np.ndarray},
+                        "bounds": (None, None),
+                    },
+                    "Unit": {
+                        "dimension": "flexible",
+                    },
+                    "UUID": {
+                        "type": {str,},
+                    },
+                    "optional": True,
+                    "description": "Individual LCA technosphere component entry: value (in a "
+                                   "component-specific unit) and the corresponding openLCA "
+                                   "technosphere UUID."
+                },
+            },
+        }
+
+        self.output_dict = {
+            "Life Cycle Assessment": {
+                "Results": {
+                    "Value": {
+                        "inserted_value": "lca_results",
+                        "type": {dict,},
+                        "dimension": "flexible",
+                    },
+                    "optional": False,
+                    "description": "LCIA results keyed by impact name, each a Quantity expressed "
+                                   "per 1 unit of the functional flow, as a composite unit of "
+                                   "'<impact unit> / <functional unit>'."
+                },
+            },
         }
 
     def _run(self, dcf):
@@ -121,6 +165,8 @@ class Life_Cycle_Assessment_Plugin:
         self.apply_component_updates(dcf)
         self.build_scaling_vector()
         self.perform_lca()
+
+        output_inserter_function(self.output_dict, self, dcf, 'Life_Cycle_Assessment_Plugin')
 
         dcf.lca = self  # preserve `dcf.lca` for existing consumers (Monte_Carlo_Analysis, tests)
 
@@ -268,23 +314,24 @@ class Life_Cycle_Assessment_Plugin:
             pass
 
     def apply_component_updates(self, dcf):
-        '''Resolve LCA input values, store them aligned to the technosphere column,
+        '''Store resolved LCA input values aligned to the technosphere column,
         then cross-check the declared Functional Unit.
 
-        Reads all LCA input tables from ``dcf.inp``, resolves path-based
-        references via :func:`process_table`, then matches each component to
-        its position in the cached first technosphere column by UUID. The
-        sign of each value is preserved from the original column. The result
-        is stored on ``self.component_values`` for use in
-        :meth:`build_scaling_vector`.
+        Reads every ``<...>LCA<...>`` wildcard table already resolved into
+        ``self.input_dict_resolved`` (path-based references such as
+        ``"A > B > Value"`` are resolved by :func:`input_resolver_function`
+        itself), then matches each component to its position in the cached
+        first technosphere column by UUID. The sign of each value is
+        preserved from the original column. The result is stored on
+        ``self.component_values`` for use in :meth:`build_scaling_vector`.
 
         Parameters
         ----------
         dcf : pyH2A.Discounted_Cash_Flow
             Discounted cash flow object whose input dictionary contains at
-            least one table whose name starts with ``"LCA"`` (case-insensitive),
-            and whose resolved ``functional_unit`` is cross-checked against the
-            ``Unit`` declared for the functional-flow row in that table (see
+            least one table whose name contains ``"LCA"``, and whose resolved
+            ``functional_unit`` is cross-checked against the ``Unit`` declared
+            for the functional-flow row in that table (see
             :func:`~pyH2A.Utilities.functional_unit.resolve_functional_unit`).
 
         Raises
@@ -309,29 +356,23 @@ class Life_Cycle_Assessment_Plugin:
         A0_values = Life_Cycle_Assessment_Plugin._cache['A0_column'][1]
         A0_units = Life_Cycle_Assessment_Plugin._cache['A0_column'][2]
 
-        lca_table_names = [table_name for table_name in dcf.inp if table_name.lower().startswith('lca')]
+        lca_table_names = [table_name for table_name in dcf.inp if 'LCA' in table_name]
         if not lca_table_names:
-            raise ValueError("No LCA component tables found in input. Define at least one table whose name starts with 'LCA'.")
+            raise ValueError("No LCA component tables found in input. Define at least one table whose name contains 'LCA'.")
 
-        # Resolve any path-based references (e.g. "A > B > Value") into numbers.
-        for lca_table_name in lca_table_names:
-            process_table(dcf.inp, lca_table_name, 'Value')
         rows = []
-        for _, component_data in (
-            item
-            for lca_table_name in lca_table_names
-            for item in dcf.inp[lca_table_name].items()
-        ):
-            uuid, raw_value, unit = component_data['UUID'], component_data['Value'], component_data['Unit']
-            scalar_value = float(np.sum(raw_value) if isinstance(raw_value, (np.ndarray, list, tuple)) else raw_value)
-            rows.append((uuid, scalar_value, unit))
+        for lca_table_name in lca_table_names:
+            for component_data in self.input_dict_resolved[lca_table_name].values():
+                value_quantity = component_data['Value']
+                scalar_quantity = Quantity(float(np.sum(value_quantity.base_value)), value_quantity.base_unit)
+                rows.append((component_data['UUID'], scalar_quantity))
 
         if len(rows) > len(A0_uuids):
             raise ValueError(
                 f"Expected {len(A0_uuids)} LCA components (one per nonzero column-0 entry), "
                 f"but got {len(rows)}."
             )
-        uuid_to_quantity = {str(uuid): Quantity(val, unit) for uuid, val, unit in rows}
+        uuid_to_quantity = {str(uuid): quantity for uuid, quantity in rows}
 
         self.component_values = A0_values.copy()
         for i, uuid in enumerate(A0_uuids):
