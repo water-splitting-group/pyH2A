@@ -40,25 +40,21 @@ class DummyDCF:
                     'UUID': _UUID_H2_PRODUCTION,
                     'Value': h2_production,
                     'Unit': 'kg',
-                    'Processed': 'Yes',
                 },
                 'PV Electricity Generation': {
                     'UUID': _UUID_PV_ELECTRICITY,
                     'Value': pv_electricity,
                     'Unit': 'MJ',
-                    'Processed': 'Yes',
                 },
                 'Electrolyzer Manufacturing': {
                     'UUID': _UUID_ELECTROLYZER_MFG,
                     'Value': electrolyzer,
                     'Unit': 'item',
-                    'Processed': 'Yes',
                 },
                 'Reverse Osmosis': {
                     'UUID': _UUID_REVERSE_OSMOSIS,
                     'Value': reverse_osmosis,
                     'Unit': 'kg',
-                    'Processed': 'Yes',
                 },
             }
         }
