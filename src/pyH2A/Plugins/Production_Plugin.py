@@ -61,7 +61,7 @@ class Production_Plugin:
 						"bounds": (0, None),
 					},
 					"Unit": {
-						"dimension": f"{self.functional_unit.dimension}/time",
+						"dimension": self.functional_unit.dimension_per_time,
 					},
 					"optional": True,
 					"description": "Plant design capacity in functional unit of product / time."
