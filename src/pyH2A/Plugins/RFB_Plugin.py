@@ -17,7 +17,7 @@ class RFB_Plugin:
 		Design capacity of the battery	
 	Battery > Energy density > Value : float or int
 		Capacity per mass of electrolyte
-	Battery > Capacity loss per year > Value : float or int
+	Battery > Electrolyte regeneration per year > Value : float or int
 		Yearly capacity loss of the electrolyte		
 	Electrolyte Impact > Specific GWP > Value : float or int, optional
 		Mass of CO2 equivalent per mass of electrolyte produced
@@ -92,6 +92,16 @@ class RFB_Plugin:
 					},
 					"description": "Power of each stack."
 				},
+				"Cost per cell stack": {
+					"Value": {
+						"type": {float, int,},
+						"bounds": (0, None),
+					},
+					"Unit": {
+						"dimension": "currency",
+					},
+					"description": "Cost of each stack."
+				},				
 				"Design capacity": {
 					"Value": {
 						"type": {float, int,},
@@ -112,15 +122,15 @@ class RFB_Plugin:
 					},
 					"description": "Capacity per mass of electrolyte."
 				},	
-				"Capacity loss per year": {
+				"Electrolyte regeneration per year": {
 					"Value": {
 						"type": {float, int,},
-						"bounds": (0, None), # there's no upper bound: we now replace the electrolyte to maintain the capacity, it is theoretically possible that the turn over frequency is higher than 1/year.
+						"bounds": (0, None), # no upper bound: it is theoretically possible that the turn over frequency is higher than 1/year.
 					},
 					"Unit": {
 						"dimension": "dimensionless",
 					},
-					"description": "Yearly capacity loss of the electrolyte."
+					"description": "Fraction of electrolyte the holdup that is replaced per year."
 				},		
 			},
 			"Electrolyte Impact": {		
@@ -166,7 +176,18 @@ class RFB_Plugin:
 					},
 					"optional": True,			
 					"description": "Resource use per mass of electrolyte produced."
-				},													
+				},	
+				"Specific cost": {
+					"Value": {
+						"type": {float, int,},
+						"bounds": (0, None),
+					},
+					"Unit": {
+						"dimension": "currency/mass", 
+					},
+					"optional": True,			
+					"description": "Cost per mass of electrolyte produced."
+				},																	
 			},
 		}
 
@@ -180,7 +201,16 @@ class RFB_Plugin:
 					},
 					"description": "Number of cell stacks to provide the required power.",
 					"optional": False,
-				},			
+				},		
+				"Cost of cell stacks": {
+					"Value": {
+						"inserted_value": "cost_cell_stacks",
+						"type": {float,},
+						"dimension": "currency",
+					},
+					"description": "Total cost of the cell stacks.",
+					"optional": False,
+				},							
 				"Initial amount of electrolyte": {
 					"Value": {
 						"inserted_value": "initial_electrolyte_amount",
@@ -237,7 +267,7 @@ class RFB_Plugin:
 					"description": "Toxicity associated to the electolyte amount used during the entire battery lifetime.",
 					"optional": True,
 				},	
-				"total resource use": {
+				"Total resource use": {
 					"Value": {
 						"inserted_value": "total_resource_use",
 						"type": {float,},
@@ -245,7 +275,25 @@ class RFB_Plugin:
 					},
 					"description": "Resource use associated to the electolyte amount used during the entire battery lifetime.",
 					"optional": True,
-				},										
+				},	
+				"Initial cost of electrolyte": {
+					"Value": {
+						"inserted_value": "initial_cost",
+						"type": {float,},
+						"dimension": "currency",
+					},
+					"description": "Cost of the initial electrolyte holdup.",
+					"optional": True,
+				},														
+				"Yearly cost of electrolyte": {
+					"Value": {
+						"inserted_value": "yearly_cost",
+						"type": {float,},
+						"dimension": "currency",
+					},
+					"description": "Cost of electrolyte replacement per year.",
+					"optional": True,
+				},																					
 			},	
 		}
 
@@ -272,6 +320,13 @@ class RFB_Plugin:
 										'-'
 										)
 
+		self.cost_cell_stacks = Quantity(
+										self.number_cell_stacks.unit['-']
+										*
+										self.input_dict_resolved['Battery']['Cost per cell stack']['Value'].unit['USD'], 
+										'USD'
+										)
+
 	def calculate_electrolyte_amount(self):
 
 		self.initial_electrolyte_amount = Quantity(
@@ -280,10 +335,9 @@ class RFB_Plugin:
 												self.input_dict_resolved['Battery']['Energy density']['Value'].unit['J/kg'], 
 												'kg')
 
-		# Assumption: the electrolyte that lost x % of its capacity is a mixture of x % damaged molecules and (1-x) % fully functional molecules, which can be separated
-		# The fraction of fresh electrolyte to inject each year is therefore equal to the yearly relative capacity loss (x %)
+		# Assumption: the fraction of fresh electrolyte to inject each year is fixed
 		self.yearly_electrolyte_amount = Quantity(
-												self.input_dict_resolved['Battery']['Capacity loss per year']['Value'].unit['-']
+												self.input_dict_resolved['Battery']['Electrolyte regeneration per year']['Value'].unit['-']
 												*
 												self.initial_electrolyte_amount.unit['kg'], 
 												'kg')
@@ -329,3 +383,18 @@ class RFB_Plugin:
 									self.total_electrolyte_amount.unit['kg'], 
 									'kg'
 									) 
+
+		if'Specific cost' in self.input_dict_resolved['Electrolyte Impact']:
+			self.initial_cost = Quantity(
+										self.initial_electrolyte_amount.unit['kg']
+										*
+										self.input_dict_resolved['Electrolyte Impact']['Specific cost']['Value'].unit['USD/kg'], 
+										'USD'
+									)
+			
+			self.yearly_cost = Quantity(
+										self.yearly_electrolyte_amount.unit['kg']
+										*
+										self.input_dict_resolved['Electrolyte Impact']['Specific cost']['Value'].unit['USD/kg'],
+										'USD'
+									)

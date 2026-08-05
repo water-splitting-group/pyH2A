@@ -82,7 +82,7 @@ class Power_Management_Explicit_Battery_Plugin:
                     "Unit": {
                         "dimension": "currency / energy",
                     },
-                    "optional": True,
+                    "optional": False,
                     "description": "Cost of grid electricity. Can be provided as a single value "
                                     "or as an array with values for each year. If not provided, "
                                     "it is assumed that grid electricity is not used."
@@ -132,9 +132,8 @@ class Power_Management_Explicit_Battery_Plugin:
 
         self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Power_Management_Explicit_Battery_Plugin')  
 
-        if 'Power Consumption' in self.input_dict_resolved:    
-            self.calculate_consumers()
-            self.calculate_electricity_cost()
+        self.calculate_consumers()
+        self.calculate_electricity_cost()
 
         output_inserter_function(self.output_dict, self, dcf, 'Power_Management_Explicit_Battery_Plugin') 
 
@@ -166,13 +165,16 @@ class Power_Management_Explicit_Battery_Plugin:
                                             np.zeros_like(available_energy_yearly.unit['J']), 
                                             'J')
             
-        self.remaining_available, secondary_unfulfilled = allocate_power(self.input_dict_resolved['Power Consumption'], available_energy_yearly)
+        if 'Power Consumption' in self.input_dict_resolved:             
+            self.remaining_available, secondary_unfulfilled = allocate_power(self.input_dict_resolved['Power Consumption'], available_energy_yearly)
+        else:
+            self.remaining_available = available_energy_yearly
+            secondary_unfulfilled = Quantity(np.zeros_like(self.remaining_available.unit['J']), 'J')
 
         self.total_unfulfilled = Quantity(secondary_unfulfilled.unit['J'] + main_unfulfilled_yearly.unit['J'],'J')
    
 
     def calculate_electricity_cost(self):
-
         self.electricity_cost = Quantity(self.total_unfulfilled.unit['J']
                                         * self.input_dict_resolved['Grid Electricity']['Cost']['Value'].unit['USD/J'], 
                                 'USD')

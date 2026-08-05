@@ -31,7 +31,7 @@ class Battery_Calculation_Plugin:
         Maximum power that can be charged or discharged at a given moment.
      Battery > Charging threshold > Value : float or int
         Fraction of the maximum power below which charging is shut down.       
-     Battery > Storage capacity per battery module > Value : float or int, optional
+     Battery > Storage capacity per module > Value : float or int, optional
         Fraction of the maximum power below which charging is shut down.    
     
     Returns
@@ -180,7 +180,7 @@ class Battery_Calculation_Plugin:
                     "optional": False,
                     "description": "Fraction of the maximum power below which charging is shut down."
                 },    
-                "Storage capacity per battery module": {
+                "Storage capacity per module": {
                     "Value": {
                         "type": {int, float,},
                         "bounds": (0, None),
@@ -272,8 +272,10 @@ class Battery_Calculation_Plugin:
 
         self.calculate_power_curtailment()
         self.calculate_capacity_curtailment()
+        if 'Storage capacity per battery module' in self.input_dict_resolved['Battery']:
+            self.calculate_sizing()
         
-        output_inserter_function(oself.utput_dict, self, dcf, 'Battery_Calculation_Plugin')            
+        output_inserter_function(self.output_dict, self, dcf, 'Battery_Calculation_Plugin')            
 
     def calculate_power_curtailment(self):
 
@@ -346,7 +348,8 @@ class Battery_Calculation_Plugin:
         hourly_energy_excess_J_full_array,
         cumulated_energy_deficit_J_full_array,
         cumulated_energy_excess_J_full_array, 
-        throughput_J_full_array
+        cumulated_charge_J_full_array,
+        cumulated_discharge_J_full_array
         ) = saturated_cumsum_with_yield(
             requested_variation = self.curtailed_charging_power.unit['J'] - self.curtailed_discharging_power.unit['J'],                          
             lower_bound = lower_bound_SOE_J,                     
@@ -394,10 +397,19 @@ class Battery_Calculation_Plugin:
                                                  'J'
                                                  )
 
-        # The throughput is a cumulated sum of the absolute value of the state of energy variation
+        # The throughput is a cumulated sum of the absolute value of the state of energy variation: cumulated_charge_J_full_array + cumulated_discharge_J_full_array
         # We need to take the last value to have the total over the lifetime, and divide it by 2 to get an "equivalent charge"
-        # The throughput is defined as an array rather than simply the totla sum in the forst place in case we would like to refine ageing models in the future, with yearly number of cycles
+        # The throughput is defined as an array rather than simply the total sum in the first place in case we would like to refine ageing models in the future, with yearly number of cycles
         self.number_charge_cycles = Quantity(
-                                            throughput_J_full_array[-1]/(2*self.input_dict_resolved['Battery']['Design capacity']['Value'].unit['J']), 
+                                            (cumulated_charge_J_full_array[-1]+cumulated_discharge_J_full_array[-1])
+                                            /
+                                            (2*self.input_dict_resolved['Battery']['Design capacity']['Value'].unit['J']), 
                                             '-')        
-  
+
+    def calculate_sizing(self):
+        self.number_modules = Quantity(
+            self.input_dict_resolved['Battery']['Design capacity']['Value'].unit['J']
+            /
+            self.input_dict_resolved['Battery']['Storage capacity per module']['Value'].unit['J'] , 
+            '-'
+        )

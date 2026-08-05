@@ -130,6 +130,15 @@ class Photovoltaic_Plugin:
 					"description": "Yearly power generation of PV array (array).",
 					"optional": False,
 				},
+				"Total yearly power generation": {
+					"Value": {
+						"inserted_value": "electric_energy_generation_yearly_array",
+						"type": {np.ndarray,},
+						"dimension": "energy",
+					},
+					"description": "Yearly power generation of PV array (array).",
+					"optional": False,
+				},				
 				"Available energy (hourly)": {
 					"Value": {
 						"inserted_value": "electric_energy_generation_yearly_data",

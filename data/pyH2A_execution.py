@@ -118,18 +118,12 @@ def technology_comparison():
 
 
 
-def test():
-
-	from pyH2A.Utilities.Energy_Conversion import Energy, eV, J, kJmol
-	from scipy import constants as con
-
-	reaction_energy_per_kg = Energy(2*1.229*con.Avogadro* (1000./2.), eV)
-	print(reaction_energy_per_kg.J/1e6)
-	print(Energy(141 * 1e6, J).kWh)
-	print(Energy(285.83 * (1000./2.) * con.Avogadro, kJmol).J)
 
 def lca():
-	result = pyH2A('src/tests/end_to_end/Thermal_Base.md', '.')
+	result = pyH2A('src/tests/end_to_end/PV_Wind_Storage_power_generation_FU.md', '.')
+	print(result)
+
+	result = pyH2A('src/tests/end_to_end/PV_Wind_Storage_consumer_FU.md', '.')
 	print(result)
 
 def main():

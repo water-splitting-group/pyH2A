@@ -83,6 +83,17 @@ class Electricity_Consumer_Plugin:
 					"optional": False,
 				},
 			},	
+			"Main Consumer": {		
+				"Consumption per year": {
+					"Value": {
+						"inserted_value": "yearly_consumption",
+						"type": {float, int,},
+						"dimension": "energy",
+					},
+					"description": "Energy demand of the consumer over the entire year.",
+					"optional": False,
+				},
+			},				
 			"Power Generation": {
 				"Available energy (hourly)": {
 					"Value": {
@@ -127,7 +138,10 @@ class Electricity_Consumer_Plugin:
 							)
 
 			self.total_electric_energy_available_yearly_data[year] = Quantity(np.where(energy_excess>0, energy_excess, 0), 'J')
-			self.unsatisfied_demand[year] = Quantity(np.where(energy_excess<=0, -energy_excess, 0), 'J')		
+			self.unsatisfied_demand[year] = Quantity(np.where(energy_excess<=0, -energy_excess, 0), 'J')	
+
+		#total energy consumed during a year
+		self.yearly_consumption = Quantity(np.sum(self.consumption_data['Consumption'].unit['J']),'J')
 			
 	
 @lru_cache(maxsize = None)
