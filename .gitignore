@@ -11,7 +11,7 @@ src/tests/e2e_lca/data/matrix_folders/smartphone_2layer_acid_base/Initial_Artifa
 src/tests/e2e_lca/data/matrix_folders/smartphone_1layer_gwp_base/Initial_Artifacts/
 src/tests/e2e_lca/data/matrix_folders/smartphone_1layer_ced_base/Initial_Artifacts/
 src/tests/e2e_lca/data/matrix_folders/smartphone_1layer_acid_base/Initial_Artifacts/
-src/tests/plugins/data/matrix_folders/pve_unit_test/Initial_Artifacts/
+src/tests/plugins/lca_data/matrix_folders/pve_unit_test/Initial_Artifacts/
 
 # docx Files
 *.docx

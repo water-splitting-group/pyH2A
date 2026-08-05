@@ -11,7 +11,7 @@ from pyH2A.Utilities.lca_utils import get_cache_paths
 # ── Paths ──────────────────────────────────────────────────────────────────
 
 _HERE = Path(__file__).parent
-_MATRIX_FOLDER = str(_HERE / 'data' / 'matrix_folders' / 'pve_unit_test')
+_MATRIX_FOLDER = str(_HERE / 'lca_data' / 'matrix_folders' / 'pve_unit_test')
 _DISK_CACHE_DIR = Path(_MATRIX_FOLDER) / 'Initial_Artifacts'
 
 # ── UUIDs ──────────────────────────────────────────────────────────────────
