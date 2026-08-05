@@ -20,7 +20,7 @@ activates it. If the section is absent, pyH2A runs as a pure techno-economic mod
 once activated, the folder containing the openLCA matrix export must be present and correctly
 specified in the input file. In addition, every foreground process in the technosphere matrix
 must be listed in one or more ``# LCA - ...`` tables in the input file. The section name must
-begin with ``LCA`` (case-insensitive).
+contain ``LCA`` (case-sensitive) anywhere in the name, not necessarily at the start.
 
 Similar to the TEA workflow, LCA is fully compatible with Monte Carlo sampling: the plugin
 outputs are re-evaluated for each sample, the foreground column of the technosphere matrix
@@ -284,12 +284,12 @@ When running from a Python script, LCA results are accessible on the DCF object:
 	lca = result.base_case.lca
 
 ``lca.lca_results`` is a dictionary keyed by the verbatim impact category name from
-``index_C.csv``:
+``index_C.csv``, with each value a :class:`~pyH2A.Utilities.Unit_Handler.quantity.Quantity`:
 
 .. code-block:: Python
 
 	for name, entry in lca.lca_results.items():
-	    print(f"{name}: {entry['value']:.6f} {entry['unit']}")
+	    print(f"{name}: {entry.supplied_value:.6f} {entry.supplied_unit}")
 
 Example output for an IPCC 2013 no LT export:
 
@@ -304,7 +304,7 @@ To retrieve a single result by impact name:
 .. code-block:: Python
 
 	gwp100_key = 'Climate change no LT - Global warming potential (GWP100) no LT'
-	gwp100 = result.base_case.lca.lca_results[gwp100_key]['value']
+	gwp100 = result.base_case.lca.lca_results[gwp100_key].supplied_value
 
 The output CSV file from a Monte Carlo run contains the same impact category names as column 
 headers, and the values are in the same units as reported in the base case. The CSV file also
