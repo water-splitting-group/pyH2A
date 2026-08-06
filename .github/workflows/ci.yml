@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [master, feat/plugin_refactor]
 
+permissions:
+  contents: write
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -13,6 +16,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          fetch-depth: 0
 
       - name: Set up latest Python
         uses: actions/setup-python@v5
@@ -28,6 +34,37 @@ jobs:
         run: |
           uv pip install --system -e .
 
-      - name: Run tests
+      - name: Run tests with coverage
+        if: github.event_name == 'push'
         run: |
-          uv run pytest
+          mkdir -p coverage
+          uv run pytest \
+            --cov=pyH2A \
+            --cov-report=xml:coverage/coverage.xml \
+            --cov-report=term-missing \
+            src/tests/ -v
+
+      - name: Generate coverage badge
+        if: github.event_name == 'push'
+        run: |
+          mkdir -p badges
+          uv pip install --system "genbadge[coverage]"
+          genbadge coverage \
+            -i coverage/coverage.xml \
+            -o badges/coverage_badge.svg
+
+      - name: Commit coverage report and badge
+        if: github.event_name == 'push'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add coverage.xml badges/coverage_badge.svg
+
+          if git diff --cached --quiet; then
+            echo "No coverage changes"
+            exit 0
+          fi
+
+          git commit -m "chore: update coverage report and badge"
+          git push
