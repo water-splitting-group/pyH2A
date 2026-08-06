@@ -274,21 +274,22 @@ re-run the full pipeline (including LCA) for each sample, and collect the chosen
 Access LCA results
 ==================
 
-When running from a Python script, LCA results are accessible on the DCF object:
+When running from a Python script, LCA results are accessible on the DCF object's ``inp``,
+the same way any other plugin's declared output is read:
 
 .. code-block:: Python
 
 	from pyH2A.run_pyH2A import pyH2A
 
 	result = pyH2A('input.md', '.')
-	lca = result.base_case.lca
+	lca_results = result.base_case.inp['Life Cycle Assessment']['Results']['Value']
 
-``lca.lca_results`` is a dictionary keyed by the verbatim impact category name from
+``lca_results`` is a dictionary keyed by the verbatim impact category name from
 ``index_C.csv``, with each value a :class:`~pyH2A.Utilities.Unit_Handler.quantity.Quantity`:
 
 .. code-block:: Python
 
-	for name, entry in lca.lca_results.items():
+	for name, entry in lca_results.items():
 	    print(f"{name}: {entry.supplied_value:.6f} {entry.supplied_unit}")
 
 Example output for an IPCC 2013 no LT export:
@@ -304,7 +305,7 @@ To retrieve a single result by impact name:
 .. code-block:: Python
 
 	gwp100_key = 'Climate change no LT - Global warming potential (GWP100) no LT'
-	gwp100 = result.base_case.lca.lca_results[gwp100_key].supplied_value
+	gwp100 = result.base_case.inp['Life Cycle Assessment']['Results']['Value'][gwp100_key].supplied_value
 
 The output CSV file from a Monte Carlo run contains the same impact category names as column 
 headers, and the values are in the same units as reported in the base case. The CSV file also
