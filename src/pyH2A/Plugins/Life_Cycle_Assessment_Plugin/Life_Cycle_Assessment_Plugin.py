@@ -19,8 +19,7 @@ class Life_Cycle_Assessment_Plugin:
     openLCA matrix export.
 
     Runs as an ordinary Workflow plugin (see ``Config/Defaults_LCA.md`` and
-    ``Config/Defaults_TEA_LCA.md``), rather than being unconditionally triggered
-    from inside ``Discounted_Cash_Flow.__init__``. Whether LCA runs at all is
+    ``Config/Defaults_TEA_LCA.md``). Whether LCA runs at all is
     controlled by which default file is merged in (``Defaults_TEA.md`` omits this
     plugin entirely), not by any conditional logic here.
 
@@ -33,9 +32,8 @@ class Life_Cycle_Assessment_Plugin:
         Value of an individual LCA technosphere component entry, in a
         component-specific unit. Every table in ``dcf.inp`` whose name
         contains ``"LCA"`` is matched (``sum_all_tables()``-style wildcard
-        table group; see :class:`~pyH2A.Plugins.Capital_Cost_Plugin.Capital_Cost_Plugin`
-        for the same pattern), and every row within each matched table is
-        resolved regardless of its name.
+        table group, and every row within each matched table is resolved 
+        regardless of its name.
     <...>LCA<...> >> UUID : str
         openLCA technosphere UUID identifying which technosphere column entry
         this component value updates.
@@ -43,8 +41,6 @@ class Life_Cycle_Assessment_Plugin:
     Returns
     -------
     Life Cycle Assessment > Results > Value : dict
-        LCIA results keyed by impact name (identical to ``self.lca_results``,
-        inserted into ``dcf.inp`` for downstream/path-based consumers).
     self.matrix_folder : str
         Path to the openLCA matrix export folder.
     self.component_values : numpy.ndarray
@@ -59,10 +55,6 @@ class Life_Cycle_Assessment_Plugin:
         vector's first entry is always solved as exactly ``1.0``, regardless
         of the real magnitude reported by openLCA), as a composite unit of
         ``<impact unit> / <functional unit>``. Set by :meth:`perform_lca`.
-    dcf.lca : Life_Cycle_Assessment_Plugin
-        This plugin instance is also assigned to ``dcf.lca``, preserved for
-        backward compatibility with consumers that read ``dcf.lca.lca_results``
-        directly (e.g. :mod:`pyH2A.Analysis.Monte_Carlo_Analysis`).
 
     Raises
     ------
@@ -167,8 +159,6 @@ class Life_Cycle_Assessment_Plugin:
         self.perform_lca()
 
         output_inserter_function(self.output_dict, self, dcf, 'Life_Cycle_Assessment_Plugin')
-
-        dcf.lca = self  # preserve `dcf.lca` for existing consumers (Monte_Carlo_Analysis, tests)
 
     def initialize_all_artifacts(self):
         '''Prepare all matrix artifacts and component basis vectors.
