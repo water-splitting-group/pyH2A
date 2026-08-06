@@ -101,7 +101,8 @@ def saturated_cumsum_with_yield(
 
     instant_deficit = np.zeros(n)
     instant_excess = np.zeros(n)
-    throughput = np.empty(n)
+    cumulated_charge = np.empty(n)
+    cumulated_discharge = np.empty(n)
 
     cumulated_deficit = 0.0
     cumulated_excess = 0.0
@@ -123,8 +124,8 @@ def saturated_cumsum_with_yield(
             )
 
             # Update state
-            throughput[i] = accepted_increase * positive_variation_yield  
-            current_state += throughput[i]
+            cumulated_charge[i] = accepted_increase * positive_variation_yield  
+            current_state += cumulated_charge[i]
 
             # Amount that could not be stored
             instant_excess[i] = incoming - accepted_increase
@@ -145,8 +146,8 @@ def saturated_cumsum_with_yield(
             delivered = min(requested_decrease, max_deliverable)
 
             # Withdraw corresponding stored amount
-            throughput[i] = delivered / negative_variation_yield
-            current_state -= throughput[i]
+            cumulated_discharge[i] = delivered / negative_variation_yield
+            current_state -= cumulated_discharge[i]
 
             # Remaining unmet demand
             instant_deficit[i] = requested_decrease - delivered
@@ -154,7 +155,8 @@ def saturated_cumsum_with_yield(
 
         state[i] = current_state
 
-    throughput = np.cumsum(throughput)
+    cumulated_charge = np.cumsum(cumulated_charge)
+    cumulated_discharge = np.cumsum(cumulated_discharge)
 
     return (
         state,
@@ -162,5 +164,6 @@ def saturated_cumsum_with_yield(
         instant_excess,
         cumulated_deficit,
         cumulated_excess,
-        throughput
+        cumulated_charge,
+        cumulated_discharge
     )

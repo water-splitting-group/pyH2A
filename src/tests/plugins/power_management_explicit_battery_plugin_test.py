@@ -2,6 +2,8 @@ import pytest
 import numpy as np
 from pyH2A.Plugins.Power_Management_Explicit_Battery_Plugin import Power_Management_Explicit_Battery_Plugin
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+from pyH2A.Utilities.functional_unit import resolve_functional_unit
+
 
 
 class DummyDCF:
@@ -16,6 +18,7 @@ class DummyDCF:
         grid_cost,
     ):
 
+        self.functional_unit = resolve_functional_unit('kWh')
         self.inp = {
             "Time": {
                 "Years": {

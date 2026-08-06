@@ -2,6 +2,7 @@ import pytest
 import numpy as np
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 from pyH2A.Plugins.Battery_Calculation_Plugin import Battery_Calculation_Plugin
+from pyH2A.Utilities.functional_unit import resolve_functional_unit
 
 
 class DummyDCF:
@@ -19,7 +20,10 @@ class DummyDCF:
         rte, 
         power,
         charging_threshold,
+        capacity_per_module
     ):
+                
+        self.functional_unit = resolve_functional_unit('kWh')
         self.inp = {
             "Time": {
                 "Years": {
@@ -60,7 +64,11 @@ class DummyDCF:
                 "Charging threshold": {
                     "Value": charging_threshold,
                     "Unit": "-",   
-                },                                                                                                     
+                }, 
+                "Storage capacity per battery module": {
+                    "Value": capacity_per_module,
+                    "Unit": "MWh",   
+                },                                                                                                                          
             },             
         }
 
@@ -79,7 +87,8 @@ class DummyDCF:
                 "highest_charge_level": 0.8, 
                 "rte":0.8, 
                 "power":10,
-                "charging_threshold":0.2
+                "charging_threshold":0.2, 
+                "capacity_per_module": 5
 
             },
             "expected": {
@@ -97,7 +106,8 @@ class DummyDCF:
                     16.271, 16.274, 16.277
                     ]), 'MWh'),                        
                 "total_unsatisfied_demand":Quantity(53978.76, 'MWh'),
-                "number_charge_cycles":Quantity(0.56, '-'),                   
+                "number_charge_cycles":Quantity(0.56, '-'),   
+                "number_modules": Quantity(6, '-')                
             },
         },
     ],
@@ -142,5 +152,10 @@ def test_battery_calculation_plugin(case):
 
     assert plugin.number_charge_cycles.unit["-"] == pytest.approx(
         expected["number_charge_cycles"].unit["-"],
+        abs=tolerance
+    )       
+
+    assert plugin.number_modules.unit["-"] == pytest.approx(
+        expected["number_modules"].unit["-"],
         abs=tolerance
     )       

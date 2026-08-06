@@ -3,210 +3,6 @@ from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 from pyH2A.Utilities.saturated_cumsum import saturated_cumsum_with_yield
 import numpy as np
 
-input_dict = {    
-    "Time": {
-        "Years": {
-            "Value": {
-                "type": {dict,},
-                "bounds": (None, None),
-            },
-            "Unit": {
-                "dimension": "dimensionless",
-            },
-            "optional": False,
-            "description": "Dictionary containing all time-related quantities."
-        }, 
-    },        
-    "Power Generation": {
-        "Available energy (hourly)": {
-            "Value": {
-                "type": {dict,},
-                "bounds": (0, None),
-            },
-            "Unit": {
-                "dimension": "energy",
-            },                    
-            "optional": False,
-            "description": " Available energy, hourly basis, dictionary of years."
-        },                      
-    },
-    "Hourly Consumer Profile": {
-        "Unsatisfied demand": {
-            "Value": {
-                "type": {dict,},
-                "bounds": (0, None),
-            },
-            "Unit": {
-                "dimension": "energy",
-            },                    
-            "optional": False,
-            "description": "Energy demand that is not met by the direct supply, dictionary of years."
-        },                      
-    },    
-    "Battery": {
-        "Design capacity": { 
-            "Value": {
-                "type": {int, float,},
-                "bounds": (0, None),
-            },
-            "Unit": {
-                "dimension": "energy",
-            },                    
-            "optional": False,
-            "description": "Full design capacity of battery."
-        },
-        "Lowest discharge level": {
-            "Value": {
-                "type": {int, float,},
-                "bounds": (0, 1),
-            },
-            "Unit": {
-                "dimension": "dimensionless",
-            },                    
-            "optional": False,
-            "description": "Lowest level to which battery can be discharged."
-        },
-        "Capacity loss per year": {
-            "Value": {
-                "type": {int, float,},
-                "bounds": (0, 1),
-            },
-            "Unit": {
-                "dimension": "dimensionless",
-            },                    
-            "optional": False,
-            "description": "Loss of capacity per year."
-        },
-        "Highest charge level": {
-            "Value": {
-                "type": {int, float,},
-                "bounds": (0, 1),
-            },
-            "Unit": {
-                "dimension": "dimensionless",
-            },                    
-            "optional": False,
-            "description": "Highest level to which battery can be charged, relative to battery capacity."
-        },         
-        "Round trip efficiency": {
-            "Value": {
-                "type": {int, float,},
-                "bounds": (0, 1),
-            },
-            "Unit": {
-                "dimension": "dimensionless",
-            },                    
-            "optional": False,
-            "description": "Round trip efficiency of battery."
-        },  
-        "Power": {
-            "Value": {
-                "type": {int, float,},
-                "bounds": (0, None),
-            },
-            "Unit": {
-                "dimension": "power",
-            },                    
-            "optional": False,
-            "description": "Maximum power that can be charged or discharged at a given moment."
-        },   
-        "Charging threshold": {
-            "Value": {
-                "type": {int, float,},
-                "bounds": (0, None),
-            },
-            "Unit": {
-                "dimension": "dimensionless",
-            },                    
-            "optional": False,
-            "description": "Fraction of the maximum power below which charging is shut down."
-        },    
-        "Storage capacity per battery module": {
-            "Value": {
-                "type": {int, float,},
-                "bounds": (0, None),
-            },
-            "Unit": {
-                "dimension": "energy",
-            },                    
-            "optional": True,
-            "description": "Serves to calculate the number of battery modules."
-        },                         
-    } 
-}
-
-output_dict = {
-    "Power Generation": {
-        "State of energy (hourly)": {
-            "Value": {
-                "inserted_value": "houly_state_of_energy",
-                "type": {dict,},
-                "dimension": "energy",
-            },
-            "description": "State of energy of the battery, dictionary of years",
-            "optional": False,
-        },
-        "Available energy (hourly)": {
-            "Value": {
-                "inserted_value": "hourly_unstored_energy",
-                 "type": {dict,},
-                 "dimension": "energy",
-            },
-            "description": "Excess energy that was not stored, dictionary of years",
-            "optional": False,
-        },
-        "Total available energy": {
-            "Value": {
-                "inserted_value": "total_unstored_energy",
-                 "type": {float,},
-                 "dimension": "energy",
-            },
-            "description": "Total excess energy that was not stored during the plant operating years",
-            "optional": False,
-        },            
-    },
-    "Hourly Consumer Profile":{
-        "Unsatisfied demand": {
-            "Value": {
-                "inserted_value": "hourly_unsatisfied_demand",
-                 "type": {dict,},
-                 "dimension": "energy",
-            },
-            "description": "Energy demand that is not met after the battery supply, dictionary of years.",
-            "optional": False,
-        },
-        "Total unsatisfied demand": {
-            "Value": {
-                "inserted_value": "total_unsatisfied_demand",
-                 "type": {float,},
-                 "dimension": "energy",
-            },
-            "description": "Total energy demand that is not met after the battery supply during the plant operating time.",
-            "optional": False,
-        },        
-    },
-    "Battery": {  
-        "Number of charge cycles": {
-            "Value": {
-                "inserted_value": "number_charge_cycles",
-                 "type": {float,},
-                 "dimension": "dimensionless",
-            },
-            "description": "Total energy throughput relative to the battery design capacity.",
-            "optional": False,
-        },              
-        "Number of needed modules": {
-            "Value": {
-                "inserted_value": "number_modules",
-                 "type": {float,int},
-                 "dimension": "dimensionless",
-            },
-            "description": "Number of modules to provide the requested storage capacity.",
-            "optional": True,
-        }        
-    }
-}
-
 class Battery_Calculation_Plugin:
     '''Simulation of electricity storage using a battery.
     The battery charges when there is some extra available energy (production > consumer demand), the power is within the allowed range and the state of charge is below a thershold.
@@ -235,7 +31,7 @@ class Battery_Calculation_Plugin:
         Maximum power that can be charged or discharged at a given moment.
      Battery > Charging threshold > Value : float or int
         Fraction of the maximum power below which charging is shut down.       
-     Battery > Storage capacity per battery module > Value : float or int, optional
+     Battery > Storage capacity per module > Value : float or int, optional
         Fraction of the maximum power below which charging is shut down.    
     
     Returns
@@ -257,14 +53,229 @@ class Battery_Calculation_Plugin:
         Number of modules to provide the requested storage capacity.         
     '''
 
-    def __init__(self, dcf, print_info):
-        self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Battery_Calculation_Plugin')
+    def __init__(self, dcf, print_info, run = True):
+        self._set_up(dcf)
+        if run:
+            self._run(dcf)
 
-        #number_operating_years = len(self.input_dict_resolved['Time']['Years']['Value']['Operation years'].unit['-'])
+    def _set_up(self, dcf):
+
+        self.functional_unit = dcf.functional_unit
+
+        self.input_dict = {    
+            "Time": {
+                "Years": {
+                    "Value": {
+                        "type": {dict,},
+                        "bounds": (None, None),
+                    },
+                    "Unit": {
+                        "dimension": "dimensionless",
+                    },
+                    "optional": False,
+                    "description": "Dictionary containing all time-related quantities."
+                }, 
+            },        
+            "Power Generation": {
+                "Available energy (hourly)": {
+                    "Value": {
+                        "type": {dict,},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "energy",
+                    },                    
+                    "optional": False,
+                    "description": " Available energy, hourly basis, dictionary of years."
+                },                      
+            },
+            "Hourly Consumer Profile": {
+                "Unsatisfied demand": {
+                    "Value": {
+                        "type": {dict,},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "energy",
+                    },                    
+                    "optional": False,
+                    "description": "Energy demand that is not met by the direct supply, dictionary of years."
+                },                      
+            },    
+            "Battery": {
+                "Design capacity": { 
+                    "Value": {
+                        "type": {int, float,},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "energy",
+                    },                    
+                    "optional": False,
+                    "description": "Full design capacity of battery."
+                },
+                "Lowest discharge level": {
+                    "Value": {
+                        "type": {int, float,},
+                        "bounds": (0, 1),
+                    },
+                    "Unit": {
+                        "dimension": "dimensionless",
+                    },                    
+                    "optional": False,
+                    "description": "Lowest level to which battery can be discharged."
+                },
+                "Capacity loss per year": {
+                    "Value": {
+                        "type": {int, float,},
+                        "bounds": (0, 1),
+                    },
+                    "Unit": {
+                        "dimension": "dimensionless",
+                    },                    
+                    "optional": False,
+                    "description": "Loss of capacity per year."
+                },
+                "Highest charge level": {
+                    "Value": {
+                        "type": {int, float,},
+                        "bounds": (0, 1),
+                    },
+                    "Unit": {
+                        "dimension": "dimensionless",
+                    },                    
+                    "optional": False,
+                    "description": "Highest level to which battery can be charged, relative to battery capacity."
+                },         
+                "Round trip efficiency": {
+                    "Value": {
+                        "type": {int, float,},
+                        "bounds": (0, 1),
+                    },
+                    "Unit": {
+                        "dimension": "dimensionless",
+                    },                    
+                    "optional": False,
+                    "description": "Round trip efficiency of battery."
+                },  
+                "Power": {
+                    "Value": {
+                        "type": {int, float,},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "power",
+                    },                    
+                    "optional": False,
+                    "description": "Maximum power that can be charged or discharged at a given moment."
+                },   
+                "Charging threshold": {
+                    "Value": {
+                        "type": {int, float,},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "dimensionless",
+                    },                    
+                    "optional": False,
+                    "description": "Fraction of the maximum power below which charging is shut down."
+                },    
+                "Storage capacity per battery module": {
+                    "Value": {
+                        "type": {int, float,},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "energy",
+                    },                    
+                    "optional": True,
+                    "description": "Serves to calculate the number of battery modules."
+                },                         
+            } 
+        }
+
+        self.output_dict = {
+            "Power Generation": {
+                "State of energy (hourly)": {
+                    "Value": {
+                        "inserted_value": "houly_state_of_energy",
+                        "type": {dict,},
+                        "dimension": "energy",
+                    },
+                    "description": "State of energy of the battery, dictionary of years",
+                    "optional": False,
+                },
+                "Available energy (hourly)": {
+                    "Value": {
+                        "inserted_value": "hourly_unstored_energy",
+                        "type": {dict,},
+                        "dimension": "energy",
+                    },
+                    "description": "Excess energy that was not stored, dictionary of years",
+                    "optional": False,
+                },
+                "Total available energy": {
+                    "Value": {
+                        "inserted_value": "total_unstored_energy",
+                        "type": {float,},
+                        "dimension": "energy",
+                    },
+                    "description": "Total excess energy that was not stored during the plant operating years",
+                    "optional": False,
+                },            
+            },
+            "Hourly Consumer Profile":{
+                "Unsatisfied demand": {
+                    "Value": {
+                        "inserted_value": "hourly_unsatisfied_demand",
+                        "type": {dict,},
+                        "dimension": "energy",
+                    },
+                    "description": "Energy demand that is not met after the battery supply, dictionary of years.",
+                    "optional": False,
+                },
+                "Total unsatisfied demand": {
+                    "Value": {
+                        "inserted_value": "total_unsatisfied_demand",
+                        "type": {float,},
+                        "dimension": "energy",
+                    },
+                    "description": "Total energy demand that is not met after the battery supply during the plant operating time.",
+                    "optional": False,
+                },        
+            },
+            "Battery": {  
+                "Number of charge cycles": {
+                    "Value": {
+                        "inserted_value": "number_charge_cycles",
+                        "type": {float,},
+                        "dimension": "dimensionless",
+                    },
+                    "description": "Total energy throughput relative to the battery design capacity.",
+                    "optional": False,
+                },              
+                "Number of needed modules": {
+                    "Value": {
+                        "inserted_value": "number_modules",
+                        "type": {float,int},
+                        "dimension": "dimensionless",
+                    },
+                    "description": "Number of modules to provide the requested storage capacity.",
+                    "optional": True,
+                }        
+            }
+        }
+
+
+    def _run(self, dcf):
+        self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Battery_Calculation_Plugin')
+
         self.calculate_power_curtailment()
         self.calculate_capacity_curtailment()
+        if 'Storage capacity per battery module' in self.input_dict_resolved['Battery']:
+            self.calculate_sizing()
         
-        output_inserter_function(output_dict, self, dcf, 'Battery_Calculation_Plugin')            
+        output_inserter_function(self.output_dict, self, dcf, 'Battery_Calculation_Plugin')            
 
     def calculate_power_curtailment(self):
 
@@ -337,7 +348,8 @@ class Battery_Calculation_Plugin:
         hourly_energy_excess_J_full_array,
         cumulated_energy_deficit_J_full_array,
         cumulated_energy_excess_J_full_array, 
-        throughput_J_full_array
+        cumulated_charge_J_full_array,
+        cumulated_discharge_J_full_array
         ) = saturated_cumsum_with_yield(
             requested_variation = self.curtailed_charging_power.unit['J'] - self.curtailed_discharging_power.unit['J'],                          
             lower_bound = lower_bound_SOE_J,                     
@@ -385,10 +397,19 @@ class Battery_Calculation_Plugin:
                                                  'J'
                                                  )
 
-        # The throughput is a cumulated sum of the absolute value of the state of energy variation
+        # The throughput is a cumulated sum of the absolute value of the state of energy variation: cumulated_charge_J_full_array + cumulated_discharge_J_full_array
         # We need to take the last value to have the total over the lifetime, and divide it by 2 to get an "equivalent charge"
-        # The throughput is defined as an array rather than simply the totla sum in the forst place in case we would like to refine ageing models in the future, with yearly number of cycles
+        # The throughput is defined as an array rather than simply the total sum in the first place in case we would like to refine ageing models in the future, with yearly number of cycles
         self.number_charge_cycles = Quantity(
-                                            throughput_J_full_array[-1]/(2*self.input_dict_resolved['Battery']['Design capacity']['Value'].unit['J']), 
+                                            (cumulated_charge_J_full_array[-1]+cumulated_discharge_J_full_array[-1])
+                                            /
+                                            (2*self.input_dict_resolved['Battery']['Design capacity']['Value'].unit['J']), 
                                             '-')        
-  
+
+    def calculate_sizing(self):
+        self.number_modules = Quantity(
+            self.input_dict_resolved['Battery']['Design capacity']['Value'].unit['J']
+            /
+            self.input_dict_resolved['Battery']['Storage capacity per battery module']['Value'].unit['J'] , 
+            '-'
+        )
