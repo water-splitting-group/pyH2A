@@ -180,7 +180,7 @@ def generate_docstring(summary, input_dict, output_dict, notes = None):
 		`__doc__`.
 	'''
 
-	lines = [summary.strip(), '']
+	lines = [textwrap.dedent(summary).strip(), '']
 	lines += _render_section('Parameters', '-', _walk_input_dict(input_dict))
 	lines += _render_section('Returns', '-', _walk_output_dict(output_dict))
 
