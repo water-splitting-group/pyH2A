@@ -147,9 +147,9 @@ The power of pyH2A lies in the ability to interface the core techno-economic ana
 
 	Name | Method Name | Arguments
 	--- | --- | ---
-	distance_cost_relationship | plot_distance_cost_relationship | Arguments - MC Analysis - distance_cost
+	distance_cost_relationship | plot_distance_response_relationship | Arguments - MC Analysis - distance_cost
 
-Including this table in the input file requests that the :func:`~pyH2A.Analysis.Monte_Carlo_Analysis.Monte_Carlo_Analysis.plot_distance_cost_relationship` method is executed. Arguments can be passed to the method in the ``Arguments`` column. In this case, a simple string is included ``Arguments - MC Analysis - distance_cost``. This directs pyH2A to another table in the input file which contains the method arguments:
+Including this table in the input file requests that the :func:`~pyH2A.Analysis.Monte_Carlo_Analysis.Monte_Carlo_Analysis.plot_distance_response_relationship` method is executed. Arguments can be passed to the method in the ``Arguments`` column. In this case, a simple string is included ``Arguments - MC Analysis - distance_cost``. This directs pyH2A to another table in the input file which contains the method arguments:
 
 .. code-block:: markdown
 	
@@ -173,7 +173,7 @@ This synthax is useful when a number of arguments are provided. Alternatively, a
 
 	Name | Method Name | Arguments
 	--- | --- | ---
-	distance_cost_relationship | plot_distance_cost_relationship | {'show': True, 'save': True}
+	distance_cost_relationship | plot_distance_response_relationship | {'show': True, 'save': True}
 
 By setting ``save`` to ``True``, the plot is saved to the output directory. In this case, the following plot is generated:
 

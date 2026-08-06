@@ -16,7 +16,8 @@ pyH2A
    plugins/plugins
    analysis/analysis
    lca_guide
-   
+   monte_carlo_guide
+
 pyH2A is a Python framework for the analysis of hydrogen production cost.
 
 Indices and tables
