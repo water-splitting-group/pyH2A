@@ -186,8 +186,8 @@ def test_scenarios(group, scenario_index):
     # Quantity, expressed as ``<impact unit> / <functional unit>``.
     input_file = _INPUT_FILES_DIR / f'{input_file_stem}.md'
     result = pyH2A(str(input_file), str(_INPUT_FILES_DIR))
-    lca = result.base_case.lca
-    quantity = lca.lca_results[impact_name]
+    lca_results = result.base_case.inp['Life Cycle Assessment']['Results']['Value']
+    quantity = lca_results[impact_name]
     diff_pct = (quantity.supplied_value - expected_value) / expected_value * 100
     print(f'\n  pyH2A={quantity.supplied_value:.6f}  reference={expected_value:.6f}  diff={diff_pct:+.4f}%')
     assert quantity.supplied_value == pytest.approx(expected_value, rel=1e-8)
