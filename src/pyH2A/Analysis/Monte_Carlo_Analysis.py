@@ -47,7 +47,7 @@ def _mc_response_worker(value_batch, inp, parameters, dependent_variable):
 		if dependent_variable == 'h2_cost':
 			response_values.append(dcf.h2_cost)
 		else:
-			response_values.append(dcf.lca.lca_results[dependent_variable].supplied_value)
+			response_values.append(dcf.inp['Life Cycle Assessment']['Results']['Value'][dependent_variable].supplied_value)
 	return response_values
 
 
