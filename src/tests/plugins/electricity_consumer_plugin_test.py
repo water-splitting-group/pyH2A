@@ -2,6 +2,7 @@ import pytest
 import numpy as np
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 from pyH2A.Plugins.Electricity_Consumer_Plugin import Electricity_Consumer_Plugin
+from pyH2A.Utilities.functional_unit import resolve_functional_unit
 
 
 class DummyDCF:
@@ -13,6 +14,8 @@ class DummyDCF:
         hourly_file,
         available_energy_hourly
     ):
+
+        self.functional_unit = resolve_functional_unit('kWh')
         self.inp = {
             "Time": {
                 "Years": {
@@ -46,6 +49,7 @@ class DummyDCF:
                     7508, 7510, 7512, 
                     7514, 7516, 7518
                     ]), 'kWh'),
+                "yearly_consumption": Quantity(87.6,"GWh"),
                 "last_6h_default_energy":Quantity(np.zeros(6), 'kWh'),
                 "first_6h_available_energy":Quantity(np.zeros(6), 'kWh'),                    
             },
@@ -72,6 +76,11 @@ def test_electricity_consumer_plugin(case):
 
     assert plugin.unsatisfied_demand[1].unit["J"][-6:] == pytest.approx(
         expected["last_6h_default_energy"].unit["J"],
+        abs=tolerance
+    )
+
+    assert plugin.yearly_consumption.unit["J"] == pytest.approx(
+        expected["yearly_consumption"].unit["J"],
         abs=tolerance
     )
 

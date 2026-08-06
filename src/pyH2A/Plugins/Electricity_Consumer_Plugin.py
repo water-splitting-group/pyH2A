@@ -5,72 +5,8 @@ from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 from pyH2A.Plugins.Hourly_Irradiation_Plugin import converter_function
 
-
-input_dict = {
-    "Time": {
-        "Years": {
-            "Value": {
-                "type": {dict,},
-                "bounds": (None, None),
-            },
-            "Unit": {
-                "dimension": "dimensionless",
-            },
-            "optional": False,
-            "description": "Dictionary containing all time-related quantities."
-        }, 
-    },  	
-	"Hourly Consumer Profile": {		
-		"File": {
-			"Value": {	
-				"type": {str,},
-			},
-			"optional": False,
-			"description": "Path to a `.csv` file containing hourly power consumption"
-		},	
-	},
-	"Power Generation": {	
-		"Available energy (hourly)": {
-			"Value": {
-				"type": {dict,},
-				"bounds": (0, None),
-			},
-			"Unit": {
-				"dimension": "energy",
-			},
-			"optional": False, 
-			"description": "Available energy, hourly basis, dictionary of years."
-		},
-	},
-}
-
-output_dict = {
-	"Hourly Consumer Profile": {		
-		"Unsatisfied demand": {
-			"Value": {
-				"inserted_value": "unsatisfied_demand",
-				"type": {dict,},
-				"dimension": "energy",
-			},
-			"description": "Energy demand that is not met by the direct supply, dictionary of years.",
-			"optional": False,
-		},
-	},	
-	"Power Generation": {
-		"Available energy (hourly)": {
-			"Value": {
-				"inserted_value": "total_electric_energy_available_yearly_data",
-				"type": {dict,},
-				"dimension": "energy",
-			},
-			"description": "Available energy, hourly basis, dictionary of years.",
-			"optional": False,
-		},
-	},	
-}
-
 class Electricity_Consumer_Plugin:
-	'''Calculation of hourly enegry excess and default.
+	'''Calculation of hourly energy excess and default.
 	
 	Parameters
 	----------
@@ -88,16 +24,99 @@ class Electricity_Consumer_Plugin:
 	Power Generation > Available energy (hourly) > Value : dict
 		Total available power, hourly basis, dictionary of years				
 	'''
+	def __init__(self, dcf, print_info, run = True):
+		self._set_up(dcf)
+		if run:
+			self._run(dcf)
 
-	def __init__(self, dcf, print_info):
+	def _set_up(self, dcf):
 
-		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Electricity_Consumer_Plugin')
+		self.functional_unit = dcf.functional_unit
+
+		self.input_dict = {
+			"Time": {
+				"Years": {
+					"Value": {
+						"type": {dict,},
+						"bounds": (None, None),
+					},
+					"Unit": {
+						"dimension": "dimensionless",
+					},
+					"optional": False,
+					"description": "Dictionary containing all time-related quantities."
+				}, 
+			},  	
+			"Hourly Consumer Profile": {		
+				"File": {
+					"Value": {	
+						"type": {str,},
+					},
+					"optional": False,
+					"description": "Path to a `.csv` file containing hourly power consumption"
+				},	
+			},
+			"Power Generation": {	
+				"Available energy (hourly)": {
+					"Value": {
+						"type": {dict,},
+						"bounds": (0, None),
+					},
+					"Unit": {
+						"dimension": "energy",
+					},
+					"optional": False, 
+					"description": "Available energy, hourly basis, dictionary of years."
+				},
+			},
+		}
+
+		self.output_dict = {
+			"Hourly Consumer Profile": {		
+				"Unsatisfied demand": {
+					"Value": {
+						"inserted_value": "unsatisfied_demand",
+						"type": {dict,},
+						"dimension": "energy",
+					},
+					"description": "Energy demand that is not met by the direct supply, dictionary of years.",
+					"optional": False,
+				},
+			},	
+			"Main Consumer": {		
+				"Consumption per year": {
+					"Value": {
+						"inserted_value": "yearly_consumption",
+						"type": {float, int,},
+						"dimension": "energy",
+					},
+					"description": "Energy demand of the consumer over the entire year.",
+					"optional": False,
+				},
+			},				
+			"Power Generation": {
+				"Available energy (hourly)": {
+					"Value": {
+						"inserted_value": "total_electric_energy_available_yearly_data",
+						"type": {dict,},
+						"dimension": "energy",
+					},
+					"description": "Available energy, hourly basis, dictionary of years.",
+					"optional": False,
+				},
+			},	
+		}
+
+
+	def _run(self, dcf):
+
+		self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Electricity_Consumer_Plugin')
 
 		self.consumption_data = import_hourly_data(self.input_dict_resolved['Hourly Consumer Profile']['File']['Value'])
 
 		self.calculate_supply_demand_difference()
 
-		output_inserter_function(output_dict, self, dcf, 'Electricity_Consumer_Plugin') 
+		output_inserter_function(self.output_dict, self, dcf, 'Electricity_Consumer_Plugin') 
 
 
 
@@ -119,7 +138,10 @@ class Electricity_Consumer_Plugin:
 							)
 
 			self.total_electric_energy_available_yearly_data[year] = Quantity(np.where(energy_excess>0, energy_excess, 0), 'J')
-			self.unsatisfied_demand[year] = Quantity(np.where(energy_excess<=0, -energy_excess, 0), 'J')		
+			self.unsatisfied_demand[year] = Quantity(np.where(energy_excess<=0, -energy_excess, 0), 'J')	
+
+		#total energy consumed during a year
+		self.yearly_consumption = Quantity(np.sum(self.consumption_data['Consumption'].unit['J']),'J')
 			
 	
 @lru_cache(maxsize = None)
