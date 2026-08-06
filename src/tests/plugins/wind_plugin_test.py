@@ -1,6 +1,7 @@
 import pytest
 import numpy as np
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+from pyH2A.Utilities.functional_unit import resolve_functional_unit
 from pyH2A.Plugins.Wind_Plugin import Wind_Plugin
 
 
@@ -12,10 +13,13 @@ class DummyDCF:
         operation_years_relative,
         hourly_file,
         available_energy_hourly,
+        total_yearly_power,
         installed_wind_capacity,
         power_per_wind_turbine,
         power_loss_per_year
     ):
+
+        self.functional_unit = resolve_functional_unit('kWh')        
         self.inp = {
             "Time": {
                 "Years": {
@@ -27,6 +31,7 @@ class DummyDCF:
             "Hourly Wind": {"File": {"Value": hourly_file}},
             "Power Generation": {
                 "Available energy (hourly)": {"Value": available_energy_hourly, "Unit" : "kWh"},
+                "Total yearly power generation": {"Value": total_yearly_power, "Unit" : "kWh"},
             },
             "Wind Turbine": {
                 "Installed wind capacity": {"Value": installed_wind_capacity, "Unit" : "MW"},
@@ -44,12 +49,15 @@ class DummyDCF:
                 "operation_years_relative": {'Operation years relative': np.arange(0, 2)},       
                 "hourly_file": "pyH2A.Lookup_Tables.Hourly_Wind_Data~Jena.615_2005_2023.csv",
                 "available_energy_hourly": {0: np.arange(0, 8760), 1:np.arange(0, 8760)},
+                "total_yearly_power": np.asarray([38364420, 38364420]),
                 "installed_wind_capacity": 20.,
                 "power_per_wind_turbine": 4.,
                 "power_loss_per_year": 0.01,
             },
             "expected": {
                 "number_turbines": Quantity(5,"-"),
+                "wind_energy_generation_yearly_array": Quantity(np.array([32954593371912.406, 32625047438193.28]),'J'),
+                "total_energy_generation_yearly_array": Quantity(np.array([171066505371912.4, 170736959438193.28]),'J'),
                 "last_half_day_available_energy":Quantity(np.array([
                         31492800000.0,  31496400000, 31500000000,  31503600000, 
                         31507200000,  31510800000,31514400000, 31518000000, 
@@ -95,3 +103,13 @@ def test_wind_plugin(case):
         expected["first_day_wind_energy"].unit["J"],
         abs=tolerance
     )    
+
+    assert plugin.wind_energy_generation_yearly_array.unit["J"] == pytest.approx(
+        expected["wind_energy_generation_yearly_array"].unit["J"],
+        abs=tolerance
+    )  
+
+    assert plugin.total_energy_generation_yearly_array.unit["J"] == pytest.approx(
+        expected["total_energy_generation_yearly_array"].unit["J"],
+        abs=tolerance
+    )      
