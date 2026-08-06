@@ -41,6 +41,16 @@ class Life_Cycle_Assessment_Plugin:
     Returns
     -------
     Life Cycle Assessment > Results > Value : dict
+        LCIA results keyed by impact name. Each value is a
+        :class:`~pyH2A.Utilities.Unit_Handler.quantity.Quantity` instance,
+        inherently expressed per 1 unit of the functional flow (the demand
+        vector's first entry is always solved as exactly ``1.0``, regardless
+        of the real magnitude reported by openLCA), as a composite unit of
+        ``<impact unit> / <functional unit>``. Computed by :meth:`perform_lca`.
+    ['Life_Cycle_Assessment_Plugin'].lca_results : dict
+        Identical to the value inserted into ``dcf.inp`` above, accessible
+        directly off the plugin instance via
+        ``dcf.plugs['Life_Cycle_Assessment_Plugin']``.
     self.matrix_folder : str
         Path to the openLCA matrix export folder.
     self.component_values : numpy.ndarray
@@ -48,13 +58,6 @@ class Life_Cycle_Assessment_Plugin:
         ``A0_column`` ordering. Set by :meth:`apply_component_updates`.
     self.scaling_vector : numpy.ndarray
         Scenario-specific activity scaling vector. Set by :meth:`build_scaling_vector`.
-    self.lca_results : dict
-        LCIA results keyed by impact name. Each value is a
-        :class:`~pyH2A.Utilities.Unit_Handler.quantity.Quantity` instance,
-        inherently expressed per 1 unit of the functional flow (the demand
-        vector's first entry is always solved as exactly ``1.0``, regardless
-        of the real magnitude reported by openLCA), as a composite unit of
-        ``<impact unit> / <functional unit>``. Set by :meth:`perform_lca`.
 
     Raises
     ------
