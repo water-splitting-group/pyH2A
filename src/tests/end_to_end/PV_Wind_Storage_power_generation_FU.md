@@ -103,7 +103,7 @@ Power per cell stack | 10 | kW
 Cost per cell stack | 8500 | USD 
 Energy density | 40 | Wh/kg
 Electrolyte regeneration per year | 0.5% | -
-Storage capacity per module | 150 | MWh
+Storage capacity per battery module | 150 | MWh
 
 # Electrolyte Impact
 

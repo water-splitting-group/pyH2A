@@ -180,7 +180,7 @@ class Battery_Calculation_Plugin:
                     "optional": False,
                     "description": "Fraction of the maximum power below which charging is shut down."
                 },    
-                "Storage capacity per module": {
+                "Storage capacity per battery module": {
                     "Value": {
                         "type": {int, float,},
                         "bounds": (0, None),
@@ -410,6 +410,6 @@ class Battery_Calculation_Plugin:
         self.number_modules = Quantity(
             self.input_dict_resolved['Battery']['Design capacity']['Value'].unit['J']
             /
-            self.input_dict_resolved['Battery']['Storage capacity per module']['Value'].unit['J'] , 
+            self.input_dict_resolved['Battery']['Storage capacity per battery module']['Value'].unit['J'] , 
             '-'
         )
