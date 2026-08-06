@@ -8,7 +8,7 @@ Default TEA | pyH2A.Config~Defaults_TEA.md
 
 Name | Description | Position 
 --- | --- | --- 
-Solar_Thermal_Plugin | Computes land area required for thermal process | 301 
+Hydrogen.Solar_Thermal_Plugin | Computes land area required for thermal process | 301 
 
 # Display Parameters
 
