@@ -41,12 +41,17 @@ def import_plugin(plugin_name, plugin_module):
 	'''
 
 	if plugin_module is True:
+		prefix = 'pyH2A.Plugins'
+	else:
+		prefix = 'pyH2A.Analysis'
+
+	if plugin_module is True:
 		prefix = 'pyH2A.Plugins.'
 	else:
 		prefix = 'pyH2A.Analysis.'
 
 	plugin = import_module(prefix + plugin_name)
-	plugin_class = getattr(plugin, plugin_name)
+	plugin_class = getattr(plugin, plugin_name.split('.')[-1])
 
 	return plugin_class
 

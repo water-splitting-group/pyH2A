@@ -1,5 +1,5 @@
 import pytest
-from pyH2A.Plugins.Time_Plugin import Time_Plugin
+from pyH2A.Plugins.Core.Time_Plugin import Time_Plugin
 import numpy as np
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 from tests.Utilities.check_dicts_for_testing import check_dicts

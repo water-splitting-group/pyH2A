@@ -1,5 +1,5 @@
 import pytest
-from pyH2A.Plugins.Labor_Operating_Cost_Plugin import Labor_Operating_Cost_Plugin
+from pyH2A.Plugins.Finance.Labor_Operating_Cost_Plugin import Labor_Operating_Cost_Plugin
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 from pyH2A.Utilities.functional_unit import resolve_functional_unit
 

@@ -14,9 +14,9 @@ Functional Unit | kWh | kWh of produced electricity is functional unit
 
 Name | Position 
 --- | --- 
-Hourly_Irradiation_Plugin | 201 
-Photovoltaic_Plugin | 202 
-Multiple_Modules_Plugin | 401 
+Energy.Hourly_Irradiation_Plugin | 201 
+Energy.Photovoltaic_Plugin | 202 
+Finance.Multiple_Modules_Plugin | 401 
 
 # Technical Operating Parameters and Specifications
 

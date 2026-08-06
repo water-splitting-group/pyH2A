@@ -2,15 +2,15 @@
 
 Name | Position | Description
 --- | --- | ---
-Time_Plugin | 100 | Computes time-related arrays and values
-Inflation_Plugin | 200 | Computes the various inflation factors
-Production_Plugin | 300 | Computes plant output
-Capital_Cost_Plugin | 400 | Calculation of direct, indirect and non-depreciable capital costs
-Replacement_Plugin | 500 | Calculation of replacement costs
-Labor_Operating_Cost_Plugin | 600 | Calculation of labor operating costs
-Other_Fixed_Operating_Cost_Plugin | 700 | Calculation of other fixed operating costs
-Variable_Operating_Cost_Plugin | 800 | Calculation of variable operating costs, including utilities
-Discounted_Cash_Flow_Plugin | 900 | Performs discounted cash flow analysis to determine the levelized cost of hydrogen
+Core.Time_Plugin | 100 | Computes time-related arrays and values
+Finance.Inflation_Plugin | 200 | Computes the various inflation factors
+Core.Production_Plugin | 300 | Computes plant output
+Finance.Capital_Cost_Plugin | 400 | Calculation of direct, indirect and non-depreciable capital costs
+Finance.Replacement_Plugin | 500 | Calculation of replacement costs
+Finance.Labor_Operating_Cost_Plugin | 600 | Calculation of labor operating costs
+Finance.Other_Fixed_Operating_Cost_Plugin | 700 | Calculation of other fixed operating costs
+Finance.Variable_Operating_Cost_Plugin | 800 | Calculation of variable operating costs, including utilities
+Core.Discounted_Cash_Flow_Plugin | 900 | Performs discounted cash flow analysis to determine the levelized cost of hydrogen
 Life_Cycle_Assessment_Plugin | 1000 | Performs life-cycle assessment to determine environmental impacts
 
 # Functional Unit

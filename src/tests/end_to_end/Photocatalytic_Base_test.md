@@ -8,10 +8,10 @@ Default TEA | pyH2A.Config~Defaults_TEA.md
 
 Name | Description | Position
 --- | --- | ---
-Hourly_Irradiation_Plugin | Plugin to calculate solar irradiation from typical meteorological year data | 201 |
-Photocatalytic_Plugin | Computes number of required baggies, cost of baggies and catalyst cost | 301 |
-Catalyst_Separation_Plugin | Computes cost of catalyst separation | 302 |
-Multiple_Modules_Plugin | Modelling of multiple plant modules, adjustment of labor requirement | 401 |
+Energy.Hourly_Irradiation_Plugin | Plugin to calculate solar irradiation from typical meteorological year data | 201 |
+Hydrogen.Photocatalytic_Plugin | Computes number of required baggies, cost of baggies and catalyst cost | 301 |
+Process_Units.Catalyst_Separation_Plugin | Computes cost of catalyst separation | 302 |
+Finance.Multiple_Modules_Plugin | Modelling of multiple plant modules, adjustment of labor requirement | 401 |
 
 # Display Parameters
 

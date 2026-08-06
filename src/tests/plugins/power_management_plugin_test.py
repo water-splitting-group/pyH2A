@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from pyH2A.Plugins.Power_Management_Plugin import Power_Management_Plugin
+from pyH2A.Plugins.Energy.Power_Management_Plugin import Power_Management_Plugin
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 from pyH2A.Utilities.functional_unit import resolve_functional_unit
 

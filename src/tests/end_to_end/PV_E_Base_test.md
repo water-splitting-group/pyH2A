@@ -8,14 +8,14 @@ Default TEA | pyH2A.Config~Defaults_TEA.md
 
 Name | Position 
 --- | --- 
-Hourly_Irradiation_Plugin | 201 |
-Photovoltaic_Plugin | 202 |
-Electrolyzer_Plugin | 203 |
-Battery_Plugin | 204 |
-Stored_Power_Electrolysis_Plugin | 205 |
-Reverse_Osmosis_Plugin | 301 |
-Power_Management_Plugin | 302 |
-Multiple_Modules_Plugin | 401 |
+Energy.Hourly_Irradiation_Plugin | 201 |
+Energy.Photovoltaic_Plugin | 202 |
+Hydrogen.Electrolyzer_Plugin | 203 |
+Energy.Battery_Plugin | 204 |
+Hydrogen.Stored_Power_Electrolysis_Plugin | 205 |
+Process_Units.Reverse_Osmosis_Plugin | 301 |
+Energy.Power_Management_Plugin | 302 |
+Finance.Multiple_Modules_Plugin | 401 |
 
 # Display Parameters
 

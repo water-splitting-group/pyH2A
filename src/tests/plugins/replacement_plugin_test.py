@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from pyH2A.Plugins.Replacement_Plugin import Replacement_Plugin
+from pyH2A.Plugins.Finance.Replacement_Plugin import Replacement_Plugin
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 from tests.Utilities.check_dicts_for_testing import check_dicts
 from pyH2A.Utilities.functional_unit import resolve_functional_unit
