@@ -357,7 +357,7 @@ class Life_Cycle_Assessment_Plugin:
         for lca_table_name in lca_table_names:
             for component_data in self.input_dict_resolved[lca_table_name].values():
                 value_quantity = component_data['Value']
-                scalar_quantity = Quantity(float(np.sum(value_quantity.base_value)), value_quantity.base_unit)
+                scalar_quantity = Quantity(value_quantity.base_value, value_quantity.base_unit)
                 rows.append((component_data['UUID'], scalar_quantity))
 
         if len(rows) > len(A0_uuids):
