@@ -1,85 +1,10 @@
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+from pyH2A.Utilities.docstring_generation import generate_docstring
 import numpy as np
 
 class Capital_Cost_Plugin:
-	'''
-
-	Parameters
-	----------
-	Time > Years > Value : dict
-		Dictionary containing all time-related quantities.
-	Inflation > Combined inflator > Value: float
-		Combined inflator.
-	Inflation > CI inflator > Value: float
-		CI inflator.
-	Inflation > Inflation correction > Value : float
-		Inflation correction accounting for startup year offset.
-	Inflation > Inflation factor full > Value : ndarray
-		Inflation factor of each year.
-	Construction > [...] > Value : float
-		Fraction of capital spent during each construction year.
-		Iteration over all entries in `Construction` table.
-	Financial Input Values > Fraction equity financing > Value : float
-		Fraction of depreciable capital costs financed through equity (as opposed to debt).
-	<...> Direct Capital Cost <...> >> Value : float
-		``sum_all_tables()`` is used in the input resolver.
-	<...> Indirect Capital Cost <...> >> Value : float
-		``sum_all_tables()`` is used in the input resolver.
-	Non-Depreciable Capital Costs > Cost of land > Value : float
-		Cost of land.
-	Non-Depreciable Capital Costs > Land required > Value : float
-		Total land area required.
-	<...> Other Non-Depreciable Capital Cost <...> >> Value : float
-		``sum_all_tables()`` is used in the input resolver.
-
-	Returns
-	-------
-	<...> Direct Capital Cost <...> > Summed total > Value : float
-		Summed total for each individual table in "Direct Capital Cost" group.
-	<...> Indirect Capital Cost <...> > Summed total > Value : float
-		Summed total for each individual table in "Indirect Capital Cost" group.
-	<...> Other Non-Depreciable Capital Cost  <...> > Summed total > Value : float
-		Summed total for each individual table in "Other Non-Depreciable Capital Cost" group.
-	Direct Capital Cost > Summed group total > Value : float
-		Summed total for all the tables in "Direct Capital Cost" group.
-	Indirect Capital Cost > Summed group total > Value : float
-		Summed total for all the tables in "Indirect Capital Cost" group.
-	Other Non-Depreciable Capital Cost > Summed group total > Value : float
-		Summed total for all the tables in "Other Non-Depreciable Capital Cost" group.
-	Direct Capital Costs > Inflated > Value : float
-		Total direct capital costs multiplied by combined inflator.
-	Indirect Capital Costs > Inflated > Value : float
-		Total indirect capital costs multiplied by combined inflator.
-	Non-Depreciable Capital Costs > Total > Value : float
-		Total non-depreciable capital costs.
-	Non-Depreciable Capital Costs > Inflated > Value : float
-		Total non-depreciable capital costs multiplied by combined inflator.
-	Non-Depreciable Capital Costs > Inflation corrected > Value : float
-		Non-depreciable capital costs, inflated and further corrected for the startup year offset.
-		Used by the discounted cash flow analysis for salvage/decommissioning calculations.
-	Non-Depreciable Capital Costs > Annual > Value : ndarray
-		Non-depreciable capital costs spent in each year of the analysis, non-zero only in the
-		first year of construction. Used by the discounted cash flow analysis.
-	Depreciable Capital Costs > Total > Value : float
-		Sum of direct and indirect capital costs.
-	Depreciable Capital Costs > Inflated > Value : float
-		Sum of direct and indirect capital costs multiplied by combined inflator.
-	Depreciable Capital Costs > Inflation corrected > Value : float
-		Depreciable capital costs, inflated and further corrected for the startup year offset.
-		Used by the discounted cash flow analysis for debt financing and salvage/decommissioning
-		calculations.
-	Depreciable Capital Costs > Initial equity > Value : float
-		Total equity-financed depreciable capital spent during construction, summed over all
-		construction years. Used by the discounted cash flow analysis.
-	Depreciable Capital Costs > Annual equity > Value : ndarray
-		Equity-financed depreciable capital spent in each year of the analysis, non-zero only
-		during the construction years. Used by the discounted cash flow analysis.
-	Total Capital Costs > Total > Value : float
-		Sum of depreciable and non-depreciable capital costs.
-	Total Capital Costs > Inflated > Value : float
-		Sum of depreicable and non-depreciable capital costs multiplied by combined inflator.
-	'''
+	
 	def __init__(self, dcf, print_info, run = True):
 		self._set_up(dcf)
 		if run:
@@ -496,6 +421,14 @@ class Capital_Cost_Plugin:
 		        },
 		    },
 		}
+  
+		summary = "Calculation of Capital Cost"
+  
+		self.__class__.__doc__ = generate_docstring(
+            summary,
+            self.input_dict,
+            self.output_dict
+        )
 
 	def _run(self, dcf):
 		self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Capital_Cost_Plugin')

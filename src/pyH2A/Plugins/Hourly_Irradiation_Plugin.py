@@ -3,44 +3,10 @@ from functools import lru_cache
 from pyH2A.Utilities.input_modification import read_textfile, file_import
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+from pyH2A.Utilities.docstring_generation import generate_docstring
 
 class Hourly_Irradiation_Plugin:
-	'''Calculation of hourly and mean daily irradiation data with different module configurations.
-	
-	Parameters
-	----------
-	Hourly Irradiation > File > Value : str
-		Path to a `.csv` file containing hourly irradiance data as provided by
-		https://re.jrc.ec.europa.eu/pvg_tools/en/#TMY.
-	Irradiance Area Parameters > Module tilt > Value : float, optional
-		Tilt angle of irradiated module. Defaults to the absolute value of the latitude.
-	Irradiance Area Parameters > Array azimuth > Value : float
-		Azimuth angle of irradiated module.
-	Irradiance Area Parameters > Nominal operating temperature > Value : float
-		Nominal operating temperature of irradiated module.
-	Irradiance Area Parameters > Mismatch derating > Value : float
-		Derating value due to mismatch (dimensionless value between 0 and 1).
-	Irradiance Area Parameters > Dirt derating > Value : float
-		Derating value due to dirt buildup (dimensionless value between 0 and 1).
-	Irradiance Area Parameters > Temperature coefficient > Value : float
-		Performance decrease of irradiated module per temperature unit increase.
-
-	Returns
-	-------
-	Hourly Irradiation > No tracking > Value : ndarray
-		Hourly irradiation energy with no tracking per area.
-	Hourly Irradiation > Horizontal single axis tracking > Value : ndarray
-		Hourly irradiation energy with single axis tracking per area.
-	Hourly Irradiation > Two axis tracking > Value : ndarray
-		Hourly irradiation energy with two axis tracking per area.
-	Hourly Irradiation > Mean solar input > Value : float
-		Mean solar input power with no tracking in per area.
-	Hourly Irradiation > Mean solar input, single axis tracking > Value : float
-		Mean solar input power with single axis tracking per area.
-	Hourly Irradiation > Mean solar input, two axis tracking > Value : float
-		Mean solar input power with two axis tracking per area.
-	'''
-
+    
 	def __init__(self, dcf, print_info, run = True):
 		self._set_up(dcf)
 		if run:
@@ -188,6 +154,14 @@ class Hourly_Irradiation_Plugin:
 				},
 			},
 		}
+  
+		summary = "Calculation of hourly and mean daily irradiation data with different module configurations."
+  
+		self.__class__.__doc__ = generate_docstring(
+            summary,
+            self.input_dict,
+            self.output_dict
+        )
 
 	def _run(self, dcf):
 		self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Hourly_Irradiation_Plugin')

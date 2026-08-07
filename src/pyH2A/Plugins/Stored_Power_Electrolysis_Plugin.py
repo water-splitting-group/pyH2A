@@ -3,49 +3,9 @@ from pyH2A.Plugins.Electrolyzer_Plugin import calculate_electrolyzer_power_deman
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import numpy as np
+from pyH2A.Utilities.docstring_generation import generate_docstring
 
 class Stored_Power_Electrolysis_Plugin:
-    '''Simulation of hydrogen production using electrolysis.
-
-    Parameters
-    ----------
-    Time > Years > Value : dict
-        Dictionary containing plant life time-related quantities    
-    Electrolysis Using Stored Power > Fraction of stored power used for electrolysis > Value : float
-        Fraction of stored power used for electrolysis.
-    Electrolyzer > Nominal power > Value : float
-        Nominal power of electrolyzer.
-    Electrolyzer > Power requirement increase per year > Value : float
-        Electrolyzer power requirement increase per year due to stack degradation. 
-        Dimensionless value > 0. Increase calculated as: (1 + increase per year) ^ year.
-    Electrolyzer > Minimum capacity > Value : float
-        Minimum capacity required for electrolyzer operation. Dimensionless value between 0 and 1.
-    Electrolyzer > Hydrogen yield per unit energy > Value : float
-        Electrical conversion efficiency of electrolyzer in (mass H2)/energy.
-    Electrolyzer > Replacement time > Value : float
-        Operating time in hours before stack replacement of electrolyzer is required.
-    Electrolyzer > Yearly operation data > Year_Value : nd.array
-        Yearly operation data of electrolyzer : year.
-    Electrolyzer > Yearly operation data > Production_Value : nd.array
-        Yearly operation data of electrolyzer : H2 produced during the year.
-    Electrolyzer > Yearly operation data > Duration_Value : nd.array
-        Yearly operation data of electrolyzer : duration of operation during the year.                
-    Electrolyzer > H2 production (yearly) > Value : nd.array
-        Yearly hydrogen production.
-    Power Generation > Stored energy (daily) > Value : dict
-        Energy stored in battery daily (dictionary of years).
-
-    Returns
-    -------
-    Technical Operating Parameters and Specifications > Design output by year > Value : nd.array
-        Design output of H2 calculated from installed electrolysis power capacity and hourly power generation data.
-    Electrolyzer > Actual stack replacement time > Value : float
-        Actual stack replacement time, calculated from replacement time and operation data.
-    Power Consumption > Stored energy electrolysis (yearly) > Value : nd.array
-        Electricity demand of electrolysis using stored energy per year.
-    Power Consumption > Stored energy electrolysis (yearly) > Type : str
-        Type of power consumer, type is 'on_demand' (only uses stored power).
-    '''
 
     def __init__(self, dcf, print_info, run = True):
         self._set_up(dcf)
@@ -229,6 +189,14 @@ class Stored_Power_Electrolysis_Plugin:
                 },
             },
         }
+        
+        summary = "Simulation of hydrogen production using electrolysis."
+        
+        self.__class__.__doc__ = generate_docstring(
+            summary,
+            self.input_dict,
+            self.output_dict
+        )
 
     def _run(self, dcf):
         self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Stored_Power_Electrolysis_Plugin')

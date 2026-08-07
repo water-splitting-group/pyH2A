@@ -1,25 +1,8 @@
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+from pyH2A.Utilities.docstring_generation import generate_docstring
 
 class Labor_Operating_Cost_Plugin:
-	'''Calculation of yearly Labor operating costs.
-
-	Parameters
-	----------
-	Inflation > Labor inflator > Value : float
-		Cost of labor inflation factor. 
-	Fixed Operating Costs > Staff > Value : float
-		Number of staff.
-	Fixed Operating Costs > Hourly labor cost > Value : float
-		Hourly labor cost of staff.
-
-	Returns
-	-------
-	Fixed Operating Costs > Labor Cost > Value : float
-		Yearly total labor cost.
-	Fixed Operating Costs > Labor Cost - Inflated > Value : float
-		Yearly total labor cost multiplied by labor inflator.
-	'''
 
 	def __init__(self, dcf, print_info, run = True):
 		self._set_up(dcf)
@@ -88,6 +71,14 @@ class Labor_Operating_Cost_Plugin:
 				},
 			},
 		}
+  
+		summary = "Calculation of yearly Labor operating costs."
+
+		self.__class__.__doc__ = generate_docstring(
+            summary,
+            self.input_dict,
+            self.output_dict
+        )
 
 	def _run(self, dcf):
 		self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Labor_Operating_Cost_Plugin')

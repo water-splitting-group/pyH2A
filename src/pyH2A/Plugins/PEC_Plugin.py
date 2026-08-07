@@ -1,48 +1,9 @@
 import numpy as np
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+from pyH2A.Utilities.docstring_generation import generate_docstring
 
 class PEC_Plugin:
-	'''Simulating H2 production using photoelectrochemical water splitting.
-
-	Parameters
-	----------
-	Technical Operating Parameters and Specifications > Plant design capacity > Value : float
-		Plant design capacity (mass of hydrogen/time).
-	PEC Cells > Cell cost > Value : float
-		Cost of PEC cells in $/m2.
-	PEC Cells > Lifetime > Value : float
-		Lifetime of PEC cells in years before replacement is required.
-	PEC Cells > Length > Value : float
-		Length of single PEC cell.
-	PEC Cells > Width > Value : float
-		Width of single PEC cell.
-	Land Area Requirement > Cell angle > Value : float
-		Angle of PEC cells from the ground.
-	Land Area Requirement > South spacing > Value : float
-		South spacing of PEC cells.
-	Land Area Requirement > East/West spacing > Value : float
-		East/West Spacing of PEC cells.
-	Solar-to-Hydrogen Efficiency > STH > Value : float
-		Solar-to-hydrogen efficiency in percentage or as a value between 0 and 1.
-	Solar Input > Mean solar input > Value : float
-		Mean solar power per surface.
-
-	Returns
-	-------
-	Non-Depreciable Capital Costs > Land required > Value : float
-		Total land area required.
-	Non-Depreciable Capital Costs > Solar collection area > Value : float
-		Solar collection area.
-	Planned Replacement > Planned replacement PEC Cells > Cost_Value : float
-		Total cost of replacing all PEC cells once.
-	Planned Replacement > Planned replacement PEC Cells > Frequency_Value : float
-		Replacement frequency of PEC cells in years, identical to PEC cell lifetime.
-	Direct Capital Costs - PEC Cells > PEC cell cost > Value : float
-		Total cost of all PEC cells.
-	PEC Cells > Number > Value : float
-		Number of individual PEC cells required for design H2 output capacity.
-	'''
 
 	def __init__(self, dcf, print_info, run = True):
 		self._set_up(dcf)
@@ -236,6 +197,14 @@ class PEC_Plugin:
 				}
 			},
 		}
+  
+		summary = "Simulating H2 production using photoelectrochemical water splitting."
+
+		self.__class__.__doc__ = generate_docstring(
+            summary,
+            self.input_dict,
+            self.output_dict
+        )
 
 	def _run(self, dcf):
 		self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'PEC_Plugin')

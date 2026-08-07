@@ -125,7 +125,7 @@ class Battery_Plugin:
             }
         }
         
-        heading = """
+        summary = """
             Simulation of electricity storage using a battery.
             Simulation assumes that battery is charged and completely discharged every day.
             (no electricity storage across days, only one discharge per day, not multiple ones)
@@ -133,7 +133,7 @@ class Battery_Plugin:
         
         
         self.__class__.__doc__ = generate_docstring(
-            heading,
+            summary,
             self.input_dict,
             self.output_dict
         )

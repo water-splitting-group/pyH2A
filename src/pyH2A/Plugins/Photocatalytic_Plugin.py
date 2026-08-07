@@ -1,81 +1,9 @@
 import numpy as np
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+from pyH2A.Utilities.docstring_generation import generate_docstring
 
 class Photocatalytic_Plugin:
-	'''Simulating H2 production using photocatalytic water splitting in plastic baggie reactors.
-
-	Parameters
-	----------
-	Technical Operating Parameters and Specifications > Plant design capacity > Value : float
-		Plant design capacity, in mass of hydrogen/time.
-	Reactor Baggies > Cost material top > Value : float
-		Cost of baggie top material.
-	Reactor Baggies > Cost Material Bottom > Value : float
-		Cost of baggie bottom material.
-	Reactor Baggies > Number of ports per baggie > Value : int
-		Number of ports per baggie.
-	Reactor Baggies > Cost of port > Value : float
-		Cost of a port.		
-	Reactor Baggies > Other Costs > Value : float
-		Other costs per baggie.
-	Reactor Baggies > Markup factor > Value : float
-		Markup factor for baggies, typically > 1.
-	Reactor Baggies > Length > Value : float
-		Length of single baggie in m.
-	Reactor Baggies > Width > Value : float
-		Width of single baggie in m.
-	Reactor Baggies > Filling height > Value : float
-		Height of reactor baggie in m. In this simulation this value determines the height
-		of the water level and hence is an important parameter ultimately determining the
-		level of light absorption and total catalyst amount.
-	Reactor Baggies > Additional land area > Value : float
-		Additional land area required, percentage or value > 0. 
-		Calculated as: (1 + addtional land area) * baggie area.
-	Reactor Baggies > Lifetime > Value : float
-		Lifetime of reactor baggies in years before replacement is required.
-	Catalyst > Cost per unit of mass > Value : float
-		Cost per mass of catalyst.
-	Catalyst > Concentration > Value : float
-		Concentration of catalyst.
-	Catalyst > Lifetime > Value : float
-		Lifetime of catalysts before replacement is required.
-	Catalyst > Molar Weight > Value : float, optional
-		If the molar weight of the catalyst is specified, homogeneous catalyst
-		properties (TON, TOF etc. are calculated).
-	Catalyst > Molar Attenuation Coefficient > Value : float, optional
-		If the molar attenuation coefficient is specified (along with the molar weight),
-		absorbance and the fraction of absorbed light are also calculated.
-	Solar-to-Hydrogen Efficiency > STH > Value : float
-		Solar-to-hydrogen efficiency in percentage or as a value between 0 and 1.
-	Solar Input > Mean solar input > Value : float
-		Mean solar input power per area.
-	Solar Input > Hourly > Value : ndarray
-		Hourly irradiation data.
-
-	Returns
-	-------
-	Non-Depreciable Capital Costs > Land required > Value : float
-		Total land area required in acres.
-	Non-Depreciable Capital Costs > Solar collection area > Value : float
-		Solar colelction area in m2.
-	Planned Replacement > Planned replacement catalyst > Cost : float
-		Total cost of completely replacing the catalyst once.
-	Planned Replacement > Planned replacement catalyst > Frequency : float
-		Replacement frequency of catalyst in years, identical to catalyst lifetime.
-	Planned Replacement > Planned replacement baggie > Cost : float
-		Total cost of replacing all  baggies.
-	Planned Replacement > Planned replacement baggie > Frequency : float
-		Replacement frequency of baggies in year, identical to baggie lifetime.
-	Direct Capital Costs - Reactor Baggies > Baggie cost > Value : float
-		Total baggie cost.
-	Direct Capital Costs - Photocatalyst > Catalyst cost > Value : float
-		Total catalyst cost.
-	Reactor Baggies > Number > Value : int
-		Number of individual baggies required for design H2 production capacity.
-	Water Volume > Volume > Value : float
-		Total water volume.
-	'''
 
 	def __init__(self, dcf, print_info, run = True):
 		self._set_up(dcf)
@@ -415,6 +343,14 @@ class Photocatalytic_Plugin:
 				},
 			},
 		}
+  
+		summary = "Simulating H2 production using photocatalytic water splitting in plastic baggie reactors."
+  
+		self.__class__.__doc__ = generate_docstring(
+            summary,
+            self.input_dict,
+            self.output_dict
+        )
 
 	def _run(self, dcf):
 		self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Photocatalytic_Plugin')

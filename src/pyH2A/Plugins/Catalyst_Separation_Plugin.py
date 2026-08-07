@@ -1,23 +1,8 @@
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+from pyH2A.Utilities.docstring_generation import generate_docstring
 
 class Catalyst_Separation_Plugin:
-	'''Calculation of cost for catalyst separation (e.g. via nanofiltration).
-
-	Parameters
-	----------
-	Water Volume > Volume > Value : float, int
-		Total water volume.
-	Catalyst > Lifetime > Value : float, int
-		Lifetime of catalysts before replacement is required.
-	Catalyst Separation > Filtration cost > Value : float, int
-		Cost of filtration in curreny per volume of filtered water.
-
-	Returns
-	-------
-	Other Variable Operating Cost - Catalyst Separation > Catalyst Separation (yearly cost) > Value : float
-		Yearly cost of catalyst seperation.
-	'''
 
 	def __init__(self, dcf, print_info, run = True):
 		self._set_up(dcf)
@@ -83,6 +68,14 @@ class Catalyst_Separation_Plugin:
 		        },
 			},
 		}
+  
+		summary = "Calculation of cost for catalyst separation (e.g. via nanofiltration)."
+
+		self.__class__.__doc__ = generate_docstring(
+            summary,
+            self.input_dict,
+            self.output_dict
+        )
 
 	def _run(self, dcf):
 		self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Catalyst_Separation_Plugin')

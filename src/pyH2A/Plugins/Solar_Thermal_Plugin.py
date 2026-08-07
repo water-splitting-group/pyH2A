@@ -1,28 +1,9 @@
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+from pyH2A.Utilities.docstring_generation import generate_docstring
 
 class Solar_Thermal_Plugin:
-	'''Simulation of hydrogen production using solar thermal water splitting.
 
-	Parameters
-	----------
-	Technical Operating Parameters and Specifications > Plant design capacity > Value : float
-		Plant design capacity (mass of hydrogen/time).
-	Solar-to-Hydrogen Efficiency > STH > Value : float
-		Solar-to-Hydrogen Efficiency of thermal water splitting process. Percentage of value 
-		between 0 and 1.
-	Solar Input > Mean solar input > Value : float
-		Mean solar input.
-	Non-Depreciable Capital Costs > Additional land area > Value : float
-		Additional land area required. Percentage or value > 0. Calculated as:
-		(1 + Addtional Land Area) * solar collection area.
-
-	Returns
-	-------
-	Non-Depreciable Capital Costs > Land required > Value : float
-		Total land requirement in acres.
-	'''
-	
 	def __init__(self, dcf, print_info, run = True):
 		self._set_up(dcf)
 		if run:
@@ -100,6 +81,14 @@ class Solar_Thermal_Plugin:
 				},
 			},
 		}
+  
+		summary = "Simulation of hydrogen production using solar thermal water splitting."
+  
+		self.__class__.__doc__ = generate_docstring(
+            summary,
+            self.input_dict,
+            self.output_dict
+        )
 
 	def _run(self, dcf):
 		self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Solar_Thermal_Plugin')

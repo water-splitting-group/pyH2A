@@ -1,33 +1,9 @@
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import numpy as np
+from pyH2A.Utilities.docstring_generation import generate_docstring
 
 class Reverse_Osmosis_Plugin:
-    '''Simulation of purified water production using reverse osmosis.
-    
-    Parameters
-    ----------
-	Technical Operating Parameters and Specifications > Design output by year > Value : nd.array
-		Yearly output ignoring operating capacity factor.
-	Technical Operating Parameters and Specifications > Operating capacity factor > Value : float, int
-		Operating capacity factor value between 0 and 1 or percentage value.        
-    Reverse Osmosis > Power demand > Value : float
-        Power demand of reverse osmosis plant of sea water.
-    Reverse Osmosis > Average daily operating hours > Value : float
-        Average daily operating hours of reverse osmosis plant, used for scaling of reverse osmosis plant.
-    Reverse Osmosis > Recovery rate > Value : float
-        Fraction of fresh water obtained from given volume of sea water.
-  
-    Returns
-    -------
-    Power Consumption > Reverse osmosis consumption (yearly) > Value : nd.array
-        Electricity demand of reverse osmosis plant on each year.
-    Power Consumption > Reverse osmosis consumption (yearly) > Type : str
-        Type of power consumer, type is 'flexible', uses both stored and available power.
-    Reverse Osmosis > Capacity > Value : float
-        Maximum sea water processing capacity per hour of reverse osmosis plant.   
-    '''
-
 
     def __init__(self, dcf, print_info, run = True):
         self._set_up(dcf)
@@ -129,6 +105,14 @@ class Reverse_Osmosis_Plugin:
                 },
             },
         }
+
+        summary = "Simulation of purified water production using reverse osmosis."
+
+        self.__class__.__doc__ = generate_docstring(
+            summary,
+            self.input_dict,
+            self.output_dict
+        )
 
     def _run(self, dcf):
         self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Reverse_Osmosis_Plugin')

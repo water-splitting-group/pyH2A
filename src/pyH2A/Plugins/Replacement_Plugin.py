@@ -2,40 +2,9 @@ from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import pyH2A.Utilities.find_nearest as fn
 import numpy as np
+from pyH2A.Utilities.docstring_generation import generate_docstring
 
 class Replacement_Plugin:
-	'''Calculating yearly overall replacement costs based on one-time replacement costs and frequency.
-
-	Parameters
-	----------
-    Time > Years > Value : dict
-        Dictionary containing plant life time-related quantities
-	Inflation > Inflation correction > Value : float
-		Inflation correction accounting for startup year offset
-	Inflation > Inflation factor full > Value : nd.array
-		Inflation factor of each year
-	Inflation > Combined inflator > Value : float
-		Combined inflation factor				
-	Planned Replacement > [...] > Frequency : float
-		Replacement frequency of [...]. 
-		Iteration over all entries in `Planned Replacement` table. 
-	Planned Replacement > [...] > Cost : float
-		One-time replacement cost of [...].
-		Iteration over all entries in `Planned Replacement` table. 
-	[...] Unplanned Replacement [...] >> Value : float
-		``sum_all_tables()`` is used.
-
-	Returns
-	-------
-	[...] Unplanned Replacement [...] > Summed total > Value : float
-		Summed total for each individual table in "Unplanned Replacement" group.
-	Unplanned Replacement > Summed group total > Value : float
-		Summed group total for all the tables in "Unplanned Replacement" group.		
-	Replacement > Total > Value : ndarray
-		Total inflated replacement costs (sum of `Planned Replacement` entries and
-		unplanned replacement costs), set to zero for the years before the start of operation
-		(i.e. during construction).
-	'''
 
 	def __init__(self, dcf, print_info, run = True):
 		self._set_up(dcf)
@@ -207,6 +176,14 @@ class Replacement_Plugin:
 				},
 			},
 		}	
+
+		summary = "Calculating yearly overall replacement costs based on one-time replacement costs and frequency."
+
+		self.__class__.__doc__ = generate_docstring(
+            summary,
+            self.input_dict,
+            self.output_dict
+        )
 
 	def _run(self, dcf):
 		self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Replacement_Plugin')
