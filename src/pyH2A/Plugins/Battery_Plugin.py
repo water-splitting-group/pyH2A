@@ -1,6 +1,6 @@
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
-from pyH2A.Utilities.docstring_generation import generate_docstring
+from pyH2A.Utilities.docstring_generation import generate_plugin_docs
 import numpy as np
 
 class Battery_Plugin:
@@ -132,10 +132,9 @@ class Battery_Plugin:
         """
         
         
-        self.__class__.__doc__ = generate_docstring(
+        self.__class__.__doc__ = generate_plugin_docs(
+            Battery_Plugin,
             summary,
-            self.input_dict,
-            self.output_dict
         )
         
     def _run(self, dcf):

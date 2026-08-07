@@ -188,3 +188,45 @@ def generate_docstring(summary, input_dict, output_dict, notes = None):
 		lines += ['Notes', '-----', notes.strip(), '']
 
 	return '\n'.join(lines).rstrip() + '\n'
+
+def generate_plugin_docs(plugin_class, summary):
+    '''Generate and assign a NumPy-style class docstring for a plugin.
+
+    The plugin class must define `input_dict` and `output_dict` inside its
+    `_set_up()` method. A temporary instance is created to access these
+    specifications, and the generated documentation is assigned directly
+    to the class `__doc__` attribute.
+
+    Parameters
+    ----------
+    plugin_class : type
+        Plugin class for which the docstring should be generated. The class
+        must contain a `_set_up()` method that defines `input_dict` and
+        `output_dict`.
+
+    summary : str
+        One-line (or short paragraph) summary of what the plugin does. This
+        is the only part of the docstring not derived from `input_dict`/
+        `output_dict`.
+
+    Returns
+    -------
+    None
+        The generated docstring is assigned directly to
+        `plugin_class.__doc__`.
+
+    Notes
+    -----
+    This function is intended for use during documentation generation, where
+    plugin instances are not normally created but class docstrings are needed
+    by tools such as Sphinx autodoc.
+    '''
+
+    instance = plugin_class.__new__(plugin_class)
+    instance._set_up(None)
+
+    plugin_class.__doc__ = generate_docstring(
+        summary,
+        instance.input_dict,
+        instance.output_dict
+    )
