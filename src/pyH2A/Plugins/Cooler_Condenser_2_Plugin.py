@@ -134,7 +134,7 @@ input_dict = {
 }
 
 output_dict = {
-    "Cooler Condenser": {
+    "Cooler Condenser 2": {
         "Heat duty": {
             "Value": {
                 "inserted_value": "heat_duty",
@@ -203,7 +203,7 @@ output_dict = {
     },
 }
 
-class Cooler_Condenser_Plugin:
+class Cooler_Condenser_2_Plugin:
     '''Simulation of humid gas mixture cooling with condensation.
     The pressure stays constant during the compression. The other properties of the Main Stream are updated.
 
@@ -252,12 +252,12 @@ class Cooler_Condenser_Plugin:
 
     def __init__(self, dcf, print_info):
 
-        self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Cooler_Condenser_Plugin')
+        self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Cooler_Condenser_2_Plugin')
 
         self.outlet_stream_properties()
         self.cooler_condenser_sizing()
 
-        output_inserter_function(output_dict, self, dcf, 'Cooler_Condenser_Plugin') 
+        output_inserter_function(output_dict, self, dcf, 'Cooler_Condenser_2_Plugin') 
 
 
     def outlet_stream_properties(self):
@@ -412,6 +412,7 @@ class Cooler_Condenser_Plugin:
         self.material_mass = Quantity(self.input_dict_resolved['Cooler Condenser']['Material weight per area']['Value'].unit['kg/m2']
                                       *  self.heat_exchange_area.unit['m2'],
                                         'kg')
+
 
 
 

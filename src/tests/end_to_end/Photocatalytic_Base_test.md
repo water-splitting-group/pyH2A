@@ -12,7 +12,8 @@ Hourly_Irradiation_Plugin | plugin | Plugin to calculate solar irradiation from 
 Photocatalytic_Plugin | plugin | Computes number of required baggies, cost of baggies and catalyst cost | 301 |
 Cooler_Condenser_Plugin | plugin | Computes number of required baggies, cost of baggies and catalyst cost | 302 |
 Compressor_Plugin  | plugin | Computes compressor power | 303 |
-Catalyst_Separation_Plugin | plugin | Computes cost of catalyst separation | 304 |
+Cooler_Condenser_2_Plugin | plugin | Computes number of required baggies, cost of baggies and catalyst cost | 304 |
+Catalyst_Separation_Plugin | plugin | Computes cost of catalyst separation | 305 |
 Multiple_Modules_Plugin | plugin | Modelling of multiple plant modules, adjustment of labor requirement | 401 |
 
 # Display Parameters
@@ -26,8 +27,8 @@ Color | darkgreen
 
 Name | Value | Path | Unit | Comment
 --- | --- | --- | --- | --- 
-Operating capacity factor | 90% | None | - 
-Plant design capacity | 1,111 | None | kg/day 
+Operating capacity factor | 0.65123094959 | None | - 
+Plant design capacity | 1,706 | None | kg/day 
 Fraction of output that reaches gate | 90% | None | - | Reduction due to loss in H2/O2 separation. 
 Plant modules | 10 | None | - | 10 identical modules, only affects labor requirement calculation. 
 
@@ -199,7 +200,7 @@ Unplanned replacement | 0.5% | {Depreciable Capital Costs > Inflated > Value, US
 
 Name | Value | Unit 
 --- | --- | --- | 
-Compression ratio | 5. | -
+Compression ratio | 20.8 | -
 Polytropic coefficient | 1.4 | -
 Efficiency | 0.75 | -
 

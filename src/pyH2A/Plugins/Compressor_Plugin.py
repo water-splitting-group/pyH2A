@@ -40,6 +40,19 @@ input_dict = {
             "description": "Compression work per shaft work provided to the compressor."
         },
     },
+    "Technical Operating Parameters and Specifications": {
+		"Operating capacity factor": { 
+			"Value": {
+				"type": {float, int},
+				"bounds": (0, 1),
+			},
+			"Unit": {
+				"dimension": "dimensionless",
+			},
+			"optional": False,
+			"description": "Operating capacity factor value between 0 and 1."
+		},    
+    },
     "Main Stream": {
         "Temperature": {
             "Value": {
@@ -110,15 +123,24 @@ output_dict = {
             "optional": False,
             "description": "Power associated to the compression."
         },         
-        "Shaft power": {
+        "Design shaft power": {
             "Value": {
-                "inserted_value": "shaft_power",
+                "inserted_value": "design_shaft_power",
                 "type": {float,},
                 "dimension": "power",
             },
             "optional": False,
-            "description": "Shaft power required to drive the compressor."
-        },       
+            "description": "Shaft power required to drive the compressor at the plant design capacity flowrate."
+        },   
+        "Average shaft power": {
+            "Value": {
+                "inserted_value": "average_shaft_power",
+                "type": {float,},
+                "dimension": "power",
+            },
+            "optional": False,
+            "description": "Shaft power required to drive the compressor, averaged (accounting for Operating capacity factor)."
+        },               
     },
     "Main Stream": {
         "Temperature": {
@@ -235,9 +257,15 @@ class Compressor_Plugin:
                                             'W'
                                         )
 
-        self.shaft_power = Quantity(
+        self.design_shaft_power = Quantity(
                                     self.compression_power.unit['W']
                                     /
                                     (self.input_dict_resolved['Compressor']['Efficiency']['Value'].unit['-']), 
+                                    'W')
+
+        self.average_shaft_power = Quantity(
+            self.design_shaft_power.unit['W']
+            *
+            self.input_dict_resolved['Technical Operating Parameters and Specifications']['Operating capacity factor']['Value'].unit['-'],
                                     'W')
 
