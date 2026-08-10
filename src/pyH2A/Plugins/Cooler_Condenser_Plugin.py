@@ -272,9 +272,9 @@ class Cooler_Condenser_Plugin:
 
         output_inserter_function(self.output_dict, self, dcf, 'Cooler_Condenser_Plugin') 
 
-        print('cooler 1 yearly_coolant_mass ', self.yearly_coolant_mass)
-        print('cooler 1 material_mass', self.material_mass)
-        print('cooler 1 yearly_condensed_water_mass ', self.yearly_condensed_water_mass)
+        print('cooler 1 yearly coolant mass ', self.yearly_coolant_mass)
+        print('cooler 1 steel mass', self.material_mass)
+        print('cooler 1 yearly condensed water mass ', self.yearly_condensed_water_mass)
 
 
 def outlet_stream_properties(dictionary, cooler_name = 'Cooler Condenser'):

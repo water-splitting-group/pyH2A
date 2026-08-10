@@ -271,6 +271,6 @@ class Cooler_Condenser_2_Plugin:
 
         output_inserter_function(self.output_dict, self, dcf, 'Cooler_Condenser_2_Plugin') 
 
-        print('cooler 2 yearly_coolant_mass ', self.yearly_coolant_mass)
-        print('cooler 2 material_mass', self.material_mass)
-        print('cooler 2 yearly_condensed_water_mass ', self.yearly_condensed_water_mass)
+        print('cooler 2 yearly coolant mass ', self.yearly_coolant_mass)
+        print('cooler 2 steel mass', self.material_mass)
+        print('cooler 2 yearly condensed water mass ', self.yearly_condensed_water_mass)

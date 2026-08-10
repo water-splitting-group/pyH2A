@@ -271,9 +271,9 @@ class Cooler_Condenser_3_Plugin:
 
         output_inserter_function(self.output_dict, self, dcf, 'Cooler_Condenser_3_Plugin') 
 
-        print('cooler 3 yearly_coolant_mass ', self.yearly_coolant_mass)
-        print('cooler 3 material_mass', self.material_mass)
-        print('cooler 3 yearly_condensed_water_mass ', self.yearly_condensed_water_mass)
+        print('cooler 3 yearly coolant mass ', self.yearly_coolant_mass)
+        print('cooler 3 steel mass', self.material_mass)
+        print('cooler 3 yearly condensed water mass ', self.yearly_condensed_water_mass)
         print('remaining uncondensed water to compensate per year (kg)', dcf.inp['Main Stream']['Mass flowrate']['Value'].unit['kg/year']
               *
               dcf.inp['Technical Operating Parameters and Specifications']['Operating capacity factor']['Value'].unit['-']
