@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.abspath('..'))
 sys.path.insert(0, os.path.abspath('../src/'))
 
 from pyH2A import __version__
-
+import _build_docs
 
 # -- Project information -----------------------------------------------------
 

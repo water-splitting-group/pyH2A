@@ -1,6 +1,5 @@
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
-from pyH2A.Utilities.docstring_generation import generate_plugin_docstring
 import numpy as np
 
 class Battery_Plugin:
@@ -164,15 +163,4 @@ class Battery_Plugin:
         capacity = nominal_capacity * capacity_decrease
 
         return capacity, capacity_decrease
-    
-summary = """
-            Simulation of electricity storage using a battery.
-            Simulation assumes that battery is charged and completely discharged every day.
-            (no electricity storage across days, only one discharge per day, not multiple ones)
-        """
-        
-generate_plugin_docstring(
-                Battery_Plugin,
-                summary,
-            )
         
