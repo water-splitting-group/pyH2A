@@ -1,7 +1,6 @@
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
-from pyH2A.Utilities.Unit_Handler.quantity import Quantity
-from pyH2A.Utilities.Physical_Properties.Physical_properties import Physical_properties as PP
-import math
+from pyH2A.Plugins.Cooler_Condenser_Plugin import outlet_stream_properties, cooler_condenser_sizing
+
 
 class Cooler_Condenser_2_Plugin:
     '''Simulation of humid gas mixture cooling with condensation.
@@ -248,179 +247,30 @@ class Cooler_Condenser_2_Plugin:
 
         self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Cooler_Condenser_2_Plugin')
 
-        self.outlet_stream_properties()
-        self.cooler_condenser_sizing()
+        (self.outlet_temperature,
+         self.outlet_mass_fraction, 
+         self.outlet_mass_flowrate,
+         self.condensed_water_enthalpy, 
+         self.outlet_enthalpy, 
+         self.max_condensed_water_flowrate,
+         self.yearly_condensed_water_mass
+         ) = outlet_stream_properties(self.input_dict_resolved)
+
+
+        (self.sizing_heat_duty,
+         self.heat_exchange_area, 
+         self.max_coolant_flowrate,
+         self.yearly_coolant_mass,
+         self.material_mass
+        ) = cooler_condenser_sizing(self.input_dict_resolved, 
+                                    self.outlet_temperature,
+                                    self.outlet_enthalpy, 
+                                    self.outlet_mass_flowrate, 
+                                    self.max_condensed_water_flowrate, 
+                                    self.condensed_water_enthalpy)
 
         output_inserter_function(self.output_dict, self, dcf, 'Cooler_Condenser_2_Plugin') 
-
-
-    def outlet_stream_properties(self):
-        '''Calculate the mass flowrate, composition and enthalpy at the outlet of the main stream and the eventual condensed water stream.
-        '''
-
-        # outlet temperature of the main stream is imposed:
-        self.outlet_temperature = self.input_dict_resolved['Cooler Condenser']['Hot outlet temperature']['Value']
-
-        # determine if the outlet reaches saturation
-        _, inlet_mol_fraction = PP.Mass_to_substance(self.input_dict_resolved['Main Stream']['Mass fraction']['Value'])
-        psat = PP.Water_saturation_pressure(self.outlet_temperature)
-
-        if inlet_mol_fraction['H2O'].unit['-'] * self.input_dict_resolved['Main Stream']['Pressure']['Value'].unit['Pa'] < psat.unit['Pa']: 
-            # outlet fluid doesn't reach saturation, no condensation occurs, and the outlet composition is identical to the inlet one
-            self.outlet_mass_fraction = self.input_dict_resolved['Main Stream']['Mass fraction']['Value']
-            self.outlet_mass_flowrate = self.input_dict_resolved['Main Stream']['Mass flowrate']['Value']
-
-            self.max_condensed_water_flowrate = Quantity(0, 'kg/s')
-            self.condensed_water_enthalpy = Quantity(0, 'J/kg') # dummy
-
-
-            h = PP.Enthalpy(T = self.outlet_temperature,
-                            P = self.input_dict_resolved['Main Stream']['Pressure']['Value'].unit['Pa'], 
-                            amount = self.outlet_mass_fraction, 
-                            phase = 'V', 
-                            composition_basis = 'mass'
-                            )
-            
-            self.outlet_enthalpy = Quantity(h.unit['J'], 'J/kg')
-
-
-            
-        else:
-            # part of the water was condensed. Water pressure is therefore equal to saturation pressure, and the fraction of the other species is updated accordingly
-            outlet_mol_fraction_water = psat.unit['Pa']/self.input_dict_resolved['Main Stream']['Pressure']['Value'].unit['Pa']
-            # inlet mole fraction is necessary to determine how outlet mole fractions are updated due to water condensation
-            _, inlet_mol_fraction = PP.Mass_to_substance(self.input_dict_resolved['Main Stream']['Mass fraction']['Value'])
-            # fraction of gas phase that is not due to vapour
-            inlet_mol_fraction_uncondensable = 1-inlet_mol_fraction['H2O'].unit['-']
-            outlet_mol_fraction_uncondensable = 1-outlet_mol_fraction_water
-            uncondensable_fraction_factor = outlet_mol_fraction_uncondensable / inlet_mol_fraction_uncondensable
-            outlet_mol_fraction = {species: Quantity(uncondensable_fraction_factor * inlet_mol_fraction[species].unit['-'], '-') for species in inlet_mol_fraction.keys() if species != 'H2O'}
-            outlet_mol_fraction['H2O'] = Quantity(outlet_mol_fraction_water, '-')
-
-            _, self.outlet_mass_fraction = PP.Substance_to_mass(outlet_mol_fraction) # mass fraction in the gas phase
-
-            # fraction of water vapour at the outlet, compared to the total (liquid + vapour) water: m_vap/(m_vap+m_liq)
-            water_uncondensed_fraction = (
-                inlet_mol_fraction_uncondensable * psat.unit['Pa']
-                /
-                (inlet_mol_fraction['H2O'].unit['-'] 
-                 * 
-                 (self.input_dict_resolved['Main Stream']['Pressure']['Value'].unit['Pa'] - psat.unit['Pa'])
-                 )
-            )
-
-            max_condensed_water_flowrate = (self.input_dict_resolved['Main Stream']['Mass flowrate']['Value'].unit['kg/s'] 
-                                        * 
-                                        (1-water_uncondensed_fraction) 
-                                        * 
-                                        self.input_dict_resolved['Main Stream']['Mass fraction']['Value']['H2O'].unit['-']
-                                        )
-            self.max_condensed_water_flowrate = Quantity(max_condensed_water_flowrate, 'kg/s')
-
-            # the part of water that was condensed is excluded from the main (vapour phase) stream
-            self.outlet_mass_flowrate = Quantity(self.input_dict_resolved['Main Stream']['Mass flowrate']['Value'].unit['kg/s'] - max_condensed_water_flowrate,
-                                                'kg/s')
-
-            # Main stream outlet enthalpy
-            h = PP.Enthalpy(T = self.outlet_temperature,
-                            P = self.input_dict_resolved['Main Stream']['Pressure']['Value'].unit['Pa'], 
-                            amount = self.outlet_mass_fraction, 
-                            phase = 'V', 
-                            composition_basis = 'mass'
-                            )
-            
-            self.outlet_enthalpy = Quantity(h.unit['J'], 'J/kg')
-
-            # Condensed water outlet enthalpy
-            h = PP.Enthalpy(T = self.outlet_temperature,
-                            P = self.input_dict_resolved['Main Stream']['Pressure']['Value'].unit['Pa'], 
-                            amount = {'H2O': Quantity(1., 'kg')}, 
-                            phase = 'L', 
-                            composition_basis = 'mass'
-                            )
-                        
-            self.condensed_water_enthalpy = Quantity(h.unit['J'], 'J/kg')
-
-        self.yearly_condensed_water_mass = Quantity(
-            self.input_dict_resolved['Technical Operating Parameters and Specifications']['Operating capacity factor']['Value'].unit['-']
-            *
-            self.max_condensed_water_flowrate.unit['kg/year'], 
-            'kg'
-            )
-
-
-    def cooler_condenser_sizing(self):
-        '''
-        Calculates the thermal power transfer between the hot and the cold fluid and subsequent heat exchange area.
-        Also calculates the cooling fluid flowrate andthe mass of stainless steel constituting the exchanger.
-        '''
-
-        sizing_heat_duty = (
-            self.input_dict_resolved['Main Stream']['Mass flowrate']['Value'].unit['kg/s']
-            *
-            self.input_dict_resolved['Main Stream']['Specific enthalpy']['Value'].unit['J/kg']
-            -
-            (
-             self.outlet_mass_flowrate.unit['kg/s'] * self.outlet_enthalpy.unit['J/kg']
-             +
-             self.max_condensed_water_flowrate.unit['kg/s'] * self.condensed_water_enthalpy.unit['J/kg']
-            )
-
-        )
-        self.sizing_heat_duty = Quantity(sizing_heat_duty, 'W')           
-                
-        # log-mean delta temperature. This doesn't normally apply to the condensation case, but we use a unique formula for simplification purposes
-        dT_1 = self.input_dict_resolved['Main Stream']['Temperature']['Value'].unit['K'] - self.input_dict_resolved['Cooler Condenser']['Cold outlet temperature']['Value'].unit['K']
-        dT_2 = self.outlet_temperature.unit['K'] - self.input_dict_resolved['Cooler Condenser']['Cold inlet temperature']['Value'].unit['K']
-        Delta_T_average = (
-            (dT_1-dT_2)
-            /
-            (math.log(dT_1/dT_2))
-            )
-
-        self.heat_exchange_area = Quantity(self.sizing_heat_duty.unit['W']
-                                            /
-                                                (
-                                                self.input_dict_resolved['Cooler Condenser']['Heat transfer coefficient']['Value'].unit['W/m2/delta_K']
-                                                *
-                                                Delta_T_average
-                                                ), 
-                                            'm2')
-        
-
-        # cooling fluid enthalpy at inlet and outlet
-        inlet_coolant_h = PP.Enthalpy(T = self.input_dict_resolved['Cooler Condenser']['Cold inlet temperature']['Value'],
-                        P = self.input_dict_resolved['Main Stream']['Pressure']['Value'].unit['Pa'], # dummy
-                        amount = {'H2O': Quantity(1., 'kg')}, 
-                        phase = 'L', 
-                        composition_basis = 'mass'
-                        )        
-        
-        outlet_coolant_h = PP.Enthalpy(T = self.input_dict_resolved['Cooler Condenser']['Cold outlet temperature']['Value'],
-                        P = self.input_dict_resolved['Main Stream']['Pressure']['Value'].unit['Pa'], # dummy
-                        amount = {'H2O': Quantity(1., 'kg')}, 
-                        phase = 'L', 
-                        composition_basis = 'mass'
-                        )  
-
-
-        self.max_coolant_flowrate = Quantity(self.sizing_heat_duty.unit['W']
-                                         /
-                                         (outlet_coolant_h.unit['J']-inlet_coolant_h.unit['J']), 
-                                         'kg/s')
-        
-        self.yearly_coolant_mass = Quantity(self.input_dict_resolved['Technical Operating Parameters and Specifications']['Operating capacity factor']['Value'].unit['-']
-                                         *
-                                         self.max_coolant_flowrate.unit['kg/year'], 
-                                         'kg')
-
-        self.material_mass = Quantity(self.input_dict_resolved['Cooler Condenser']['Material weight per area']['Value'].unit['kg/m2']
-                                      *  self.heat_exchange_area.unit['m2'],
-                                        'kg')
 
         print('cooler 2 yearly_coolant_mass ', self.yearly_coolant_mass)
         print('cooler 2 material_mass', self.material_mass)
         print('cooler 2 yearly_condensed_water_mass ', self.yearly_condensed_water_mass)
-
-
-
