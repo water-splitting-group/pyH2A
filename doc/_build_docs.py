@@ -1,5 +1,5 @@
-from src.pyH2A.Plugins.Battery_Plugin import Battery_Plugin
-from src.pyH2A.Utilities.docstring_generation import generate_plugin_docstring
+from pyH2A.Plugins.Battery_Plugin import Battery_Plugin
+from pyH2A.Utilities.docstring_generation import generate_plugin_docstring
 
 # generating docs for plugins
 generate_plugin_docstring(Battery_Plugin, """Simulation of electricity storage using a battery. 
