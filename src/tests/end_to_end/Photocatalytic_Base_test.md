@@ -14,6 +14,8 @@ Catalyst_Separation_Plugin | Computes cost of catalyst separation | 302 |
 Cooler_Condenser_Plugin | Computes first cooler condenser sizing and coolant requirements | 303 |
 Compressor_Plugin  | Computes compressor power and yearly consumption | 304 |
 Cooler_Condenser_2_Plugin | Computes second cooler condenser sizing and coolant requirements | 305 |
+Compressor_2_Plugin  | Computes second compressor power and yearly consumption | 306 |
+Cooler_Condenser_3_Plugin | Computes third cooler condenser sizing and coolant requirements | 307 |
 Multiple_Modules_Plugin | Modelling of multiple plant modules, adjustment of labor requirement | 401 |
 
 # Display Parameters
@@ -200,8 +202,15 @@ Unplanned replacement | 0.5% | {Depreciable Capital Costs > Inflated > Value, US
 
 Name | Value | Unit 
 --- | --- | --- | 
-Compression ratio | 20.8 | -
+Compression ratio | 4.35 | -
 Polytropic coefficient | 1.4 | -
+Efficiency | 0.75 | -
+
+# Compressor 2
+
+Name | Value | Unit 
+--- | --- | --- | 
+Compression ratio | 4.78 | -
 Efficiency | 0.75 | -
 
 # Cooler Condenser

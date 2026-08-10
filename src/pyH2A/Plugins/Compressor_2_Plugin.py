@@ -1,8 +1,5 @@
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
-from pyH2A.Utilities.Unit_Handler.quantity import Quantity
-from pyH2A.Utilities.Physical_Properties.Physical_properties import Physical_properties as PP
-from pyH2A.Utilities.Physical_Properties.data import Constants as constant
-import numpy as np
+from pyH2A.Plugins.Compressor_Plugin import calculate_compression
 
 class Compressor_2_Plugin:
     '''Simulation of gas mixture adiabatic compression.
@@ -19,7 +16,7 @@ class Compressor_2_Plugin:
     def _set_up(self, dcf):
 
         self.input_dict = {
-            "Compressor": {
+            "Compressor 2": {
                 "Compression ratio": {
                     "Value": {
                         "type": {int,float,},
@@ -192,57 +189,15 @@ class Compressor_2_Plugin:
 
         self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Compressor_2_Plugin')
 
-        self.calculate_compression()
+        (self.outlet_temperature,
+         self.outlet_pressure,
+         self.outlet_enthalpy, 
+         self.compression_power, 
+         self.design_shaft_power, 
+         self.yearly_shaft_power
+         ) = calculate_compression(self.input_dict_resolved, compressor_name = 'Compressor 2')
 
         output_inserter_function(self.output_dict, self, dcf, 'Compressor_2_Plugin') 
 
-
-    def calculate_compression(self):
-        '''Using inlet stream and compressor characteristics, shaft work and outlet stream properties are calculated.
-        '''
-        if 'Polytropic coefficient' in self.input_dict_resolved['Compressor']:
-            k = self.input_dict_resolved['Compressor']['Polytropic coefficient']['Value'].unit['-']
-        else:
-            k = constant.IDEAL_GAS_DIATOMIC_HEAT_CAPACITY_RATIO.unit['-']
-
-        self.outlet_temperature = Quantity(
-                                        self.input_dict_resolved['Main Stream']['Temperature']['Value'].unit['K']
-                                        * self.input_dict_resolved['Compressor']['Compression ratio']['Value'].unit['-']**((k-1)/k), 
-                                        'K')
-
-        self.outlet_pressure = Quantity(
-                                        self.input_dict_resolved['Main Stream']['Pressure']['Value'].unit['Pa']
-                                        * self.input_dict_resolved['Compressor']['Compression ratio']['Value'].unit['-'], 
-                                        'Pa')
-
-        h = PP.Enthalpy(T = self.outlet_temperature,
-                        P = self.outlet_pressure, 
-                        amount = self.input_dict_resolved['Main Stream']['Mass fraction']['Value'], 
-                        phase = 'V', 
-                        composition_basis = 'mass'
-                        )
-        
-        self.outlet_enthalpy = Quantity(h.unit['J'], 'J/kg')
-
-        self.compression_power = Quantity(
-                                            self.input_dict_resolved['Main Stream']['Mass flowrate']['Value'].unit['kg/s']
-                                            *
-                                            (self.outlet_enthalpy.unit['J/kg']-self.input_dict_resolved['Main Stream']['Specific enthalpy']['Value'].unit['J/kg']), 
-                                            'W'
-                                        )
-
-        self.design_shaft_power = Quantity(
-                                    self.compression_power.unit['W']
-                                    /
-                                    (self.input_dict_resolved['Compressor']['Efficiency']['Value'].unit['-']), 
-                                    'W')
-
-        self.yearly_shaft_power = Quantity(
-            self.design_shaft_power.unit['Wh_per_year']
-            *
-            self.input_dict_resolved['Technical Operating Parameters and Specifications']['Operating capacity factor']['Value'].unit['-'],
-                                    'Wh')
-
-        print('design_shaft_power ', self.design_shaft_power)
-        print('yearly_shaft_power ', self.yearly_shaft_power)
-
+        print('compressor 2 design_shaft_power ', self.design_shaft_power)
+        print('compressor 2 yearly_shaft_power ', self.yearly_shaft_power)        
