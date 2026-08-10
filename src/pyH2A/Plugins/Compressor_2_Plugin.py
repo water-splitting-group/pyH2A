@@ -15,6 +15,8 @@ class Compressor_2_Plugin:
 
     def _set_up(self, dcf):
 
+        self.functional_unit = dcf.functional_unit  
+        
         self.input_dict = {
             "Compressor 2": {
                 "Compression ratio": {
