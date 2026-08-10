@@ -272,10 +272,6 @@ class Cooler_Condenser_Plugin:
 
         output_inserter_function(self.output_dict, self, dcf, 'Cooler_Condenser_Plugin') 
 
-        print('cooler 1 yearly_coolant_mass ', self.yearly_coolant_mass)
-        print('cooler 1 material_mass', self.material_mass)
-        print('cooler 1 yearly_condensed_water_mass ', self.yearly_condensed_water_mass)
-
 
 def outlet_stream_properties(dictionary, cooler_name = 'Cooler Condenser'):
     '''Calculate the mass flowrate, composition and enthalpy at the outlet of the main stream and the eventual condensed water stream.

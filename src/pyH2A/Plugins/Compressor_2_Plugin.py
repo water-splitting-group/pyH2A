@@ -200,6 +200,3 @@ class Compressor_2_Plugin:
          ) = calculate_compression(self.input_dict_resolved, compressor_name = 'Compressor 2')
 
         output_inserter_function(self.output_dict, self, dcf, 'Compressor_2_Plugin') 
-
-        print('compressor 2 design_shaft_power ', self.design_shaft_power)
-        print('compressor 2 yearly_shaft_power ', self.yearly_shaft_power)        

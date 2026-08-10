@@ -270,7 +270,3 @@ class Cooler_Condenser_2_Plugin:
                                     self.condensed_water_enthalpy)
 
         output_inserter_function(self.output_dict, self, dcf, 'Cooler_Condenser_2_Plugin') 
-
-        print('cooler 2 yearly_coolant_mass ', self.yearly_coolant_mass)
-        print('cooler 2 material_mass', self.material_mass)
-        print('cooler 2 yearly_condensed_water_mass ', self.yearly_condensed_water_mass)
