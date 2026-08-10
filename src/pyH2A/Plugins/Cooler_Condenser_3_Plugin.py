@@ -2,7 +2,7 @@ from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Plugins.Cooler_Condenser_Plugin import outlet_stream_properties, cooler_condenser_sizing
 
 
-class Cooler_Condenser_2_Plugin:
+class Cooler_Condenser_3_Plugin:
     '''Simulation of humid gas mixture cooling with condensation.
     The pressure stays constant during the compression. The other properties of the Main Stream are updated.
     '''
@@ -146,7 +146,7 @@ class Cooler_Condenser_2_Plugin:
         }
 
         self.output_dict = {
-            "Cooler Condenser 2": {
+            "Cooler Condenser 3": {
                 "Sizing heat duty": {
                     "Value": {
                         "inserted_value": "sizing_heat_duty",
@@ -245,7 +245,7 @@ class Cooler_Condenser_2_Plugin:
 
     def _run(self, dcf):    
 
-        self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Cooler_Condenser_2_Plugin')
+        self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Cooler_Condenser_3_Plugin')
 
         (self.outlet_temperature,
          self.outlet_mass_fraction, 
@@ -269,8 +269,13 @@ class Cooler_Condenser_2_Plugin:
                                     self.max_condensed_water_flowrate, 
                                     self.condensed_water_enthalpy)
 
-        output_inserter_function(self.output_dict, self, dcf, 'Cooler_Condenser_2_Plugin') 
+        output_inserter_function(self.output_dict, self, dcf, 'Cooler_Condenser_3_Plugin') 
 
-        print('cooler 2 yearly_coolant_mass ', self.yearly_coolant_mass)
-        print('cooler 2 material_mass', self.material_mass)
-        print('cooler 2 yearly_condensed_water_mass ', self.yearly_condensed_water_mass)
+        print('cooler 3 yearly_coolant_mass ', self.yearly_coolant_mass)
+        print('cooler 3 material_mass', self.material_mass)
+        print('cooler 3 yearly_condensed_water_mass ', self.yearly_condensed_water_mass)
+        print('remaining uncondensed water to compensate per year (kg)', dcf.inp['Main Stream']['Mass flowrate']['Value'].unit['kg/year']
+              *
+              dcf.inp['Technical Operating Parameters and Specifications']['Operating capacity factor']['Value'].unit['-']
+              *
+              dcf.inp['Main Stream']['Mass fraction']['Value']['H2O'].unit['-'])
