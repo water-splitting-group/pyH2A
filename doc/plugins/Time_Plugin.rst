@@ -228,4 +228,3 @@ These quantities are subsequently used by other plugins whenever time indexing, 
 
 .. automodule:: pyH2A.Plugins.Time_Plugin
     :members:
-    :undoc-members:
