@@ -191,14 +191,15 @@ def generate_docstring(summary, input_dict, output_dict, notes = None):
 
 def generate_plugin_docstring(plugin_class, summary):
 
-    class DocDCF:
-        functional_unit = None
-        unit = None
+	class DocDCF:
+		class functional_unit:
+			dimension = 'dimensionless'   # placeholder, only used for doc generation
+		unit = None
 
-    instance = plugin_class.__new__(plugin_class)
-    instance._set_up(DocDCF())
+	instance = plugin_class.__new__(plugin_class)
+	instance._set_up(DocDCF())
 
-    plugin_class.__doc__ = generate_docstring(
+	plugin_class.__doc__ = generate_docstring(
         summary,
         instance.input_dict,
         instance.output_dict
