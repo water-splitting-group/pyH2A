@@ -3,7 +3,6 @@ from pyH2A.Plugins.Electrolyzer_Plugin import calculate_electrolyzer_power_deman
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import numpy as np
-from pyH2A.Utilities.docstring_generation import generate_docstring
 
 class Stored_Power_Electrolysis_Plugin:
 

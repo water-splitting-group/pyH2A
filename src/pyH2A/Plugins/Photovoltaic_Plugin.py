@@ -2,7 +2,6 @@ from pyH2A.Utilities.input_modification import read_textfile, hourly_to_daily_po
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import numpy as np
-from pyH2A.Utilities.docstring_generation import generate_docstring
 
 class Photovoltaic_Plugin:
 

@@ -1,7 +1,6 @@
 import numpy as np
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
-from pyH2A.Utilities.docstring_generation import generate_docstring
 
 class Photocatalytic_Plugin:
 
