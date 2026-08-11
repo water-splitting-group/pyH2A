@@ -177,14 +177,6 @@ class Replacement_Plugin:
 			},
 		}	
 
-		summary = "Calculating yearly overall replacement costs based on one-time replacement costs and frequency."
-
-		self.__class__.__doc__ = generate_docstring(
-            summary,
-            self.input_dict,
-            self.output_dict
-        )
-
 	def _run(self, dcf):
 		self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Replacement_Plugin')
 		

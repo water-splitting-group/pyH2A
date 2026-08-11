@@ -154,14 +154,6 @@ class Hourly_Irradiation_Plugin:
 				},
 			},
 		}
-  
-		summary = "Calculation of hourly and mean daily irradiation data with different module configurations."
-  
-		self.__class__.__doc__ = generate_docstring(
-            summary,
-            self.input_dict,
-            self.output_dict
-        )
 
 	def _run(self, dcf):
 		self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Hourly_Irradiation_Plugin')

@@ -106,14 +106,6 @@ class Reverse_Osmosis_Plugin:
             },
         }
 
-        summary = "Simulation of purified water production using reverse osmosis."
-
-        self.__class__.__doc__ = generate_docstring(
-            summary,
-            self.input_dict,
-            self.output_dict
-        )
-
     def _run(self, dcf):
         self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Reverse_Osmosis_Plugin')
 

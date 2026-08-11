@@ -343,14 +343,6 @@ class Photocatalytic_Plugin:
 				},
 			},
 		}
-  
-		summary = "Simulating H2 production using photocatalytic water splitting in plastic baggie reactors."
-  
-		self.__class__.__doc__ = generate_docstring(
-            summary,
-            self.input_dict,
-            self.output_dict
-        )
 
 	def _run(self, dcf):
 		self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Photocatalytic_Plugin')

@@ -145,14 +145,6 @@ class Inflation_Plugin:
                 },                                                      
             }
         }
-        
-        summary = "Generation of a the necessary inflation-related quantities for other plugins."
-        
-        self.__class__.__doc__ = generate_docstring(
-            summary,
-            self.input_dict,
-            self.output_dict
-        )
 
     def _run(self, dcf):
         self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Inflation_Plugin')

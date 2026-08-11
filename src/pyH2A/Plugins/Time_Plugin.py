@@ -87,17 +87,6 @@ class Time_Plugin:
                 },   
             }
         }
-        
-        summary = """
-            Generation of a unique dictionary contianing all the necessary time-related arrays and values for other plugins.
-            All the quantities are dimensionless, no conversion being expected, and the years play the role of indexes rather than durations.
-        """
-        
-        self.__class__.__doc__ = generate_docstring(
-            summary,
-            self.input_dict,
-            self.output_dict
-        )
 
     def _run(self, dcf):
         self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Time_Plugin')

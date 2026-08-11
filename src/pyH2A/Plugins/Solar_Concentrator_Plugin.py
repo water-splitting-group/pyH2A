@@ -125,14 +125,6 @@ class Solar_Concentrator_Plugin:
 			},
 		}
 
-		summary = "Simulation of solar concentration (used in combination with PEC cells)."
-
-		self.__class__.__doc__ = generate_docstring(
-            summary,
-            self.input_dict,
-            self.output_dict
-        )
-
 	def _run(self, dcf):
 		self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Solar_Concentrator_Plugin')
 

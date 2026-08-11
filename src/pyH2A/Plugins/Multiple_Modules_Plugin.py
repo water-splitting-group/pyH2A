@@ -91,18 +91,6 @@ class Multiple_Modules_Plugin:
 				},
 			},
 		}
-  
-		summary = """
-			Simulating mutliple plant modules which are operated together, assuming that only labor cost is reduced. 
-			Calculation of required labor to operate all modules, scaling down labor requirement to one module for subsequent calculations.
-  		"""
-  
-  
-		self.__class__.__doc__ = generate_docstring(
-            summary,
-            self.input_dict,
-            self.output_dict
-        )
 
 	def _run(self, dcf):
 		self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Multiple_Modules_Plugin')

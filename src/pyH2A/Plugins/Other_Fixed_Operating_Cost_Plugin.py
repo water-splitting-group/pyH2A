@@ -185,14 +185,6 @@ class Other_Fixed_Operating_Cost_Plugin:
 				},
 			},
 		}
-  
-		summary = "Calculation of yearly fixed operating costs."
-
-		self.__class__.__doc__ = generate_docstring(
-            summary,
-            self.input_dict,
-            self.output_dict
-        )
 
 	def _run(self, dcf):
 		self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Other_Fixed_Operating_Cost_Plugin')
