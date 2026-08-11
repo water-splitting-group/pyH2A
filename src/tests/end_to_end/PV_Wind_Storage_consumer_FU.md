@@ -76,7 +76,7 @@ Capital spent in 1st year of construction | 100% | -
 
 Name | Value | Path | Unit | Comment
 --- | --- | --- | --- | --- 
-Nominal power | 30000 | None | kW | Optimal PV oversize ratio, same as Chang 2020
+Nominal power | 30 | None | MW | Optimal PV oversize ratio, same as Chang 2020
 Power loss per year | 0.5% | None | - | Based on Chang 2020
 Efficiency | 22% | None | - | Only used for area calculation
 
@@ -84,7 +84,7 @@ Efficiency | 22% | None | - | Only used for area calculation
 
 Name | Value | Unit | Comment 
 --- | --- | --- | --- 
-Installed wind capacity | 60 | MW
+Installed wind capacity | 100 | MW
 Power per wind turbine | 4 | MW | Typical value for land-based turbines (Older ones tend to be below, new ones are higher)
 Power loss per year | 0.5% | -
 
@@ -120,7 +120,7 @@ Specific cost | 9 | USD/kg
 Name | Value | Path | Unit | Comment
 --- | --- | --- | --- | ---
 PV CAPEX | 818 | {Photovoltaic > Nominal power > Value, kW} | USD | Based on Chang 2020, Chiesa 2021 Middle East PV installation cost, Shah 2021
-Wind CAPEX | 1.2 | {Wind Turbine > Installed wind capacity > Value, W} | USD | Assuming 1.2 M USD per MW isntalled
+Wind CAPEX | 1.2 | {Wind Turbine > Installed wind capacity > Value, W} | USD | Assuming 1.2 M USD per MW installed
 
 # Direct Capital Costs - Storage
 

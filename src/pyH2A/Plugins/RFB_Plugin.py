@@ -140,7 +140,7 @@ class RFB_Plugin:
 						"bounds": (0, None),
 					},
 					"Unit": {
-						"dimension": "mass/mass", # I didn't make it dimensionless because it'S a typical case where at some point we might want to have a matrix operation where this value, and the next ones, are multiplies by the mass of product
+						"dimension": "mass/mass", # I didn't make it dimensionless because it's a typical case where at some point we might want to have a matrix operation where this value, and the next ones, are multiplies by the mass of product
 					},
 					"optional": True,						
 					"description": "Mass of CO2 equivalent per mass of electrolyte produced."

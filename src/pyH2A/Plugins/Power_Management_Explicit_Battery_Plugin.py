@@ -44,6 +44,17 @@ class Power_Management_Explicit_Battery_Plugin:
                     "description": "Available energy on an hourly basis, as a dictionary of years. "
                                     "If not provided, it is assumed that no energy is available."
                 },
+                "Total yearly power generation": {
+                    "Value": {
+                        "type": {np.ndarray,},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "energy",
+                    },
+                    "optional": True,
+                    "description": "Yearly power generation of all production means (array)"
+                },                       
             },
             "Power Consumption": {
                 "<...>": {
@@ -59,7 +70,20 @@ class Power_Management_Explicit_Battery_Plugin:
                                     "in which case they should be provided as separate entries under Power Consumption. "
                                     "Only the flexible consumers (i.e. the ones whose consumption can take place at any moment) must be specified"
                 },
-            },    
+            },   
+            "Main Consumer": {
+                "Consumption per year": {
+                    "Value": {
+                        "type": {float,int,},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "energy",
+                    },
+                    "optional": True,
+                    "description": "Energy demand of the consumer over the entire year."
+                },
+            },                 
             "Hourly Consumer Profile": {
                 "Unsatisfied demand": {
                     "Value": {
@@ -101,6 +125,15 @@ class Power_Management_Explicit_Battery_Plugin:
                     "optional": True,
                     "description": "Remaining available energy, yearly basis.",
                 },
+				"Production oversizing ratio": {
+					"Value": {
+						"inserted_value": "production_oversizing",
+						"type": {float,},
+						"dimension": "dimensionless",
+					},
+					"description": "Total energy produced divided by the total energy consumed.",
+					"optional": False,
+				},	                   
             },
             "Grid Electricity": {
                 "Used grid electricity (yearly)": {
@@ -166,13 +199,23 @@ class Power_Management_Explicit_Battery_Plugin:
                                             'J')
             
         if 'Power Consumption' in self.input_dict_resolved:             
-            self.remaining_available, secondary_unfulfilled = allocate_power(self.input_dict_resolved['Power Consumption'], available_energy_yearly)
+            self.remaining_available, secondary_unfulfilled, secondary_consumption = allocate_power(self.input_dict_resolved['Power Consumption'], available_energy_yearly)
         else:
             self.remaining_available = available_energy_yearly
             secondary_unfulfilled = Quantity(np.zeros_like(self.remaining_available.unit['J']), 'J')
+            secondary_consumption = Quantity(0,'J')
 
         self.total_unfulfilled = Quantity(secondary_unfulfilled.unit['J'] + main_unfulfilled_yearly.unit['J'],'J')
-   
+
+        self.production_oversizing = Quantity(
+                                        np.sum(self.input_dict_resolved['Power Generation']['Total yearly power generation']['Value'].unit['J'])
+                                        /
+                                        (secondary_consumption.unit['J'] + self.input_dict_resolved ['Main Consumer']['Consumption per year']['Value'].unit['J'])
+                                        /
+                                        np.sum(self.input_dict_resolved['Time']['Years']['Value']['Operation years ones'].unit['-'])
+                                        ,
+                                        '-')
+
 
     def calculate_electricity_cost(self):
         self.electricity_cost = Quantity(self.total_unfulfilled.unit['J']
@@ -190,6 +233,8 @@ def allocate_power(consumption, available_power):
 
     total_unfulfilled = np.zeros_like(remaining_available)
 
+    summed_demand = 0
+
     for _, consumer in consumption.items():
 
         demand = consumer['Value'].unit['J']
@@ -200,6 +245,8 @@ def allocate_power(consumption, available_power):
 
         total_unfulfilled += demand - fulfilled
 
-    return Quantity(remaining_available, 'J'), Quantity(total_unfulfilled, 'J')
+        summed_demand += demand
+
+    return Quantity(remaining_available, 'J'), Quantity(total_unfulfilled, 'J'), Quantity(summed_demand, 'J')
 
 
