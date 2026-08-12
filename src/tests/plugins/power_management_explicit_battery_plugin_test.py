@@ -41,21 +41,19 @@ class DummyDCF:
                     "Processed": "Yes",
                 },                
             },
-            "Flexible Power Consumption": {
+            "Flexible Power Demand": {
                 "Test consumer": {
                     "Value": power_consumption["value"],
                     "Unit": "kWh",
                     "Processed": "Yes",
                 },
             },
-            "Main Consumer": {
-                "Consumption per year": {
+            "Power Demand": {
+                "Main consumer yearly consumption": {
                     "Value": main_consumption_per_year,
                     "Unit": "kWh",
-                },
-            },            
-            "Hourly Consumer Profile": {
-                "Unsatisfied demand": {
+                },                
+                "Main consumer hourly unsatisfied demand": {
                     "Value": unsatisfied_demand,
                     "Unit": "kWh",
                     "Processed": "Yes",
@@ -96,6 +94,7 @@ class DummyDCF:
                 "production_oversizing": Quantity(1.9148936170212767, '-'),
                 "total_unfulfilled": Quantity(np.array([1.0, 5.0]), 'kWh'),
                 "electricity_cost": Quantity(np.array([3.14159, 15.70795]), 'USD'),
+                "total_energy_demand": Quantity(np.array([470, 470]), 'kWh'),
             },
         },
     ],
@@ -114,8 +113,8 @@ def test_power_management_explicit_battery_plugin(case):
     tolerance = 1e-12
 
     np.testing.assert_allclose(
-        plugin.remaining_available.unit['kWh'],
-        expected["remaining_available"].unit['kWh'],
+        plugin.remaining_available.unit['J'],
+        expected["remaining_available"].unit['J'],
         rtol=tolerance,
         atol=tolerance,
     )
@@ -138,5 +137,12 @@ def test_power_management_explicit_battery_plugin(case):
         rtol=tolerance,
         atol=tolerance,
     )
+
+    np.testing.assert_allclose(
+        plugin.total_energy_demand.unit['J'],
+        expected["total_energy_demand"].unit['J'],
+        rtol=tolerance,
+        atol=tolerance,
+    )    
     
 

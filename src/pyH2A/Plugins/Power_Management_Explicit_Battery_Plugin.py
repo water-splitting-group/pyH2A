@@ -55,7 +55,7 @@ class Power_Management_Explicit_Battery_Plugin:
                     "description": "Yearly power generation of all production means (array)"
                 },                       
             },
-            "Flexible Power Consumption": {
+            "Flexible Power Demand": {
                 "<...>": {
                     "Value": {
                         "type": {np.ndarray,float,int,},
@@ -65,13 +65,13 @@ class Power_Management_Explicit_Battery_Plugin:
                         "dimension": "energy",
                     },
                     "optional": True,
-                    "description": "Power consumption values for each year. Can be provided for multiple consumers, "
-                                    "in which case they should be provided as separate entries under Power Consumption. "
+                    "description": "Power Demand values for each year. Can be provided for multiple consumers, "
+                                    "in which case they should be provided as separate entries under Flexible Power Demand."
                                     "Only the flexible consumers (i.e. the ones whose consumption can take place at any moment) must be specified"
                 },
             },   
-            "Main Consumer": {
-                "Consumption per year": {
+            "Power Demand": {
+                "Main consumer yearly consumption": {
                     "Value": {
                         "type": {np.ndarray,},
                         "bounds": (0, None),
@@ -81,10 +81,8 @@ class Power_Management_Explicit_Battery_Plugin:
                     },
                     "optional": False,
                     "description": "Energy demand of the consumer over each operating year (array)."
-                },
-            },                 
-            "Hourly Consumer Profile": {
-                "Unsatisfied demand": {
+                },             
+                "Main consumer hourly unsatisfied demand": {
                     "Value": {
                         "type": {dict,},
                         "bounds": (0, None),
@@ -94,8 +92,8 @@ class Power_Management_Explicit_Battery_Plugin:
                     },
                     "optional": False,
                     "description": "Unsatisfied demand of the main consumer. Dictionary of years"
-                },
-            },
+                },                
+            },                 
             "Grid Electricity": {
                 "Cost": {
                     "Value": {
@@ -134,6 +132,17 @@ class Power_Management_Explicit_Battery_Plugin:
 					"optional": False,
 				},	                   
             },
+            "Power Demand": {
+                "Total yearly consumption": {
+                    "Value": {
+                        "inserted_value": "total_energy_demand",
+                        "type": {np.ndarray,},
+                        "dimension": "energy",
+                    },
+                    "optional": False,
+                    "description": "Consumption from the main customer and the flexible customers, yearly basis.",
+                },
+            },            
             "Grid Electricity": {
                 "Used grid electricity (yearly)": {
                     "Value": {
@@ -184,10 +193,10 @@ class Power_Management_Explicit_Battery_Plugin:
 
         available_energy_yearly = dict_to_yearly_array_power_quantity(self.input_dict_resolved['Power Generation']['Available energy (hourly)']['Value'])
 
-        main_unfulfilled_yearly = dict_to_yearly_array_power_quantity(self.input_dict_resolved['Hourly Consumer Profile']['Unsatisfied demand']['Value'])
+        main_unfulfilled_yearly = dict_to_yearly_array_power_quantity(self.input_dict_resolved['Power Demand']['Main consumer hourly unsatisfied demand']['Value'])
            
-        if 'Flexible Power Consumption' in self.input_dict_resolved:             
-            self.remaining_available, secondary_unfulfilled, secondary_consumption = allocate_power(self.input_dict_resolved['Flexible Power Consumption'], 
+        if 'Flexible Power Demand' in self.input_dict_resolved:             
+            self.remaining_available, secondary_unfulfilled, secondary_consumption = allocate_power(self.input_dict_resolved['Flexible Power Demand'], 
                                                                                                     available_energy_yearly, 
                                                                                                     self.input_dict_resolved['Time']['Years']['Value']['Operation years ones'].unit['-'] )
         else:
@@ -195,18 +204,18 @@ class Power_Management_Explicit_Battery_Plugin:
             secondary_unfulfilled = Quantity(np.zeros_like(self.remaining_available.unit['J']), 'J')
             secondary_consumption = Quantity(0,'J')
 
-        self.total_unfulfilled = Quantity(secondary_unfulfilled.unit['J'] + main_unfulfilled_yearly.unit['J'],'J')
-
         self.total_energy_demand = Quantity(
                                             secondary_consumption.unit['J'] 
                                             + 
-                                            self.input_dict_resolved ['Main Consumer']['Consumption per year']['Value'].unit['J'], 
+                                            self.input_dict_resolved ['Power Demand']['Main consumer yearly consumption']['Value'].unit['J'], 
                                             'J')
+
+        self.total_unfulfilled = Quantity(secondary_unfulfilled.unit['J'] + main_unfulfilled_yearly.unit['J'],'J')
 
         self.production_oversizing = Quantity(
                                         np.sum(self.input_dict_resolved['Power Generation']['Total yearly power generation']['Value'].unit['J'])
                                         /
-                                        np.sum(secondary_consumption.unit['J'] + self.input_dict_resolved ['Main Consumer']['Consumption per year']['Value'].unit['J'])
+                                        np.sum(self.total_energy_demand.unit['J'])
                                         ,
                                         '-')
 
@@ -225,7 +234,7 @@ def allocate_power(consumption, available_power, operation_years_ones):
 
     remaining_available = available_power.unit['J'].copy()
 
-    total_unfulfilled = np.zeros_like(remaining_available)
+    unfulfilled = np.zeros_like(remaining_available)
 
     yearly_demand = np.zeros_like(remaining_available)
 
@@ -239,10 +248,10 @@ def allocate_power(consumption, available_power, operation_years_ones):
 
         remaining_available -= fulfilled
 
-        total_unfulfilled += demand - fulfilled
+        unfulfilled += demand - fulfilled
 
         yearly_demand += demand
 
-    return Quantity(remaining_available, 'J'), Quantity(total_unfulfilled, 'J'), Quantity(yearly_demand, 'J')
+    return Quantity(remaining_available, 'J'), Quantity(unfulfilled, 'J'), Quantity(yearly_demand, 'J')
 
 
