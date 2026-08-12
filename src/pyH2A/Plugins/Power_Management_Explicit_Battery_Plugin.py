@@ -55,7 +55,7 @@ class Power_Management_Explicit_Battery_Plugin:
                     "description": "Yearly power generation of all production means (array)"
                 },                       
             },
-            "Power Consumption": {
+            "Flexible Power Consumption": {
                 "<...>": {
                     "Value": {
                         "type": {np.ndarray,float,int,},
@@ -186,8 +186,8 @@ class Power_Management_Explicit_Battery_Plugin:
 
         main_unfulfilled_yearly = dict_to_yearly_array_power_quantity(self.input_dict_resolved['Hourly Consumer Profile']['Unsatisfied demand']['Value'])
            
-        if 'Power Consumption' in self.input_dict_resolved:             
-            self.remaining_available, secondary_unfulfilled, secondary_consumption = allocate_power(self.input_dict_resolved['Power Consumption'], 
+        if 'Flexible Power Consumption' in self.input_dict_resolved:             
+            self.remaining_available, secondary_unfulfilled, secondary_consumption = allocate_power(self.input_dict_resolved['Flexible Power Consumption'], 
                                                                                                     available_energy_yearly, 
                                                                                                     self.input_dict_resolved['Time']['Years']['Value']['Operation years ones'].unit['-'] )
         else:
@@ -197,10 +197,16 @@ class Power_Management_Explicit_Battery_Plugin:
 
         self.total_unfulfilled = Quantity(secondary_unfulfilled.unit['J'] + main_unfulfilled_yearly.unit['J'],'J')
 
+        self.total_energy_demand = Quantity(
+                                            secondary_consumption.unit['J'] 
+                                            + 
+                                            self.input_dict_resolved ['Main Consumer']['Consumption per year']['Value'].unit['J'], 
+                                            'J')
+
         self.production_oversizing = Quantity(
                                         np.sum(self.input_dict_resolved['Power Generation']['Total yearly power generation']['Value'].unit['J'])
                                         /
-                                        (secondary_consumption.unit['J'] + np.sum(self.input_dict_resolved ['Main Consumer']['Consumption per year']['Value'].unit['J']))
+                                        np.sum(secondary_consumption.unit['J'] + self.input_dict_resolved ['Main Consumer']['Consumption per year']['Value'].unit['J'])
                                         ,
                                         '-')
 
@@ -221,7 +227,7 @@ def allocate_power(consumption, available_power, operation_years_ones):
 
     total_unfulfilled = np.zeros_like(remaining_available)
 
-    summed_demand = 0
+    yearly_demand = np.zeros_like(remaining_available)
 
     for _, consumer in consumption.items():
 
@@ -235,8 +241,8 @@ def allocate_power(consumption, available_power, operation_years_ones):
 
         total_unfulfilled += demand - fulfilled
 
-        summed_demand += np.sum(demand)
+        yearly_demand += demand
 
-    return Quantity(remaining_available, 'J'), Quantity(total_unfulfilled, 'J'), Quantity(summed_demand, 'J')
+    return Quantity(remaining_available, 'J'), Quantity(total_unfulfilled, 'J'), Quantity(yearly_demand, 'J')
 
 

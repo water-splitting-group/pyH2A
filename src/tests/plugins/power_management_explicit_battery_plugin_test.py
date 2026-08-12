@@ -41,7 +41,7 @@ class DummyDCF:
                     "Processed": "Yes",
                 },                
             },
-            "Power Consumption": {
+            "Flexible Power Consumption": {
                 "Test consumer": {
                     "Value": power_consumption["value"],
                     "Unit": "kWh",
