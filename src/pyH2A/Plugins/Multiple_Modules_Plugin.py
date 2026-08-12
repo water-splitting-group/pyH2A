@@ -57,7 +57,7 @@ class Multiple_Modules_Plugin:
 					"Unit": {
 						"dimension": "area",
 					},
-					"optional": False,
+					"optional": True,
 					"description": "Solar collection area for one plant module."
 				},
 			},
@@ -83,7 +83,7 @@ class Multiple_Modules_Plugin:
 					"Unit": {
 						"dimension": "dimensionless",
 					},
-					"optional": False,
+					"optional": True,
 					"description": "Number of wind turbines needed to match the required installed power."
 				},
 			},						
@@ -96,7 +96,7 @@ class Multiple_Modules_Plugin:
 					"Unit": {
 						"dimension": "area",
 					},
-					"optional": False,
+					"optional": True,
 					"description": "Solar collection area that can be covered by one staffer."
 				},
 				"Battery modules per staffer": {
@@ -107,7 +107,7 @@ class Multiple_Modules_Plugin:
 					"Unit": {
 						"dimension": "dimensionless",
 					},
-					"optional": False,
+					"optional": True,
 					"description": "Number of battery modules that can be handeled by one staffer."
 				},
 				"Wind turbines per staffer": {
@@ -118,7 +118,7 @@ class Multiple_Modules_Plugin:
 					"Unit": {
 						"dimension": "dimensionless",
 					},
-					"optional": False,
+					"optional": True,
 					"description": "Number of battery modules that can be maintained by one staffer."
 				},								
 				"Number of 8-hour shifts": {
