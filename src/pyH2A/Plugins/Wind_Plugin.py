@@ -155,7 +155,16 @@ class Wind_Plugin:
 					},
 					"description": "Yearly power generation of all production means (array).",
 					"optional": False,
-				},					
+				},	
+				"Wind to total production ratio": {
+					"Value": {
+						"inserted_value": "wind_to_total_production_fraction",
+						"type": {float,},
+						"dimension": "dimensionless",
+					},
+					"description": "Total energy production by wind, didvided by the production of PV + wind together.",
+					"optional": True,
+				},								
 				"Available energy (hourly)": {
 					"Value": {
 						"inserted_value": "total_electric_energy_generation_yearly_data",
@@ -251,6 +260,13 @@ class Wind_Plugin:
 																+
 																self.wind_energy_generation_yearly_array.unit['J'], 
 																'J'
+															)
+			
+			self.wind_to_total_production_fraction = Quantity(
+																np.sum(self.wind_energy_generation_yearly_array.unit['J'])
+																/
+																np.sum(self.total_energy_generation_yearly_array.unit['J']),
+																'-'
 															)
 		else: 
 			self.total_energy_generation_yearly_array = self.wind_energy_generation_yearly_array

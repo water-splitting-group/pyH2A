@@ -71,6 +71,7 @@ class DummyDCF:
                         3006888977.5945992 ,  3422031955.855719,  3906197542.9547396, 5915441564.042187, 
                         6972642911.208555, 8566416338.770905,  10790912763.99429, 11276236627.601461,                         
                     ]), 'J'),
+                "wind_to_total_production_fraction": Quantity(0.1918635928589533,'-')
             },
         },
     ],
@@ -112,4 +113,9 @@ def test_wind_plugin(case):
     assert plugin.total_energy_generation_yearly_array.unit["J"] == pytest.approx(
         expected["total_energy_generation_yearly_array"].unit["J"],
         abs=tolerance
-    )      
+    )     
+
+    assert plugin.wind_to_total_production_fraction.unit["-"] == pytest.approx(
+        expected["wind_to_total_production_fraction"].unit["-"],
+        abs=tolerance
+    )          
