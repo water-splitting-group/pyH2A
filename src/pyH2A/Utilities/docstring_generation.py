@@ -150,7 +150,6 @@ def _render_section(title, underline_char, entries):
 	for entry in entries:
 		lines.append(_render_entry(*entry))
 
-	lines.append('')
 
 	return lines
 
