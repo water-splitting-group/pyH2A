@@ -27,7 +27,7 @@ Multiple_Modules_Plugin | 401
 
 Name | Value | Unit | Comment 
 --- | --- | --- | --- 
-Plant design capacity | {Main Consumer > Consumption per year > Value, kWh} | kWh_per_year | Main consumer yearly consumption
+Design output by year | {Power Demand > Total yearly consumption > Value, kWh} | kWh | Main consumer yearly consumption
 Operating capacity factor | 100% | - | Set to 100%
 Fraction of output that reaches gate | 100% | -
 Plant modules | 10 | - | Modelling of 10 modules for calculation of staff cost to facilitate comparison with PEC and photocatalytic model
@@ -44,7 +44,7 @@ Name | Value | Comment
 --- | --- | --- | --- 
 File | pyH2A.Lookup_Tables.Hourly_Wind_Data~Jena.615_2005_2023.csv | Location: Jena, DE
 
-# Hourly Consumer Profile
+# Hourly Main Consumer Profile
 
 Name | Value  
 --- | --- | --- 
@@ -161,3 +161,9 @@ Cost | 2.12 | USD/kWh
 
 # Utilities
 
+# Flexible Power Demand
+
+Name | Value | Unit
+--- | --- | ---
+Consumer 1 | 365 | MWh
+Consumer 2 | 730 | MWh
