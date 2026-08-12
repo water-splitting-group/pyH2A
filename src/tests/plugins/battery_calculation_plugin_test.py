@@ -35,7 +35,7 @@ class DummyDCF:
             "Power Generation": {
                 "Available energy (hourly)": {"Value": available_energy_hourly, "Unit" : "kWh"},
             },         
-            "Hourly Consumer Profile": {"Unsatisfied demand": {"Value": unsatisfied_demand, "Unit" : "kWh"}},      
+            "Power Demand": {"Main consumer hourly unsatisfied demand": {"Value": unsatisfied_demand, "Unit" : "kWh"}},      
             "Battery": {
                 "Design capacity": {
                     "Value": design_capacity,
