@@ -3,40 +3,10 @@ from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 import pyH2A.Utilities.find_nearest as fn
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import numpy as np
+from pyH2A.Utilities.docstring_generation import generate_docstring
 
 class Inflation_Plugin:
-    '''Generation of a the necessary inflation-related quantities for other plugins.
 
-    Parameters
-    ----------
-    Financial Input Values > Inflation rate > Value : int or float
-        Inflation factor.
-    Financial Input Values > Current year for capital costs > Value : int or float
-        Current year capital costs.
-    Financial Input Values > Basis year > Value : int or float
-        Basis year for inflation calculation.
-    Financial Input Values > Reference year > Value : int or float
-        Reference year for inflation calculation.   
-    Time > Years > Value : dict
-        Dictionary containing all time-related quantities.                              
-    
-    Returns
-    -------
-    Inflation > Inflation factor full > Value : nd.array
-       Array containing the inflation factor for each year of the plant life, including construction and production.
-    Inflation > Inflation correction > Value : float
-       Correction factor applied to the inflation factors, to account for the time ofset between reference year and startup year.
-    Inflation > CEPCI inflator > Value : float
-       CEPCI inflation factor.
-    Inflation > CI inflator > Value : float
-       CI inflation factor.
-    Inflation > Combined inflator > Value : float
-       Sum of CEPCI and CI inflation factors.
-    Inflation > Labor inflator > Value : float
-       Cost of labor inflation factor.
-    Inflation > Chemical inflator > Value : float
-       Cost of chemicals inflation factor.                                   
-    '''
     def __init__(self, dcf, print_info, run = True):
         self._set_up(dcf)
         if run:
@@ -175,6 +145,9 @@ class Inflation_Plugin:
                 },                                                      
             }
         }
+        
+        self.__doc__ = generate_docstring("Generation of a the necessary inflation-related quantities for other plugins.",
+                                          self.input_dict, self.output_dict)
 
     def _run(self, dcf):
         self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Inflation_Plugin')

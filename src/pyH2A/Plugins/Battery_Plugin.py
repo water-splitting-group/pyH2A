@@ -4,6 +4,7 @@ import numpy as np
 from pyH2A.Utilities.docstring_generation import generate_docstring
 
 class Battery_Plugin:
+
     def __init__(self, dcf, print_info, run = True):
         self._set_up(dcf)
         if run:
@@ -124,7 +125,7 @@ class Battery_Plugin:
             }
         }
         
-        self.__class__.__doc__ = generate_docstring("""
+        self.__doc__ = generate_docstring("""
                                             Simulation of electricity storage using a battery.
                                             Simulation assumes that battery is charged and completely discharged every day.
                                             (no electricity storage across days, only one discharge per day, not multiple ones).
