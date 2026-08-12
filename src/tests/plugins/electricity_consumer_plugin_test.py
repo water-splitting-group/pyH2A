@@ -10,7 +10,7 @@ class DummyDCF:
 
     def __init__(
         self,
-        operation_years_relative,
+        operation_years,
         hourly_file,
         available_energy_hourly
     ):
@@ -19,12 +19,12 @@ class DummyDCF:
         self.inp = {
             "Time": {
                 "Years": {
-                    "Value": operation_years_relative,
+                    "Value": operation_years,
                     "Unit": "-",   
                     "Processed": "Yes",                    
                 },
             },            
-            "Hourly Consumer Profile": {"File": {"Value": hourly_file}},
+            "Hourly Main Consumer Profile": {"File": {"Value": hourly_file}},
             "Power Generation": {
                 "Available energy (hourly)": {"Value": available_energy_hourly, "Unit" : "kWh"},
             },           
@@ -36,7 +36,8 @@ class DummyDCF:
     [
         {
             "input": {
-                "operation_years_relative": {'Operation years relative': np.arange(0, 2)},       
+                "operation_years": {'Operation years relative': np.arange(0, 2), 
+                                    'Operation years ones': np.ones(2)},       
                 "hourly_file": "pyH2A.Lookup_Tables.Hourly_Consumption~Constant_consumption_10MW.csv ",
                 "available_energy_hourly": {0: 2*np.arange(0, 8760), 1:2*np.arange(0, 8760)},
             },
@@ -49,7 +50,8 @@ class DummyDCF:
                     7508, 7510, 7512, 
                     7514, 7516, 7518
                     ]), 'kWh'),
-                "yearly_consumption": Quantity(87.6,"GWh"),
+                "yearly_consumption": Quantity(np.array([87.6, 87.6]),
+                                               "GWh"),
                 "last_6h_default_energy":Quantity(np.zeros(6), 'kWh'),
                 "first_6h_available_energy":Quantity(np.zeros(6), 'kWh'),                    
             },
@@ -79,9 +81,11 @@ def test_electricity_consumer_plugin(case):
         abs=tolerance
     )
 
-    assert plugin.yearly_consumption.unit["J"] == pytest.approx(
-        expected["yearly_consumption"].unit["J"],
-        abs=tolerance
+    np.testing.assert_allclose(
+        plugin.yearly_consumption.unit["kWh"],
+        expected["yearly_consumption"].unit["kWh"],
+        rtol=1e-12,
+        atol=1e-12,
     )
 
     assert plugin.total_electric_energy_available_yearly_data[0].unit["J"][0:6] == pytest.approx(
