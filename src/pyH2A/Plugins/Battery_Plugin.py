@@ -1,39 +1,9 @@
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import numpy as np
+from pyH2A.Utilities.docstring_generation import generate_docstring
 
 class Battery_Plugin:
-    '''Simulation of electricity storage using a battery.
-    Simulation assumes that battery is charged and completely discharged every day.
-    (no electricity storage across days, only one discharge per day, not multiple ones).
-
-    Parameters
-    ----------
-    Time > Years > Value : dict
-        Dictionary containing plant life time-related quantities
-    Power Generation > Available energy (daily) > Value : dict
-        Available energy, daily basis, dictionary of years.
-    Battery > Design capacity > Value : float
-        Full design capacity of battery.
-    Battery > Lowest discharge level > Value : float
-        Lowest level to which battery can be discharged. Dimensionless value between 0 and 1.
-    Battery > Capacity loss per year > Value : float
-        Loss of capacity per year. Dimensionless value > 0.
-    Battery > Round trip efficiency > Value : float
-        Round trip efficiency of battery. Dimensionless value between 0 and 1.
-    
-    Returns
-    -------
-    Power Generation > Stored energy (daily) > Value : dict
-        Energy stored in battery daily (dictionary of years).
-    Power Generation > Available energy (daily) > Value : dict
-        Available energy, daily basis, dictionary of years - power which 
-        has not been stored in battery
-    Power Generation > Available energy (hourly) > Value : float
-        Available energy (hourly) is set to zero, since available power is now 
-        only in daily format. 
-    '''
-
     def __init__(self, dcf, print_info, run = True):
         self._set_up(dcf)
         if run:
@@ -153,6 +123,12 @@ class Battery_Plugin:
                 }
             }
         }
+        
+        self.__class__.__doc__ = generate_docstring("""
+                                            Simulation of electricity storage using a battery.
+                                            Simulation assumes that battery is charged and completely discharged every day.
+                                            (no electricity storage across days, only one discharge per day, not multiple ones).
+                                          """, self.input_dict, self.output_dict)
 
     def _run(self, dcf):
         self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Battery_Plugin')
