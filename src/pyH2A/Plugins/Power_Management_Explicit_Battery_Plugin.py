@@ -168,7 +168,6 @@ class Power_Management_Explicit_Battery_Plugin:
         }
 
 
-
     def _run(self, dcf):    
 
         self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Power_Management_Explicit_Battery_Plugin')  
@@ -178,9 +177,8 @@ class Power_Management_Explicit_Battery_Plugin:
 
         output_inserter_function(self.output_dict, self, dcf, 'Power_Management_Explicit_Battery_Plugin') 
 
+    def calculate_consumers(self):
         '''
-        Allocate the remaining renewable excess to secondary consumers (i.e. consumers other than the main one).
-
         At this point the battery has already been simulated.
         The main consumer (with non-flexible consumption) has already been supplied by direct renewable generation + battery as much as possible.
 
@@ -188,9 +186,6 @@ class Power_Management_Explicit_Battery_Plugin:
         - the remaining deficit of the main consumer must be supplied from the grid.
         - the remaining renewable excess may only be used by the secondary consumers, which are assumed to be flexible;
         '''
-
-    def calculate_consumers(self):
-
         available_energy_yearly = dict_to_yearly_array_power_quantity(self.input_dict_resolved['Power Generation']['Available energy (hourly)']['Value'])
 
         main_unfulfilled_yearly = dict_to_yearly_array_power_quantity(self.input_dict_resolved['Power Demand']['Main consumer hourly unsatisfied demand']['Value'])
@@ -218,7 +213,6 @@ class Power_Management_Explicit_Battery_Plugin:
                                         np.sum(self.total_energy_demand.unit['J'])
                                         ,
                                         '-')
-
 
     def calculate_electricity_cost(self):
         self.electricity_cost = Quantity(self.total_unfulfilled.unit['J']
