@@ -24,7 +24,8 @@ _TYPE_ORDER = [int, float, str, bool, dict, list, tuple, np.ndarray]
 _TYPE_PROSE = {int: 'int', float: 'float', str: 'str', bool: 'bool',
               dict: 'dict', list: 'list', tuple: 'tuple', np.ndarray: 'ndarray'}
 
-_INDENT = '    '
+_INDENT_HEADER = '    '
+_INDENT = '        '
 _WRAP_WIDTH = 88
 
 def _type_set_to_prose(type_set):
@@ -129,7 +130,7 @@ def _walk_output_dict(output_dict):
 	return entries
 
 def _render_entry(path, type_prose, optional, description):
-	header = f'{path} : {type_prose}'
+	header = f'{_INDENT_HEADER}{path} : {type_prose}'
 	if optional:
 		header += ', optional'
 
@@ -180,7 +181,7 @@ def generate_docstring(summary, input_dict, output_dict, notes = None):
 		`__doc__`.
 	'''
 
-	lines = [summary.strip(), '']
+	lines = [textwrap.dedent(summary).strip(), '']
 	lines += _render_section('Parameters', '-', _walk_input_dict(input_dict))
 	lines += _render_section('Returns', '-', _walk_output_dict(output_dict))
 
