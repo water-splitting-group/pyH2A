@@ -7,50 +7,7 @@ class Battery_Calculation_Plugin:
     '''Simulation of electricity storage using a battery.
     The battery charges when there is some extra available energy (production > consumer demand), the power is within the allowed range and the state of charge is below a thershold.
     The battery discharges when there is some unsatisfied demand (production < consumer demand). 
-    The amounts that are not stored and that are missing to supply the customer are also calculated.
-
-    Parameters
-    ----------
-    Time > Years > Value : dict
-        Dictionary containing plant life time-related quantities
-    Power Generation > Available energy (hourly) > Value : dict
-        Available energy, hourly basis, dictionary of years.
-    Hourly Consumer Profile > Unsatisfied demand > Value : dict
-        Energy demand that is not met by the direct supply, dictionary of years.  
-    Battery > Design capacity > Value : float or int
-        Full design capacity of battery.
-    Battery > Lowest discharge level > Value : float or int
-        Lowest level to which battery can be discharged, relative to battery design capacity. Dimensionless value between 0 and 1.
-    Battery > Highest charge level > Value : float or int
-        Highest level to which battery can be charged, relative to battery capacity. Dimensionless value between 0 and 1.        
-    Battery > Capacity loss per year > Value : float or int
-        Loss of capacity per year. Dimensionless value > 0.
-    Battery > Round trip efficiency > Value : float or int
-        Round trip efficiency of battery. Dimensionless value between 0 and 1.
-    Battery > Power > Value : float or int
-        Maximum power that can be charged or discharged at a given moment.
-     Battery > Charging threshold > Value : float or int
-        Fraction of the maximum power below which charging is shut down.       
-     Battery > Storage capacity per module > Value : float or int, optional
-        Fraction of the maximum power below which charging is shut down.    
-    
-    Returns
-    -------
-    Power Generation > State of energy (hourly) > Value : dict
-        State of energy of the battery, dictionary of years.
-    Power Generation > Available energy (hourly) > Value : dict
-        Excess energy that was not stored, dictionary of years
-    Power Generation > Total available energy > Value : float
-        Total excess energy that was not stored during the plant operating years.
-    Hourly Consumer Profile > Unsatisfied demand > Value : dict
-        Energy demand that is not met after the battery supply, dictionary of years.
-    Hourly Consumer Profile > Total unsatisfied demand > Value : float
-        Total energy demand that is not met after the battery supply during the plant operating time.        
-        
-    Battery > Number of charge cycle > Value : float
-        Total energy throughput relative to the initial design capacity.         
-    Battery > Number of needed modules > Value : float or int, optional
-        Number of modules to provide the requested storage capacity.         
+    The amounts that are not stored and that are missing to supply the customer are also calculated.      
     '''
 
     def __init__(self, dcf, print_info, run = True):
@@ -89,8 +46,8 @@ class Battery_Calculation_Plugin:
                     "description": " Available energy, hourly basis, dictionary of years."
                 },                      
             },
-            "Hourly Consumer Profile": {
-                "Unsatisfied demand": {
+            "Power Demand": {
+                "Main consumer hourly unsatisfied demand": {
                     "Value": {
                         "type": {dict,},
                         "bounds": (0, None),
@@ -224,8 +181,8 @@ class Battery_Calculation_Plugin:
                     "optional": False,
                 },            
             },
-            "Hourly Consumer Profile":{
-                "Unsatisfied demand": {
+            "Power Demand":{
+                "Main consumer hourly unsatisfied demand": {
                     "Value": {
                         "inserted_value": "hourly_unsatisfied_demand",
                         "type": {dict,},
@@ -311,7 +268,7 @@ class Battery_Calculation_Plugin:
 
         # symetrically, discharge is only available within the limits of the battery power. Ideally we would allow the battery power to be sufficient to provide the entire consumption as a standalone, but in a general case this is not guaranteed
         unsatisfied_demand_full_array = np.concatenate([
-                                                    self.input_dict_resolved['Hourly Consumer Profile']['Unsatisfied demand']['Value'][year].unit['Wh'] 
+                                                    self.input_dict_resolved['Power Demand']['Main consumer hourly unsatisfied demand']['Value'][year].unit['Wh'] 
                                                     for year in operating_years_relative
                                                 ])
 
