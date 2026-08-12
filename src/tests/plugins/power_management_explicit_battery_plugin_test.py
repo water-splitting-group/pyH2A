@@ -13,7 +13,9 @@ class DummyDCF:
         self,
         operation_years_ones,
         available_hourly,
+        total_yearly_generation,
         power_consumption,
+        main_consumption_per_year,
         unsatisfied_demand,
         grid_cost,
     ):
@@ -33,6 +35,11 @@ class DummyDCF:
                     "Unit": "kWh",
                     "Processed": "Yes",
                 },
+                "Total yearly power generation": {
+                    "Value": total_yearly_generation,
+                    "Unit": "kWh",
+                    "Processed": "Yes",
+                },                
             },
             "Power Consumption": {
                 "Test consumer": {
@@ -41,6 +48,12 @@ class DummyDCF:
                     "Processed": "Yes",
                 },
             },
+            "Main Consumer": {
+                "Consumption per year": {
+                    "Value": main_consumption_per_year,
+                    "Unit": "kWh",
+                },
+            },            
             "Hourly Consumer Profile": {
                 "Unsatisfied demand": {
                     "Value": unsatisfied_demand,
@@ -61,14 +74,16 @@ class DummyDCF:
     [
         {
             "input": {
-                "operation_years_ones": {"Operation years ones": np.ones(3)},                   
+                "operation_years_ones": {"Operation years ones": np.ones(2)},                   
                 "available_hourly": {
                     0: np.array([9.0, 12.0, 11.0]),
                     1: np.array([6.0, 4.0, 6.0]),
                 },
+                "total_yearly_generation":np.array([1000., 800]),
                 "power_consumption": {
-                    "value": np.array([20.]),
+                    "value": np.array([20., 20]),
                 },
+                "main_consumption_per_year":np.array([450, 450.]),
                 "unsatisfied_demand": {
                     0: np.array([1, 0, 0]),
                     1: np.array([0, 0, 1.0]),
@@ -78,6 +93,7 @@ class DummyDCF:
             },
             "expected": {
                 "remaining_available": Quantity(np.array([12., 0.]), 'kWh'),
+                "production_oversizing": Quantity(1.9148936170212767, '-'),
                 "total_unfulfilled": Quantity(np.array([1.0, 5.0]), 'kWh'),
                 "electricity_cost": Quantity(np.array([3.14159, 15.70795]), 'USD'),
             },
@@ -98,10 +114,15 @@ def test_power_management_explicit_battery_plugin(case):
     tolerance = 1e-12
 
     np.testing.assert_allclose(
-        plugin.remaining_available.unit['J'],
-        expected["remaining_available"].unit['J'],
+        plugin.remaining_available.unit['kWh'],
+        expected["remaining_available"].unit['kWh'],
         rtol=tolerance,
         atol=tolerance,
+    )
+
+    assert plugin.production_oversizing.unit['-'] == pytest.approx(
+        expected["production_oversizing"].unit['-'],
+        abs=tolerance,
     )
 
     np.testing.assert_allclose(
