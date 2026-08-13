@@ -16,6 +16,7 @@ Compressor_Plugin  | Computes compressor power and yearly consumption | 304 |
 Cooler_Condenser_2_Plugin | Computes second cooler condenser sizing and coolant requirements | 305 |
 Compressor_2_Plugin  | Computes second compressor power and yearly consumption | 306 |
 Cooler_Condenser_3_Plugin | Computes third cooler condenser sizing and coolant requirements | 307 |
+PSA_refactored_Plugin | Computes sizing and cost of PSA separation unit | 308
 Multiple_Modules_Plugin | Modelling of multiple plant modules, adjustment of labor requirement | 401 |
 
 # Display Parameters
@@ -216,9 +217,34 @@ Efficiency | 0.75 | -
 # Cooler Condenser
 
 Name | Value | Unit 
---- | --- | --- | 
+--- | --- | --- 
 Cold inlet temperature | 20. | degC
 Cold outlet temperature | 35. | degC
 Hot outlet temperature | 40. | degC
 Heat transfer coefficient | 300. | W/m2/delta_K
 Material weight per area | 34. | kg/m2
+
+# PSA
+
+Name | Value | Unit 
+--- | --- | --- 
+Adsorption time | 33 | s
+Number of beds | 12 | -
+
+# PSA Adsorbent Parameters
+
+Name | Value | Unit 
+--- | --- | --- 
+Bed void fraction | 36% | -
+Bed usage fraction | 0.769 | -
+Adsorption uptake fraction | 3.9% | -
+Residual loading fraction | 0.188% | -
+Bulk density | 700 | kg/m3
+
+# Reference PSA System
+
+Name | Value | Unit 
+--- | --- | --- 
+Reference bed volume | 6065 |  L
+Reference cost | 100,000 | USD
+Scaling exponent | 0.5 | -
