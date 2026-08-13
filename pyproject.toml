@@ -20,4 +20,5 @@ dependencies = [
     "pint>=0.24.4",
     "pytest>=8.4.2",
     "scipy>=1.13.1",
+    "numba>=0.60.0",
 ]
