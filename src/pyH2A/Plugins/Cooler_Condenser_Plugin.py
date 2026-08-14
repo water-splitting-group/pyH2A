@@ -132,7 +132,7 @@ class Cooler_Condenser_Plugin:
                     "optional": False,
                     "description": "Mixture inlet mass fraction of each component."
                 }, 
-                "Mass flowrate": {
+                "Design mass flowrate": {
                     "Value": {
                         "type": {int,float,},
                         "bounds": (0, None),
@@ -142,7 +142,18 @@ class Cooler_Condenser_Plugin:
                     },
                     "optional": False,
                     "description": "Mixture inlet mass flowrate."
-                },                            
+                },  
+                "Peak mass flowrate": {
+                    "Value": {
+                        "type": {int,float,},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "mass/time",
+                    },
+                    "optional": False,
+                    "description": "Mixture inlet mass flowrate on peak production day."
+                },                                          
             },
         }
 
@@ -168,7 +179,7 @@ class Cooler_Condenser_Plugin:
                 }, 
                 "Sizing condensed water flowrate": {
                     "Value": {
-                        "inserted_value": "max_condensed_water_flowrate",
+                        "inserted_value": "peak_condensed_water_flowrate",
                         "type": {float,},
                         "dimension": "mass/time",
                     },
@@ -231,7 +242,7 @@ class Cooler_Condenser_Plugin:
                     "optional": False,
                     "description": "Mixture outlet mass fraction."
                 },   
-                "Mass flowrate": {
+                "Design mass flowrate": {
                     "Value": {
                         "inserted_value": "outlet_mass_flowrate",
                         "type": {float,},
@@ -239,7 +250,16 @@ class Cooler_Condenser_Plugin:
                     },
                     "optional": False,
                     "description": "Mixture outlet mass flowrate, at design capacity flowrate."
-                },   					                
+                },  
+                "Peak mass flowrate": {
+                    "Value": {
+                        "inserted_value": "peak_mass_flowrate",
+                        "type": {float,},
+                        "dimension": "mass/time",
+                    },
+                    "optional": False,
+                    "description": "Mixture outlet mass flowrate on peak production day."
+                },                    					                
             },
         }
 
@@ -251,9 +271,10 @@ class Cooler_Condenser_Plugin:
         (self.outlet_temperature,
          self.outlet_mass_fraction, 
          self.outlet_mass_flowrate,
+         self.peak_mass_flowrate,
          self.condensed_water_enthalpy, 
          self.outlet_enthalpy, 
-         self.max_condensed_water_flowrate,
+         self.peak_condensed_water_flowrate,
          self.yearly_condensed_water_mass
          ) = outlet_stream_properties(self.input_dict_resolved)
 
@@ -267,7 +288,8 @@ class Cooler_Condenser_Plugin:
                                     self.outlet_temperature,
                                     self.outlet_enthalpy, 
                                     self.outlet_mass_flowrate, 
-                                    self.max_condensed_water_flowrate, 
+                                    self.peak_mass_flowrate,
+                                    self.peak_condensed_water_flowrate, 
                                     self.condensed_water_enthalpy)
 
         output_inserter_function(self.output_dict, self, dcf, 'Cooler_Condenser_Plugin') 
@@ -291,9 +313,10 @@ def outlet_stream_properties(dictionary, cooler_name = 'Cooler Condenser'):
     if inlet_mol_fraction['H2O'].unit['-'] * dictionary['Main Stream']['Pressure']['Value'].unit['Pa'] < psat.unit['Pa']: 
         # outlet fluid doesn't reach saturation, no condensation occurs, and the outlet composition is identical to the inlet one
         outlet_mass_fraction = dictionary['Main Stream']['Mass fraction']['Value']
-        outlet_mass_flowrate = dictionary['Main Stream']['Mass flowrate']['Value']
+        outlet_mass_flowrate = dictionary['Main Stream']['Design mass flowrate']['Value']
+        peak_mass_flowrate = dictionary['Main Stream']['Peak mass flowrate']['Value']
 
-        max_condensed_water_flowrate = Quantity(0, 'kg/s')
+        peak_condensed_water_flowrate = Quantity(0, 'kg/s')
         condensed_water_enthalpy = Quantity(0, 'J/kg') # dummy
 
 
@@ -332,17 +355,24 @@ def outlet_stream_properties(dictionary, cooler_name = 'Cooler Condenser'):
                 )
         )
 
-        max_condensed_water_flowrate = (dictionary['Main Stream']['Mass flowrate']['Value'].unit['kg/s'] 
+        peak_condensed_water_flowrate = (dictionary['Main Stream']['Peak mass flowrate']['Value'].unit['kg/s'] 
                                     * 
                                     (1-water_uncondensed_fraction) 
                                     * 
                                     dictionary['Main Stream']['Mass fraction']['Value']['H2O'].unit['-']
                                     )
-        max_condensed_water_flowrate = Quantity(max_condensed_water_flowrate, 'kg/s')
+        peak_condensed_water_flowrate = Quantity(peak_condensed_water_flowrate, 'kg/s')
 
         # the part of water that was condensed is excluded from the main (vapour phase) stream
-        outlet_mass_flowrate = Quantity(dictionary['Main Stream']['Mass flowrate']['Value'].unit['kg/s'] - max_condensed_water_flowrate.unit['kg/s'],
+        peak_mass_flowrate = Quantity(dictionary['Main Stream']['Peak mass flowrate']['Value'].unit['kg/s'] - peak_condensed_water_flowrate.unit['kg/s'],
                                             'kg/s')
+
+        outlet_mass_flowrate = Quantity(peak_mass_flowrate.unit['kg/s'] 
+                              * 
+                              dictionary['Main Stream']['Design mass flowrate']['Value'].unit['kg/s'] 
+                              / 
+                              dictionary['Main Stream']['Peak mass flowrate']['Value'].unit['kg/s'], 
+                              'kg/s')
 
         # Main stream outlet enthalpy
         h = PP.Enthalpy(T = outlet_temperature,
@@ -364,37 +394,42 @@ def outlet_stream_properties(dictionary, cooler_name = 'Cooler Condenser'):
                     
         condensed_water_enthalpy = Quantity(h.unit['J'], 'J/kg')
 
+    
     yearly_condensed_water_mass = Quantity(
         dictionary['Technical Operating Parameters and Specifications']['Operating capacity factor']['Value'].unit['-']
         *
-        max_condensed_water_flowrate.unit['kg/year'], 
-        'kg'
-        )
+        dictionary['Main Stream']['Design mass flowrate']['Value'].unit['kg/s']
+        *
+        peak_condensed_water_flowrate.unit['kg/year']
+        /
+        dictionary['Main Stream']['Peak mass flowrate']['Value'].unit['kg/s'], 
+        'kg')
 
     return (outlet_temperature, 
             outlet_mass_fraction, 
             outlet_mass_flowrate, 
+            peak_mass_flowrate,
             condensed_water_enthalpy, 
             outlet_enthalpy,
-            max_condensed_water_flowrate,
+            peak_condensed_water_flowrate,
             yearly_condensed_water_mass
             )
 
-def cooler_condenser_sizing(dictionary, outlet_temperature, outlet_enthalpy, outlet_mass_flowrate, max_condensed_water_flowrate, condensed_water_enthalpy, cooler_name = 'Cooler Condenser'):
+def cooler_condenser_sizing(dictionary, outlet_temperature, outlet_enthalpy, outlet_mass_flowrate, peak_mass_flowrate, peak_condensed_water_flowrate, condensed_water_enthalpy, cooler_name = 'Cooler Condenser'):
     '''
     Calculates the thermal power transfer between the hot and the cold fluid and subsequent heat exchange area.
     Also calculates the cooling fluid flowrate andthe mass of stainless steel constituting the exchanger.
     '''
 
     sizing_heat_duty = (
-        dictionary['Main Stream']['Mass flowrate']['Value'].unit['kg/s']
+        dictionary['Main Stream']['Peak mass flowrate']['Value'].unit['kg/s']
         *
         dictionary['Main Stream']['Specific enthalpy']['Value'].unit['J/kg']
         -
         (
-            outlet_mass_flowrate.unit['kg/s'] * outlet_enthalpy.unit['J/kg']
+            peak_mass_flowrate.unit['kg/s'] * outlet_enthalpy.unit['J/kg']
             +
-            max_condensed_water_flowrate.unit['kg/s'] * condensed_water_enthalpy.unit['J/kg']
+            peak_condensed_water_flowrate.unit['kg/s'] * condensed_water_enthalpy.unit['J/kg']
         )
 
     )
@@ -439,10 +474,16 @@ def cooler_condenser_sizing(dictionary, outlet_temperature, outlet_enthalpy, out
                                         /
                                         (outlet_coolant_h.unit['J']-inlet_coolant_h.unit['J']), 
                                         'kg/s')
-    
+
+    coolant_flowrate_kg_per_year = (max_coolant_flowrate.unit['kg/year']
+                                    *
+                                    outlet_mass_flowrate.unit['kg/year']
+                                    / 
+                                    peak_mass_flowrate.unit['kg/year'])
+        
     yearly_coolant_mass = Quantity(dictionary['Technical Operating Parameters and Specifications']['Operating capacity factor']['Value'].unit['-']
                                         *
-                                        max_coolant_flowrate.unit['kg/year'], 
+                                        coolant_flowrate_kg_per_year, 
                                         'kg')
 
     material_mass = Quantity(dictionary[cooler_name]['Material weight per area']['Value'].unit['kg/m2']

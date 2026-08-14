@@ -111,7 +111,7 @@ class Compressor_2_Plugin:
                     "optional": False,
                     "description": "Mixture inlet mass fraction of each component."
                 }, 
-                "Mass flowrate": {
+                "Design mass flowrate": {
                     "Value": {
                         "type": {int, float,},
                         "bounds": (0, None),
@@ -120,25 +120,34 @@ class Compressor_2_Plugin:
                         "dimension": "mass/time",
                     },
                     "optional": False,
-                    "description": "Mixture inlet mass flowrate."
-                },                            
+                    "description": "Mixture outlet mass flowrate, yearly averaged, excluding downtime."
+                },     
+                "Peak mass flowrate": {
+                    "Value": {
+                        "inserted_value": "peak_mass_flowrate",
+                        "type": {float,},
+                        "dimension": "mass/time",
+                    },
+                    "optional": False,
+                    "description": "Mixture outlet mass flowrate on peak production day."
+                },                                          
             },
         }
 
         self.output_dict = {
             "Compressor 2": {
-                "Compression power": {
+                "Peak compression power": {
                     "Value": {
-                        "inserted_value": "compression_power",
+                        "inserted_value": "peak_compression_power",
                         "type": {float,},
                         "dimension": "power",
                     },
                     "optional": False,
                     "description": "Power associated to the compression."
                 },         
-                "Design shaft power": {
+                "Peak shaft power": {
                     "Value": {
-                        "inserted_value": "design_shaft_power",
+                        "inserted_value": "peak_shaft_power",
                         "type": {float,},
                         "dimension": "power",
                     },
@@ -147,7 +156,7 @@ class Compressor_2_Plugin:
                 },   
                 "Yearly power requirement": {
                     "Value": {
-                        "inserted_value": "yearly_shaft_power",
+                        "inserted_value": "yearly_shaft_energy",
                         "type": {float,},
                         "dimension": "energy",
                     },
@@ -194,12 +203,12 @@ class Compressor_2_Plugin:
         (self.outlet_temperature,
          self.outlet_pressure,
          self.outlet_enthalpy, 
-         self.compression_power, 
-         self.design_shaft_power, 
-         self.yearly_shaft_power
+         self.peak_compression_power, 
+         self.peak_shaft_power, 
+         self.yearly_shaft_energy
          ) = calculate_compression(self.input_dict_resolved, compressor_name = 'Compressor 2')
 
         output_inserter_function(self.output_dict, self, dcf, 'Compressor_2_Plugin') 
 
-        print('compressor 2 design_shaft_power ', self.design_shaft_power)
-        print('compressor 2 yearly_shaft_power ', self.yearly_shaft_power)        
+        print('compressor 2 peak_shaft_power ', self.peak_shaft_power)
+        print('compressor 2 yearly_shaft_energy ', self.yearly_shaft_energy)        

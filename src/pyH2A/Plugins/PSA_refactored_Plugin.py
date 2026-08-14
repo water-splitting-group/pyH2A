@@ -27,7 +27,7 @@ class PSA_refactored_Plugin:
 								"optional": False,
 								"description": "Mixture inlet mass fraction of each component."
 							}, 
-							"Mass flowrate": {
+							"Peak mass flowrate": {
 								"Value": {
 									"type": {int,float,},
 									"bounds": (0, None),
@@ -40,6 +40,13 @@ class PSA_refactored_Plugin:
 							},    
 			},			
 			"PSA": {
+				"Adsorbate": {
+					"Value": {
+						"type": {str,},
+					},
+					"optional": False,
+					"description": "Species to adsorb"
+				},
 				"Adsorption time": {
 					"Value": {
 						"type": {float,int,},
@@ -220,9 +227,11 @@ class PSA_refactored_Plugin:
 		the number of beds.
 		'''
 
-		adsorbate_mass_flow_kg_per_s = (self.input_dict_resolved['Main Stream']['Mass flowrate']['Value'].unit['kg/s']
+		Adsorbate = self.input_dict_resolved['PSA']['Adsorbate']['Value']
+
+		adsorbate_mass_flow_kg_per_s = (self.input_dict_resolved['Main Stream']['Peak mass flowrate']['Value'].unit['kg/s']
 										*
-										self.input_dict_resolved['Main Stream']['Mass fraction']['Value']['O2'].unit['-'])
+										self.input_dict_resolved['Main Stream']['Mass fraction']['Value'][Adsorbate].unit['-'])
 
 		adsorbate_kg_per_cycle_per_bed = (adsorbate_mass_flow_kg_per_s
 									  * self.input_dict_resolved['PSA']['Adsorption time']['Value'].unit['s'])
