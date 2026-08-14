@@ -1,0 +1,63 @@
+# Input files to merge
+
+Name | Value
+--- | ---
+Defaults | pyH2A.Config~Defaults_LCA.md
+
+# Life Cycle Assessment
+
+Name | Value
+--- | ---
+Matrix Folder | src/tests/e2e_lca/data/matrix_folders/smartphone_3layer_acid_base
+
+# LCA - Smartphone GT Components
+
+Name | Value | Unit | UUID
+--- | --- | --- | ---
+Smartphone | 1.0 | kg | 927ba7de-2e36-4192-a585-91b7db8a07e4
+Circuit Board | {GT Circuit Board Output > Circuit Board > Value, item} | item | 86c3e6eb-2103-4a36-87e0-5abaa79ee289
+Display | {GT Display Output > Display > Value, kg} | kg | 49092338-ccb5-4102-8d7b-d9a55ebecdaf
+Battery | {GT Battery Output > Battery > Value, kg} | kg | 91c3199d-cf4c-452e-979a-c467fc9c8404
+
+# Workflow
+
+Name | Type | Position
+--- | --- | ---
+Test_Plugin_C | plugin | 50
+Test_Plugin_D | plugin | 50
+Test_Plugin_E | plugin | 50
+
+# GT Circuit Board Input
+
+Name | Value | Unit
+--- | --- | ---
+Base Quantity | 1.0 | item
+Scenario Factor | 1.0 | -
+
+# GT Display Input
+
+Name | Value | Unit
+--- | --- | ---
+Base Quantity | 1.0 | kg
+Scenario Factor | 1.0 | -
+
+# GT Battery Input
+
+Name | Value | Unit
+--- | --- | ---
+Base Quantity | 1.0 | kg
+Scenario Factor | 1.0 | -
+
+# Construction
+
+Name | Full Name | Value | Unit
+--- | --- | --- | ---
+capital perc 1st | % of capital spent in 1st year of construction | 100% | -
+
+# Technical Operating Parameters and Specifications
+
+Name | Value | Unit | Comment
+--- | --- | --- | ---
+Plant design capacity | 1.0 | kg/day | Reference production for GT LCA tests
+Operating capacity factor | 90% | - | Capacity factor
+Fraction of output that reaches gate | 100% | - | No gate losses assumed for minimal LCA test
