@@ -131,7 +131,7 @@ class Cooler_Condenser_2_Plugin:
                     "optional": False,
                     "description": "Mixture inlet mass fraction of each component."
                 }, 
-                "Mass flowrate": {
+                "Design mass flowrate": {
                     "Value": {
                         "type": {int,float,},
                         "bounds": (0, None),
@@ -141,7 +141,18 @@ class Cooler_Condenser_2_Plugin:
                     },
                     "optional": False,
                     "description": "Mixture inlet mass flowrate."
-                },                            
+                },  
+                "Peak mass flowrate": {
+                    "Value": {
+                        "type": {int,float,},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "mass/time",
+                    },
+                    "optional": False,
+                    "description": "Mixture inlet mass flowrate on peak production day."
+                },                                                               
             },
         }
 
@@ -167,7 +178,7 @@ class Cooler_Condenser_2_Plugin:
                 }, 
                 "Sizing condensed water flowrate": {
                     "Value": {
-                        "inserted_value": "max_condensed_water_flowrate",
+                        "inserted_value": "peak_condensed_water_flowrate",
                         "type": {float,},
                         "dimension": "mass/time",
                     },
@@ -230,7 +241,7 @@ class Cooler_Condenser_2_Plugin:
                     "optional": False,
                     "description": "Mixture outlet mass fraction."
                 },   
-                "Mass flowrate": {
+                "Design mass flowrate": {
                     "Value": {
                         "inserted_value": "outlet_mass_flowrate",
                         "type": {float,},
@@ -238,7 +249,16 @@ class Cooler_Condenser_2_Plugin:
                     },
                     "optional": False,
                     "description": "Mixture outlet mass flowrate, at design capacity flowrate."
-                },   					                
+                },  
+                "Peak mass flowrate": {
+                    "Value": {
+                        "inserted_value": "peak_mass_flowrate",
+                        "type": {float,},
+                        "dimension": "mass/time",
+                    },
+                    "optional": False,
+                    "description": "Mixture outlet mass flowrate on peak production day."
+                },                    					                
             },
         }
 
@@ -250,9 +270,10 @@ class Cooler_Condenser_2_Plugin:
         (self.outlet_temperature,
          self.outlet_mass_fraction, 
          self.outlet_mass_flowrate,
+         self.peak_mass_flowrate,
          self.condensed_water_enthalpy, 
          self.outlet_enthalpy, 
-         self.max_condensed_water_flowrate,
+         self.peak_condensed_water_flowrate,
          self.yearly_condensed_water_mass
          ) = outlet_stream_properties(self.input_dict_resolved)
 
@@ -266,7 +287,12 @@ class Cooler_Condenser_2_Plugin:
                                     self.outlet_temperature,
                                     self.outlet_enthalpy, 
                                     self.outlet_mass_flowrate, 
-                                    self.max_condensed_water_flowrate, 
+                                    self.peak_mass_flowrate,
+                                    self.peak_condensed_water_flowrate, 
                                     self.condensed_water_enthalpy)
 
         output_inserter_function(self.output_dict, self, dcf, 'Cooler_Condenser_2_Plugin') 
+
+        print('cooler 2 yearly coolant mass ', self.yearly_coolant_mass)
+        print('cooler 2 steel mass', self.material_mass)
+        print('cooler 2 yearly condensed water mass ', self.yearly_condensed_water_mass)

@@ -6,15 +6,17 @@ Default TEA | pyH2A.Config~Defaults_TEA.md
 
 # Workflow
 
-Name | Type | Description | Position
---- | --- | --- | ---
-Hourly_Irradiation_Plugin | plugin | Plugin to calculate solar irradiation from typical meteorological year data | 201 |
-Photocatalytic_Plugin | plugin | Computes number of required baggies, cost of baggies and catalyst cost | 301 |
-Cooler_Condenser_Plugin | plugin | Computes number of required baggies, cost of baggies and catalyst cost | 302 |
-Compressor_Plugin  | plugin | Computes compressor power | 303 |
-Cooler_Condenser_2_Plugin | plugin | Computes number of required baggies, cost of baggies and catalyst cost | 304 |
-Catalyst_Separation_Plugin | plugin | Computes cost of catalyst separation | 305 |
-Multiple_Modules_Plugin | plugin | Modelling of multiple plant modules, adjustment of labor requirement | 401 |
+Name | Description | Position
+--- | --- | ---
+Hourly_Irradiation_Plugin | Plugin to calculate solar irradiation from typical meteorological year data | 201 |
+Photocatalytic_Plugin | Computes number of required baggies, cost of baggies and catalyst cost | 301 |
+Catalyst_Separation_Plugin | Computes cost of catalyst separation | 302 |
+Cooler_Condenser_Plugin | Computes first cooler condenser sizing and coolant requirements | 303 |
+Compressor_Plugin  | Computes compressor power and yearly consumption | 304 |
+Cooler_Condenser_2_Plugin | Computes second cooler condenser sizing and coolant requirements | 305 |
+Compressor_2_Plugin  | Computes second compressor power and yearly consumption | 306 |
+Cooler_Condenser_3_Plugin | Computes third cooler condenser sizing and coolant requirements | 307 |
+Multiple_Modules_Plugin | Modelling of multiple plant modules, adjustment of labor requirement | 401 |
 
 # Display Parameters
 
@@ -27,8 +29,8 @@ Color | darkgreen
 
 Name | Value | Path | Unit | Comment
 --- | --- | --- | --- | --- 
-Operating capacity factor | 0.65123094959 | None | - 
-Plant design capacity | 1,706 | None | kg/day 
+Operating capacity factor | 0.9 | None | - | corresponds to a gross yearly production of 1111 kg H2
+Plant design capacity | 1,111 | None | kg/day 
 Fraction of output that reaches gate | 90% | None | - | Reduction due to loss in H2/O2 separation. 
 Plant modules | 10 | None | - | 10 identical modules, only affects labor requirement calculation. 
 
@@ -200,14 +202,21 @@ Unplanned replacement | 0.5% | {Depreciable Capital Costs > Inflated > Value, US
 
 Name | Value | Unit 
 --- | --- | --- | 
-Compression ratio | 20.8 | -
+Compression ratio | 4.35 | -
 Polytropic coefficient | 1.4 | -
+Efficiency | 0.75 | -
+
+# Compressor 2
+
+Name | Value | Unit 
+--- | --- | --- | 
+Compression ratio | 4.78 | -
 Efficiency | 0.75 | -
 
 # Cooler Condenser
 
 Name | Value | Unit 
---- | --- | --- | 
+--- | --- | --- 
 Cold inlet temperature | 20. | degC
 Cold outlet temperature | 35. | degC
 Hot outlet temperature | 40. | degC

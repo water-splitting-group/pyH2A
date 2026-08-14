@@ -1,5 +1,6 @@
 import numpy as np
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
+from pyH2A.Utilities.input_modification import hourly_to_daily_power
 from pyH2A.Utilities.Physical_Properties.Physical_properties import Physical_properties as PP
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
@@ -452,15 +453,24 @@ class Photocatalytic_Plugin:
 				"optional": False,
 				"description": "Mixture outlet mass fraction."
 			},   
-			"Mass flowrate": {
+			"Design mass flowrate": {
 				"Value": {
 					"inserted_value": "outlet_mass_flowrate",
 					"type": {float,},
 					"dimension": "mass/time",
 				},
 				"optional": False,
-				"description": "Mixture outlet mass flowrate."
-			},   					                
+				"description": "Mixture outlet mass flowrate, yearly averaged, excluding downtime."
+			},  
+			"Peak mass flowrate": {
+				"Value": {
+					"inserted_value": "peak_mass_flowrate",
+					"type": {float,},
+					"dimension": "mass/time",
+				},
+				"optional": False,
+				"description": "Mixture outlet mass flowrate on peak production day."
+			},   			 					                
 		},			
 		}
 
@@ -657,6 +667,16 @@ class Photocatalytic_Plugin:
 									   self.outlet_mass_fraction['H2'].unit['-']
 									   ,
 									   'kg/s')
+		
+		Daily_irradiation_J_per_m2 = hourly_to_daily_power(self.input_dict_resolved['Solar Input']['Hourly']['Value'].unit['J/m2'])
+		Max_daily_irradiation_J_per_m2 = np.max(Daily_irradiation_J_per_m2)
+
+		self.peak_mass_flowrate = Quantity(self.outlet_mass_flowrate.unit['kg/s']
+									 		*
+											Max_daily_irradiation_J_per_m2
+											/
+											self.input_dict_resolved['Solar Input']['Mean solar input']['Value'].unit['W/m2'],
+											'kg/day')
 
 		# specific enthalpy at the outlet of the baggie
 		h = PP.Enthalpy(T = self.outlet_temperature,
