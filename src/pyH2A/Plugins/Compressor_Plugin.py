@@ -127,8 +127,10 @@ class Compressor_Plugin:
                 },    
                 "Peak mass flowrate": {
                     "Value": {
-                        "inserted_value": "peak_mass_flowrate",
-                        "type": {float,},
+                        "type": {int, float,},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
                         "dimension": "mass/time",
                     },
                     "optional": False,
