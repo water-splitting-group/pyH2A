@@ -90,6 +90,9 @@ Other costs per baggie | 610.7 | USD
 Markup factor | 1.5 | - | Markup factor of baggies
 Additional land area | 30% | - | Land area required in addition to area occupied by baggies
 Lifetime | 5 | year | Lifetime of reactor baggies
+Material thickness top | 0.001 | m | KRA-476 estimation
+Material thickness bottom | 0.001 | m | KRA-476 estimation
+Material density | 950 | kg/m3 | KRA-476, ecoinvent UUID 92b4ac20-732a-37cb-907a-4db4f4744397
 
 # Catalyst Separation
 
