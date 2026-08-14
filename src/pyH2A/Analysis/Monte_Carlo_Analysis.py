@@ -45,7 +45,7 @@ def _mc_response_worker(value_batch, inp, parameters, dependent_variable):
 						value_type=parameter['Type'])
 		dcf = Discounted_Cash_Flow(input_dict, print_info=False)
 		if dependent_variable == 'h2_cost':
-			response_values.append(dcf.h2_cost)
+			response_values.append(dcf.inp['Dependent Variables']['Levelized cost']['Value'].supplied_value)
 		else:
 			response_values.append(dcf.inp['Life Cycle Assessment']['Results']['Value'][dependent_variable].supplied_value)
 	return response_values
