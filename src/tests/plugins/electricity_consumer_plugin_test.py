@@ -38,7 +38,7 @@ class DummyDCF:
             "input": {
                 "operation_years": {'Operation years relative': np.arange(0, 2), 
                                     'Operation years ones': np.ones(2)},       
-                "hourly_file": "pyH2A.Lookup_Tables.Hourly_Consumption~Constant_consumption_10MW.csv ",
+                "hourly_file": "pyH2A.Lookup_Tables.Hourly_Consumption~Constant_consumption_10MW.csv",
                 "available_energy_hourly": {0: 2*np.arange(0, 8760), 1:2*np.arange(0, 8760)},
             },
             "expected": {
