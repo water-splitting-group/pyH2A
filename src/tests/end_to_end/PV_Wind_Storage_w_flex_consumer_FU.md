@@ -94,7 +94,8 @@ Name | Value | Unit | Comment
 --- | --- | --- | ---
 Design capacity | 3000 | MWh | Full design capacity
 Lowest discharge level | 20% | - | Lowest level to which battery can be discharged
-Capacity loss per year | 1% | - | Loss of capacity per year
+Capacity loss per year | 0.5% | - | Loss of capacity per year
+Capacity loss per full charge | 0.1% | - | loss per full charge equivalent
 Round trip efficiency | 80% | - | For lithium ion battery
 Highest charge level | 80% | - | 
 Power | 20 | MW | insufficient for a 10 MW customer at night
