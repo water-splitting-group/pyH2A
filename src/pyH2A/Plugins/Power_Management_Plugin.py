@@ -3,145 +3,6 @@ from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import numpy as np
 
-input_dict = {
-    "Time": {
-        "Years": {
-            "Value": {
-                "type": {dict,},
-                "bounds": (None, None),
-            },
-            "Unit": {
-                "dimension": "dimensionless",
-            },
-            "optional": False,
-            "description": "Dictionary containing all time-related quantities."
-        }, 
-    },        
-    "Power Generation": {
-        "Available energy (daily)": {
-            "Value": {
-                "type": {dict,},
-                "bounds": (0, None),
-            },
-            "Unit": {
-                "dimension": "energy",
-            },
-            "optional": True,
-            "description": "Available energy on a daily basis, as a dictionary of years. "
-                            "If not provided, it is assumed that no energy is available."
-        },
-        "Stored energy (daily)": {
-            "Value": {
-                "type": {dict,},
-                "bounds": (0, None),
-            },
-            "Unit": {
-                "dimension": "energy",
-            },
-            "optional": True,
-            "description": "Stored energy on a daily basis as a dictionary of years. "
-                            "If not provided, it is assumed that no stored energy is generated."
-        },
-    },
-    "Power Consumption": {
-        "<...>": {
-            "Value": {
-                "type": {np.ndarray,float,int,},
-                "bounds": (0, None),
-            },
-            "Type": {
-                "type": {str,},
-                "options": {'flexible', 'on_demand'},
-            },
-            "Unit": {
-                "dimension": "energy",
-            },
-            "optional": True,
-            "description": "Power consumption values for each year. Can be provided for multiple consumers, "
-                            "in which case they should be provided as separate entries under Power Consumption. "
-                            "The type of consumer should be specified as either 'flexible' for consumers that "
-                            "can consume both available and stored power, or 'on_demand' for consumers "
-                            "that can only consume stored power."
-        },
-    },
-    "Grid Electricity": {
-        "Cost": {
-            "Value": {
-                "type": {float, np.ndarray, int},
-                "bounds": (0, None),
-            },
-            "Unit": {
-                "dimension": "currency / energy",
-            },
-            "optional": True,
-            "description": "Cost of grid electricity. Can be provided as a single value "
-                            "or as an array with values for each year. If not provided, "
-                            "it is assumed that grid electricity is not used."
-        },
-    },
-}
-
-output_dict = {
-    "Power Generation": {
-        "Available energy (yearly)": {
-            "Value": {
-                "inserted_value": "remaining_flexible",
-                "type": {np.ndarray,}, 
-                "dimension": "energy",
-            },
-            "optional": True,
-            "description": "Remaining available energy, yearly basis.",
-        },
-        "Stored energy (yearly)": {
-            "Value": {
-                "inserted_value": "remaining_stored",
-                "type": {np.ndarray,},
-                "dimension": "energy",
-            },
-            "optional": True,
-            "description": "Remaining stored energy, yearly basis.",
-        },
-        "Available energy (daily)": {
-            "Value": {
-                "inserted_value": Quantity(0, 'J'),
-                "type": {float,},
-                "dimension": "energy",
-            },
-            "description": "Remaining available energy, daily basis set to 0.",
-        },
-        "Stored energy (daily)": {
-            "Value": {
-                "inserted_value": Quantity(0, 'J'),
-                "type": {float,},
-                "dimension": "energy",
-            },
-            "description": "Remaining stored energy, daily basis set to 0.",
-        },
-    },
-    "Grid Electricity": {
-        "Used grid electricity (yearly)": {
-            "Value": {
-                "inserted_value": "total_unfulfilled",
-                "type": {np.ndarray,},
-                "dimension": "energy",
-            },
-            "optional": True,
-            "description": "Used grid electricity, yearly basis.",
-        },
-    },
-    "Other Variable Operating Cost - Grid Electricity": {
-        "Cost of grid electricity (yearly)": {
-            "Value": {
-                "inserted_value": "electricity_cost",
-                "type": {np.ndarray,},
-                "dimension": "currency",
-            },
-            "optional": True,
-            "description": "Cost of grid electricity, yearly basis.",
-        },
-    },
-}
-
 class Power_Management_Plugin:
     '''Management of electricity production and consumption.
     
@@ -181,15 +42,162 @@ class Power_Management_Plugin:
         Cost of grid electricity, yearly basis.
     '''
 
-    def __init__(self, dcf, print_info):
+    def __init__(self, dcf, print_info, run = True):
+        self._set_up(dcf)
+        if run:
+            self._run(dcf)
 
-        self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Power_Management_Plugin')  
+    def _set_up(self, dcf):
+
+        self.functional_unit = dcf.functional_unit
+
+        self.input_dict = {
+            "Time": {
+                "Years": {
+                    "Value": {
+                        "type": {dict,},
+                        "bounds": (None, None),
+                    },
+                    "Unit": {
+                        "dimension": "dimensionless",
+                    },
+                    "optional": False,
+                    "description": "Dictionary containing all time-related quantities."
+                }, 
+            },        
+            "Power Generation": {
+                "Available energy (daily)": {
+                    "Value": {
+                        "type": {dict,},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "energy",
+                    },
+                    "optional": True,
+                    "description": "Available energy on a daily basis, as a dictionary of years. "
+                                    "If not provided, it is assumed that no energy is available."
+                },
+                "Stored energy (daily)": {
+                    "Value": {
+                        "type": {dict,},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "energy",
+                    },
+                    "optional": True,
+                    "description": "Stored energy on a daily basis as a dictionary of years. "
+                                    "If not provided, it is assumed that no stored energy is generated."
+                },
+            },
+            "Power Consumption": {
+                "<...>": {
+                    "Value": {
+                        "type": {np.ndarray,float,int,},
+                        "bounds": (0, None),
+                    },
+                    "Type": {
+                        "type": {str,},
+                        "options": {'flexible', 'on_demand'},
+                    },
+                    "Unit": {
+                        "dimension": "energy",
+                    },
+                    "optional": True,
+                    "description": "Power consumption values for each year. Can be provided for multiple consumers, "
+                                    "in which case they should be provided as separate entries under Power Consumption. "
+                                    "The type of consumer should be specified as either 'flexible' for consumers that "
+                                    "can consume both available and stored power, or 'on_demand' for consumers "
+                                    "that can only consume stored power."
+                },
+            },
+            "Grid Electricity": {
+                "Cost": {
+                    "Value": {
+                        "type": {float, np.ndarray, int},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "currency / energy",
+                    },
+                    "optional": True,
+                    "description": "Cost of grid electricity. Can be provided as a single value "
+                                    "or as an array with values for each year. If not provided, "
+                                    "it is assumed that grid electricity is not used."
+                },
+            },
+        }
+
+        self.output_dict = {
+            "Power Generation": {
+                "Available energy (yearly)": {
+                    "Value": {
+                        "inserted_value": "remaining_flexible",
+                        "type": {np.ndarray,}, 
+                        "dimension": "energy",
+                    },
+                    "optional": True,
+                    "description": "Remaining available energy, yearly basis.",
+                },
+                "Stored energy (yearly)": {
+                    "Value": {
+                        "inserted_value": "remaining_stored",
+                        "type": {np.ndarray,},
+                        "dimension": "energy",
+                    },
+                    "optional": True,
+                    "description": "Remaining stored energy, yearly basis.",
+                },
+                "Available energy (daily)": {
+                    "Value": {
+                        "inserted_value": Quantity(0, 'J'),
+                        "type": {float,},
+                        "dimension": "energy",
+                    },
+                    "description": "Remaining available energy, daily basis set to 0.",
+                },
+                "Stored energy (daily)": {
+                    "Value": {
+                        "inserted_value": Quantity(0, 'J'),
+                        "type": {float,},
+                        "dimension": "energy",
+                    },
+                    "description": "Remaining stored energy, daily basis set to 0.",
+                },
+            },
+            "Grid Electricity": {
+                "Used grid electricity (yearly)": {
+                    "Value": {
+                        "inserted_value": "total_unfulfilled",
+                        "type": {np.ndarray,},
+                        "dimension": "energy",
+                    },
+                    "optional": True,
+                    "description": "Used grid electricity, yearly basis.",
+                },
+            },
+            "Other Variable Operating Cost - Grid Electricity": {
+                "Cost of grid electricity (yearly)": {
+                    "Value": {
+                        "inserted_value": "electricity_cost",
+                        "type": {np.ndarray,},
+                        "dimension": "currency",
+                    },
+                    "optional": True,
+                    "description": "Cost of grid electricity, yearly basis.",
+                },
+            },
+        }
+
+    def _run(self, dcf):
+        self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Power_Management_Plugin')  
 
         if 'Power Consumption' in self.input_dict_resolved:    
             self.calculate_consumers()
             self.calculate_electricity_cost()
 
-        output_inserter_function(output_dict, self, dcf, 'Power_Management_Plugin') 
+        output_inserter_function(self.output_dict, self, dcf, 'Power_Management_Plugin') 
         
     def calculate_consumers(self):
         '''Negoitate available and stored power with power consumers. 

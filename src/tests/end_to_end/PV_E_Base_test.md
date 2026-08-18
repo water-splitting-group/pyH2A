@@ -6,16 +6,16 @@ Default TEA | pyH2A.Config~Defaults_TEA.md
 
 # Workflow
 
-Name | Type | Position 
---- | --- | --- 
-Hourly_Irradiation_Plugin | plugin | 201 |
-Photovoltaic_Plugin | plugin | 202 |
-Electrolyzer_Plugin | plugin | 203 |
-Battery_Plugin | plugin | 204 |
-Stored_Power_Electrolysis_Plugin | plugin | 205 |
-Reverse_Osmosis_Plugin | plugin | 301 |
-Power_Management_Plugin | plugin | 302 |
-Multiple_Modules_Plugin | plugin | 401 |
+Name | Position 
+--- | --- 
+Hourly_Irradiation_Plugin | 201 |
+Photovoltaic_Plugin | 202 |
+Electrolyzer_Plugin | 203 |
+Battery_Plugin | 204 |
+Stored_Power_Electrolysis_Plugin | 205 |
+Reverse_Osmosis_Plugin | 301 |
+Power_Management_Plugin | 302 |
+Multiple_Modules_Plugin | 401 |
 
 # Display Parameters
 
@@ -50,8 +50,10 @@ Data | {Hourly Irradiation > Horizontal single axis tracking > Value, kWh/m2} | 
 
 Name | Value | Unit | Comment 
 --- | --- | --- | --- 
-Plant modules | 10 | - | Modelling of 10 modules for calculation of staff cost to facilitate comparison with PEC and photocatalytic model
+Design output by year | {Electrolyzer > H2 production (yearly) > Value, kg} | kg | Hydrogen production by electrolyzer (direct and via stored power) is considered as design output by year
+Operating capacity factor | 100% | - | Set to 100%, operating capacity factor is considered during modelling of electrolyzer operation
 Fraction of output that reaches gate | 100% | -
+Plant modules | 10 | - | Modelling of 10 modules for calculation of staff cost to facilitate comparison with PEC and photocatalytic model
 
 # Construction
 

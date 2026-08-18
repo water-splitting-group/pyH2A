@@ -2,6 +2,7 @@ import pytest
 from pyH2A.Plugins.Battery_Plugin import Battery_Plugin
 import numpy as np
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+from pyH2A.Utilities.functional_unit import resolve_functional_unit
 
 class DummyDCF:
     """DCF object for Battery_plugin with configurable inputs."""
@@ -15,6 +16,7 @@ class DummyDCF:
         loss_of_capacity,
         round_trip_efficiency,
     ):
+        self.functional_unit = resolve_functional_unit('kg')
         self.inp = {
             "Time": {
                 "Years": {

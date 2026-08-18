@@ -1,6 +1,7 @@
 import pytest
 from pyH2A.Plugins.Labor_Operating_Cost_Plugin import Labor_Operating_Cost_Plugin
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+from pyH2A.Utilities.functional_unit import resolve_functional_unit
 
 
 class DummyDCF:
@@ -12,6 +13,7 @@ class DummyDCF:
         hourly_labor_cost,
         labor_inflator,
     ):
+        self.functional_unit = resolve_functional_unit('kg')
         self.inp = {
             "Inflation": {
                 "Labor inflator": {

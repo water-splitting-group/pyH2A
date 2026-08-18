@@ -2,6 +2,7 @@ import pytest
 import numpy as np
 from pyH2A.Plugins.Photovoltaic_Plugin import Photovoltaic_Plugin
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+from pyH2A.Utilities.functional_unit import resolve_functional_unit
 
 class DummyDCF:
     """Minimal DCF object for Photovoltaic_Plugin testing with configurable inputs."""
@@ -15,6 +16,7 @@ class DummyDCF:
         efficiency,
     ):
 
+        self.functional_unit = resolve_functional_unit('kg')
         self.inp = {
             "Time": {
                 "Years": {
