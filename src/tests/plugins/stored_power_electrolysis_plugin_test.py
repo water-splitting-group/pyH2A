@@ -2,6 +2,7 @@ import pytest
 import numpy as np
 from pyH2A.Plugins.Stored_Power_Electrolysis_Plugin import Stored_Power_Electrolysis_Plugin
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+from pyH2A.Utilities.functional_unit import resolve_functional_unit
 
 class DummyDCF:
     """Minimal DCF for Stored_Power_Electrolysis_Plugin with variable-value inputs."""
@@ -22,6 +23,7 @@ class DummyDCF:
         stored_power_daily_kWh,
     ):
 
+        self.functional_unit = resolve_functional_unit('kg')
         self.inp = {
             "Time": {
                 "Years": {

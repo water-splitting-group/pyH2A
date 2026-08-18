@@ -88,6 +88,15 @@ The operation years expressed relative to startup.
    t_{life}-1
    \right]
 
+Start index
+~~~~~~~~~~~
+
+The relative year of startup.
+
+.. math::
+
+   \mathrm{Start index} = Y_{operation start} - Y_{construction start} 
+
 Operation years ones
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -103,6 +112,38 @@ Array of ones having the same length as the operation period.
    \ldots,
    1
    \right]
+
+Analysis years ones
+~~~~~~~~~~~~~~~~~~~
+
+Array of ones having the same length as the construction and operation period.
+
+.. math::
+
+   \mathrm{Analysis Years Ones}
+   =
+   \left[
+   1,
+   1,
+   \ldots,
+   1
+   \right]   
+
+Construction years ones
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Array of ones having the same length as the construction period.
+
+.. math::
+
+   \mathrm{Construction Years Ones}
+   =
+   \left[
+   1,
+   1,
+   \ldots,
+   1
+   \right] 
 
 Example
 -------
@@ -144,8 +185,17 @@ The plugin generates:
    Operation years relative:
    [0, 1, 2, 3, 4]
 
+   Startup index:
+   2
+
    Operation years ones:
    [1, 1, 1, 1, 1]
+
+   Analysis years ones:
+   [1, 1, 1, 1, 1, 1, 1]
+
+   Construction years ones:
+   [1, 1]   
 
 Returned dictionary
 -------------------
@@ -167,7 +217,10 @@ which contains:
        "Plant years relative": [-2, -1, 0, 1, 2, 3, 4],
        "Operation years": [2025, 2026, 2027, 2028, 2029],
        "Operation years relative": [0, 1, 2, 3, 4],
-       "Operation years ones": [1, 1, 1, 1, 1]
+       "Startup index": 2,
+       "Operation years ones": [1, 1, 1, 1, 1], 
+       "Analysis years ones": [1, 1, 1, 1, 1, 1, 1], 
+       "Construction years ones": [1, 1]
    }
 
 These quantities are subsequently used by other plugins whenever time indexing, yearly arrays, inflation corrections, or project scheduling information are required.    

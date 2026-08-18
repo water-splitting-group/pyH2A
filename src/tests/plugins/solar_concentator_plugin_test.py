@@ -1,6 +1,7 @@
 import pytest
 from pyH2A.Plugins.Solar_Concentrator_Plugin import Solar_Concentrator_Plugin
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+from pyH2A.Utilities.functional_unit import resolve_functional_unit
 
 
 class DummyDCF:
@@ -15,6 +16,7 @@ class DummyDCF:
         ew_spacing_m,
         solar_collection_area_m2,
     ):
+        self.functional_unit = resolve_functional_unit('kg')
         self.inp = {
             "Solar Concentrator": {
                 "Concentration factor": {

@@ -2,6 +2,7 @@ import pytest
 import numpy as np
 from pyH2A.Plugins.Multiple_Modules_Plugin import Multiple_Modules_Plugin
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+from pyH2A.Utilities.functional_unit import resolve_functional_unit
 
 
 class DummyDCF:
@@ -10,6 +11,7 @@ class DummyDCF:
     def __init__(
         self, plant_modules, solar_area_per_module, area_per_staff, shifts, supervisors
     ):
+        self.functional_unit = resolve_functional_unit('kg')
         self.inp = {
             "Technical Operating Parameters and Specifications": {
                 "Plant modules": {

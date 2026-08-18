@@ -4,145 +4,6 @@ from pyH2A.Utilities.input_modification import read_textfile, file_import
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
-input_dict = {
-	"Hourly Irradiation": {		
-		"File": {
-			"Value": {	
-				"type": {str,},
-			},
-			"optional": False,
-			"description": "Path to a `.csv` file containing hourly irradiance data"
-		},
-	},
-	"Irradiance Area Parameters": {	
-		"Module tilt": {
-			"Value": {
-				"type": {int, float,},
-				"bounds": (0, np.pi / 2),
-			},
-			"Unit": {
-				"dimension": "angle",
-			},
-			"optional": True, # we always need a tilt, but it's optional as an explicit input because it defaults to the latitude
-			"description": "Tilt of irradiated module."
-		},
-		"Array azimuth": {
-			"Value": {
-				"type": {int, float,},
-				"bounds": (0, np.pi),
-			},
-			"Unit": {
-				"dimension": "angle",
-			},
-			"optional": False,
-			"description": "Azimuth angle of irradiated module."
-		},
-		"Nominal operating temperature": {
-			"Value": {
-				"type": {int, float,},
-				"bounds": (250, 500),
-			},
-			"Unit": {
-				"dimension": "absolute_temperature",
-			},
-			"optional": False,
-			"description": "Nominal operating temperature of irradiated module."
-		},
-		"Mismatch derating": {
-			"Value": {
-				"type": {int, float,},
-				"bounds": (0, 1), 
-			},
-			"Unit": {
-				"dimension": "dimensionless",
-			},
-			"optional": False,
-			"description": "Derating value due to mismatch (percentage or value between 0 and 1)."
-		},
-		"Dirt derating": {
-			"Value": {
-				"type": {int, float,},
-				"bounds": (0, 1), 
-			},
-			"Unit": {
-				"dimension": "dimensionless",
-			},
-			"optional": False,
-			"description": "Derating value due to dirt buildup (percentage or value between 0 and 1)."
-		},
-		"Temperature coefficient": {
-			"Value": {
-				"type": {int, float,},
-				"bounds": (-0.5, 0.5), 
-			},
-			"Unit": {
-				"dimension": "1/temperature_diff",
-			},
-			"optional": False,
-			"description": "Performance decrease of irradiated module per degree increase."
-		},
-	},
-}
-
-output_dict = {
-	"Hourly Irradiation": {
-		"No tracking": {
-			"Value": {
-				"inserted_value": "hourly_energy",
-				"type": {np.ndarray,},
-				"dimension": "energy / area",
-			},
-			"optional": False,
-			"description": "Hourly irradiation with no tracking per area."
-		},
-		"Horizontal single axis tracking": {
-			"Value": {
-				"inserted_value": "hourly_energy_sat",
-				"type": {np.ndarray,},
-				"dimension": "energy / area",
-			},
-			"optional": False,
-			"description": "Hourly irradiation with single axis tracking per area."
-		},
-		"Two axis tracking": {
-			"Value": {
-				"inserted_value": "hourly_energy_dat",
-				"type": {np.ndarray,},
-				"dimension": "energy / area",
-			},
-			"optional": False,
-			"description": "Hourly irradiation with two axis tracking per area."
-		},
-		"Mean solar input no tracking": {
-			"Value": {
-				"inserted_value": "yearly_averaged_power",
-				"type": {int, float,},
-				"dimension": "power / area",
-			},
-			"optional": False,
-			"description": "Mean solar input with no tracking per area."
-		},
-		"Mean solar input single axis tracking": {
-			"Value": {
-				"inserted_value": "yearly_averaged_power_sat",
-				"type": {int, float,},
-				"dimension": "power / area",
-			},
-			"optional": False,
-			"description": "Mean solar input with single axis tracking per area."
-		},
-		"Mean solar input two axis tracking": {
-			"Value": {
-				"inserted_value": "yearly_averaged_power_dat",
-				"type": {int, float,},
-				"dimension": "power / area",
-			},
-			"optional": False,
-			"description": "Mean solar input with two axis tracking per area."
-		},
-	},
-}
-
 class Hourly_Irradiation_Plugin:
 	'''Calculation of hourly and mean daily irradiation data with different module configurations.
 	
@@ -180,9 +41,156 @@ class Hourly_Irradiation_Plugin:
 		Mean solar input power with two axis tracking per area.
 	'''
 
-	def __init__(self, dcf, print_info):
+	def __init__(self, dcf, print_info, run = True):
+		self._set_up(dcf)
+		if run:
+			self._run(dcf)
 
-		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Hourly_Irradiation_Plugin')
+	def _set_up(self, dcf):
+
+		self.functional_unit = dcf.functional_unit
+
+		self.input_dict = {
+			"Hourly Irradiation": {		
+				"File": {
+					"Value": {	
+						"type": {str,},
+					},
+					"optional": False,
+					"description": "Path to a `.csv` file containing hourly irradiance data"
+				},
+			},
+			"Irradiance Area Parameters": {	
+				"Module tilt": {
+					"Value": {
+						"type": {int, float,},
+						"bounds": (0, np.pi / 2),
+					},
+					"Unit": {
+						"dimension": "angle",
+					},
+					"optional": True, # we always need a tilt, but it's optional as an explicit input because it defaults to the latitude
+					"description": "Tilt of irradiated module."
+				},
+				"Array azimuth": {
+					"Value": {
+						"type": {int, float,},
+						"bounds": (0, np.pi),
+					},
+					"Unit": {
+						"dimension": "angle",
+					},
+					"optional": False,
+					"description": "Azimuth angle of irradiated module."
+				},
+				"Nominal operating temperature": {
+					"Value": {
+						"type": {int, float,},
+						"bounds": (250, 500),
+					},
+					"Unit": {
+						"dimension": "absolute_temperature",
+					},
+					"optional": False,
+					"description": "Nominal operating temperature of irradiated module."
+				},
+				"Mismatch derating": {
+					"Value": {
+						"type": {int, float,},
+						"bounds": (0, 1), 
+					},
+					"Unit": {
+						"dimension": "dimensionless",
+					},
+					"optional": False,
+					"description": "Derating value due to mismatch (percentage or value between 0 and 1)."
+				},
+				"Dirt derating": {
+					"Value": {
+						"type": {int, float,},
+						"bounds": (0, 1), 
+					},
+					"Unit": {
+						"dimension": "dimensionless",
+					},
+					"optional": False,
+					"description": "Derating value due to dirt buildup (percentage or value between 0 and 1)."
+				},
+				"Temperature coefficient": {
+					"Value": {
+						"type": {int, float,},
+						"bounds": (-0.5, 0.5), 
+					},
+					"Unit": {
+						"dimension": "1/temperature_diff",
+					},
+					"optional": False,
+					"description": "Performance decrease of irradiated module per degree increase."
+				},
+			},
+		}
+
+		self.output_dict = {
+			"Hourly Irradiation": {
+				"No tracking": {
+					"Value": {
+						"inserted_value": "hourly_energy",
+						"type": {np.ndarray,},
+						"dimension": "energy / area",
+					},
+					"optional": False,
+					"description": "Hourly irradiation with no tracking per area."
+				},
+				"Horizontal single axis tracking": {
+					"Value": {
+						"inserted_value": "hourly_energy_sat",
+						"type": {np.ndarray,},
+						"dimension": "energy / area",
+					},
+					"optional": False,
+					"description": "Hourly irradiation with single axis tracking per area."
+				},
+				"Two axis tracking": {
+					"Value": {
+						"inserted_value": "hourly_energy_dat",
+						"type": {np.ndarray,},
+						"dimension": "energy / area",
+					},
+					"optional": False,
+					"description": "Hourly irradiation with two axis tracking per area."
+				},
+				"Mean solar input no tracking": {
+					"Value": {
+						"inserted_value": "yearly_averaged_power",
+						"type": {int, float,},
+						"dimension": "power / area",
+					},
+					"optional": False,
+					"description": "Mean solar input with no tracking per area."
+				},
+				"Mean solar input single axis tracking": {
+					"Value": {
+						"inserted_value": "yearly_averaged_power_sat",
+						"type": {int, float,},
+						"dimension": "power / area",
+					},
+					"optional": False,
+					"description": "Mean solar input with single axis tracking per area."
+				},
+				"Mean solar input two axis tracking": {
+					"Value": {
+						"inserted_value": "yearly_averaged_power_dat",
+						"type": {int, float,},
+						"dimension": "power / area",
+					},
+					"optional": False,
+					"description": "Mean solar input with two axis tracking per area."
+				},
+			},
+		}
+
+	def _run(self, dcf):
+		self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Hourly_Irradiation_Plugin')
 
 		pv = self.input_dict_resolved['Irradiance Area Parameters']
 		
@@ -206,7 +214,7 @@ class Hourly_Irradiation_Plugin:
 			 									pv['Dirt derating']['Value']
 												)
 
-		output_inserter_function(output_dict, self, dcf, 'Hourly_Irradiation_Plugin') 
+		output_inserter_function(self.output_dict, self, dcf, 'Hourly_Irradiation_Plugin') 
 
 def converter_function(string):
 	'''Converter function for datetime of hourly irradiation data.'''

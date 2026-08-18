@@ -9,7 +9,7 @@ class FunctionalUnit:
     dimension_per_time: str
     unit_SI_per_s: str
     unit_per_year: str
-
+    
 def resolve_functional_unit(unit):
     '''Compute functional-unit-derived quantities (dimension, SI unit, etc.) for the
     given unit string. Pure function — no global state; call fresh wherever the
