@@ -5,24 +5,6 @@ from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 class Multiple_Modules_Plugin:
 	''' Simulating mutliple plant modules which are operated together, assuming that only labor cost is reduced. 
 	Calculation of required labor to operate all modules, scaling down labor requirement to one module for subsequent calculations.
-
-	Parameters
-	----------
-	Technical Operating Parameters and Specifications > Plant modules > Value : float or int
-		Number of plant modules considered in this calculation.
-	Non-Depreciable Capital Costs > Solar collection area > Value : float
-		Solar collection area for one plant module.
-	Fixed Operating Costs > Solar collection area per staffer > Value : float
-		Solar collection area that can be covered by one staffer.
-	Fixed Operating Costs > Number of 8-hour shifts > Value : float or int
-		Number of 8-hour shifts (typically 3 for 24h operation).
-	Fixed Operating Costs > Number of supervisors > Value : float or int
-		Number of shift supervisors.
-
-	Returns
-	-------
-	Fixed Operating Costs > Staff > Value : float
-		Number of 8-hour equivalent staff required for operating one plant module.
 	''' 
 
 	def __init__(self, dcf, print_info, run = True):
