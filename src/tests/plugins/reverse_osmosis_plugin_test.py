@@ -2,6 +2,7 @@ import pytest
 import numpy as np
 from pyH2A.Plugins.Reverse_Osmosis_Plugin import Reverse_Osmosis_Plugin
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+from pyH2A.Utilities.functional_unit import resolve_functional_unit
 
 
 class DummyDCF:
@@ -15,6 +16,7 @@ class DummyDCF:
         operating_time_fraction, 
         recovery_rate
     ):
+        self.functional_unit = resolve_functional_unit('kg')
         self.inp = {
             "Technical Operating Parameters and Specifications": {
                 "Design output by year": {

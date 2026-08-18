@@ -1,6 +1,7 @@
 import pytest
 from pyH2A.Plugins.Catalyst_Separation_Plugin import Catalyst_Separation_Plugin
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+from pyH2A.Utilities.functional_unit import resolve_functional_unit
 
 
 class DummyDCF:
@@ -9,6 +10,7 @@ class DummyDCF:
     def __init__(
         self, water_volume_liters, filtration_cost_per_m3, catalyst_lifetime_years
     ):
+        self.functional_unit = resolve_functional_unit('kg')
         self.inp = {
             "Water Volume": {
                 "Volume": {

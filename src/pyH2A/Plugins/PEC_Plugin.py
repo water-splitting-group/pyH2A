@@ -2,190 +2,6 @@ import numpy as np
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
-input_dict = {
-	"Technical Operating Parameters and Specifications": {
-		"Plant design capacity": {
-			"Value": {
-				"type": {float,int,},
-				"bounds": (0, None),
-			},
-			"Unit": {
-				"dimension": "mass / time",
-			},
-			"optional": False,
-			"description": "Design output in mass per unit time."
-		},
-	},
-	"PEC Cells": {
-		"Cell cost": {
-			"Value": {
-				"type": {float,int,},
-				"bounds": (0, None),
-			},
-			"Unit": {
-				"dimension": "currency / area",
-			},
-			"optional": False,
-			"description": "Cost of PEC cells per cell area."
-		},
-		"Lifetime": {
-			"Value": {
-				"type": {float,int,},
-				"bounds": (0, None),
-			},
-			"Unit": {
-				"dimension": "time",
-			},
-			"optional": False,
-			"description": "Lifetime of PEC cells before replacement is required."
-		},
-		"Length": {
-			"Value": {
-				"type": {float,int,},
-				"bounds": (0, None),
-			},
-			"Unit": {
-				"dimension": "length",
-			},
-			"optional": False,
-			"description": "Length of single PEC cell."
-		},
-		"Width": {
-			"Value": {
-				"type": {float,int,},
-				"bounds": (0, None),
-			},
-			"Unit": {
-				"dimension": "length",
-			},
-			"optional": False,
-			"description": "Width of single PEC cell."
-		}
-	},
-	"Land Area Requirement": {
-		"Cell angle": {
-			"Value": {
-				"type": {float,int,},
-				"bounds": (0, np.pi / 2), 
-			},
-			"Unit": {
-				"dimension": "angle",
-			},
-			"optional": False,
-			"description": "Angle of PEC cells from the ground."
-		},
-		"South spacing": {
-			"Value": {
-				"type": {float,int,},
-				"bounds": (0, None),
-			},
-			"Unit": {
-				"dimension": "length",
-			},
-			"optional": False,
-			"description": "South spacing of PEC cells."
-		},
-		"East/West spacing": {
-			"Value": {
-				"type": {float,int,},
-				"bounds": (0, None),
-			},
-			"Unit": {
-				"dimension": "length",
-			},
-			"optional": False,
-			"description": "East/West Spacing of PEC cells."
-		}
-	},
-	"Solar-to-Hydrogen Efficiency": {
-		"STH": {
-			"Value": {
-				"type": {float,int,},
-				"bounds": (0, 1),
-			},
-			"Unit": {
-				"dimension": "dimensionless", 
-			},
-			"optional": False,
-			"description": "Solar-to-hydrogen efficiency in percentage or as a value between 0 and 1."
-		}
-	},
-	"Solar Input": {
-		"Mean solar input": {
-			"Value": {
-				"type": {float,int,},
-				"bounds": (0, None),
-			},
-			"Unit": {
-				"dimension": "power / area",
-			},
-			"optional": False,
-			"description": "Mean solar input in power / area, yearly average of solar input."
-		}
-	}
-}
-
-output_dict = {
-	"Non-Depreciable Capital Costs": {
-		"Land required": {
-			"Value": {
-				"inserted_value": "total_land_area", 
-				"type": {float,int,}, 
-				"dimension":"area",
-        	},
-			"description": "Total land area required.",
-			"optional": False,
-		},
-		"Solar collection area": {
-			"Value": {
-				"inserted_value": "total_solar_collection_area",
-				"type": {float,int,},
-				"dimension":"area",
-			},
-			"description": "Solar collection area.",
-			"optional": False,
-		}
-	},
-	"Planned Replacement": {
-		"Planned replacement PEC cells": {
-			"Cost_Value": {
-				"inserted_value": "cell_cost",
-				"type": {float,int,},
-				"dimension":"currency",
-			},
-			"Frequency_Value": {
-				"inserted_value": "cell_lifetime",
-				"type": {float,int,}, 
-				"dimension":"time",
-			},
-			"description": "Total cost of replacing all PEC cells once.",
-			"optional": False,		
-		}
-	},
- 	"Direct Capital Costs - PEC Cells": {
-		"PEC cell cost": {
-			"Value": {
-				"inserted_value": "cell_cost",
-				"type": {float,int,}, 
-				"dimension": "currency"
-			},
-			"description": "Total cost of all PEC cells.",
-			"optional": False,
-		}
-	},
-	"PEC Cells": {
-		"Number": {
-			"Value": {
-				"inserted_value": "cell_number",
-				"type": {float,int}, 
-				"dimension":"dimensionless",
-			},
-			"description": "Number of individual PEC cells required for design H2 output capacity.",
-			"optional": False,
-		}
-	},
-}
-
 class PEC_Plugin:
 	'''Simulating H2 production using photoelectrochemical water splitting.
 
@@ -228,8 +44,201 @@ class PEC_Plugin:
 		Number of individual PEC cells required for design H2 output capacity.
 	'''
 
-	def __init__(self, dcf, print_info):
-		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'PEC_Plugin')
+	def __init__(self, dcf, print_info, run = True):
+		self._set_up(dcf)
+		if run:
+			self._run(dcf)
+
+	def _set_up(self, dcf):
+
+		self.functional_unit = dcf.functional_unit
+
+		self.input_dict = {
+			"Technical Operating Parameters and Specifications": {
+				"Plant design capacity": {
+					"Value": {
+						"type": {float,int,},
+						"bounds": (0, None),
+					},
+					"Unit": {
+						"dimension": "mass / time",
+					},
+					"optional": False,
+					"description": "Plant design capacity, in mass of hydrogen/time."
+				},
+			},
+			"PEC Cells": {
+				"Cell cost": {
+					"Value": {
+						"type": {float,int,},
+						"bounds": (0, None),
+					},
+					"Unit": {
+						"dimension": "currency / area",
+					},
+					"optional": False,
+					"description": "Cost of PEC cells per cell area."
+				},
+				"Lifetime": {
+					"Value": {
+						"type": {float,int,},
+						"bounds": (0, None),
+					},
+					"Unit": {
+						"dimension": "time",
+					},
+					"optional": False,
+					"description": "Lifetime of PEC cells before replacement is required."
+				},
+				"Length": {
+					"Value": {
+						"type": {float,int,},
+						"bounds": (0, None),
+					},
+					"Unit": {
+						"dimension": "length",
+					},
+					"optional": False,
+					"description": "Length of single PEC cell."
+				},
+				"Width": {
+					"Value": {
+						"type": {float,int,},
+						"bounds": (0, None),
+					},
+					"Unit": {
+						"dimension": "length",
+					},
+					"optional": False,
+					"description": "Width of single PEC cell."
+				}
+			},
+			"Land Area Requirement": {
+				"Cell angle": {
+					"Value": {
+						"type": {float,int,},
+						"bounds": (0, np.pi / 2), 
+					},
+					"Unit": {
+						"dimension": "angle",
+					},
+					"optional": False,
+					"description": "Angle of PEC cells from the ground."
+				},
+				"South spacing": {
+					"Value": {
+						"type": {float,int,},
+						"bounds": (0, None),
+					},
+					"Unit": {
+						"dimension": "length",
+					},
+					"optional": False,
+					"description": "South spacing of PEC cells."
+				},
+				"East/West spacing": {
+					"Value": {
+						"type": {float,int,},
+						"bounds": (0, None),
+					},
+					"Unit": {
+						"dimension": "length",
+					},
+					"optional": False,
+					"description": "East/West Spacing of PEC cells."
+				}
+			},
+			"Solar-to-Hydrogen Efficiency": {
+				"STH": {
+					"Value": {
+						"type": {float,int,},
+						"bounds": (0, 1),
+					},
+					"Unit": {
+						"dimension": "dimensionless", 
+					},
+					"optional": False,
+					"description": "Solar-to-hydrogen efficiency in percentage or as a value between 0 and 1."
+				}
+			},
+			"Solar Input": {
+				"Mean solar input": {
+					"Value": {
+						"type": {float,int,},
+						"bounds": (0, None),
+					},
+					"Unit": {
+						"dimension": "power / area",
+					},
+					"optional": False,
+					"description": "Mean solar input in power / area, yearly average of solar input."
+				}
+			}
+		}
+
+		self.output_dict = {
+			"Non-Depreciable Capital Costs": {
+				"Land required": {
+					"Value": {
+						"inserted_value": "total_land_area", 
+						"type": {float,int,}, 
+						"dimension":"area",
+		        	},
+					"description": "Total land area required.",
+					"optional": False,
+				},
+				"Solar collection area": {
+					"Value": {
+						"inserted_value": "total_solar_collection_area",
+						"type": {float,int,},
+						"dimension":"area",
+					},
+					"description": "Solar collection area.",
+					"optional": False,
+				}
+			},
+			"Planned Replacement": {
+				"Planned replacement PEC cells": {
+					"Cost_Value": {
+						"inserted_value": "cell_cost",
+						"type": {float,int,},
+						"dimension":"currency",
+					},
+					"Frequency_Value": {
+						"inserted_value": "cell_lifetime",
+						"type": {float,int,}, 
+						"dimension":"time",
+					},
+					"description": "Total cost of replacing all PEC cells once.",
+					"optional": False,		
+				}
+			},
+		 	"Direct Capital Costs - PEC Cells": {
+				"PEC cell cost": {
+					"Value": {
+						"inserted_value": "cell_cost",
+						"type": {float,int,}, 
+						"dimension": "currency"
+					},
+					"description": "Total cost of all PEC cells.",
+					"optional": False,
+				}
+			},
+			"PEC Cells": {
+				"Number": {
+					"Value": {
+						"inserted_value": "cell_number",
+						"type": {float,int}, 
+						"dimension":"dimensionless",
+					},
+					"description": "Number of individual PEC cells required for design H2 output capacity.",
+					"optional": False,
+				}
+			},
+		}
+
+	def _run(self, dcf):
+		self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'PEC_Plugin')
 		
 		self.hydrogen_production()
 		self.PEC_cost()
@@ -237,7 +246,7 @@ class PEC_Plugin:
 
 		self.cell_lifetime = self.input_dict_resolved['PEC Cells']['Lifetime']['Value']
 
-		output_inserter_function(output_dict, self, dcf, 'PEC_Plugin') 
+		output_inserter_function(self.output_dict, self, dcf, 'PEC_Plugin') 
 
 	def hydrogen_production(self):
 		'''Calculation of (kg of H2)/day produced by single PEC cell.

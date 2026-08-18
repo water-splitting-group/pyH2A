@@ -6,10 +6,10 @@ Default TEA | pyH2A.Config~Defaults_TEA.md
 
 # Workflow
 
-Name | Type | Position
---- | --- | ---
-Test_Plugin_A | plugin | 201
-Test_Plugin_B | plugin | 202
+Name | Position
+--- |  ---
+Test_Plugin_A | 201
+Test_Plugin_B | 202
 
 # Plugin A - Photovoltaic Input
 

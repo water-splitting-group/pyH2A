@@ -327,7 +327,7 @@ class Discounted_Cash_Flow_Plugin:
                         "Fraction of revenues during start-up": {
                             "Value": {
                                 "type": {int, float},
-                                "bounds": (0, None),
+                                "bounds": (0, 1),
                             },
                             "Unit": {
                                 "dimension": "dimensionless",
@@ -349,7 +349,7 @@ class Discounted_Cash_Flow_Plugin:
                         "Salvage value (fraction of total capital investment)": {
                             "Value": {
                                 "type": {int, float},
-                                "bounds": (0, None),
+                                "bounds": (0, 1),
                             },
                             "Unit": {
                                 "dimension": "dimensionless",

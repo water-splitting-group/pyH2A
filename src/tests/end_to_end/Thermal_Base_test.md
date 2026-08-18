@@ -6,9 +6,9 @@ Default TEA | pyH2A.Config~Defaults_TEA.md
 
 # Workflow
 
-Name | Type | Description | Position 
---- | --- | --- | --- 
-Solar_Thermal_Plugin | plugin | Computes land area required for thermal process | 301 
+Name | Description | Position 
+--- | --- | --- 
+Solar_Thermal_Plugin | Computes land area required for thermal process | 301 
 
 # Display Parameters
 

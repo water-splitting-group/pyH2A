@@ -3,6 +3,7 @@ from pyH2A.Plugins.Time_Plugin import Time_Plugin
 import numpy as np
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 from tests.Utilities.check_dicts_for_testing import check_dicts
+from pyH2A.Utilities.functional_unit import resolve_functional_unit
 
 class DummyDCF:
     """DCF object for Time_plugin with configurable inputs."""
@@ -14,6 +15,7 @@ class DummyDCF:
         startup_year,
         ref_year,
     ):
+        self.functional_unit = resolve_functional_unit('kg')
         self.inp = {
             "Construction":{
                 key:{

@@ -2,6 +2,7 @@ import pytest
 from pyH2A.Plugins.Inflation_Plugin import Inflation_Plugin
 import numpy as np
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+from pyH2A.Utilities.functional_unit import resolve_functional_unit
 
 class DummyDCF:
     """DCF object for Inflation_plugin with configurable inputs."""
@@ -14,6 +15,7 @@ class DummyDCF:
         ref_year,
         time_dict,
     ):
+        self.functional_unit = resolve_functional_unit('kg')
         self.inp = {
             "Financial Input Values": {
                 "Inflation rate": {
