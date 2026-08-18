@@ -11,11 +11,6 @@ Name | Description | Position
 Hourly_Irradiation_Plugin | Plugin to calculate solar irradiation from typical meteorological year data | 201 |
 Photocatalytic_Plugin | Computes number of required baggies, cost of baggies and catalyst cost | 301 |
 Catalyst_Separation_Plugin | Computes cost of catalyst separation | 302 |
-Cooler_Condenser_Plugin | Computes first cooler condenser sizing and coolant requirements | 303 |
-Compressor_Plugin  | Computes compressor power and yearly consumption | 304 |
-Cooler_Condenser_2_Plugin | Computes second cooler condenser sizing and coolant requirements | 305 |
-Compressor_2_Plugin  | Computes second compressor power and yearly consumption | 306 |
-Cooler_Condenser_3_Plugin | Computes third cooler condenser sizing and coolant requirements | 307 |
 Multiple_Modules_Plugin | Modelling of multiple plant modules, adjustment of labor requirement | 401 |
 
 # Display Parameters
@@ -197,28 +192,3 @@ Process water | 2.637 | None | 1/kg | 0.0023749510945008 | None | USD | 1.0 | - 
 Name | Value | Path | Unit | Comment 
 --- | --- | --- | --- | --- 
 Unplanned replacement | 0.5% | {Depreciable Capital Costs > Inflated > Value, USD} | USD | Based on Pinaud 2013, Total Unplanned Replacement Capital Cost Factor (fraction of total direct depreciable costs/year)
-
-# Compressor
-
-Name | Value | Unit 
---- | --- | --- | 
-Compression ratio | 4.35 | -
-Polytropic coefficient | 1.4 | -
-Efficiency | 0.75 | -
-
-# Compressor 2
-
-Name | Value | Unit 
---- | --- | --- | 
-Compression ratio | 4.78 | -
-Efficiency | 0.75 | -
-
-# Cooler Condenser
-
-Name | Value | Unit 
---- | --- | --- 
-Cold inlet temperature | 20. | degC
-Cold outlet temperature | 35. | degC
-Hot outlet temperature | 40. | degC
-Heat transfer coefficient | 300. | W/m2/delta_K
-Material weight per area | 34. | kg/m2
