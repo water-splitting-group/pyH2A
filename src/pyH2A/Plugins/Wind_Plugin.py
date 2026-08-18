@@ -7,31 +7,7 @@ from pyH2A.Plugins.Hourly_Irradiation_Plugin import converter_function
 
 class Wind_Plugin:
 	'''Calculation of hourly wind power generation and needed number of turbines to match a desired nominal power.
-	
-	Parameters
-	----------
-    Time > Years > Value : dict
-        Dictionary containing plant life time-related quantities
-	Hourly Wind > File > Value : str
-		Path to a `.csv` file containing hourly wind data as provided by
-		https://re.jrc.ec.europa.eu/pvg_tools/en/#TMY.			
-	Power Generation > Available energy (hourly) > Value : dict, optional
-		Available power, hourly basis, dictionary of years
-	Wind Turbine > Installed wind capacity > Value : int or float
-		Installed power
-	Wind Turbine > Power per wind turbine > Value : int or float
-		Nominal power of each turbine			
-	Wind Turbine > Power loss per year > Value : int or float
-		Reduction in power produced by wind turbine per year due to degradation. Percentage or value > 0. Ageing factor calculated as: (1 - loss per year) ^ year.	
-
-	Returns
-	-------
-	Power Generation > Wind hourly power generation > Value : dict
-		Available energy due to wind power, hourly basis, dictionary of years
-	Power Generation > Available energy (hourly) > Value : dict
-		Total available power, hourly basis, dictionary of years	
-	Wind Turbine > Number of wind turbines > Value : int or float
-		Number of wind turbines needed to match the required installed power				
+		hourly wind data as provided by https://re.jrc.ec.europa.eu/pvg_tools/en/#TMY				
 	'''
 
 	def __init__(self, dcf, print_info, run = True):
