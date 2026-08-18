@@ -7,7 +7,7 @@ Default TEA | pyH2A.Config~Defaults_TEA.md
 # Workflow
 
 Name | Position 
---- | --- | --- 
+--- | --- 
 Hourly_Irradiation_Plugin | 201 |
 Photovoltaic_Plugin | 202 |
 Wind_Plugin | 203 |
