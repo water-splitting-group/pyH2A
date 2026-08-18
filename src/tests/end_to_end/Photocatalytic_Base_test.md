@@ -63,7 +63,7 @@ Temperature coefficient | 0 | 1/delta_degC | No decrease on photocatalyst activi
 Name | Value | Unit | Comment 
 --- | --- | --- | --- 
 Mean solar input | {Hourly Irradiation > Mean solar input no tracking > Value, kW/m2} | kW/m2 | Solar irradiation for baggies on flat ground without tracking
-Hourly | {Hourly Irradiation > No tracking> Value, kWh/m2} | kWh/m2 
+Hourly | {Hourly Irradiation > No tracking > Value, kWh/m2} | kWh/m2 
 
 # Solar-to-Hydrogen Efficiency
 
@@ -219,7 +219,7 @@ Efficiency | 0.75 | -
 Name | Value | Unit 
 --- | --- | --- 
 Cold inlet temperature | 20. | degC
-Cold outlet temperature | 35. | degC
+Cold outlet temperature | 30. | degC
 Hot outlet temperature | 40. | degC
 Heat transfer coefficient | 300. | W/m2/delta_K
 Material weight per area | 34. | kg/m2
