@@ -6,23 +6,7 @@ from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 from pyH2A.Plugins.Hourly_Irradiation_Plugin import converter_function
 
 class Electricity_Consumer_Plugin:
-	'''Calculation of hourly energy excess and default.
-	
-	Parameters
-	----------
-    Time > Years > Value : dict
-        Dictionary containing plant life time-related quantities
-	Hourly Main Consumer Profile > File > Value : str
-		Path to a `.csv` file containing hourly consumer data.			
-	Power Generation > Available energy (hourly) > Value : dict, optional
-		Available power, hourly basis, dictionary of years
-
-	Returns
-	-------
-	Hourly Main Consumer Profile > Unsatisfied demand > Value : dict
-		Energy demand that is not met by the direct supply, dictionary of years
-	Power Generation > Available energy (hourly) > Value : dict
-		Total available power, hourly basis, dictionary of years				
+	'''Calculation of hourly energy excess and default.				
 	'''
 	def __init__(self, dcf, print_info, run = True):
 		self._set_up(dcf)
