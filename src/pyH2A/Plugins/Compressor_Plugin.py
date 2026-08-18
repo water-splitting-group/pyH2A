@@ -2,7 +2,6 @@ from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 from pyH2A.Utilities.Physical_Properties.Physical_properties import Physical_properties as PP
 from pyH2A.Utilities.Physical_Properties.data import Constants as constant
-import numpy as np
 
 class Compressor_Plugin:
     '''Simulation of gas mixture adiabatic compression.
@@ -213,10 +212,7 @@ class Compressor_Plugin:
          self.yearly_shaft_energy
          ) = calculate_compression(self.input_dict_resolved)
 
-        output_inserter_function(self.output_dict, self, dcf, 'Compressor_Plugin') 
-
-        print('compressor 1 peak_shaft_power ', self.peak_shaft_power)
-        print('compressor 1 yearly_shaft_energy ', self.yearly_shaft_energy)        
+        output_inserter_function(self.output_dict, self, dcf, 'Compressor_Plugin')     
 
 
 def calculate_compression(dictionary, compressor_name = 'Compressor'):
