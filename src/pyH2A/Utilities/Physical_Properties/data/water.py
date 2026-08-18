@@ -1,0 +1,20 @@
+from .species_data import SpeciesData
+from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+import numpy as np
+
+'''
+Solid volume value and coefficients for liquid volume polynomial established from NIST chemistry webbook SRD69 https://webbook.nist.gov/chemistry/fluid/ 
+Coefficients for vapour enthalpy polynomials from NASA Glenn Coefficients for Calculating Thermodynamic Properties of Individual Species.
+Liquid water is assumed to have a constant heat capacity.
+Reference conditions: Standard formation enthalpy for liquid water at 298.15 K
+'''
+
+WATER = SpeciesData(
+    molecular_weight = Quantity(18.015, 'g/mol'),
+    liquid_volume_coefficients = np.array([9.99806282e-04, -2.33664305e-09, 5.74608202e-09, -1.80098558e-11, 4.45840291e-14]),    
+    solid_volume_coefficients = np.array([0.00109]),    
+    vapour_enthalpy_coefficients = np.array([-1.399234E+07, 1.939305E+03, -4.703031E-01, 1.003900E-03, -6.337082E-07, 1.636914E-10]),
+    liquid_enthalpy_coefficients = np.array([-17114900, 4.186e3]), 
+    solid_enthalpy_coefficients =  np.array([-16864100, 2050.]),
+    combustion_enthalpy = Quantity(0, 'J/kg')         
+)
