@@ -29,7 +29,7 @@ Color | darkgreen
 
 Name | Value | Path | Unit | Comment
 --- | --- | --- | --- | --- 
-Operating capacity factor | 0.9 | None | - | corresponds to a gross yearly production of 1111 kg H2
+Operating capacity factor | 90% | None | - 
 Plant design capacity | 1,111 | None | kg/day 
 Fraction of output that reaches gate | 90% | None | - | Reduction due to loss in H2/O2 separation. 
 Plant modules | 10 | None | - | 10 identical modules, only affects labor requirement calculation. 
