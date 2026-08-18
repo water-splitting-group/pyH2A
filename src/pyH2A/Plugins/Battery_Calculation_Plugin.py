@@ -1,7 +1,8 @@
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
-from pyH2A.Utilities.saturated_cumsum import saturated_cumsum_with_yield
+from pyH2A.Utilities.saturated_cumsum import saturated_cumsum
 import numpy as np
+
 
 class Battery_Calculation_Plugin:
     '''Simulation of electricity storage using a battery.
@@ -90,9 +91,20 @@ class Battery_Calculation_Plugin:
                     "Unit": {
                         "dimension": "dimensionless",
                     },                    
-                    "optional": False,
-                    "description": "Loss of capacity per year."
+                    "optional": True,
+                    "description": "Loss of capacity per year. Defaults to 0."
                 },
+                "Capacity loss per full charge": {
+                    "Value": {
+                        "type": {int, float,},
+                        "bounds": (0, 1),
+                    },
+                    "Unit": {
+                        "dimension": "dimensionless",
+                    },                    
+                    "optional": True,
+                    "description": "Loss of capacity per equivalent full charge. Defaults to 0"
+                },                
                 "Highest charge level": {
                     "Value": {
                         "type": {int, float,},
@@ -243,7 +255,7 @@ class Battery_Calculation_Plugin:
                                                     for year in operating_years_relative
                                                 ])
 
-        # if the power (in what, i.e. hourly energy in Wh) is below the minimum threshold, we don't charge the battery and the energy remains available
+        # if the power (in watt, i.e. hourly energy in Wh) is below the minimum threshold, we don't charge the battery and the energy remains available
         # if the available power exceeds the power of the battery, the value is saturated, the excess energy remains available
         curtailed_charging_power = np.where(
                                                 (available_energy_Wh_full_array
@@ -286,13 +298,23 @@ class Battery_Calculation_Plugin:
                                   self.input_dict_resolved['Battery']['Design capacity']['Value'].unit['J'] * self.input_dict_resolved['Battery']['Lowest discharge level']['Value'].unit['-']) 
 
         # The battery capacity evolves with years
-        battery_yearly_ageing_factor_calendar = 1-self.input_dict_resolved['Battery']['Capacity loss per year']['Value'].unit['-']
-        battery_ageing_factor_calendar = np.repeat(battery_yearly_ageing_factor_calendar ** operating_years_relative, 8760) 
+        if 'Capacity loss per year' in self.input_dict_resolved['Battery']:
+            battery_yearly_ageing_factor_calendar = 1-self.input_dict_resolved['Battery']['Capacity loss per year']['Value'].unit['-']
+            battery_ageing_factor_calendar = np.repeat(battery_yearly_ageing_factor_calendar ** operating_years_relative, 8760) 
+        else:
+            battery_ageing_factor_calendar = np.ones_like(lower_bound_SOE_J)
         upper_bound_SOE_J = (battery_ageing_factor_calendar 
                              * 
                              self.input_dict_resolved['Battery']['Design capacity']['Value'].unit['J'] 
                              * 
                              self.input_dict_resolved['Battery']['Highest charge level']['Value'].unit['-'])
+
+        if 'Capacity loss per full charge' in self.input_dict_resolved['Battery']:
+            # The capacity loss per full charge refers to the total capacity ; only a fraction of which is effectively usable anyway, 
+            # therefore the loss of usable capacity is only a fraction 'Highest charge level' of the nominal 'Design capacity'
+            ageing_per_cycle = self.input_dict_resolved['Battery']['Capacity loss per full charge']['Value'].unit['-'] * self.input_dict_resolved['Battery']['Highest charge level']['Value'].unit['-'] 
+        else: 
+            ageing_per_cycle = 0
 
         # The power that is a-priori available for charging is subject to curtailment due to the battery capacity
         # moreover, considering that the state of energy (SOE) corresponds to the part of the chargin energy that will effectively be restituted later by the battery, the power transmitted during charging is subject to the RTE
@@ -307,10 +329,11 @@ class Battery_Calculation_Plugin:
         cumulated_energy_excess_J_full_array, 
         cumulated_charge_J_full_array,
         cumulated_discharge_J_full_array
-        ) = saturated_cumsum_with_yield(
+        ) = saturated_cumsum(
             requested_variation = self.curtailed_charging_power.unit['J'] - self.curtailed_discharging_power.unit['J'],                          
             lower_bound = lower_bound_SOE_J,                     
-            upper_bound = upper_bound_SOE_J,
+            nominal_upper_bound = upper_bound_SOE_J, # The upper bound varies with calendar year
+            loss_per_cycle = ageing_per_cycle, # complementary ageing due to number of charges-discharges
             initial_state = upper_bound_SOE_J[0], # assuming the battery is initially fully charged
             positive_variation_yield = self.input_dict_resolved['Battery']['Round trip efficiency']['Value'].unit['-'],
             negative_variation_yield = 1.
