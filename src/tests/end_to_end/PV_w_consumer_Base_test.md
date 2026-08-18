@@ -6,17 +6,17 @@ Default TEA | pyH2A.Config~Defaults_TEA.md
 
 # Workflow
 
-Name | Type | Position 
---- | --- | --- 
-Hourly_Irradiation_Plugin | plugin | 201 |
-Photovoltaic_Plugin | plugin | 202 |
-Electricity_Consumer_Plugin | plugin | 203 |
-Electrolyzer_Plugin | plugin | 204 |
-Battery_Plugin | plugin | 205 |
-Stored_Power_Electrolysis_Plugin | plugin | 206 |
-Reverse_Osmosis_Plugin | plugin | 301 |
-Power_Management_Plugin | plugin | 302 |
-Multiple_Modules_Plugin | plugin | 401 |
+Name | Position 
+--- | --- 
+Hourly_Irradiation_Plugin | 201 |
+Photovoltaic_Plugin | 202 |
+Electricity_Consumer_Plugin | 203 |
+Electrolyzer_Plugin | 204 |
+Battery_Plugin | 205 |
+Stored_Power_Electrolysis_Plugin | 206 |
+Reverse_Osmosis_Plugin | 301 |
+Power_Management_Plugin | 302 |
+Multiple_Modules_Plugin | 401 |
 
 # Display Parameters
 
