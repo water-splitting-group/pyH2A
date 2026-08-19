@@ -4,49 +4,6 @@ from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
 class RFB_Plugin:
 	'''Calculation of Redox Flow Battery amount of electrolytes and their total impact, as well as the number of stack cells.
-	
-	Parameters
-	----------
-    Time > Years > Value : dict
-        Dictionary containing plant life time-related quantities
-    Battery > Power > Value : float or int
-        Total power of the battery
-    Battery > Power per cell stack > Value : float or int
-        Power of each stack	
-	Battery > Design capacity > Value : float or int
-		Design capacity of the battery	
-	Battery > Energy density > Value : float or int
-		Capacity per mass of electrolyte
-	Battery > Electrolyte regeneration per year > Value : float or int
-		Yearly capacity loss of the electrolyte		
-	Electrolyte Impact > Specific GWP > Value : float or int, optional
-		Mass of CO2 equivalent per mass of electrolyte produced
-	Electrolyte Impact > Energy intensity > Value : float or int, optional
-		Energy consumed per mass of electrolyte produced
-	Electrolyte Impact > Specific toxicity > Value : float or int, optional
-		Toxicity in Comparative Toxic Unit per mass of electrolyte produced
-	Electrolyte Impact > Specific resource use > Value : float or int, optional
-		Resource use per mass of electrolyte produced
-
-	Returns
-	-------
-	Battery > Number of cell stacks > Value : float
-		Number of cell stacks to provide the required power
-	Battery > Initial amount of electrolyte > Value : float
-		Mass of electrolyte present in the battery upon startup
-	Battery > Yearly amount of replacement electrolyte > Value : float
-		Mass of electrolyte needed during each operation year to maintain capacity 
-	Battery > Total amount of electrolyte > Value : float
-		Mass of electrolyte needed during the entire battery lifetime
-	Electrolyte Impact > Total GWP > Value : float, optional
-		GWP associated to the electolyte amount used during the entire battery lifetime	
-	Electrolyte Impact > Total energy > Value : float, optional
-		Energy consumption associated to the electolyte amount used during the entire battery lifetime
-	Electrolyte Impact > Total toxicity > Value : float, optional
-		Toxicity associated to the electolyte amount used during the entire battery lifetime
-	Electrolyte Impact > Total resource use > Value : float, optional
-		Resource use associated to the electolyte amount used during the entire battery lifetime
-				
 	'''
 	def __init__(self, dcf, print_info, run = True):
 		self._set_up(dcf)
@@ -140,7 +97,7 @@ class RFB_Plugin:
 						"bounds": (0, None),
 					},
 					"Unit": {
-						"dimension": "mass/mass", # I didn't make it dimensionless because it'S a typical case where at some point we might want to have a matrix operation where this value, and the next ones, are multiplies by the mass of product
+						"dimension": "mass/mass", # I didn't make it dimensionless because it's a typical case where at some point we might want to have a matrix operation where this value, and the next ones, are multiplies by the mass of product
 					},
 					"optional": True,						
 					"description": "Mass of CO2 equivalent per mass of electrolyte produced."
