@@ -144,7 +144,7 @@ def calculate_ideal_mixture_property(
 
     if composition_basis == 'mass':
         mass = amount
-    else:
+    else: # all the "specific_property" variables we calculate are mass-specific
         mass, _ = substance_to_mass(amount, species_data)
 
     total = 0
@@ -181,7 +181,7 @@ def calculate_wilke_mixture_property(
     if composition_basis == 'molar':
         # as a safety net, ensure that the composition that is passed is a fraction, not an extensive amount
         mol_fraction = amount_to_fraction(composition)
-    else:
+    else: # Wilke fundamentally requires molar fractions
         _, mol_fraction = mass_to_substance(composition, species_data)
 
     # Calculation of individual species property:
@@ -241,7 +241,7 @@ def calculate_Arrhenius_mixture_property(
     if composition_basis == 'molar':
         # as a safety net, ensure that the composition that is passed is a fraction, not an extensive amount
         mol_fraction = amount_to_fraction(composition)
-    else:
+    else: # Arrhenius fundamentally requires molar fractions
         _, mol_fraction = mass_to_substance(composition, species_data)
 
     # Calculation of individual species property:
