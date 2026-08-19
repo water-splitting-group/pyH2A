@@ -95,23 +95,23 @@ def test_wind_plugin(case):
         abs=tolerance
     )
 
-    assert plugin.total_electric_energy_generation_yearly_data[1].unit["J"][-12:] == pytest.approx(
-        expected["last_half_day_available_energy"].unit["J"],
+    assert plugin.total_electric_energy_generation_yearly_data[1].unit["kWh"][-12:] == pytest.approx(
+        expected["last_half_day_available_energy"].unit["kWh"],
         abs=tolerance
     )
 
-    assert plugin.wind_electric_energy_generation_yearly_data[1].unit["J"][0:24] == pytest.approx(
-        expected["first_day_wind_energy"].unit["J"],
+    assert plugin.wind_electric_energy_generation_yearly_data[1].unit["kWh"][0:24] == pytest.approx(
+        expected["first_day_wind_energy"].unit["kWh"],
         abs=tolerance
     )    
 
-    assert plugin.wind_energy_generation_yearly_array.unit["J"] == pytest.approx(
-        expected["wind_energy_generation_yearly_array"].unit["J"],
+    assert plugin.wind_energy_generation_yearly_array.unit["kWh"] == pytest.approx(
+        expected["wind_energy_generation_yearly_array"].unit["kWh"],
         abs=tolerance
     )  
 
-    assert plugin.total_energy_generation_yearly_array.unit["J"] == pytest.approx(
-        expected["total_energy_generation_yearly_array"].unit["J"],
+    assert plugin.total_energy_generation_yearly_array.unit["kWh"] == pytest.approx(
+        expected["total_energy_generation_yearly_array"].unit["kWh"],
         abs=tolerance
     )     
 
