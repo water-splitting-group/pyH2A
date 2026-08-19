@@ -1,6 +1,6 @@
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 from pyH2A.Utilities.Physical_Properties.equations.pure_species_properties_calculation import calc_volume, calc_enthalpy, calc_heat_capacity
-from pyH2A.Utilities.Physical_Properties.equations.mixture_properties_calculation import calculate_mixture_property, substance_to_mass, mass_to_substance
+from pyH2A.Utilities.Physical_Properties.equations.mixture_properties_calculation import calculate_ideal_mixture_property, substance_to_mass, mass_to_substance
 from pyH2A.Utilities.Physical_Properties.equations.water_saturation import calc_water_saturation_pressure
 from pyH2A.Utilities.Physical_Properties.data.hydrogen import HYDROGEN
 from pyH2A.Utilities.Physical_Properties.data.oxygen import OXYGEN
@@ -109,7 +109,7 @@ class Physical_properties:
             Volume of the specified amount of mixture under the specified temperature and pressure
         '''
 
-        V_total = calculate_mixture_property(
+        V_total = calculate_ideal_mixture_property(
             T,
             P,
             amount,
@@ -150,7 +150,7 @@ class Physical_properties:
             Enthalpy of the specified amount of mixture under the specified temperature and pressure          
         '''
 
-        H_total = calculate_mixture_property(
+        H_total = calculate_ideal_mixture_property(
             T,
             P,
             amount,
@@ -191,7 +191,7 @@ class Physical_properties:
             Constant pressure heat capacity of the specified amount of mixture under the specified temperature and pressure            
         '''
 
-        Cp_total = calculate_mixture_property(
+        Cp_total = calculate_ideal_mixture_property(
             T,
             P,
             amount,
