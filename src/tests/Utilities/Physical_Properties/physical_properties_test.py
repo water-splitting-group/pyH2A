@@ -33,7 +33,7 @@ from tests.Utilities.check_dicts_for_testing import check_dicts
                 "enthalpy": Quantity(-3527830.3799919076, 'J'),           
                 "cp": Quantity(2285.9011465963235, 'J / delta_K'),                 
                 "volume": Quantity(2.0728531423410006, 'm3'),  
-                "viscosity": Quantity(1.6755516542671376e-5, 'Pa*s'),           
+                "viscosity": Quantity(1.6648980501537642e-5, 'Pa*s'),           
             },
         },
         {
@@ -62,7 +62,7 @@ from tests.Utilities.check_dicts_for_testing import check_dicts
                 "enthalpy": Quantity(-46534.9815012528, 'J'),    
                 "cp": Quantity(30.152915000642132, 'J / delta_K'),  
                 "volume": Quantity(0.027342636722606124, 'm3'),   
-                "viscosity": Quantity(1.6755516634268702e-5, 'Pa*s'),                
+                "viscosity": Quantity(1.6648980598729204e-05, 'Pa*s'),                
             },
         },   
     ],
