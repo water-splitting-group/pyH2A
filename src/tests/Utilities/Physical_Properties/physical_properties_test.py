@@ -32,7 +32,8 @@ from tests.Utilities.check_dicts_for_testing import check_dicts
                 },         
                 "enthalpy": Quantity(-3527830.3799919076, 'J'),           
                 "cp": Quantity(2285.9011465963235, 'J / delta_K'),                 
-                "volume": Quantity(2.0728531423410006, 'm3'),             
+                "volume": Quantity(2.0728531423410006, 'm3'),  
+                "viscosity": Quantity(1.6755516542671376e-5, 'Pa*s'),           
             },
         },
         {
@@ -61,9 +62,9 @@ from tests.Utilities.check_dicts_for_testing import check_dicts
                 "enthalpy": Quantity(-46534.9815012528, 'J'),    
                 "cp": Quantity(30.152915000642132, 'J / delta_K'),  
                 "volume": Quantity(0.027342636722606124, 'm3'),   
-                
+                "viscosity": Quantity(1.6755516634268702e-5, 'Pa*s'),                
             },
-        },
+        },   
     ],
     ids=[
         "Mass basis",
@@ -117,9 +118,18 @@ def test_physical_properties(case):
         composition_basis=inp["composition_basis"],
     )
 
+    mu = PP.Viscosity(
+        T,
+        P,
+        amount,
+        phase=inp["phase"],
+        composition_basis=inp["composition_basis"],
+    )    
+
     obtained["enthalpy"] = H
     obtained["cp"] = Cp
     obtained["volume"] = V
+    obtained["viscosity"] = mu
 
     check_dicts(obtained, case["expected"])
 
@@ -162,12 +172,13 @@ def test_water_saturation_pressure(case):
             },
             "expected": {
                 "volume": Quantity(1.8321969454242848e1, 'liter'),
+                "viscosity": Quantity(4.624267257083149e-4, 'Pa*s')
             },
         },
     ],
     ids=["Pure liquid water"],
 )
-def test_liquid_water_volume(case):
+def test_liquid_water(case):
     """Check liquid water volume."""
 
     inp = case["input"]
@@ -179,7 +190,14 @@ def test_liquid_water_volume(case):
             inp["amount"],
             phase=inp["phase"],
             composition_basis=inp["composition_basis"],
-        )
+        ), 
+        "viscosity": PP.Viscosity(
+            inp["temperature"],
+            inp["pressure"],
+            inp["amount"],
+            phase=inp["phase"],
+            composition_basis=inp["composition_basis"],
+        )        
     }
 
     check_dicts(obtained, case["expected"])
