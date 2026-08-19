@@ -248,23 +248,31 @@ def import_hourly_data(file_name):
 	``@lru_cache`` is used for fast repeated reads
 	'''
 
-	data = np.genfromtxt(file_import(file_name, mode = 'r'), 
-						  delimiter = ',', skip_header = 17, 
-						  skip_footer = 9, converters = {0: converter_function})
+	file_read = file_import(file_name, mode='r')
 
 	strings = ['Latitude (decimal degrees)', 'Longitude (decimal degrees)']
 	location = {}
 
-	file_read = file_import(file_name, mode = 'r')
 	for row_counter, line in enumerate(file_read):
+
+		if line.startswith("time(UTC)"):
+			skip_header = row_counter + 1
+			break
 
 		split = line.split(':')
 
 		if split[0] in strings:
-			location[split[0]] = float(split[1].strip(' '))
-		else:
-			break
+			location[split[0]] = float(split[1].strip())
+
 	file_read.close()
+
+	data = np.genfromtxt(
+		file_import(file_name, mode='r'),
+		delimiter=',',
+		skip_header=skip_header,
+		skip_footer=9,
+		converters={0: converter_function}
+	)
 
 	data_dict = {'Time': Quantity(data[:,0], '-'), 
 				 'Temperature': Quantity(data[:,1], 'degC'), 
