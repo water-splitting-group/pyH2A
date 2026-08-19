@@ -1,4 +1,5 @@
 import math
+import re
 from pathlib import PurePath
 from pathlib import Path
 import matplotlib.pyplot as plt
@@ -8,9 +9,16 @@ from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 import numpy as np
 from pyH2A.Utilities.input_modification import file_import
 
+_UNESCAPED_DOLLAR = re.compile(r'(?<!\\)\$')
+
 def make_bold(string):
 	'''Convert provided string to a string which is formatted to be bold.
-	"%" signs cannot be rendered bold with this approach and are hence returned normal'''
+	"%" signs cannot be rendered bold with this approach and are hence returned normal.
+	Any unescaped "$" in the input is escaped before wrapping in mathtext bold markup,
+	so a literal "$" already present in the text (e.g. a parameter name like
+	"PV CAPEX ($/kW)") doesn't throw off the even/odd "$" count matplotlib's mathtext
+	parser relies on to detect math regions (see matplotlib.cbook.is_math_text). Already
+	escaped "\\$" sequences (the existing convention in some input files) are left as is.'''
 
 	if isinstance(string, str):
 		string = string.split(' ')
@@ -20,6 +28,7 @@ def make_bold(string):
 	output = ''
 
 	for word in string:
+		word = _UNESCAPED_DOLLAR.sub(r'\\$', word)
 		if '%' in word:
 			output += r'$\bf{' + word[:-1] + '}$' + word[-1] + ' '
 		else:
