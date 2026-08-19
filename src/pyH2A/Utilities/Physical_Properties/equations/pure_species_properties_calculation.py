@@ -133,7 +133,8 @@ def evaluate_polynomial_derivative(coefficients, T):
 
 def evaluate_sutherland(coefficients, T):
     '''
-    Uses Sutherland correlation to assess physical properties
+    Uses Sutherland correlation to assess physical properties.
+    This form is usual for gas viscosity and for thermal conductivity
     '''
 
     value = (coefficients['Reference value'].base_value
