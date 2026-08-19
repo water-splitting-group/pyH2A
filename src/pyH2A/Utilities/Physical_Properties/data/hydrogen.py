@@ -14,5 +14,9 @@ HYDROGEN = SpeciesData(
     vapour_enthalpy_coefficients = np.array([-4266.5e3, 14.31e3]),
     liquid_enthalpy_coefficients = np.array([]), 
     solid_enthalpy_coefficients =  np.array([]),      
-    combustion_enthalpy = Quantity(142.5e6, 'J/kg')    
+    combustion_enthalpy = Quantity(142.5e6, 'J/kg'), 
+    gas_viscosity_coefficients = {'Reference value': Quantity(0.884e-5, 'Pa*s'), 
+                                  'Reference temperature': Quantity(293.15, 'K'),
+                                  'Sutherland constant': Quantity(72, 'K') }, 
+    liquid_viscosity_coefficients = np.array([]) 
 )
