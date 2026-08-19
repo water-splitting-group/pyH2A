@@ -103,30 +103,30 @@ def calc_viscosity(species_data, T, P, phase):
 
 # Generic form of the equations that are used for properties calculation
 
-def evaluate_polynomial(coefficients, T):
+def evaluate_polynomial(coefficients, x):
     """
     Evaluates a polynomial:
-        a0 + a1*T + a2*T² + ...
+        a0 + a1*x + a2*x² + ...
     """
 
     value = 0.0
 
     for i in range(len(coefficients)):
-        value += coefficients[i] * T**i
+        value += coefficients[i] * x**i
 
     return value
 
 
-def evaluate_polynomial_derivative(coefficients, T):
+def evaluate_polynomial_derivative(coefficients, x):
     """
     Evaluates the derivative:
-        a1 + 2*a2*T + 3*a3*T² + ...
+        a1 + 2*a2*x + 3*a3*x² + ...
     """
 
     value = 0.0
 
     for i in range(1, len(coefficients)):
-        value += i * coefficients[i] * T**(i-1)
+        value += i * coefficients[i] * x**(i-1)
 
     return value
 
