@@ -85,7 +85,7 @@ def calc_viscosity(species_data, T, P, phase):
     Calculates the viscosity of a pure gas using Sutherland's equation, or the viscosity of liquid water using a polynomial interpolation of experimental data
     '''
     if phase == 'V':
-        viscosity = evaluate_sutherland(species_data.gas_viscosity_coefficients, T)
+        viscosity = evaluate_sutherland(species_data.gas_viscosity_coefficients, T.unit['K'])
 
     elif phase == 'L':
         coefficients = species_data.liquid_viscosity_coefficients
@@ -139,11 +139,11 @@ def evaluate_sutherland(coefficients, T):
 
     value = (coefficients['Reference value'].base_value
              *
-             (T.unit['K']/coefficients['Reference temperature'].unit['K'])**1.5
+             (T/coefficients['Reference temperature'].unit['K'])**1.5
              *
             (coefficients['Reference temperature'].unit['K'] + coefficients['Sutherland constant'].unit['K'])
             /
-            (T.unit['K'] + coefficients['Sutherland constant'].unit['K'])
+            (T + coefficients['Sutherland constant'].unit['K'])
              )
     
     return value
