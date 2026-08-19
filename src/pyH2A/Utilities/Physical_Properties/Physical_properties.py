@@ -1,6 +1,6 @@
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
-from pyH2A.Utilities.Physical_Properties.equations.pure_species_properties_calculation import calc_volume, calc_enthalpy, calc_heat_capacity
-from pyH2A.Utilities.Physical_Properties.equations.mixture_properties_calculation import calculate_ideal_mixture_property, substance_to_mass, mass_to_substance
+from pyH2A.Utilities.Physical_Properties.equations.pure_species_properties_calculation import calc_volume, calc_enthalpy, calc_heat_capacity, calc_viscosity
+from pyH2A.Utilities.Physical_Properties.equations.mixture_properties_calculation import calculate_ideal_mixture_property, calculate_wilke_mixture_property, calculate_Arrhenius_mixture_property, substance_to_mass, mass_to_substance
 from pyH2A.Utilities.Physical_Properties.equations.water_saturation import calc_water_saturation_pressure
 from pyH2A.Utilities.Physical_Properties.data.hydrogen import HYDROGEN
 from pyH2A.Utilities.Physical_Properties.data.oxygen import OXYGEN
@@ -224,3 +224,56 @@ class Physical_properties:
         Psat = calc_water_saturation_pressure(T)  
 
         return Psat
+
+
+    # Viscosity of a gas mixture or pure liquid water 
+    @staticmethod
+    def Viscosity(T, P, composition, phase='V', composition_basis='mass'):
+        '''
+        Calculates the saturation pressure of pure water 
+
+        Parameters
+        ----------
+        T : float 
+            Temperature.
+        P : float 
+            Pressure.
+        amount : float 
+            Amount of mixture, specified in terms of mass or substance depending on the composition basis.
+        phase : str
+            S, L or V 
+        composition_basis : str
+            mass or molar.
+
+        Returns
+        -------
+        Viscosity: float 
+            Viscosity of the gas mixture or pure water 
+        '''    
+
+        if phase =='V':
+            Viscosity = calculate_wilke_mixture_property(
+                T,
+                P,
+                composition,
+                phase,            
+                composition_basis,
+                Physical_properties.species_data,
+                calc_viscosity
+            )
+
+        elif phase == 'L':
+            Viscosity = calculate_Arrhenius_mixture_property( # valid for non-polar mixtures only
+                T,
+                P,
+                composition,
+                phase,            
+                composition_basis,
+                Physical_properties.species_data,
+                calc_viscosity
+            )
+
+        else:
+            raise ValueError(f"{phase} phase not supported for viscosity calculation")
+
+        return Quantity(Viscosity, 'Pa * s')

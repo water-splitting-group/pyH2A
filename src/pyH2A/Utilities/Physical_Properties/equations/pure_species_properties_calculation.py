@@ -19,7 +19,7 @@ def calc_enthalpy(species_data, T, P, phase):
 
 
     if len(coefficients) == 0:
-        raise ValueError(f"{phase} phase not supported")
+        raise ValueError(f"{phase} phase not supported for enthalpy calculation")
 
 
     h = evaluate_polynomial(coefficients, T.unit['K'])
@@ -45,7 +45,7 @@ def calc_heat_capacity(species_data, T, P, phase):
 
 
     if len(coefficients) == 0:
-        raise ValueError(f"{phase} phase not supported")
+        raise ValueError(f"{phase} phase not supported for heat capacity calculation")
 
     cp = evaluate_polynomial_derivative(coefficients, T.unit['K'])
 
@@ -65,7 +65,7 @@ def calc_volume(species_data, T, P, phase):
         coefficients = species_data.liquid_volume_coefficients
 
         if len(coefficients) == 0:
-            raise ValueError(f"{phase} phase not supported")
+            raise ValueError(f"{phase} phase not supported for volume calculation")
 
         v = evaluate_polynomial(coefficients, T.unit['degC'])
 
@@ -73,12 +73,35 @@ def calc_volume(species_data, T, P, phase):
         coefficients = species_data.solid_volume_coefficients
 
         if len(coefficients) == 0:
-            raise ValueError(f"{phase} phase not supported")
+            raise ValueError(f"{phase} phase not supported for volume calculation")
 
         v = evaluate_polynomial(coefficients, T.unit['degC'])
 
     return Quantity(v, 'm3/kg')
 
+
+def calc_viscosity(species_data, T, P, phase):
+    '''
+    Calculates the viscosity of a pure gas using Sutherland's equation, or the viscosity of liquid water using a polynomial interpolation of experimental data
+    '''
+    if phase == 'V':
+        viscosity = evaluate_sutherland(species_data.gas_viscosity_coefficients, T)
+
+    elif phase == 'L':
+        coefficients = species_data.liquid_viscosity_coefficients
+
+        if len(coefficients) == 0:
+            raise ValueError(f"{phase} phase not supported for viscosity calculation")
+
+        viscosity = evaluate_polynomial(coefficients, T.unit['K'])
+
+    else:
+        raise ValueError(f"{phase} phase not supported for viscosity calculation")
+
+    return Quantity(viscosity, 'Pa*s')
+
+
+# Generic form of the equations that are used for properties calculation
 
 def evaluate_polynomial(coefficients, T):
     """
@@ -105,4 +128,21 @@ def evaluate_polynomial_derivative(coefficients, T):
     for i in range(1, len(coefficients)):
         value += i * coefficients[i] * T**(i-1)
 
+    return value
+
+
+def evaluate_sutherland(coefficients, T):
+    '''
+    Uses Sutherland correlation to assess physical properties
+    '''
+
+    value = (coefficients['Reference value'].base_value
+             *
+             (T.unit['K']/coefficients['Reference temperature'].unit['K'])**1.5
+             *
+            (coefficients['Reference temperature'].unit['K'] + coefficients['Sutherland constant'].unit['K'])
+            /
+            (T.unit['K'] + coefficients['Sutherland constant'].unit['K'])
+             )
+    
     return value
