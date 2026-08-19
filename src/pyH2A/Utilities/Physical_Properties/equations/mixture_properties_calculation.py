@@ -178,11 +178,9 @@ def calculate_wilke_mixture_property(
     The calculated property being intensive, the composition must be a mass fraction or a molar fraction, not a total amount
     '''
 
-    # as a safety net, ensure that the composition that is passed is a fraction, not an extensive amount
-    composition = amount_to_fraction(composition)
-
     if composition_basis == 'molar':
-        mol_fraction = composition
+        # as a safety net, ensure that the composition that is passed is a fraction, not an extensive amount
+        mol_fraction = amount_to_fraction(composition)
     else:
         _, mol_fraction = mass_to_substance(composition, species_data)
 
@@ -240,11 +238,9 @@ def calculate_Arrhenius_mixture_property(
     The calculated property being intensive, the composition must be a mass fraction or a molar fraction, not a total amount
     '''
 
-    # as a safety net, ensure that the composition that is passed is a fraction, not an extensive amount
-    composition = amount_to_fraction(composition)
-
     if composition_basis == 'molar':
-        mol_fraction = composition
+        # as a safety net, ensure that the composition that is passed is a fraction, not an extensive amount
+        mol_fraction = amount_to_fraction(composition)
     else:
         _, mol_fraction = mass_to_substance(composition, species_data)
 
