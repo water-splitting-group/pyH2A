@@ -100,7 +100,7 @@ def mass_to_substance(mass_amounts, species_data):
     return molar_amount, molar_fraction
 
 
-def calculate_mixture_property(
+def calculate_ideal_mixture_property(
         T,
         P,        
         amount,
@@ -110,7 +110,8 @@ def calculate_mixture_property(
         property_function):
     
     '''
-    Calls the properties function of each individual species and calculates the properties of an ideal mixture
+    Calls the properties function of each individual species and calculates the properties of a mixture 
+    assuming the total the total quantity is the sum of the individual species contributions (ideal mixture)
     '''
 
     if composition_basis == 'mass':
