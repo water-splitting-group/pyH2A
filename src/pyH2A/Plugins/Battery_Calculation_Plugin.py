@@ -301,7 +301,7 @@ class Battery_Calculation_Plugin:
         else:
             battery_ageing_factor_calendar = np.ones_like(lower_bound_SOE_J)
 
-        # The capacity upper and lower bounds are rpoprtional to the (aged) full capacity
+        # The capacity upper and lower bounds are proprtional to the (aged) full capacity
         lower_bound_SOE_J = (battery_ageing_factor_calendar 
                              * 
                              self.input_dict_resolved['Battery']['Design capacity']['Value'].unit['J'] 
@@ -331,8 +331,8 @@ class Battery_Calculation_Plugin:
         state_of_energy_J_full_array,
         hourly_energy_deficit_J_full_array,
         hourly_energy_excess_J_full_array,
-        cumulated_energy_deficit_J_full_array,
-        cumulated_energy_excess_J_full_array, 
+        cumulated_energy_deficit_J,
+        cumulated_energy_excess_J, 
         cumulated_charge_J_full_array,
         cumulated_discharge_J_full_array
         ) = saturated_cumsum(
@@ -361,7 +361,7 @@ class Battery_Calculation_Plugin:
                                             for i, year in enumerate(operating_years_relative)
                                         }
         self.total_unstored_energy = Quantity(
-                                            cumulated_energy_excess_J_full_array
+                                            cumulated_energy_excess_J
                                             +
                                             np.sum(self.available_energy_due_to_power_curtailment.unit['J']),
                                             'J'
@@ -377,7 +377,7 @@ class Battery_Calculation_Plugin:
                                             for i, year in enumerate(operating_years_relative)
                                         }
         
-        self.total_unsatisfied_demand = Quantity(cumulated_energy_deficit_J_full_array
+        self.total_unsatisfied_demand = Quantity(cumulated_energy_deficit_J
                                                  +
                                                  np.sum(self.unsatisfied_demand_due_to_power_curtailment.unit['J']),
                                                  'J'
