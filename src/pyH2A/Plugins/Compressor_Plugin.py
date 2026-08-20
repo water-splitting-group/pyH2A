@@ -114,13 +114,13 @@ class Compressor_Plugin:
                     "optional": False,
                     "description": "Mixture inlet mass fraction of each component."
                 }, 
-                "Design mass flowrate": {
+                "Yearly mass flow": {
                     "Value": {
-                        "type": {int, float,},
+                        "type": {np.ndarray,},
                         "bounds": (0, None),
                     },
                     "Unit": {
-                        "dimension": "mass/time",
+                        "dimension": "mass",
                     },
                     "optional": False,
                     "description": "Mixture outlet mass flowrate, yearly averaged, excluding downtime."
@@ -162,7 +162,7 @@ class Compressor_Plugin:
                 "Yearly power requirement": {
                     "Value": {
                         "inserted_value": "yearly_shaft_energy",
-                        "type": {float,},
+                        "type": {np.ndarray,},
                         "dimension": "energy",
                     },
                     "optional": False,
@@ -260,13 +260,13 @@ def calculate_compression(dictionary, compressor_name = 'Compressor'):
                                 'W')
 
     yearly_shaft_energy = Quantity(
-        peak_shaft_power.unit['Wh_per_year']
-        *
-        dictionary['Technical Operating Parameters and Specifications']['Operating capacity factor']['Value'].unit['-']
-        * 
-        dictionary['Main Stream']['Design mass flowrate']['Value'].unit['kg/s']
-        /
-        dictionary['Main Stream']['Peak mass flowrate']['Value'].unit['kg/s'],
+                                peak_shaft_power.unit['Wh_per_year'] 
+                                *
+                                dictionary['Technical Operating Parameters and Specifications']['Operating capacity factor']['Value'].unit['-']
+                                * 
+                                dictionary['Main Stream']['Yearly mass flow']['Value'].unit['kg']
+                                /
+                                dictionary['Main Stream']['Peak mass flowrate']['Value'].unit['kg/year'],
                                 'Wh')
 
     return (outlet_temperature, 

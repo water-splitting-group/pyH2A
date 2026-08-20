@@ -89,6 +89,19 @@ class Photocatalytic_Plugin:
 		self.functional_unit = dcf.functional_unit
 
 		self.input_dict = {
+		    "Time": {
+		        "Years": {
+		            "Value": {
+		                "type": {dict,},
+		                "bounds": (None, None),
+		            },
+		            "Unit": {
+		                "dimension": "dimensionless",
+		            },
+		            "optional": False,
+		            "description": "Dictionary containing all time-related quantities."
+		        }, 
+		    },    			
 			"Technical Operating Parameters and Specifications": {
 				"Plant design capacity": {
 					"Value": {
@@ -453,14 +466,14 @@ class Photocatalytic_Plugin:
 				"optional": False,
 				"description": "Mixture outlet mass fraction."
 			},   
-			"Design mass flowrate": {
+			"Yearly mass flow": {
 				"Value": {
-					"inserted_value": "outlet_mass_flowrate",
-					"type": {float,},
-					"dimension": "mass/time",
+					"inserted_value": "yearly_mass_flow",
+					"type": {np.ndarray,},
+					"dimension": "mass",
 				},
 				"optional": False,
-				"description": "Mixture outlet mass flowrate, yearly averaged, excluding downtime."
+				"description": "Mixture outlet mass per year, excluding downtime (array of years)."
 			},  
 			"Peak mass flowrate": {
 				"Value": {
@@ -662,16 +675,19 @@ class Photocatalytic_Plugin:
 		_, self.outlet_mass_fraction = PP.Substance_to_mass(mol_fraction)
 
 
-		self.outlet_mass_flowrate = Quantity(self.input_dict_resolved['Technical Operating Parameters and Specifications']['Plant design capacity']['Value'].unit['kg/s']
+		self.yearly_mass_flow = Quantity(self.input_dict_resolved['Technical Operating Parameters and Specifications']['Plant design capacity']['Value'].unit['kg/year']
+								   		*	
+										self.input_dict_resolved['Time']['Years']['Value']['Operation years ones'].unit['-']
 									   / 
 									   self.outlet_mass_fraction['H2'].unit['-']
 									   ,
-									   'kg/s')
+									   'kg')
 		
 		Daily_irradiation_J_per_m2 = hourly_to_daily_power(self.input_dict_resolved['Solar Input']['Hourly']['Value'].unit['J/m2'])
 		Max_daily_irradiation_J_per_m2 = np.max(Daily_irradiation_J_per_m2)
 
-		self.peak_mass_flowrate = Quantity(self.outlet_mass_flowrate.unit['kg/s']
+		time_for_peak = Quantity(1., 's')
+		self.peak_mass_flowrate = Quantity(self.yearly_mass_flow.unit['kg'][0] * time_for_peak.unit['year'] 
 									 		*
 											Max_daily_irradiation_J_per_m2
 											/
