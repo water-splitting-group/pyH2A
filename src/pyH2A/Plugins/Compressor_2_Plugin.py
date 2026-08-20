@@ -122,7 +122,7 @@ class Compressor_2_Plugin:
                         "dimension": "mass",
                     },
                     "optional": False,
-                    "description": "Mixture outlet mass flowrate, yearly averaged, excluding downtime."
+                    "description": "Mixture inlet mass per year, excluding operating capacity factor (array of years)."
                 },    
                 "Peak mass flowrate": {
                     "Value": {

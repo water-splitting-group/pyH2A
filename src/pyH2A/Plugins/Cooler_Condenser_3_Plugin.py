@@ -141,7 +141,7 @@ class Cooler_Condenser_3_Plugin:
                         "dimension": "mass",
                     },
                     "optional": False,
-                    "description": "Mixture inlet mass per year (array of years)."
+                    "description": "Mixture inlet mass per year, excluding operating capacity factor (array of years)."
                 },  
                 "Peak mass flowrate": {
                     "Value": {
@@ -249,7 +249,7 @@ class Cooler_Condenser_3_Plugin:
                         "dimension": "mass",
                     },
                     "optional": False,
-                    "description": "Mixture outlet mass flowrate, at design capacity flowrate."
+                    "description": "Mixture outlet mass per year, excluding operating capacity factor (array of years).."
                 },  
                 "Peak mass flowrate": {
                     "Value": {
