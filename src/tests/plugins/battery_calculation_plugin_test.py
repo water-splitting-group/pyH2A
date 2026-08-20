@@ -100,13 +100,13 @@ class DummyDCF:
                     0, 0.002, 0.004, 
                     0.006, 0.008, 0.01
                     ]), 'MWh'),                    
-                "total_unstored_energy":Quantity(53977.26, 'MWh'),
+                "total_unstored_energy":Quantity(53976.51, 'MWh'),
                 "last_6h_hourly_unsatisfied_demand":Quantity(np.array([
                     16.262 , 16.265 , 16.268, 
                     16.271, 16.274, 16.277
                     ]), 'MWh'),                        
-                "total_unsatisfied_demand":Quantity(53978.76, 'MWh'),
-                "number_charge_cycles":Quantity(0.56, '-'),   
+                "total_unsatisfied_demand":Quantity(53978.16, 'MWh'),
+                "number_charge_cycles":Quantity(0.58, '-'),   
                 "number_modules": Quantity(6, '-')                
             },
         },

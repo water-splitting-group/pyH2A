@@ -4,7 +4,7 @@ from numba import njit
 @njit
 def saturated_cumsum(
         requested_variation,
-        lower_bound,
+        nominal_lower_bound,
         nominal_upper_bound,
         loss_per_cycle,
         initial_state,
@@ -18,7 +18,7 @@ def saturated_cumsum(
     ----------
     requested_variation : ndarray
         Variation that would be observed in the absence of curtailment and yield (e.g. available charging energy).
-    lower_bound : ndarray
+    nominal_lower_bound : ndarray
         Lower saturation limit.
     nominal_upper_bound : ndarray
         Upper saturation limit.
@@ -91,7 +91,7 @@ def saturated_cumsum(
             requested_decrease =  - requested_variation[i]
 
             # Amount available inside the storage
-            available_storage = current_state - lower_bound[i]
+            available_storage = current_state - nominal_lower_bound[i]*ageing_factor
 
             # Maximum amount that can be delivered
             max_deliverable = (
