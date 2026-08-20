@@ -34,6 +34,14 @@ class Photocatalytic_Plugin:
 		Calculated as: (1 + addtional land area) * baggie area.
 	Reactor Baggies > Lifetime > Value : float
 		Lifetime of reactor baggies in years before replacement is required.
+	Reactor Baggies > Material thickness top > Value : float
+		Thickness of baggie top material.
+	Reactor Baggies > Material thickness bottom > Value : float
+		Thickness of baggie bottom material.
+	Reactor Baggies > Material density > Value : float
+		Density of baggie material.
+	Financial Input Values > Plant life > Value : float
+		Plant operation time, used to calculate replacement frequency of consumable components.
 	Catalyst > Cost per unit of mass > Value : float
 		Cost per mass of catalyst.
 	Catalyst > Concentration > Value : float
@@ -75,6 +83,12 @@ class Photocatalytic_Plugin:
 		Number of individual baggies required for design H2 production capacity.
 	Water Volume > Volume > Value : float
 		Total water volume.
+	Reactor Baggies > Baggie material weight > Value : float
+		Total weight of material needed for baggie reactors, for LCA linkage.
+	Reactor Baggies > Total number of ports > Value : float
+		Total number of ports needed for baggie reactors, for LCA linkage.
+	Catalyst > Total amount of catalyst > Value : float
+		Total weight of catalyst needed over the operation time of the plant, for LCA linkage.
 	'''
 
 	def __init__(self, dcf, print_info, run = True):
@@ -98,6 +112,19 @@ class Photocatalytic_Plugin:
 					},
 					"optional": False,
 					"description": "Plant design capacity, in mass of hydrogen/time."
+				},
+			},
+			"Financial Input Values": {
+				"Plant life": {
+					"Value": {
+						"type": {int,float},
+						"bounds": (0, None),
+					},
+					"Unit": {
+						"dimension": "time",
+					},
+					"optional": False,
+					"description": "Plant operation time, used to calculate replacement frequency of consumable components (e.g. baggies, catalyst) for LCA linkage."
 				},
 			},
 			"Reactor Baggies": {
@@ -221,6 +248,39 @@ class Photocatalytic_Plugin:
 					},
 					"optional": False,
 					"description": "Lifetime of reactor baggies before replacement is required."
+				},
+				"Material thickness top": {
+					"Value": {
+						"type": {int,float},
+						"bounds": (0, None),
+					},
+					"Unit": {
+						"dimension": "length",
+					},
+					"optional": False,
+					"description": "Thickness of baggie top material, used for LCA material weight calculation."
+				},
+				"Material thickness bottom": {
+					"Value": {
+						"type": {int,float},
+						"bounds": (0, None),
+					},
+					"Unit": {
+						"dimension": "length",
+					},
+					"optional": False,
+					"description": "Thickness of baggie bottom material, used for LCA material weight calculation."
+				},
+				"Material density": {
+					"Value": {
+						"type": {int,float},
+						"bounds": (0, None),
+					},
+					"Unit": {
+						"dimension": "mass / volume",
+					},
+					"optional": False,
+					"description": "Density of baggie material, used for LCA material weight calculation."
 				},
 			},
 			"Catalyst": {
@@ -402,6 +462,24 @@ class Photocatalytic_Plugin:
 					"optional": False,
 					"description": "Number of individual baggies required for design H2 production capacity."
 				},
+				"Baggie material weight": {
+					"Value": {
+						"inserted_value": "total_material_weight",
+						"type": {int, float,},
+						"dimension": "mass",
+					},
+					"optional": False,
+					"description": "Total weight of material needed for baggie reactors."
+				},
+				"Total number of ports": {
+					"Value": {
+						"inserted_value": "total_amount_of_ports",
+						"type": {int, float,},
+						"dimension": "dimensionless",
+					},
+					"optional": False,
+					"description": "Total number of ports needed for baggie reactors."
+				},
 			},
 			"Water Volume": {
 				"Volume": {
@@ -414,6 +492,17 @@ class Photocatalytic_Plugin:
 					"description": "Total water volume"
 				},
 			},
+			"Catalyst": {
+				"Total amount of catalyst": {
+					"Value": {
+						"inserted_value": "total_catalyst_amount",
+						"type": {int, float,},
+						"dimension": "mass",
+					},
+					"optional": False,
+					"description": "Total weight of catalyst needed over the operation time of the plant"
+				},
+			},
 		}
 
 	def _run(self, dcf):
@@ -424,10 +513,11 @@ class Photocatalytic_Plugin:
 		
 		self.catalyst_lifetime = self.input_dict_resolved['Catalyst']['Lifetime']['Value']
 		self.baggie_lifetime = self.input_dict_resolved['Reactor Baggies']['Lifetime']['Value']
-		
+		self.plant_life = self.input_dict_resolved['Financial Input Values']['Plant life']['Value']
+
 		self.hydrogen_production()
-		self.baggie_cost()
-		self.catalyst_cost()
+		self.baggie_calculations()
+		self.catalyst_calculations()
 		self.land_area()
 		self.catalyst_activity()
 		
@@ -517,55 +607,94 @@ class Photocatalytic_Plugin:
 
 		self.catalyst_properties = catalyst_properties
 
-	def baggie_cost(self):
-		'''Calculation of cost per baggie, number of required baggies and total baggie cost.
+	def baggie_calculations(self):
+		'''Calculation of cost per baggie, number of required baggies, total baggie cost,
+		total baggie material weight and total number of ports (the latter two for LCA linkage).
 		'''
 
 		baggie = self.input_dict_resolved['Reactor Baggies']
 
-		material_cost = (self.baggie_area.unit['m2'] 
-						 * (baggie['Cost material top']['Value'].unit['USD/m2'] 
+		material_cost = (self.baggie_area.unit['m2']
+						 * (baggie['Cost material top']['Value'].unit['USD/m2']
 							+ baggie['Cost material bottom']['Value'].unit['USD/m2']))
-		
-		port_cost = (baggie['Number of ports per baggie']['Value'].unit['-'] 
+
+		port_cost = (baggie['Number of ports per baggie']['Value'].unit['-']
 					 * baggie['Cost of port']['Value'].unit['USD'])
 
-		cost_per_baggie = (baggie['Markup factor']['Value'].unit['-'] 
+		cost_per_baggie = (baggie['Markup factor']['Value'].unit['-']
 						   * (material_cost + port_cost + baggie['Other costs per baggie']['Value'].unit['USD']))
 
-		baggie_number = (self.input_dict_resolved['Technical Operating Parameters and Specifications']['Plant design capacity']['Value'].unit['kg/day'] 
+		baggie_number = (self.input_dict_resolved['Technical Operating Parameters and Specifications']['Plant design capacity']['Value'].unit['kg/day']
 						 / self.mass_rate_H2_per_baggie.unit['kg/day'])
 		baggie_number_rounded_up = np.ceil(baggie_number).astype(int)
-		
+
 		self.baggie_number = Quantity(baggie_number_rounded_up, '-')
 		self.baggies_cost = Quantity(self.baggie_number.unit['-'] * cost_per_baggie, 'USD')
 
-	def catalyst_cost(self):
-		'''Calculation of individual baggie volume, catalyst amount per baggie, total catalyst amount 
-		and total catalyst cost.
+		# LCA-linkage outputs below. These estimate a lifetime total as "amount present at one time x
+		# (plant_life / component_lifetime)". This is a DIFFERENT convention from the "Planned Replacement"
+		# outputs above, which report a per-event Cost + Frequency and leave recurrence over plant life to
+		# Replacement_Plugin.py downstream. This is intentional: these are parallel, LCA-specific totals,
+		# not a duplicate of the existing replacement-cost machinery.
+		material_volume_per_baggie = Quantity(self.baggie_area.unit['m2']
+											  * (baggie['Material thickness top']['Value'].unit['m']
+												 + baggie['Material thickness bottom']['Value'].unit['m']),
+									  'm3')
+
+		material_weight_per_baggie = Quantity(material_volume_per_baggie.unit['m3']
+											  * baggie['Material density']['Value'].unit['kg/m3'],
+									  'kg')
+
+		baggie_replacement_count = Quantity(self.plant_life.unit['year']
+												/ self.baggie_lifetime.unit['year'],
+										'-')
+
+		self.total_material_weight = Quantity(material_weight_per_baggie.unit['kg']
+											  * self.baggie_number.unit['-']
+											  * baggie_replacement_count.unit['-'],
+									  'kg')
+
+		self.total_amount_of_ports = Quantity(baggie['Number of ports per baggie']['Value'].unit['-']
+											  * self.baggie_number.unit['-']
+											  * baggie_replacement_count.unit['-'],
+									  '-')
+
+	def catalyst_calculations(self):
+		'''Calculation of individual baggie volume, catalyst amount per baggie, total catalyst amount,
+		total catalyst cost, and total catalyst amount needed over the plant operation time (for LCA linkage).
 		'''
 
 		baggie = self.input_dict_resolved['Reactor Baggies']
 
-		baggie_volume = (baggie['Length']['Value'].unit['m'] 
+		baggie_volume = (baggie['Length']['Value'].unit['m']
 						 * baggie['Width']['Value'].unit['m']
 						 * baggie['Filling height']['Value'].unit['m'])
 
-		self.total_volume = Quantity(baggie_volume 
-									 * self.baggie_number.unit['-'], 
+		self.total_volume = Quantity(baggie_volume
+									 * self.baggie_number.unit['-'],
 									 'm3')
-		
-		self.catalyst_amount_per_baggie = Quantity(baggie_volume 
-												   * self.input_dict_resolved['Catalyst']['Concentration']['Value'].unit['kg/m3'], 
+
+		self.catalyst_amount_per_baggie = Quantity(baggie_volume
+												   * self.input_dict_resolved['Catalyst']['Concentration']['Value'].unit['kg/m3'],
 												   'kg')
-		
-		self.catalyst_amount = Quantity(self.catalyst_amount_per_baggie.unit['kg'] 
-										* self.baggie_number.unit['-'], 
+
+		self.catalyst_amount = Quantity(self.catalyst_amount_per_baggie.unit['kg']
+										* self.baggie_number.unit['-'],
 										'kg')
-		
-		self.catalyst_cost = Quantity(self.catalyst_amount.unit['kg'] 
-									  * self.input_dict_resolved['Catalyst']['Cost per unit of mass']['Value'].unit['USD/kg'], 
+
+		self.catalyst_cost = Quantity(self.catalyst_amount.unit['kg']
+									  * self.input_dict_resolved['Catalyst']['Cost per unit of mass']['Value'].unit['USD/kg'],
 									  'USD')
+
+		# LCA-linkage output. Same "amount present x (plant_life / component_lifetime)" convention as
+		# total_material_weight/total_amount_of_ports in baggie_calculations() - see note there.
+		catalyst_replacement_count = Quantity(self.plant_life.unit['year']
+												  / self.catalyst_lifetime.unit['year'],
+										  '-')
+
+		self.total_catalyst_amount = Quantity(self.catalyst_amount.unit['kg']
+											  * catalyst_replacement_count.unit['-'],
+									  'kg')
 
 	def land_area(self):
 		'''Calculation of total required land area and solar collection area.

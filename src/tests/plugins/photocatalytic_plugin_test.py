@@ -30,15 +30,24 @@ class DummyDCF:
         sth,
         solar_input,
         hourly_solar,
+        material_thickness_top,
+        material_thickness_bottom,
+        material_density,
+        plant_life,
     ):
 
         self.functional_unit = resolve_functional_unit('kg')
         self.inp = {
             "Technical Operating Parameters and Specifications": {
                 "Plant design capacity": {
-                    "Value": design_capacity, 
+                    "Value": design_capacity,
                     "Unit":"kg/day"
                 },
+            },
+            "Financial Input Values": {
+                "Plant life": {
+                    "Value": plant_life,
+                    "Unit": "year"},
             },
             "Reactor Baggies": {
                 "Cost material top": {
@@ -72,8 +81,17 @@ class DummyDCF:
                     "Value": add_land, 
                     "Unit":"-"},
                 "Lifetime": {
-                    "Value": baggie_lifetime, 
+                    "Value": baggie_lifetime,
                     "Unit":"year"},
+                "Material thickness top": {
+                    "Value": material_thickness_top,
+                    "Unit":"m"},
+                "Material thickness bottom": {
+                    "Value": material_thickness_bottom,
+                    "Unit":"m"},
+                "Material density": {
+                    "Value": material_density,
+                    "Unit":"kg/m3"},
             },
             "Catalyst": {
                 "Cost per unit of mass": {
@@ -164,6 +182,10 @@ class DummyDCF:
                         0,
                     ]
                 ),
+                "material_thickness_top": 0.001,
+                "material_thickness_bottom": 0.001,
+                "material_density": 950.0,
+                "plant_life": 20.0,
             },
             "expected": {
                 "total_land_area": Quantity(46105.020000000004,"m2"),
@@ -171,7 +193,10 @@ class DummyDCF:
                 "catalyst_cost": Quantity(2835458.73,"USD"),
                 "baggies_cost": Quantity(66834.53099999999,"USD"),
                 "baggie_number": Quantity(9,"-"),
-                "total_volume": Quantity(1773270.0,"liter")
+                "total_volume": Quantity(1773270.0,"liter"),
+                "total_material_weight": Quantity(269537.04,"kg"),
+                "total_amount_of_ports": Quantity(432.0,"-"),
+                "total_catalyst_amount": Quantity(37806.1164,"kg"),
             },
         },
     ],
@@ -215,6 +240,21 @@ def test_photocatalytic_plugin_optional_catalyst(case):
     )
 
     assert plugin.total_volume.unit["liter"] == pytest.approx(
-        expected["total_volume"].unit["liter"], 
+        expected["total_volume"].unit["liter"],
+        abs=tolerance
+    )
+
+    assert plugin.total_material_weight.unit["kg"] == pytest.approx(
+        expected["total_material_weight"].unit["kg"],
+        abs=tolerance
+    )
+
+    assert plugin.total_amount_of_ports.unit["-"] == pytest.approx(
+        expected["total_amount_of_ports"].unit["-"],
+        abs=tolerance
+    )
+
+    assert plugin.total_catalyst_amount.unit["kg"] == pytest.approx(
+        expected["total_catalyst_amount"].unit["kg"],
         abs=tolerance
     )
