@@ -7,8 +7,8 @@ Solid volume value and coefficients for liquid volume polynomial established fro
 Coefficients for vapour enthalpy polynomials from NASA Glenn Coefficients for Calculating Thermodynamic Properties of Individual Species.
 Liquid water is assumed to have a constant heat capacity.
 Reference conditions: Standard formation enthalpy for liquid water at 298.15 K.
-Sutherland constants are used for vapour viscosity calculation, although it is known to be less accurate for polar molecules it is frequenbtly used as a first approximation,
-from Comsol documentation https://doc.comsol.com/6.3/doc/com.comsol.help.cfd/cfd_ug_fluidflow_high_mach.08.43.html
+Sutherland constants are used for vapour viscosity calculation (although it is known to be less accurate for polar molecules, it is frequently used as a first approximation),
+they are obtained from Comsol documentation https://doc.comsol.com/6.3/doc/com.comsol.help.cfd/cfd_ug_fluidflow_high_mach.08.43.html
 Coefficients for liquid water viscosity obtained by experimental data fitting: https://holzmann-cfd.com/community/blog-and-tools/cae-blog/thermophysical-properties-water
 '''
 
