@@ -171,9 +171,9 @@ def saturated_cumsum_calendar_loss(
 @njit
 def saturated_cumsum_cycle_loss(
         requested_variation,
-        lower_bound,
+        nominal_lower_bound,
         nominal_upper_bound,
-        ageing_per_cycle,
+        loss_per_cycle,
         initial_state,
         positive_variation_yield=1.0,
         negative_variation_yield=1.0,
@@ -185,7 +185,7 @@ def saturated_cumsum_cycle_loss(
     ----------
     requested_variation : ndarray
         Variation that would be observed in the absence of curtailment and yield (e.g. available charging energy).
-    lower_bound : ndarray
+    nominal_lower_bound : ndarray
         Lower saturation limit.
     upper_bound : ndarray
         Upper saturation limit.
@@ -254,7 +254,7 @@ def saturated_cumsum_cycle_loss(
             requested_decrease =  - requested_variation[i]
 
             # Amount available inside the storage
-            available_storage = current_state - lower_bound[i]
+            available_storage = current_state - nominal_lower_bound[i]*ageing_factor
 
             # Maximum amount that can be delivered
             max_deliverable = (
@@ -272,7 +272,7 @@ def saturated_cumsum_cycle_loss(
             cumulated_deficit += instant_deficit[i]
 
         # calculation of the new capacity factor (relative to the initial one)
-        ageing_factor -= (cumulated_charge[i] + cumulated_discharge[i])*ageing_per_cycle/(2*nominal_upper_bound[0])
+        ageing_factor -= (cumulated_charge[i] + cumulated_discharge[i])*loss_per_cycle/(2*nominal_upper_bound[0])
 
         state[i] = current_state
 

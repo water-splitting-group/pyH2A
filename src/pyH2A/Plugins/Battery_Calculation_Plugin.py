@@ -294,16 +294,21 @@ class Battery_Calculation_Plugin:
     def calculate_capacity_curtailment(self):
 
         operating_years_relative = self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']
-        # The lower bound of the state of energy is assumed to be constant (fraction of the initial capacity), but the curtailing function expects an array
-        lower_bound_SOE_J = np.full(self.curtailed_charging_power.unit['J'].shape, 
-                                  self.input_dict_resolved['Battery']['Design capacity']['Value'].unit['J'] * self.input_dict_resolved['Battery']['Lowest discharge level']['Value'].unit['-']) 
-
         # The battery capacity evolves with years
         if 'Capacity loss per year' in self.input_dict_resolved['Battery']:
             battery_yearly_ageing_factor_calendar = 1-self.input_dict_resolved['Battery']['Capacity loss per year']['Value'].unit['-']
             battery_ageing_factor_calendar = np.repeat(battery_yearly_ageing_factor_calendar ** operating_years_relative, 8760) 
         else:
             battery_ageing_factor_calendar = np.ones_like(lower_bound_SOE_J)
+
+        # The capacity upper and lower bounds are rpoprtional to the (aged) full capacity
+        lower_bound_SOE_J = (battery_ageing_factor_calendar 
+                             * 
+                             self.input_dict_resolved['Battery']['Design capacity']['Value'].unit['J'] 
+                             * 
+                             self.input_dict_resolved['Battery']['Lowest discharge level']['Value'].unit['-'])
+
+
         upper_bound_SOE_J = (battery_ageing_factor_calendar 
                              * 
                              self.input_dict_resolved['Battery']['Design capacity']['Value'].unit['J'] 
@@ -332,9 +337,9 @@ class Battery_Calculation_Plugin:
         cumulated_discharge_J_full_array
         ) = saturated_cumsum_cycle_loss(
             requested_variation = self.curtailed_charging_power.unit['J'] - self.curtailed_discharging_power.unit['J'],                          
-            lower_bound = lower_bound_SOE_J,                     
+            nominal_lower_bound = lower_bound_SOE_J,                     
             nominal_upper_bound = upper_bound_SOE_J, # The upper bound varies with calendar year
-            ageing_per_cycle = ageing_per_cycle, # complementary ageing due to number of charges-discharges
+            loss_per_cycle = ageing_per_cycle, # complementary ageing due to number of charges-discharges
             initial_state = upper_bound_SOE_J[0], # assuming the battery is initially fully charged
             positive_variation_yield = self.input_dict_resolved['Battery']['Round trip efficiency']['Value'].unit['-'],
             negative_variation_yield = 1.
