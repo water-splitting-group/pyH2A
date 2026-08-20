@@ -645,18 +645,18 @@ class Photocatalytic_Plugin:
 											  * baggie['Material density']['Value'].unit['kg/m3'],
 									  'kg')
 
-		baggie_replacement_frequency = Quantity(self.plant_life.unit['year']
+		baggie_replacement_count = Quantity(self.plant_life.unit['year']
 												/ self.baggie_lifetime.unit['year'],
 										'-')
 
 		self.total_material_weight = Quantity(material_weight_per_baggie.unit['kg']
 											  * self.baggie_number.unit['-']
-											  * baggie_replacement_frequency.unit['-'],
+											  * baggie_replacement_count.unit['-'],
 									  'kg')
 
 		self.total_amount_of_ports = Quantity(baggie['Number of ports per baggie']['Value'].unit['-']
 											  * self.baggie_number.unit['-']
-											  * baggie_replacement_frequency.unit['-'],
+											  * baggie_replacement_count.unit['-'],
 									  '-')
 
 	def catalyst_calculations(self):
@@ -688,12 +688,12 @@ class Photocatalytic_Plugin:
 
 		# LCA-linkage output. Same "amount present x (plant_life / component_lifetime)" convention as
 		# total_material_weight/total_amount_of_ports in baggie_calculations() - see note there.
-		catalyst_replacement_frequency = Quantity(self.plant_life.unit['year']
+		catalyst_replacement_count = Quantity(self.plant_life.unit['year']
 												  / self.catalyst_lifetime.unit['year'],
 										  '-')
 
 		self.total_catalyst_amount = Quantity(self.catalyst_amount.unit['kg']
-											  * catalyst_replacement_frequency.unit['-'],
+											  * catalyst_replacement_count.unit['-'],
 									  'kg')
 
 	def land_area(self):
