@@ -1,0 +1,251 @@
+from pyH2A.Utilities.input_modification import dict_to_yearly_array_power_quantity
+from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
+from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+import numpy as np
+
+class Power_Management_Explicit_Battery_Plugin:
+    '''Management of electricity production and consumption.
+    
+    '''
+
+    def __init__(self, dcf, print_info, run = True):
+        self._set_up(dcf)
+        if run:
+            self._run(dcf)
+
+    def _set_up(self, dcf):
+
+        self.functional_unit = dcf.functional_unit
+            
+        self.input_dict = {
+            "Time": {
+                "Years": {
+                    "Value": {
+                        "type": {dict,},
+                        "bounds": (None, None),
+                    },
+                    "Unit": {
+                        "dimension": "dimensionless",
+                    },
+                    "optional": False,
+                    "description": "Dictionary containing all time-related quantities."
+                }, 
+            },        
+            "Power Generation": {
+                "Available energy (hourly)": {
+                    "Value": {
+                        "type": {dict,},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "energy",
+                    },
+                    "optional": False,
+                    "description": "Available energy on an hourly basis, as a dictionary of years. "
+                },
+                "Total yearly power generation": {
+                    "Value": {
+                        "type": {np.ndarray,},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "energy",
+                    },
+                    "optional": False,
+                    "description": "Yearly power generation of all production means (array)"
+                },                       
+            },
+            "Flexible Power Demand": {
+                "<...>": {
+                    "Value": {
+                        "type": {np.ndarray,float,int,},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "energy",
+                    },
+                    "optional": True,
+                    "description": "Power Demand values for each year. Can be provided for multiple consumers, "
+                                    "in which case they should be provided as separate entries under Flexible Power Demand."
+                                    "Only the flexible consumers (i.e. the ones whose consumption can take place at any moment) must be specified"
+                },
+            },   
+            "Power Demand": {
+                "Main consumer yearly consumption": {
+                    "Value": {
+                        "type": {np.ndarray,},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "energy",
+                    },
+                    "optional": False,
+                    "description": "Energy demand of the consumer over each operating year (array)."
+                },             
+                "Main consumer hourly unsatisfied demand": {
+                    "Value": {
+                        "type": {dict,},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "energy",
+                    },
+                    "optional": False,
+                    "description": "Unsatisfied demand of the main consumer. Dictionary of years"
+                },                
+            },                 
+            "Grid Electricity": {
+                "Cost": {
+                    "Value": {
+                        "type": {float, np.ndarray, int},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "currency / energy",
+                    },
+                    "optional": False,
+                    "description": "Cost of grid electricity. Can be provided as a single value "
+                                    "or as an array with values for each year. If not provided, "
+                                    "it is assumed that grid electricity is not used."
+                },
+            },
+        }
+
+        self.output_dict = {
+            "Power Generation": {
+                "Available energy (yearly)": {
+                    "Value": {
+                        "inserted_value": "remaining_available",
+                        "type": {np.ndarray,}, 
+                        "dimension": "energy",
+                    },
+                    "optional": False,
+                    "description": "Remaining available energy, yearly basis.",
+                },
+				"Production oversizing ratio": {
+					"Value": {
+						"inserted_value": "production_oversizing",
+						"type": {float,},
+						"dimension": "dimensionless",
+					},
+					"description": "Total energy produced divided by the total energy consumed.",
+					"optional": False,
+				},	                   
+            },
+            "Power Demand": {
+                "Total yearly consumption": {
+                    "Value": {
+                        "inserted_value": "total_energy_demand",
+                        "type": {np.ndarray,},
+                        "dimension": "energy",
+                    },
+                    "optional": False,
+                    "description": "Consumption from the main customer and the flexible customers, yearly basis.",
+                },
+            },            
+            "Grid Electricity": {
+                "Used grid electricity (yearly)": {
+                    "Value": {
+                        "inserted_value": "total_unfulfilled",
+                        "type": {np.ndarray,},
+                        "dimension": "energy",
+                    },
+                    "optional": False,
+                    "description": "Used grid electricity, yearly basis.",
+                },
+            },
+            "Other Variable Operating Cost - Grid Electricity": {
+                "Cost of grid electricity (yearly)": {
+                    "Value": {
+                        "inserted_value": "electricity_cost",
+                        "type": {np.ndarray,},
+                        "dimension": "currency",
+                    },
+                    "optional": False,
+                    "description": "Cost of grid electricity, yearly basis.",
+                },
+            },
+        }
+
+
+    def _run(self, dcf):    
+
+        self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Power_Management_Explicit_Battery_Plugin')  
+
+        self.calculate_consumers()
+        self.calculate_electricity_cost()
+
+        output_inserter_function(self.output_dict, self, dcf, 'Power_Management_Explicit_Battery_Plugin') 
+
+    def calculate_consumers(self):
+        '''
+        At this point the battery has already been simulated.
+        The main consumer (with non-flexible consumption) has already been supplied by direct renewable generation + battery as much as possible.
+
+        Therefore:
+        - the remaining deficit of the main consumer must be supplied from the grid.
+        - the remaining renewable excess may only be used by the secondary consumers, which are assumed to be flexible;
+        '''
+        available_energy_yearly = dict_to_yearly_array_power_quantity(self.input_dict_resolved['Power Generation']['Available energy (hourly)']['Value'])
+
+        main_unfulfilled_yearly = dict_to_yearly_array_power_quantity(self.input_dict_resolved['Power Demand']['Main consumer hourly unsatisfied demand']['Value'])
+           
+        if 'Flexible Power Demand' in self.input_dict_resolved:             
+            self.remaining_available, secondary_unfulfilled, secondary_consumption = allocate_power(self.input_dict_resolved['Flexible Power Demand'], 
+                                                                                                    available_energy_yearly, 
+                                                                                                    self.input_dict_resolved['Time']['Years']['Value']['Operation years ones'].unit['-'] )
+        else:
+            self.remaining_available = available_energy_yearly
+            secondary_unfulfilled = Quantity(np.zeros_like(self.remaining_available.unit['J']), 'J')
+            secondary_consumption = Quantity(0,'J')
+
+        self.total_energy_demand = Quantity(
+                                            secondary_consumption.unit['J'] 
+                                            + 
+                                            self.input_dict_resolved ['Power Demand']['Main consumer yearly consumption']['Value'].unit['J'], 
+                                            'J')
+
+        self.total_unfulfilled = Quantity(secondary_unfulfilled.unit['J'] + main_unfulfilled_yearly.unit['J'],'J')
+
+        self.production_oversizing = Quantity(
+                                        np.sum(self.input_dict_resolved['Power Generation']['Total yearly power generation']['Value'].unit['J'])
+                                        /
+                                        np.sum(self.total_energy_demand.unit['J'])
+                                        ,
+                                        '-')
+
+    def calculate_electricity_cost(self):
+        self.electricity_cost = Quantity(self.total_unfulfilled.unit['J']
+                                        * self.input_dict_resolved['Grid Electricity']['Cost']['Value'].unit['USD/J'], 
+                                'USD')
+
+    
+def allocate_power(consumption, available_power, operation_years_ones):
+    """
+    Allocate remaining renewable electricity to secondary consumers.
+    Any remaining demand is assumed to come from the grid.
+    """
+
+    remaining_available = available_power.unit['J'].copy()
+
+    unfulfilled = np.zeros_like(remaining_available)
+
+    yearly_demand = np.zeros_like(remaining_available)
+
+    for _, consumer in consumption.items():
+
+        # each consumer's consumption is allowed to be a scalar or an array, it is necessary to harmonize and make it all an array of the number of years whatever the input type
+
+        demand = consumer['Value'].unit['J'] * operation_years_ones
+
+        fulfilled = np.minimum(demand, remaining_available)
+
+        remaining_available -= fulfilled
+
+        unfulfilled += demand - fulfilled
+
+        yearly_demand += demand
+
+    return Quantity(remaining_available, 'J'), Quantity(unfulfilled, 'J'), Quantity(yearly_demand, 'J')
+
+

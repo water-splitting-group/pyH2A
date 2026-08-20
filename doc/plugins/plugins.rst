@@ -8,6 +8,7 @@ Plugins allow for modelling of different hydrogen production pathways. They proc
    :caption: Plugins
 
    Plugin_Guide
+   Battery_Calculation_Plugin
    Battery_Plugin
    Capital_Cost_Plugin
    Catalyst_Separation_Plugin
@@ -20,6 +21,7 @@ Plugins allow for modelling of different hydrogen production pathways. They proc
    Photocatalytic_Plugin
    Photovoltaic_Plugin
    Power_Management_Plugin
+   Power_Management_Explicit_Battery   
    Production_Plugin
    Replacement_Plugin
    Reverse_Osmosis_Plugin
