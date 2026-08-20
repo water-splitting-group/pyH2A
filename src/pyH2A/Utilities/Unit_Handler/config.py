@@ -129,7 +129,8 @@ DIMENSIONS = {
             "kg": 1.0,
             "mg": 1e-6,
             "g": 1e-3,
-            "ton": 1000.0  # Note: ton implies metric tonne here
+            "ton": 1000.0,  # Note: ton implies metric tonne here
+            "lb": 0.45359237
         }
     },
     "temperature_diff": {
