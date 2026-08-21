@@ -88,20 +88,7 @@ class Photocatalytic_Plugin:
 
 		self.functional_unit = dcf.functional_unit
 
-		self.input_dict = {
-		    "Time": {
-		        "Years": {
-		            "Value": {
-		                "type": {dict,},
-		                "bounds": (None, None),
-		            },
-		            "Unit": {
-		                "dimension": "dimensionless",
-		            },
-		            "optional": False,
-		            "description": "Dictionary containing all time-related quantities."
-		        }, 
-		    },    			
+		self.input_dict = { 			
 			"Technical Operating Parameters and Specifications": {
 				"Plant design capacity": {
 					"Value": {
@@ -114,6 +101,17 @@ class Photocatalytic_Plugin:
 					"optional": False,
 					"description": "Plant design capacity, in mass of hydrogen/time."
 				},
+				"Design output by year": {
+					"Value": {
+						"type": {np.ndarray},
+						"bounds": (0, None),
+					},
+					"Unit": {
+						"dimension": "mass",
+					},
+					"optional": False,
+					"description": "Yearly output, ignoring the capacity factor."
+				},				
 			},
 			"Reactor Baggies": {
 				"Cost material top": {
@@ -466,7 +464,7 @@ class Photocatalytic_Plugin:
 				"optional": False,
 				"description": "Mixture outlet mass fraction."
 			},   
-			"Yearly mass flow": {
+			"Design mass by year": {
 				"Value": {
 					"inserted_value": "yearly_mass_flow",
 					"type": {np.ndarray,},
@@ -675,9 +673,7 @@ class Photocatalytic_Plugin:
 		_, self.outlet_mass_fraction = PP.Substance_to_mass(mol_fraction)
 
 
-		self.yearly_mass_flow = Quantity(self.input_dict_resolved['Technical Operating Parameters and Specifications']['Plant design capacity']['Value'].unit['kg/year']
-								   		*	
-										self.input_dict_resolved['Time']['Years']['Value']['Operation years ones'].unit['-']
+		self.yearly_mass_flow = Quantity(self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output by year']['Value'].unit['kg']
 									   / 
 									   self.outlet_mass_fraction['H2'].unit['-']
 									   ,

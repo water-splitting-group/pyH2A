@@ -133,7 +133,7 @@ class Cooler_Condenser_Plugin:
                     "optional": False,
                     "description": "Mixture inlet mass fraction of each component."
                 }, 
-                "Yearly mass flow": {
+                "Design mass by year": {
                     "Value": {
                         "type": {np.ndarray,},
                         "bounds": (0, None),
@@ -243,7 +243,7 @@ class Cooler_Condenser_Plugin:
                     "optional": False,
                     "description": "Mixture outlet mass fraction."
                 },   
-                "Yearly mass flow": {
+                "Design mass by year": {
                     "Value": {
                         "inserted_value": "yearly_mass_flow",
                         "type": {np.ndarray,},
@@ -314,7 +314,7 @@ def outlet_stream_properties(dictionary, cooler_name = 'Cooler Condenser'):
     if inlet_mol_fraction['H2O'].unit['-'] * dictionary['Main Stream']['Pressure']['Value'].unit['Pa'] < psat.unit['Pa']: 
         # outlet fluid doesn't reach saturation, no condensation occurs, and the outlet composition is identical to the inlet one
         outlet_mass_fraction = dictionary['Main Stream']['Mass fraction']['Value']
-        yearly_mass_flow = dictionary['Main Stream']['Yearly mass flow']['Value']
+        yearly_mass_flow = dictionary['Main Stream']['Design mass by year']['Value']
         peak_mass_flowrate = dictionary['Main Stream']['Peak mass flowrate']['Value']
 
         peak_condensed_water_flowrate = Quantity(0, 'kg/s')
@@ -370,7 +370,7 @@ def outlet_stream_properties(dictionary, cooler_name = 'Cooler Condenser'):
 
         yearly_mass_flow = Quantity(peak_mass_flowrate.unit['kg/s'] 
                               * 
-                              dictionary['Main Stream']['Yearly mass flow']['Value'].unit['kg'] 
+                              dictionary['Main Stream']['Design mass by year']['Value'].unit['kg'] 
                               / 
                               dictionary['Main Stream']['Peak mass flowrate']['Value'].unit['kg/s'], 
                               'kg')
@@ -399,7 +399,7 @@ def outlet_stream_properties(dictionary, cooler_name = 'Cooler Condenser'):
     yearly_condensed_water_mass = Quantity(
         dictionary['Technical Operating Parameters and Specifications']['Operating capacity factor']['Value'].unit['-']
         *
-        dictionary['Main Stream']['Yearly mass flow']['Value'].unit['kg']
+        dictionary['Main Stream']['Design mass by year']['Value'].unit['kg']
         *
         peak_condensed_water_flowrate.unit['kg/s']
         /

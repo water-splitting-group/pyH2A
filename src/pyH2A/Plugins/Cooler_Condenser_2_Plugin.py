@@ -132,7 +132,7 @@ class Cooler_Condenser_2_Plugin:
                     "optional": False,
                     "description": "Mixture inlet mass fraction of each component."
                 }, 
-                "Yearly mass flow": {
+                "Design mass by year": {
                     "Value": {
                         "type": {np.ndarray,},
                         "bounds": (0, None),
@@ -242,7 +242,7 @@ class Cooler_Condenser_2_Plugin:
                     "optional": False,
                     "description": "Mixture outlet mass fraction."
                 },   
-                "Yearly mass flow": {
+                "Design mass by year": {
                     "Value": {
                         "inserted_value": "yearly_mass_flow",
                         "type": {np.ndarray,},

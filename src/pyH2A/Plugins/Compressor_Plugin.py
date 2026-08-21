@@ -114,7 +114,7 @@ class Compressor_Plugin:
                     "optional": False,
                     "description": "Mixture inlet mass fraction of each component."
                 }, 
-                "Yearly mass flow": {
+                "Design mass by year": {
                     "Value": {
                         "type": {np.ndarray,},
                         "bounds": (0, None),
@@ -264,7 +264,7 @@ def calculate_compression(dictionary, compressor_name = 'Compressor'):
                                 *
                                 dictionary['Technical Operating Parameters and Specifications']['Operating capacity factor']['Value'].unit['-']
                                 * 
-                                dictionary['Main Stream']['Yearly mass flow']['Value'].unit['kg']
+                                dictionary['Main Stream']['Design mass by year']['Value'].unit['kg']
                                 /
                                 dictionary['Main Stream']['Peak mass flowrate']['Value'].unit['kg/year'],
                                 'Wh')

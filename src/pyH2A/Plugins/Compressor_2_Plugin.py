@@ -113,7 +113,7 @@ class Compressor_2_Plugin:
                     "optional": False,
                     "description": "Mixture inlet mass fraction of each component."
                 }, 
-                "Yearly mass flow": {
+                "Design mass by year": {
                     "Value": {
                         "type": {np.ndarray,},
                         "bounds": (0, None),
