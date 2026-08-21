@@ -1,5 +1,7 @@
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Plugins.Compressor_Plugin import calculate_compression
+import numpy as np
+
 
 class Compressor_2_Plugin:
     '''Simulation of gas mixture adiabatic compression.
@@ -111,17 +113,17 @@ class Compressor_2_Plugin:
                     "optional": False,
                     "description": "Mixture inlet mass fraction of each component."
                 }, 
-                "Design mass flowrate": {
+                "Design mass by year": {
                     "Value": {
-                        "type": {int, float,},
+                        "type": {np.ndarray,},
                         "bounds": (0, None),
                     },
                     "Unit": {
-                        "dimension": "mass/time",
+                        "dimension": "mass",
                     },
                     "optional": False,
-                    "description": "Mixture outlet mass flowrate, yearly averaged, excluding downtime."
-                },     
+                    "description": "Mixture inlet mass per year, excluding operating capacity factor (array of years)."
+                },    
                 "Peak mass flowrate": {
                     "Value": {
                         "type": {int, float,},
@@ -132,7 +134,7 @@ class Compressor_2_Plugin:
                     },
                     "optional": False,
                     "description": "Mixture outlet mass flowrate on peak production day."
-                },                                          
+                },                                           
             },
         }
 
@@ -159,7 +161,7 @@ class Compressor_2_Plugin:
                 "Yearly power requirement": {
                     "Value": {
                         "inserted_value": "yearly_shaft_energy",
-                        "type": {float,},
+                        "type": {np.ndarray,},
                         "dimension": "energy",
                     },
                     "optional": False,
@@ -210,4 +212,4 @@ class Compressor_2_Plugin:
          self.yearly_shaft_energy
          ) = calculate_compression(self.input_dict_resolved, compressor_name = 'Compressor 2')
 
-        output_inserter_function(self.output_dict, self, dcf, 'Compressor_2_Plugin')       
+        output_inserter_function(self.output_dict, self, dcf, 'Compressor_2_Plugin') 

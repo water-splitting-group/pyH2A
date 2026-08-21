@@ -2,6 +2,7 @@ from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 from pyH2A.Utilities.Physical_Properties.Physical_properties import Physical_properties as PP
 from pyH2A.Utilities.Physical_Properties.data import Constants as constant
+import numpy as np
 
 class Compressor_Plugin:
     '''Simulation of gas mixture adiabatic compression.
@@ -113,16 +114,16 @@ class Compressor_Plugin:
                     "optional": False,
                     "description": "Mixture inlet mass fraction of each component."
                 }, 
-                "Design mass flowrate": {
+                "Design mass by year": {
                     "Value": {
-                        "type": {int, float,},
+                        "type": {np.ndarray,},
                         "bounds": (0, None),
                     },
                     "Unit": {
-                        "dimension": "mass/time",
+                        "dimension": "mass",
                     },
                     "optional": False,
-                    "description": "Mixture outlet mass flowrate, yearly averaged, excluding downtime."
+                    "description": "Mixture inlet mass by year excluding operating capacity factor (array of years)."
                 },    
                 "Peak mass flowrate": {
                     "Value": {
@@ -161,7 +162,7 @@ class Compressor_Plugin:
                 "Yearly power requirement": {
                     "Value": {
                         "inserted_value": "yearly_shaft_energy",
-                        "type": {float,},
+                        "type": {np.ndarray,},
                         "dimension": "energy",
                     },
                     "optional": False,
@@ -212,7 +213,7 @@ class Compressor_Plugin:
          self.yearly_shaft_energy
          ) = calculate_compression(self.input_dict_resolved)
 
-        output_inserter_function(self.output_dict, self, dcf, 'Compressor_Plugin')     
+        output_inserter_function(self.output_dict, self, dcf, 'Compressor_Plugin') 
 
 
 def calculate_compression(dictionary, compressor_name = 'Compressor'):
@@ -256,13 +257,13 @@ def calculate_compression(dictionary, compressor_name = 'Compressor'):
                                 'W')
 
     yearly_shaft_energy = Quantity(
-        peak_shaft_power.unit['Wh_per_year']
-        *
-        dictionary['Technical Operating Parameters and Specifications']['Operating capacity factor']['Value'].unit['-']
-        * 
-        dictionary['Main Stream']['Design mass flowrate']['Value'].unit['kg/s']
-        /
-        dictionary['Main Stream']['Peak mass flowrate']['Value'].unit['kg/s'],
+                                peak_shaft_power.unit['Wh_per_year'] 
+                                *
+                                dictionary['Technical Operating Parameters and Specifications']['Operating capacity factor']['Value'].unit['-']
+                                * 
+                                dictionary['Main Stream']['Design mass by year']['Value'].unit['kg']
+                                /
+                                dictionary['Main Stream']['Peak mass flowrate']['Value'].unit['kg/year'],
                                 'Wh')
 
     return (outlet_temperature, 

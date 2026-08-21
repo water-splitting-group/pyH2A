@@ -1,5 +1,6 @@
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Plugins.Cooler_Condenser_Plugin import outlet_stream_properties, cooler_condenser_sizing
+import numpy as np
 
 
 class Cooler_Condenser_3_Plugin:
@@ -131,16 +132,16 @@ class Cooler_Condenser_3_Plugin:
                     "optional": False,
                     "description": "Mixture inlet mass fraction of each component."
                 }, 
-                "Design mass flowrate": {
+                "Design mass by year": {
                     "Value": {
-                        "type": {int,float,},
+                        "type": {np.ndarray,},
                         "bounds": (0, None),
                     },
                     "Unit": {
-                        "dimension": "mass/time",
+                        "dimension": "mass",
                     },
                     "optional": False,
-                    "description": "Mixture inlet mass flowrate."
+                    "description": "Mixture inlet mass per year, excluding operating capacity factor (array of years)."
                 },  
                 "Peak mass flowrate": {
                     "Value": {
@@ -152,7 +153,7 @@ class Cooler_Condenser_3_Plugin:
                     },
                     "optional": False,
                     "description": "Mixture inlet mass flowrate on peak production day."
-                },                                                               
+                },                                          
             },
         }
 
@@ -188,7 +189,7 @@ class Cooler_Condenser_3_Plugin:
                 "Yearly mass of condensed water": {
                     "Value": {
                         "inserted_value": "yearly_condensed_water_mass",
-                        "type": {float,},
+                        "type": {np.ndarray,},
                         "dimension": "mass",
                     },
                     "optional": False,
@@ -206,7 +207,7 @@ class Cooler_Condenser_3_Plugin:
                 "Yearly mass of cooling water": {
                     "Value": {
                         "inserted_value": "yearly_coolant_mass",
-                        "type": {float,},
+                        "type": {np.ndarray,},
                         "dimension": "mass",
                     },
                     "optional": False,
@@ -241,14 +242,14 @@ class Cooler_Condenser_3_Plugin:
                     "optional": False,
                     "description": "Mixture outlet mass fraction."
                 },   
-                "Design mass flowrate": {
+                "Design mass by year": {
                     "Value": {
-                        "inserted_value": "outlet_mass_flowrate",
-                        "type": {float,},
-                        "dimension": "mass/time",
+                        "inserted_value": "yearly_mass_flow",
+                        "type": {np.ndarray,},
+                        "dimension": "mass",
                     },
                     "optional": False,
-                    "description": "Mixture outlet mass flowrate, at design capacity flowrate."
+                    "description": "Mixture outlet mass per year, excluding operating capacity factor (array of years).."
                 },  
                 "Peak mass flowrate": {
                     "Value": {
@@ -269,7 +270,7 @@ class Cooler_Condenser_3_Plugin:
 
         (self.outlet_temperature,
          self.outlet_mass_fraction, 
-         self.outlet_mass_flowrate,
+         self.yearly_mass_flow,
          self.peak_mass_flowrate,
          self.condensed_water_enthalpy, 
          self.outlet_enthalpy, 
@@ -286,7 +287,7 @@ class Cooler_Condenser_3_Plugin:
         ) = cooler_condenser_sizing(self.input_dict_resolved, 
                                     self.outlet_temperature,
                                     self.outlet_enthalpy, 
-                                    self.outlet_mass_flowrate, 
+                                    self.yearly_mass_flow, 
                                     self.peak_mass_flowrate,
                                     self.peak_condensed_water_flowrate, 
                                     self.condensed_water_enthalpy)
