@@ -11,6 +11,7 @@ class DummyDCF:
     def __init__(
         self,
         design_capacity,
+        design_output_by_year,
         top_cost,
         bottom_cost,
         ports,
@@ -33,12 +34,16 @@ class DummyDCF:
     ):
 
         self.functional_unit = resolve_functional_unit('kg')
-        self.inp = {
+        self.inp = {               
             "Technical Operating Parameters and Specifications": {
                 "Plant design capacity": {
                     "Value": design_capacity, 
                     "Unit":"kg/day"
                 },
+                "Design output by year": {
+                    "Value": design_output_by_year, 
+                    "Unit":"kg"
+                },                
             },
             "Reactor Baggies": {
                 "Cost material top": {
@@ -118,6 +123,7 @@ class DummyDCF:
         {
             "input": {
                 "design_capacity": 1111.,
+                "design_output_by_year": np.array([1111*365, 1111*365]),
                 "top_cost": 0.54,
                 "bottom_cost": 0.47,
                 "ports": 12,
@@ -171,7 +177,14 @@ class DummyDCF:
                 "catalyst_cost": Quantity(2835458.73,"USD"),
                 "baggies_cost": Quantity(66834.53099999999,"USD"),
                 "baggie_number": Quantity(9,"-"),
-                "total_volume": Quantity(1773270.0,"liter")
+                "total_volume": Quantity(1773270.0,"liter"),
+                "outlet_enthalpy": Quantity(-3529060.931274817, 'J/kg'), 
+                "outlet_mass_fraction": {'O2': Quantity(0.6495098252351335, '-'),
+                                         'H2': Quantity(0.0818433531892011, '-'),
+                                         'H2O': Quantity(0.2686468215756655, '-'),
+                                         },
+                "yearly_mass_flow": Quantity(np.array([4954770.1089733215, 4954770.1089733215]), 'kg'), 
+                "peak_mass_flowrate": Quantity(11312.26068731211, 'kg/day'), 
             },
         },
     ],
@@ -218,3 +231,18 @@ def test_photocatalytic_plugin_optional_catalyst(case):
         expected["total_volume"].unit["liter"], 
         abs=tolerance
     )
+
+    assert plugin.outlet_enthalpy.unit["J/kg"] == pytest.approx(
+        expected["outlet_enthalpy"].unit["J/kg"], 
+        abs=tolerance
+    )
+
+    for species in case["expected"]["outlet_mass_fraction"].keys():
+        assert plugin.outlet_mass_fraction[species].unit["-"] == case["expected"]["outlet_mass_fraction"][species].unit["-"]
+
+    np.testing.assert_allclose(plugin.yearly_mass_flow.unit["kg"],case["expected"]["yearly_mass_flow"].unit["kg"],rtol=tolerance,atol=tolerance,)        
+
+    assert plugin.peak_mass_flowrate.unit["kg/day"] == pytest.approx(
+        expected["peak_mass_flowrate"].unit["kg/day"], 
+        abs=tolerance
+    )        
