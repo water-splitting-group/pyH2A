@@ -694,6 +694,9 @@ def process_path(dictionary, path, top_key, key, bottom_key):
 			if isinstance(target_value, Quantity):
 				target_value = target_value.unit[unit]
 
+			elif isinstance(target_value, dict) and all(isinstance(item, Quantity) for item in target_value.values()):
+				target_value = {key:target_value[key].unit[unit] for key in target_value.keys()}				
+
 			else:
 				print('Warning: Non-numerical (non-Quantity) value retrieved at "{0} > {1} > {2}" (by "{3} > {4}"), obtained value is {5}, setting to 1'
 						.format(parsed_path[0], parsed_path[1], parsed_path[2], top_key, key, target_value))
@@ -760,7 +763,11 @@ def process_cell(dictionary, top_key, key, bottom_key, cell = None, print_proces
 
 		for path in paths:
 			target_value = process_path(dictionary, path, top_key, key, bottom_key)
-			value *= target_value
+
+			if isinstance(target_value, dict):				
+				value = {key: value * val for key, val in target_value.items()}
+			else:
+				value *= target_value
 
 		return value
 
@@ -1064,8 +1071,8 @@ def retrieve_base_unit(table_dictionary):
 
 
 
-def daily_to_yearly_power_quantity(dictionary):
-	'''Convert dictionary with daily power values to array with yearly power values.
+def dict_to_yearly_array_power_quantity(dictionary):
+	'''Convert dictionary with hourly or daily power values to array with yearly power values.
 	(when values are Quantity objects)
 	'''
 
@@ -1075,3 +1082,14 @@ def daily_to_yearly_power_quantity(dictionary):
 	base_unit = dictionary[list(dictionary.keys())[0]].base_unit
 
 	return Quantity(yearly_power, base_unit)
+
+
+def smoothened_production(a, s):
+	'''
+	Returns an array of length equal to that of input a, 
+	and whose values are constant by pieces of length s and equal to the average of the corresponding s values of the original array.
+	'''
+	
+	return np.repeat(np.add.reduceat(a, np.arange(0, len(a), s)) /
+					np.minimum(s, len(a) - np.arange(0, len(a), s)), 
+					np.diff(np.r_[np.arange(0, len(a), s), len(a)]))

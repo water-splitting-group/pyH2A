@@ -129,7 +129,12 @@ def test():
 	print(Energy(285.83 * (1000./2.) * con.Avogadro, kJmol).J)
 
 def lca():
-	result = pyH2A('src/tests/end_to_end/Thermal_Base.md', '.')
+	#result = pyH2A('src/tests/end_to_end/Photocatalytic_Base_test.md', '.')
+
+	#result = pyH2A('src/tests/end_to_end/PV_Wind_Storage_main_consumer_FU.md', '.')
+	
+	result = pyH2A('src/tests/end_to_end/Photocatalytic_w_renewable_prod_storage.md', '.')
+
 	print(result)
 
 def main():

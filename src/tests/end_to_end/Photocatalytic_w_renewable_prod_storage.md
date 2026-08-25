@@ -17,6 +17,12 @@ Cooler_Condenser_2_Plugin | Computes second cooler condenser sizing and coolant 
 Compressor_2_Plugin  | Computes second compressor power and yearly consumption | 306 |
 Cooler_Condenser_3_Plugin | Computes third cooler condenser sizing and coolant requirements | 307 |
 PSA_refactored_Plugin | Computes sizing and cost of PSA separation unit | 308
+Photovoltaic_Plugin | - | 309
+Wind_Plugin | - | 310 
+Electricity_Consumer_Plugin | - | 311 |
+Battery_Calculation_Plugin | - | 312 |
+Power_Management_Explicit_Battery_Plugin | - | 313 |
+RFB_Plugin | - | 314 | 
 Multiple_Modules_Plugin | Modelling of multiple plant modules, adjustment of labor requirement | 401 |
 
 # Display Parameters
@@ -47,6 +53,22 @@ Name | Value | Comment
 --- | --- | --- 
 File | pyH2A.Lookup_Tables.Hourly_Irradiation_Data~tmy_34.859_-116.889_2006_2015.csv | Location: Dagget, CA, USA 
 
+# Hourly Wind
+
+Name | Value | Comment 
+--- | --- | --- | --- 
+File | pyH2A.Lookup_Tables.Hourly_Wind_Data~Jena.615_2005_2023.csv | Location: Jena, DE
+
+# Hourly Main Consumer Profile
+
+Name | Value | Unit 
+--- | --- | --- 
+Cooler condenser 1 | {Cooler Condenser > Cooling water hourly pumping energy > Value, J} | J 
+Compressor 1 | {Compressor > Hourly energy requirement > Value, J} | J 
+Cooler condenser 2 | {Cooler Condenser 2 > Cooling water hourly pumping energy > Value, J} | J
+Compressor 2 | {Compressor 2 > Hourly energy requirement > Value, J} | J 
+Cooler condenser 3 | {Cooler Condenser 3 > Cooling water hourly pumping energy > Value, J} | J
+
 # Irradiance Area Parameters
 
 Name | Value | Unit | Comment 
@@ -64,6 +86,12 @@ Name | Value | Unit | Comment
 --- | --- | --- | --- 
 Mean solar input | {Hourly Irradiation > Mean solar input no tracking > Value, kW/m2} | kW/m2 | Solar irradiation for baggies on flat ground without tracking
 Hourly | {Hourly Irradiation > No tracking > Value, kWh/m2} | kWh/m2 
+
+# Irradiation Used
+
+Name | Value | Unit | Comment 
+--- | --- | --- | --- 
+Data | {Hourly Irradiation > Horizontal single axis tracking > Value, kWh/m2} | kWh/m2 | Single axis tracking based on Chang 2020
 
 # Solar-to-Hydrogen Efficiency
 
@@ -176,6 +204,8 @@ Solar collection area per staffer | 405,000 | m2 | Labor cost based on Pinaud 20
 Number of supervisors | 1 | - | Number of shift supervisors
 Number of 8-hour shifts | 3 | - | Number of shifts per day
 Hourly labor cost | 50.0 | USD/h | Burdened labor cost, including overhead
+Wind turbines per staffer | 8 | - | 
+Battery modules per staffer | 10 | - | 
 
 # Other Fixed Operating Costs
 
@@ -250,3 +280,73 @@ Name | Value | Unit
 Reference bed volume | 6065 |  L
 Reference cost | 100,000 | USD
 Scaling exponent | 0.5 | -
+
+# Photovoltaic
+
+Name | Value | Path | Unit | Comment
+--- | --- | --- | --- | --- 
+Nominal power | 30 | None | MW | Optimal PV oversize ratio, same as Chang 2020
+Power loss per year | 0.5% | None | - | Based on Chang 2020
+Efficiency | 22% | None | - | Only used for area calculation
+
+# Wind Turbine
+
+Name | Value | Unit | Comment 
+--- | --- | --- | --- 
+Installed wind capacity | 100 | MW
+Power per wind turbine | 4 | MW | Typical value for land-based turbines (Older ones tend to be below, new ones are higher)
+Power loss per year | 0.5% | -
+
+# Battery
+
+Name | Value | Unit | Comment
+--- | --- | --- | ---
+Design capacity | 3000 | MWh | Full design capacity
+Lowest discharge level | 20% | - | Lowest level to which battery can be discharged
+Capacity loss per year | 0.5% | - | Loss of capacity per year
+Capacity loss per full charge | 0.1% | - | loss per full charge equivalent
+Round trip efficiency | 80% | - | For lithium ion battery
+Highest charge level | 80% | - | 
+Power | 20 | MW | insufficient for a 10 MW customer at night
+Charging threshold | 20% | -
+Power per cell stack | 10 | kW
+Cost per cell stack | 8500 | USD 
+Energy density | 40 | Wh/kg
+Electrolyte regeneration per year | 0.5% | -
+Storage capacity per battery module | 150 | MWh
+
+# Electrolyte Impact
+
+Name | Value | Unit
+--- | --- | ---
+Specific GWP | 20 | kg/kg
+Energy intensity | 100 | kWh/kg
+Specific toxicity | 12 | 1/kg
+Specific resource use | 15 | kg/kg
+Specific cost | 9 | USD/kg
+
+# Direct Capital Costs - Power generation
+
+Name | Value | Path | Unit | Comment
+--- | --- | --- | --- | ---
+PV CAPEX | 818 | {Photovoltaic > Nominal power > Value, kW} | USD | Based on Chang 2020, Chiesa 2021 Middle East PV installation cost, Shah 2021
+Wind CAPEX | 1.2 | {Wind Turbine > Installed wind capacity > Value, W} | USD | Assuming 1.2 M USD per MW installed
+
+# Direct Capital Costs - Storage
+
+Name | Value | Unit | Comment
+--- | --- | --- | --- | ---
+Electrolyte initial holdup | {Electrolyte Impact > Initial cost of electrolyte > Value, USD} | USD | Initial amount of electrolyte 
+Battery stack  | {Battery > Cost of cell stacks > Value, USD} | USD | Cost of the cell stacks
+
+# Planned Replacement
+
+Name | Frequency_Value | Frequency_Unit | Cost_Value | Cost_Unit | Comment 
+--- | --- | --- | --- | --- | --- 
+Electrolyte replacement | 1 | year | {Electrolyte Impact > Yearly cost of electrolyte > Value, USD} | USD | the replacement of electrolyte can be continuous, but all calculations are made per year
+
+# Grid Electricity
+
+Name | Value | Unit
+--- | --- | ---
+Cost | 2.12 | USD/kWh
