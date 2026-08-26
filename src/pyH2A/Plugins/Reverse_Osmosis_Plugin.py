@@ -102,7 +102,7 @@ class Reverse_Osmosis_Plugin:
         }
 
         self.output_dict = {
-            "Power Consumption": {
+            "Flexible Power Demand": {
                 "Reverse osmosis consumption (yearly)": {
                     "Value": {
                         "inserted_value": "electricity_demand_by_year",

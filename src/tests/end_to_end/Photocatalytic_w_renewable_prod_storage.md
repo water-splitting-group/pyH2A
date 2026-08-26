@@ -252,8 +252,7 @@ Cold inlet temperature | 20. | degC |
 Cold outlet temperature | 30. | degC |
 Hot outlet temperature | 40. | degC |
 Heat transfer coefficient | 300. | W/m2/delta_K 
-Material weight per area | 34. | kg/m2 | assuming the condensing fluid circulates in tubes whose thickness is 10% of the inner diameter
-
+Material weight per area | 34. | kg/m2 | assuming the condensing fluid circulates in tubes whose thickness is 10% of the inner diameter, and taking a safety margin
 
 # PSA
 
@@ -305,9 +304,9 @@ Design capacity | 3000 | MWh | Full design capacity
 Lowest discharge level | 20% | - | Lowest level to which battery can be discharged
 Capacity loss per year | 0.5% | - | Loss of capacity per year
 Capacity loss per full charge | 0.1% | - | loss per full charge equivalent
-Round trip efficiency | 80% | - | For lithium ion battery
+Round trip efficiency | 80% | - | 
 Highest charge level | 80% | - | 
-Power | 20 | MW | insufficient for a 10 MW customer at night
+Power | 20 | MW | 
 Charging threshold | 20% | -
 Power per cell stack | 10 | kW
 Cost per cell stack | 8500 | USD 

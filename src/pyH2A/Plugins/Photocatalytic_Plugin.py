@@ -1,6 +1,6 @@
 import numpy as np
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
-from pyH2A.Utilities.input_modification import hourly_to_daily_power, smoothened_production
+from pyH2A.Utilities.input_modification import smoothened_production
 from pyH2A.Utilities.Physical_Properties.Physical_properties import Physical_properties as PP
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
@@ -370,71 +370,71 @@ class Photocatalytic_Plugin:
 					"description": "Total water volume"
 				},
 			},
-		"Main Stream": {
-			"Temperature": {
-				"Value": {
-					"inserted_value": "outlet_temperature",
-					"type": {float,},
-					"dimension": "absolute_temperature",
+			"Main Stream": {
+				"Temperature": {
+					"Value": {
+						"inserted_value": "outlet_temperature",
+						"type": {float,},
+						"dimension": "absolute_temperature",
+					},
+					"optional": False,
+					"description": "Mixture outlet temperature."
 				},
-				"optional": False,
-				"description": "Mixture outlet temperature."
-			},
-			"Pressure": {
-				"Value": {
-					"inserted_value": "outlet_pressure",
-					"type": {float,},
-					"dimension": "pressure",
+				"Pressure": {
+					"Value": {
+						"inserted_value": "outlet_pressure",
+						"type": {float,},
+						"dimension": "pressure",
+					},
+					"optional": False,
+					"description": "Mixture outlet pressure."
 				},
-				"optional": False,
-				"description": "Mixture outlet pressure."
-			},
-			"Specific enthalpy": {
-				"Value": {
-					"inserted_value": "outlet_enthalpy",
-					"type": {float,},
-					"dimension": "energy/mass",
-				},
-				"optional": False,
-				"description": "Mixture outlet specific enthalpy."
-			},  
-			"Mass fraction": {
-				"Value": {
-					"inserted_value": "outlet_mass_fraction",
-					"type": {dict,},
-					"dimension": "dimensionless",
-				},
-				"optional": False,
-				"description": "Mixture outlet mass fraction."
-			},   
-			"Mass flow (hourly)": {
-				"Value": {
-					"inserted_value": "hourly_mass_flow",
-					"type": {dict,},
-					"dimension": "mass",
-				},
-				"optional": False,
-				"description": "Mixture outlet mass flow, dictionary of years whose items are hourly arrays."
-			},  			
-			"Design mass flow by year": {
-				"Value": {
-					"inserted_value": "yearly_mass_flow",
-					"type": {np.ndarray,},
-					"dimension": "mass",
-				},
-				"optional": False,
-				"description": "Mixture outlet mass per year, excluding downtime (array of years)."
-			},  
-			"Peak mass flowrate": {
-				"Value": {
-					"inserted_value": "peak_mass_flowrate",
-					"type": {float,},
-					"dimension": "mass/time",
-				},
-				"optional": False,
-				"description": "Mixture outlet mass flowrate on peak production day."
-			},   			 					                
-		},			
+				"Specific enthalpy": {
+					"Value": {
+						"inserted_value": "outlet_enthalpy",
+						"type": {float,},
+						"dimension": "energy/mass",
+					},
+					"optional": False,
+					"description": "Mixture outlet specific enthalpy."
+				},  
+				"Mass fraction": {
+					"Value": {
+						"inserted_value": "outlet_mass_fraction",
+						"type": {dict,},
+						"dimension": "dimensionless",
+					},
+					"optional": False,
+					"description": "Mixture outlet mass fraction."
+				},   
+				"Mass flow (hourly)": {
+					"Value": {
+						"inserted_value": "hourly_mass_flow",
+						"type": {dict,},
+						"dimension": "mass",
+					},
+					"optional": False,
+					"description": "Mixture outlet mass flow, dictionary of years whose items are hourly arrays."
+				},  			
+				"Design mass flow by year": {
+					"Value": {
+						"inserted_value": "yearly_mass_flow",
+						"type": {np.ndarray,},
+						"dimension": "mass",
+					},
+					"optional": False,
+					"description": "Mixture outlet mass per year, excluding downtime (array of years)."
+				},  
+				"Peak mass flowrate": {
+					"Value": {
+						"inserted_value": "peak_mass_flowrate",
+						"type": {float,},
+						"dimension": "mass/time",
+					},
+					"optional": False,
+					"description": "Mixture outlet mass flowrate on peak production day."
+				},   			 					                
+			},			
 		}
 
 	def _run(self, dcf):

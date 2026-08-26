@@ -1,5 +1,6 @@
-from pyH2A.Utilities.input_modification import hourly_to_daily_power
+from pyH2A.Utilities.input_modification import hourly_to_daily_power, smoothened_production
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
+from pyH2A.Utilities.Physical_Properties.Physical_properties import Physical_properties as PP
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import numpy as np
 
@@ -204,12 +205,78 @@ class Electrolyzer_Plugin:
                     "description": "Available energy (daily) after subtracting power consumed by electrolyzer. (dictionary of years)."
                 },
             },
+            "Main Stream": {
+                "Temperature": {
+                    "Value": {
+                        "inserted_value": "outlet_temperature",
+                        "type": {float,},
+                        "dimension": "absolute_temperature",
+                    },
+                    "optional": False,
+                    "description": "Mixture outlet temperature."
+                },
+                "Pressure": {
+                    "Value": {
+                        "inserted_value": "outlet_pressure",
+                        "type": {float,},
+                        "dimension": "pressure",
+                    },
+                    "optional": False,
+                    "description": "Mixture outlet pressure."
+                },
+                "Specific enthalpy": {
+                    "Value": {
+                        "inserted_value": "outlet_enthalpy",
+                        "type": {float,},
+                        "dimension": "energy/mass",
+                    },
+                    "optional": False,
+                    "description": "Mixture outlet specific enthalpy."
+                },  
+                "Mass fraction": {
+                    "Value": {
+                        "inserted_value": "outlet_mass_fraction",
+                        "type": {dict,},
+                        "dimension": "dimensionless",
+                    },
+                    "optional": False,
+                    "description": "Mixture outlet mass fraction."
+                },   
+                "Mass flow (hourly)": {
+                    "Value": {
+                        "inserted_value": "hourly_mass_flow",
+                        "type": {dict,},
+                        "dimension": "mass",
+                    },
+                    "optional": False,
+                    "description": "Mixture outlet mass flow, dictionary of years whose items are hourly arrays."
+                },  			
+                "Design mass flow by year": {
+                    "Value": {
+                        "inserted_value": "yearly_mass_flow",
+                        "type": {np.ndarray,},
+                        "dimension": "mass",
+                    },
+                    "optional": False,
+                    "description": "Mixture outlet mass per year, excluding downtime (array of years)."
+                },  
+                "Peak mass flowrate": {
+                    "Value": {
+                        "inserted_value": "peak_mass_flowrate",
+                        "type": {float,},
+                        "dimension": "mass/time",
+                    },
+                    "optional": False,
+                    "description": "Mixture outlet mass flowrate on peak production day."
+                },   			 					                
+            },	            
         }
 
     def _run(self, dcf):
         self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Electrolyzer_Plugin')
 
         self.calculate_H2_production()
+        self.outlet_flow_properties()
         self.replacement_frequency = calculate_stack_replacement(self.yearly_data_duration, 
                                     self.input_dict_resolved['Electrolyzer']['Replacement time']['Value'].unit['h'])
 
@@ -227,6 +294,7 @@ class Electrolyzer_Plugin:
         yearly_data_duration = []
         yearly_data_unused_energy = {}
         yearly_data_unused_energy_daily = {}
+        self.hourly_h2_production = {}
 
         for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']:
 
@@ -252,7 +320,8 @@ class Electrolyzer_Plugin:
                                 electrolyzer_energy_consumption,
                                 self.input_dict_resolved['Electrolyzer']['Hydrogen yield per unit energy']['Value'].unit['kg/J'],
                                 power_increase_ratio) # returns an array of kg of H2 produced during each hour
-            
+            self.hourly_h2_production[year] = Quantity(h2_produced, 'kg')
+
             yearly_data_year.append(year)
             yearly_data_production.append(np.sum(h2_produced))
             yearly_data_duration.append(np.sum(electrolyzer_capacity))
@@ -271,6 +340,59 @@ class Electrolyzer_Plugin:
         
         self.yearly_data_unused_energy = yearly_data_unused_energy
         self.yearly_data_unused_energy_daily = yearly_data_unused_energy_daily
+
+
+    def outlet_flow_properties(self):
+        '''Establishes the thermophysical characteristics of the fluid leaving the reactor, for downstream process sizing'''
+
+        self.outlet_temperature = Quantity(85., 'degC') # hardcoded for the moment, could become an input later
+        self.outlet_pressure = Quantity(20, 'bar') # hardcoded for the moment, could become an input later
+
+        # Assuming water vapour is saturated in the baggie, determination of the water vapour pressure
+        psat = PP.Water_saturation_pressure(self.outlet_temperature)
+
+        mol_fraction = {} # molar fraction of the gas mixture, assuming ideal gas, expressed in mol of species for a total amount of 1 mol 
+        mol_fraction['H2O'] = Quantity(
+                                psat.unit['Pa']/self.outlet_pressure.unit['Pa'], 
+                                '-') 
+        # The pressure that is not due to water is due to H2
+        mol_fraction['H2'] = Quantity(
+                                1-mol_fraction['H2O'].unit['-'], 
+                                '-')
+
+        _, self.outlet_mass_fraction = PP.Substance_to_mass(mol_fraction)
+
+
+        smoothening_period = Quantity(1, 'h')
+        self.hourly_mass_flow = {}
+
+        # hourly_unsmoothened_output_kg should normally be a yearly dict of hourly arrays,
+        # but we assume a production that is independent of the year, so there's no need to run the same calculation multiple times: a single year (year 0) is sufficient, and is the used identical to itself when generating the hourly_mass_flow dict
+        hourly_unsmoothened_output_kg = (self.hourly_h2_production[0].unit['kg']
+                                        / 
+                                        self.outlet_mass_fraction['H2'].unit['-']
+                                        )
+        for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']:			
+            year = round(year)
+            self.hourly_mass_flow[year] = Quantity(smoothened_production(hourly_unsmoothened_output_kg, round(smoothening_period.unit['h'])), 
+                                                        'kg')
+
+        self.yearly_mass_flow = Quantity(self.h2_production.unit['kg']
+                                    / 
+                                    self.outlet_mass_fraction['H2'].unit['-']
+                                    ,
+                                    'kg')
+
+        self.peak_mass_flowrate = Quantity(np.max(self.hourly_mass_flow[0].unit['kg']), 'kg/h')
+
+        # specific enthalpy at the outlet of the baggie
+        h = PP.Enthalpy(T = self.outlet_temperature,
+                        P = self.outlet_pressure, 
+                        amount = self.outlet_mass_fraction,
+                        phase = 'V', 
+                        composition_basis = 'mass'
+                        )
+        self.outlet_enthalpy = Quantity(h.unit['J'], 'J/kg')
 
 def calculate_electrolyzer_power_demand(power_requirement_increase, nominal_power, year):
     '''Calculation of yearly increase in electrolyzer power demand.
