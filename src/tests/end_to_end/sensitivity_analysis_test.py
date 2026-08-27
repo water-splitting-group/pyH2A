@@ -1,10 +1,12 @@
 """Tests for pyH2A.Analysis.Sensitivity_Analysis.
 
-Covers, all against the real Sensitivity_Analysis.md fixture (a multi-route file
-whose PV_E route is active by default, PC and PEC deactivated):
-- End-to-end regression of perform_sensitivity_analysis() for the default-active
-  PV_E route (base case LCOH and all six parameters' low/high results), cross-
-  checked against known-correct values.
+Covers, against the three real per-route fixtures (Sensitivity_Analysis_PV_E.md,
+Sensitivity_Analysis_PC.md, Sensitivity_Analysis_PEC.md - each a single-route file
+with its own merged-in base scenario and its own 'Parameters - Sensitivity_Analysis'
+table, no route toggling):
+- End-to-end regression of perform_sensitivity_analysis() for PV_E (base case LCOH
+  and all six parameters' low/high results), cross-checked against known-correct
+  values.
 - The compounding-parameter behavior ('PV power loss per year' and
   'Electrolyzer power increase per year' produce much larger LCOH swings than
   the other four parameters) - protected explicitly so it isn't mistaken for a
@@ -12,18 +14,13 @@ whose PV_E route is active by default, PC and PEC deactivated):
 - The Dependent variable configuration states: isolated resolution logic,
   fallback when the row/table is missing, and loud failure on an invalid path.
 - A smoke test confirming plot_sensitivity_box_plot() produces a real saved figure.
-- The multi-route table-scanning mechanism: default-state regression, zero/
-  multiple-active error cases, and switching to a different route.
 - Real end-to-end regression for the PC and PEC routes, with base-case results
   cross-checked against the independently-established reference values in
   e2e_lcoh/lcoh_test.py.
-- The 'Expected base file' cross-check that catches the active route table and
-  the merged-in base file being out of sync with each other.
 """
 import matplotlib
 matplotlib.use('Agg')
 
-import copy
 import pathlib
 import matplotlib.figure
 import pytest
@@ -31,14 +28,10 @@ import pytest
 from pyH2A.Analysis.Sensitivity_Analysis import (
     Sensitivity_Analysis,
     _resolve_dependent_variable,
-    _find_active_parameters_table,
-    _check_base_file_matches_active_route,
-    _LOCAL_DEPENDENT_VARIABLE_CONFIG,
 )
-from pyH2A.Analysis.config import DEPENDENT_VARIABLE_CONFIG
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
-FIXTURE_FILE = "src/tests/end_to_end/Sensitivity_Analysis.md"
+FIXTURE_FILE = "src/tests/end_to_end/Sensitivity_Analysis_PV_E.md"
 
 # Very strict tolerance to detect economic regression, matching e2e_lcoh/lcoh_test.py
 TOLERANCE = 1e-13
@@ -170,9 +163,9 @@ def test_missing_dependent_variable_row_falls_back(tmp_path, results):
     block_to_remove = (
         "# Sensitivity_Analysis\n"
         "\n"
-        "Name | Value\n"
-        "--- | ---\n"
-        "Dependent variable | {Dependent Variables > Levelized cost > Value, USD/kg}\n"
+        "Name | Value | Label\n"
+        "--- | --- | ---\n"
+        "Dependent variable | {Dependent Variables > Levelized cost > Value, USD/kg} | Levelized Cost\n"
         "\n"
     )
     assert block_to_remove in original_text
@@ -194,8 +187,8 @@ def test_missing_dependent_variable_row_falls_back(tmp_path, results):
 
 def test_invalid_dependent_variable_path_raises(tmp_path):
     original_text = pathlib.Path(FIXTURE_FILE).read_text()
-    good_line = "Dependent variable | {Dependent Variables > Levelized cost > Value, USD/kg}"
-    bad_line = "Dependent variable | {Dependent Variables > Nonexistent Row > Value, USD/kg}"
+    good_line = "Dependent variable | {Dependent Variables > Levelized cost > Value, USD/kg} | Levelized Cost"
+    bad_line = "Dependent variable | {Dependent Variables > Nonexistent Row > Value, USD/kg} | Levelized Cost"
     assert good_line in original_text
 
     variant_path = tmp_path / "Sensitivity_Analysis_bad_path.md"
@@ -206,61 +199,37 @@ def test_invalid_dependent_variable_path_raises(tmp_path):
         sa_variant.perform_sensitivity_analysis()
 
 
-# ── Test Group 3b: dependent-variable label/header/unit resolution ─────────
+# ── Test Group 3b: dependent-variable label/unit resolution ─────────────────
 #
-# configure_dependent_variable() additionally resolves display metadata
-# (header/label/unit) from the path's middle segment (e.g. 'Levelized cost' out
-# of '{Dependent Variables > Levelized cost > Value, USD/kg}'), checking the
-# shared DEPENDENT_VARIABLE_CONFIG first, then the local
-# _LOCAL_DEPENDENT_VARIABLE_CONFIG fallback, then leaving the attributes as
-# None for today's hardcoded-default behavior.
+# configure_dependent_variable() reads display label and unit directly off the
+# 'Dependent variable' row itself ('Value' for the path/unit, 'Label' for the
+# display name) - the row is self-describing, no shared or per-module config
+# dict is consulted. Two cases: the row has a 'Label' column (real, current
+# use case), or it doesn't (falls back to today's hardcoded default behavior).
 
-def _sensitivity_analysis_with_dependent_variable(tmp_path, dependent_variable_line):
+def test_dependent_variable_label_and_unit_resolve_from_row(sensitivity_analysis):
+    # Regression protection for the current real use case: the 'Dependent variable'
+    # row's own 'Label' column is read directly, no config dict involved.
+    assert sensitivity_analysis.dependent_variable_label == 'Levelized Cost'
+    assert sensitivity_analysis.dependent_variable_unit == 'USD/kg'
+
+
+def test_dependent_variable_missing_label_falls_back_to_hardcoded_default(tmp_path):
+    # A 'Dependent variable' row with no 'Label' column must not crash - it leaves
+    # dependent_variable_label as None, so callers (e.g. plot_sensitivity_box_plot)
+    # fall back to today's hardcoded default behavior. Unit still parses fine from
+    # the 'Value' column regardless - only Label is missing.
     original_text = pathlib.Path(FIXTURE_FILE).read_text()
-    good_line = "Dependent variable | {Dependent Variables > Levelized cost > Value, USD/kg}"
+    good_line = "Dependent variable | {Dependent Variables > Levelized cost > Value, USD/kg} | Levelized Cost"
+    no_label_line = "Dependent variable | {Dependent Variables > Levelized cost > Value, USD/kg}"
     assert good_line in original_text
 
-    variant_path = tmp_path / "Sensitivity_Analysis_dependent_variable_variant.md"
-    variant_path.write_text(original_text.replace(good_line, dependent_variable_line))
-    return Sensitivity_Analysis(str(variant_path))
+    variant_path = tmp_path / "Sensitivity_Analysis_no_label.md"
+    variant_path.write_text(original_text.replace(good_line, no_label_line))
 
-
-def test_dependent_variable_resolves_from_shared_config(tmp_path):
-    # 'Climate change' is a real key in the shared DEPENDENT_VARIABLE_CONFIG (used by
-    # Monte_Carlo_Analysis for LCA metrics). This pipeline can't actually produce that
-    # path today - this only proves the shared-config lookup mechanism itself fires.
-    sa_variant = _sensitivity_analysis_with_dependent_variable(
-        tmp_path,
-        "Dependent variable | {Dependent Variables > Climate change > Value, kg CO2-Eq/kg H2}",
-    )
-
-    expected = DEPENDENT_VARIABLE_CONFIG['Climate change']
-    assert sa_variant.dependent_variable_header == expected['header']
-    assert sa_variant.dependent_variable_label == expected['label']
-    assert sa_variant.dependent_variable_unit == expected['unit']
-
-
-def test_dependent_variable_resolves_from_local_fallback(sensitivity_analysis):
-    # Regression protection for the current real use case: 'Levelized cost' is not
-    # (yet) in the shared config, so resolution must fall back to the local dict.
-    expected = _LOCAL_DEPENDENT_VARIABLE_CONFIG['Levelized cost']
-    assert sensitivity_analysis.dependent_variable_header == expected['header']
-    assert sensitivity_analysis.dependent_variable_label == expected['label']
-    assert sensitivity_analysis.dependent_variable_unit == expected['unit']
-
-
-def test_dependent_variable_unknown_path_falls_back_to_hardcoded_default(tmp_path):
-    # An arbitrary path matching neither the shared nor local config must not crash -
-    # it leaves the label/header/unit attributes unset (None), so callers (e.g.
-    # plot_sensitivity_box_plot) fall back to today's hardcoded default behavior.
-    sa_variant = _sensitivity_analysis_with_dependent_variable(
-        tmp_path,
-        "Dependent variable | {Dependent Variables > Totally Unknown Thing > Value, USD/kg}",
-    )
-
-    assert sa_variant.dependent_variable_header is None
+    sa_variant = Sensitivity_Analysis(str(variant_path))
     assert sa_variant.dependent_variable_label is None
-    assert sa_variant.dependent_variable_unit is None
+    assert sa_variant.dependent_variable_unit == 'USD/kg'
 
 
 # ── Test Group 4: chart generation smoke test ───────────────────────────────
@@ -281,136 +250,17 @@ def test_sensitivity_box_plot_smoke(tmp_path, sensitivity_analysis):
     assert saved_files[0].stat().st_size > 0
 
 
-# ── Test Group 5: multi-route table-scanning mechanism ──────────────────────
-#
-# Sensitivity_Analysis.md contains three parameter tables side by side -
-# 'Parameters - Sensitivity_Analysis - PV_E' (active), '... - PC -
-# Deactivate', and '... - PEC - Deactivate' - and Sensitivity_Analysis.py scans
-# for the single non-deactivated one via _find_active_parameters_table(). The
-# tests below verify the default (PV_E active) end to end, then test the
-# scanning/deactivation logic itself by manipulating one already-loaded input
-# dictionary in memory, rather than requiring separate physical .md files for
-# every activation state.
-
-@pytest.fixture(scope="module")
-def multi_route_sensitivity_analysis():
-    return Sensitivity_Analysis(FIXTURE_FILE)
-
-
-@pytest.fixture(scope="module")
-def multi_route_results(multi_route_sensitivity_analysis):
-    return multi_route_sensitivity_analysis.perform_sensitivity_analysis()
-
-
-def test_multi_route_default_state_matches_known_pv_e_values(multi_route_sensitivity_analysis, multi_route_results):
-    # Proves the table-scanning logic finds and uses 'Parameters - Sensitivity_Analysis
-    # - PV_E' by default (PC and PEC both deactivated in the real file), and that doing
-    # so produces the known-correct PV_E numbers, via the same route-suffixed-table
-    # code path exercised by every other route-switching test in this group.
-    obtained_base_case = multi_route_sensitivity_analysis.base_case.inp['Dependent Variables']['Levelized cost']['Value'].unit['USD/kg']
-    assert obtained_base_case == pytest.approx(BASE_CASE_LCOH, abs=TOLERANCE)
-
-    for name, low_key, low_value, high_key, high_value in SENSITIVITY_CASES:
-        assert multi_route_results[name]["Values"][low_key] == pytest.approx(low_value, abs=TOLERANCE)
-        assert multi_route_results[name]["Values"][high_key] == pytest.approx(high_value, abs=TOLERANCE)
-
-
-def test_multi_route_zero_active_tables_raises(multi_route_sensitivity_analysis):
-    # Simulate deactivating the only currently-active table (PV_E), on top of PC and
-    # PEC already being deactivated in the real file - leaving zero active.
-    inp = copy.deepcopy(multi_route_sensitivity_analysis.inp)
-    inp["Parameters - Sensitivity_Analysis - PV_E - Deactivate"] = inp.pop("Parameters - Sensitivity_Analysis - PV_E")
-
-    with pytest.raises(ValueError, match="No active"):
-        _find_active_parameters_table(inp)
-
-
-def test_multi_route_multiple_active_tables_raises(multi_route_sensitivity_analysis):
-    # Simulate activating PC on top of the already-active PV_E - two active at once.
-    inp = copy.deepcopy(multi_route_sensitivity_analysis.inp)
-    inp["Parameters - Sensitivity_Analysis - PC"] = inp.pop("Parameters - Sensitivity_Analysis - PC - Deactivate")
-
-    with pytest.raises(ValueError, match="Multiple active"):
-        _find_active_parameters_table(inp)
-
-
-def test_multi_route_selects_pc_table_when_pc_active(multi_route_sensitivity_analysis):
-    # Simulate switching which route is active: deactivate PV_E, activate PC.
-    # Structural check only (table selection + which parameters it holds), using the
-    # already-loaded PV_E-merged dictionary in memory - not an end-to-end run, since
-    # PC's parameter paths only resolve against a Photocatalytic base file merge, not
-    # the PV_E one this dictionary was actually built from. A real end-to-end run with
-    # PC's own base file merged in, checked against independently-verified values, is
-    # covered separately below (Test Group 6).
-    inp = copy.deepcopy(multi_route_sensitivity_analysis.inp)
-    inp["Parameters - Sensitivity_Analysis - PV_E - Deactivate"] = inp.pop("Parameters - Sensitivity_Analysis - PV_E")
-    inp["Parameters - Sensitivity_Analysis - PC"] = inp.pop("Parameters - Sensitivity_Analysis - PC - Deactivate")
-
-    active_table = _find_active_parameters_table(inp)
-    assert active_table == "Parameters - Sensitivity_Analysis - PC"
-
-    pc_parameter_names = {row["Name"] for row in inp[active_table].values()}
-    assert pc_parameter_names == {
-        "Catalyst cost (USD/kg)",
-        "PC solar-to-hydrogen efficiency",
-        "Catalyst lifetime (year)",
-        "Reactor baggie lifetime (year)",
-        "Baggie markup factor",
-        "Filtration cost (USD/m3)",
-    }
-    assert len(inp[active_table]) == 6
-
-
-def test_multi_route_mismatched_base_file_raises(multi_route_sensitivity_analysis):
-    # Simulate the two-switch mistake directly: activate PC's parameter table (which
-    # declares, via its 'Route Config - PC' table, that it expects the Photocatalytic
-    # base file) but leave 'Base' in 'Input files to merge' still pointing at the PV_E
-    # base file - the two settings are now out of sync with each other.
-    inp = copy.deepcopy(multi_route_sensitivity_analysis.inp)
-    inp["Parameters - Sensitivity_Analysis - PV_E - Deactivate"] = inp.pop("Parameters - Sensitivity_Analysis - PV_E")
-    inp["Parameters - Sensitivity_Analysis - PC"] = inp.pop("Parameters - Sensitivity_Analysis - PC - Deactivate")
-
-    active_table = _find_active_parameters_table(inp)
-    with pytest.raises(ValueError, match="expects base file"):
-        _check_base_file_matches_active_route(inp, active_table)
-
-
 # ── Test Group 6: PC and PEC route ground-truth verification ────────────────
 #
-# Real end-to-end runs (not just structural checks) for the two routes that, until
-# now, only had their parameter *paths* verified, not their computed results. Each
-# route's base case is cross-checked against e2e_lcoh/lcoh_test.py's independently-
-# established reference value for that route, the same way PV_E's is - closing the
-# rigor gap between these two routes and PV_E. A temporary variant of the real,
-# committed fixture file is generated per route (base file swapped, PV_E
-# deactivated, the target route activated) rather than committing separate PC/PEC
-# fixture files.
-
-def _build_multi_route_variant(directory, base_file, active_route):
-    original_text = pathlib.Path(FIXTURE_FILE).read_text()
-    text = original_text.replace(
-        "Base | src/tests/end_to_end/PV_E_Base_test.md",
-        f"Base | {base_file}",
-    ).replace(
-        "# Parameters - Sensitivity_Analysis - PV_E\n",
-        "# Parameters - Sensitivity_Analysis - PV_E - Deactivate\n",
-    ).replace(
-        f"# Parameters - Sensitivity_Analysis - {active_route} - Deactivate\n",
-        f"# Parameters - Sensitivity_Analysis - {active_route}\n",
-    )
-    variant_path = directory / f"Sensitivity_Analysis_{active_route}.md"
-    variant_path.write_text(text)
-    return str(variant_path)
-
+# Real end-to-end runs for the PC and PEC routes, each its own single-route
+# fixture (Sensitivity_Analysis_PC.md / Sensitivity_Analysis_PEC.md). Each
+# route's base case is cross-checked against e2e_lcoh/lcoh_test.py's
+# independently-established reference value for that route, the same way
+# PV_E's is.
 
 @pytest.fixture(scope="module")
-def pc_sensitivity_analysis(tmp_path_factory):
-    variant_path = _build_multi_route_variant(
-        tmp_path_factory.mktemp("pc_route"),
-        "src/tests/end_to_end/Photocatalytic_Base_test.md",
-        "PC",
-    )
-    return Sensitivity_Analysis(variant_path)
+def pc_sensitivity_analysis():
+    return Sensitivity_Analysis("src/tests/end_to_end/Sensitivity_Analysis_PC.md")
 
 
 @pytest.fixture(scope="module")
@@ -419,13 +269,8 @@ def pc_results(pc_sensitivity_analysis):
 
 
 @pytest.fixture(scope="module")
-def pec_sensitivity_analysis(tmp_path_factory):
-    variant_path = _build_multi_route_variant(
-        tmp_path_factory.mktemp("pec_route"),
-        "src/tests/end_to_end/PEC_Base_test.md",
-        "PEC",
-    )
-    return Sensitivity_Analysis(variant_path)
+def pec_sensitivity_analysis():
+    return Sensitivity_Analysis("src/tests/end_to_end/Sensitivity_Analysis_PEC.md")
 
 
 @pytest.fixture(scope="module")
