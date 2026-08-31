@@ -2,7 +2,6 @@ import pytest
 import numpy as np
 from pyH2A.Plugins.PSA_Plugin import PSA_Plugin
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
-from pyH2A.Utilities.functional_unit import resolve_functional_unit
 
 
 class DummyDCF:
@@ -19,17 +18,19 @@ class DummyDCF:
         feed_gas_velocity,
         length_to_diameter_ratio,
         number_of_beds,
-        steel_density,
+        feed_gas_viscosity,
         bed_void_fraction,
         bed_usage_fraction,
         uptake_fraction,
         residual_loading_fraction,
         bulk_density,
-        cepci_base,
-        cepci_current,
+        particle_diameter,
         adsorbent_cost_per_kg,
+        adsorbent_replacement_interval,
+        material,
+        weld_efficiency,
+        current_year_for_capital_costs,
     ):
-        self.functional_unit = resolve_functional_unit('kg')
         self.inp = {
             "Technical Operating Parameters and Specifications": {
                 "Plant design capacity": {
@@ -66,13 +67,20 @@ class DummyDCF:
                     "Value": length_to_diameter_ratio,
                     "Unit": "-"
                 },
+                "Feed gas viscosity": {
+                    "Value": feed_gas_viscosity,
+                    "Unit": "Pa*s"
+                },
                 "Number of beds": {
                     "Value": number_of_beds,
                     "Unit": "-"
                 },
-                "Steel density": {
-                    "Value": steel_density,
-                    "Unit": "kg/m3"
+                "Material": {
+                    "Value": material,
+                },
+                "Weld efficiency": {
+                    "Value": weld_efficiency,
+                    "Unit": "-"
                 },
             },
             "PSA Adsorbent Parameters": {
@@ -96,19 +104,23 @@ class DummyDCF:
                     "Value": bulk_density,
                     "Unit": "kg/m3"
                 },
-            },
-            "PSA Costing": {
-                "CEPCI base": {
-                    "Value": cepci_base,
-                    "Unit": "-"
-                },
-                "CEPCI current": {
-                    "Value": cepci_current,
-                    "Unit": "-"
+                "Adsorbent particle diameter": {
+                    "Value": particle_diameter,
+                    "Unit": "mm"
                 },
                 "Adsorbent cost per kg": {
                     "Value": adsorbent_cost_per_kg,
                     "Unit": "USD/kg"
+                },
+                "Adsorbent replacement interval": {
+                    "Value": adsorbent_replacement_interval,
+                    "Unit": "year"
+                },
+            },
+            "Financial Input Values": {
+                "Current year for capital costs": {
+                    "Value": current_year_for_capital_costs,
+                    "Unit": "-"
                 },
             },
         }
@@ -128,25 +140,29 @@ class DummyDCF:
                 "feed_gas_velocity": 0.35,
                 "length_to_diameter_ratio": 3.0,
                 "number_of_beds": 4,
-                "steel_density": 8000.0,
+                "feed_gas_viscosity": 1.5e-5,
                 "bed_void_fraction": 0.36,
                 "bed_usage_fraction": 0.769,
                 "uptake_fraction": 0.0390,
                 "residual_loading_fraction": 0.00188,
                 "bulk_density": 700.0,
-                "cepci_base": 397.0,
-                "cepci_current": 800.0,
+                "particle_diameter": 2.5,
                 "adsorbent_cost_per_kg": 5.0,
+                "adsorbent_replacement_interval": 4.0,
+                "material": "low_alloy_steel",
+                "weld_efficiency": 0.85,
+                "current_year_for_capital_costs": 2016,
             },
             "expected": {
                 "adsorbate_mass_flow": Quantity(0.1596824467763889, "kg/s"),
                 "adsorbent_mass": Quantity(75.87353342504323, "kg"),
                 "bed_volume": Quantity(0.16936056568090008, "m3"),
                 "adsorption_time": Quantity(3.390841166218064, "s"),
-                "vessel_steel_mass": Quantity(54.98082132249511, "kg"),
-                "vessel_cost": Quantity(77193.52413139565, "USD"),
+                "vessel_steel_mass": Quantity(112.7970482746962, "kg"),
+                "vessel_cost": Quantity(35416.51710185572, "USD"),
                 "adsorbent_cost": Quantity(379.36766712521614, "USD"),
-                "psa_cost": Quantity(77572.89179852087, "USD"),
+                "psa_cost": Quantity(35795.88476898094, "USD"),
+                "pressure_drop": Quantity(9696.36612264019, "Pa"),
             },
         },
     ],
@@ -200,5 +216,10 @@ def test_psa_plugin(case):
 
     assert plugin.psa_cost.unit['USD'] == pytest.approx(
         expected["psa_cost"].unit['USD'],
+        abs=tolerance
+    )
+
+    assert plugin.pressure_drop.unit['Pa'] == pytest.approx(
+        expected["pressure_drop"].unit['Pa'],
         abs=tolerance
     )
