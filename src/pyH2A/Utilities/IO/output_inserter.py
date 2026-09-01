@@ -279,8 +279,22 @@ def output_inserter_function(output_dict,
     '''
 
     try:
+
+        if '@' in plugin_name:
+            _, instance_number = plugin_name.rsplit('@', 1)
+            instance_number = instance_number.strip()
+        else:
+            instance_number = None
+
         # Iterating through the top level of the output dictionary
         for top_key, table_dict in output_dict.items():
+
+            # Replace '@' in table names by the plugin instance number
+            if '@' in top_key:
+                if instance_number is not None:
+                    top_key = top_key.replace('@', f' {instance_number}')
+                else:
+                    top_key = top_key.replace('@', '')            
 
             # Skipping over special insertions (which are not inserted by processing the output dictionary)
             if top_key in special_top_level_keys:

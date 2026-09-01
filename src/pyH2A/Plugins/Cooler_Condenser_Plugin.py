@@ -8,7 +8,8 @@ class Cooler_Condenser_Plugin:
     '''Simulation of humid gas mixture cooling with condensation.
     The pressure stays constant during the compression. The other properties of the Main Stream are updated.
     '''
-    def __init__(self, dcf, print_info, run = True):
+    def __init__(self, dcf, print_info, run = True, instance_number=None):
+        self.instance_number = instance_number
         self._set_up(dcf)
         if run:
             self._run(dcf)
@@ -31,7 +32,7 @@ class Cooler_Condenser_Plugin:
                     "description": "Dictionary containing all time-related quantities."
                 }, 
             },               
-            "Cooler Condenser": {
+            "Cooler Condenser@": {
                 "Cold inlet temperature": {
                     "Value": {
                         "type": {int,float,},
@@ -183,7 +184,7 @@ class Cooler_Condenser_Plugin:
         }
 
         self.output_dict = {
-            "Cooler Condenser": {
+            "Cooler Condenser@": {
                 "Sizing heat duty": {
                     "Value": {
                         "inserted_value": "sizing_heat_duty",
@@ -327,7 +328,14 @@ class Cooler_Condenser_Plugin:
 
     def _run(self, dcf):    
 
-        self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Cooler_Condenser_Plugin')
+        plugin_name = 'Cooler_Condenser_Plugin'
+        cooler_name = 'Cooler Condenser'
+
+        if self.instance_number is not None:
+            plugin_name = f'{plugin_name} @{self.instance_number}'
+            cooler_name = f'{cooler_name} {self.instance_number}'
+            
+        self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, plugin_name)
 
         (self.outlet_temperature,
          self.outlet_mass_fraction, 
@@ -338,7 +346,7 @@ class Cooler_Condenser_Plugin:
          self.outlet_enthalpy, 
          self.peak_condensed_water_flowrate,
          self.yearly_condensed_water_mass
-         ) = outlet_stream_properties(self.input_dict_resolved)
+         ) = outlet_stream_properties(self.input_dict_resolved, cooler_name)
 
 
         (self.sizing_heat_duty,
@@ -350,7 +358,8 @@ class Cooler_Condenser_Plugin:
                                     self.outlet_enthalpy, 
                                     self.peak_mass_flowrate,
                                     self.peak_condensed_water_flowrate, 
-                                    self.condensed_water_enthalpy)
+                                    self.condensed_water_enthalpy, 
+                                    cooler_name)
 
         (self.hourly_coolant_mass, 
          self.yearly_coolant_mass, 
@@ -362,12 +371,12 @@ class Cooler_Condenser_Plugin:
                                         self.yearly_mass_flow, 
                                         self.peak_mass_flowrate)        
 
-        output_inserter_function(self.output_dict, self, dcf, 'Cooler_Condenser_Plugin') 
+        output_inserter_function(self.output_dict, self, dcf, plugin_name) 
 
-        print('cooler 1 yearly coolant mass ', self.yearly_coolant_mass)
-        print('cooler 1 steel mass', self.material_mass)
-        print('cooler 1 yearly condensed water mass ', self.yearly_condensed_water_mass)
-        print('cooler 1 yearly cooling energy ', self.yearly_pumping_energy.unit['MWh'])
+        print(cooler_name, ' yearly coolant mass ', self.yearly_coolant_mass)
+        print(cooler_name, ' steel mass', self.material_mass)
+        print(cooler_name, ' yearly condensed water mass ', self.yearly_condensed_water_mass)
+        print(cooler_name, ' yearly cooling energy ', self.yearly_pumping_energy.unit['MWh'])
 
 
 def outlet_stream_properties(dictionary, cooler_name = 'Cooler Condenser'):

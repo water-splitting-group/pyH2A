@@ -135,12 +135,13 @@ Resource use per stack | 10 | kg
 
 # Electrolyte Impact
 
-Name | Value | Unit | Comment
---- | --- | --- | ---
-Specific GWP | 10 | kg/kg
-Energy intensity | 10 | J/kg
-Specific toxicity | 10 | 1/kg
-Specific resource use | 10 | kg/kg
+Name | Value | Unit
+--- | --- | ---
+Specific GWP | 20 | kg/kg
+Energy intensity | 100 | kWh/kg
+Specific toxicity | 12 | 1/kg
+Specific resource use | 15 | kg/kg
+
 
 # Reverse Osmosis
 

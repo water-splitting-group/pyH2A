@@ -13,9 +13,9 @@ Photocatalytic_Plugin | Computes number of required baggies, cost of baggies and
 Catalyst_Separation_Plugin | Computes cost of catalyst separation | 302 |
 Cooler_Condenser_Plugin | Computes first cooler condenser sizing and coolant requirements | 303 |
 Compressor_Plugin  | Computes compressor power and yearly consumption | 304 |
-Cooler_Condenser_2_Plugin | Computes second cooler condenser sizing and coolant requirements | 305 |
+Cooler_Condenser_Plugin @2 | Computes second cooler condenser sizing and coolant requirements | 305 |
 Compressor_2_Plugin  | Computes second compressor power and yearly consumption | 306 |
-Cooler_Condenser_3_Plugin | Computes third cooler condenser sizing and coolant requirements | 307 |
+Cooler_Condenser_Plugin @3 | Computes third cooler condenser sizing and coolant requirements | 307 |
 PSA_refactored_Plugin | Computes sizing and cost of PSA separation unit | 308
 Photovoltaic_Plugin | - | 309
 Wind_Plugin | - | 310 
@@ -63,7 +63,7 @@ File | pyH2A.Lookup_Tables.Hourly_Wind_Data~Jena.615_2005_2023.csv | Location: J
 
 Name | Value | Unit 
 --- | --- | --- 
-Cooler condenser 1 | {Cooler Condenser > Cooling water hourly pumping energy > Value, J} | J 
+Cooler condenser | {Cooler Condenser > Cooling water hourly pumping energy > Value, J} | J 
 Compressor 1 | {Compressor > Hourly energy requirement > Value, J} | J 
 Cooler condenser 2 | {Cooler Condenser 2 > Cooling water hourly pumping energy > Value, J} | J
 Compressor 2 | {Compressor 2 > Hourly energy requirement > Value, J} | J 
@@ -223,6 +223,7 @@ Name | Usage_Value | Usage_Path | Usage_Unit | Cost_Value | Cost_Path | Cost_Uni
 Industrial electricity | 3.29 | None | 1/kg | pyH2A.Lookup_Tables.Utility_Cost~Industrial_Electricity_AEO_2017_Reference_Case.csv | None | USD | 0.0036 | - | Electricity usage based on Pinaud 2013
 Process water | 2.637 | None | 1/kg | 0.0023749510945008 | None | USD | 1.0 | - | Seawater reverse osmosis cost ca. 0.6 USD/m3 (equal to ca. 0.0023 USD/gal), based on Kibria 2021 and Driess 2021
 
+
 # Unplanned Replacement
 
 Name | Value | Path | Unit | Comment 
@@ -245,6 +246,26 @@ Compression ratio | 4.78 | -
 Efficiency | 0.7 | - | 75% efficiency of the compressor itself, but we account for a bit of loss in the rest of the chain (e.g. electric motor)
 
 # Cooler Condenser
+
+Name | Value | Unit | 
+--- | --- | --- 
+Cold inlet temperature | 20. | degC |
+Cold outlet temperature | 30. | degC |
+Hot outlet temperature | 40. | degC |
+Heat transfer coefficient | 300. | W/m2/delta_K 
+Material weight per area | 34. | kg/m2 | assuming the condensing fluid circulates in tubes whose thickness is 10% of the inner diameter, and taking a safety margin
+
+# Cooler Condenser 2
+
+Name | Value | Unit | 
+--- | --- | --- 
+Cold inlet temperature | 20. | degC |
+Cold outlet temperature | 30. | degC |
+Hot outlet temperature | 40. | degC |
+Heat transfer coefficient | 300. | W/m2/delta_K 
+Material weight per area | 34. | kg/m2 | assuming the condensing fluid circulates in tubes whose thickness is 10% of the inner diameter, and taking a safety margin
+
+# Cooler Condenser 3
 
 Name | Value | Unit | 
 --- | --- | --- 
@@ -300,8 +321,8 @@ Power loss per year | 0.5% | -
 
 Name | Value | Unit | Comment
 --- | --- | --- | ---
-Design capacity | 3000 | MWh | Full design capacity
-Lowest discharge level | 20% | - | Lowest level to which battery can be discharged
+Usable capacity | 3000 | MWh | 
+Lowest charge level | 20% | - | Lowest level to which battery can be discharged
 Capacity loss per year | 0.5% | - | Loss of capacity per year
 Capacity loss per full charge | 0.1% | - | loss per full charge equivalent
 Round trip efficiency | 80% | - | 
@@ -311,8 +332,11 @@ Charging threshold | 20% | -
 Power per cell stack | 10 | kW
 Cost per cell stack | 8500 | USD 
 Energy density | 40 | Wh/kg
-Electrolyte regeneration per year | 0.5% | -
+Fraction of electrolyte to replace per year | 1% | -
+Fraction of replaced electrolyte to produce per year | 40% | -
 Storage capacity per battery module | 150 | MWh
+Cell stack lifetime | 2 | year
+Electrolyte density | 1400 | kg/m3
 
 # Electrolyte Impact
 
@@ -322,7 +346,15 @@ Specific GWP | 20 | kg/kg
 Energy intensity | 100 | kWh/kg
 Specific toxicity | 12 | 1/kg
 Specific resource use | 15 | kg/kg
-Specific cost | 9 | USD/kg
+
+# Cell Stack Impact
+
+Name | Value | Unit | Comment
+--- | --- | --- | ---
+GWP per stack | 10 | kg
+Energy per stack | 10 | J
+Toxicity per stack | 10 | -
+Resource use per stack | 10 | kg
 
 # Direct Capital Costs - Power generation
 
@@ -331,18 +363,7 @@ Name | Value | Path | Unit | Comment
 PV CAPEX | 818 | {Photovoltaic > Nominal power > Value, kW} | USD | Based on Chang 2020, Chiesa 2021 Middle East PV installation cost, Shah 2021
 Wind CAPEX | 1.2 | {Wind Turbine > Installed wind capacity > Value, W} | USD | Assuming 1.2 M USD per MW installed
 
-# Direct Capital Costs - Storage
 
-Name | Value | Unit | Comment
---- | --- | --- | --- | ---
-Electrolyte initial holdup | {Electrolyte Impact > Initial cost of electrolyte > Value, USD} | USD | Initial amount of electrolyte 
-Battery stack  | {Battery > Cost of cell stacks > Value, USD} | USD | Cost of the cell stacks
-
-# Planned Replacement
-
-Name | Frequency_Value | Frequency_Unit | Cost_Value | Cost_Unit | Comment 
---- | --- | --- | --- | --- | --- 
-Electrolyte replacement | 1 | year | {Electrolyte Impact > Yearly cost of electrolyte > Value, USD} | USD | the replacement of electrolyte can be continuous, but all calculations are made per year
 
 # Grid Electricity
 

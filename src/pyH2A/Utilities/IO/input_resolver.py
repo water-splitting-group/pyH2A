@@ -676,8 +676,21 @@ def input_resolver_function(input_dict, dcf_class, plugin_name):
     try:
         input_dict_resolved = {}
 
+        if '@' in plugin_name: # Extract plugin instance number from plugin_name if present
+            _, instance_number = plugin_name.rsplit('@', 1)
+            instance_number = instance_number.strip()
+        else:
+            instance_number = None
+
         for top_key, table_dict in input_dict.items():
-            
+
+            # Replace '@' in table names by the plugin instance number
+            if '@' in top_key:
+                if instance_number is not None:
+                    top_key = top_key.replace('@', f' {instance_number}')
+                else:
+                    top_key = top_key.replace('@', '')
+
             # Check if top_key indicates table group, if so call table group resolve
             if WILDCARD_MARKER in top_key:
                 resolved_table_group = table_group_resolver_function(top_key, table_dict, dcf_class)
