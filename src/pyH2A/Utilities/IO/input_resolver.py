@@ -677,17 +677,17 @@ def input_resolver_function(input_dict, dcf_class, plugin_name):
         input_dict_resolved = {}
 
         if '@' in plugin_name: # Extract plugin instance number from plugin_name if present
-            _, instance_number = plugin_name.rsplit('@', 1)
-            instance_number = instance_number.strip()
+            _, instance_suffix = plugin_name.rsplit('@', 1)
+            instance_suffix = instance_suffix.strip()
         else:
-            instance_number = None
+            instance_suffix = None
 
         for top_key, table_dict in input_dict.items():
 
             # Replace '@' in table names by the plugin instance number
             if '@' in top_key:
-                if instance_number is not None:
-                    top_key = top_key.replace('@', f' {instance_number}')
+                if instance_suffix is not None:
+                    top_key = top_key.replace('@', f' {instance_suffix}')
                 else:
                     top_key = top_key.replace('@', '')
 

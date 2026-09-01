@@ -8,8 +8,8 @@ class Cooler_Condenser_Plugin:
     '''Simulation of humid gas mixture cooling with condensation.
     The pressure stays constant during the compression. The other properties of the Main Stream are updated.
     '''
-    def __init__(self, dcf, print_info, run = True, instance_number=None):
-        self.instance_number = instance_number
+    def __init__(self, dcf, print_info, run = True, instance_suffix=None):
+        self.instance_suffix = instance_suffix
         self._set_up(dcf)
         if run:
             self._run(dcf)
@@ -331,9 +331,9 @@ class Cooler_Condenser_Plugin:
         plugin_name = 'Cooler_Condenser_Plugin'
         cooler_name = 'Cooler Condenser'
 
-        if self.instance_number is not None:
-            plugin_name = f'{plugin_name} @{self.instance_number}'
-            cooler_name = f'{cooler_name} {self.instance_number}'
+        if self.instance_suffix is not None:
+            plugin_name = f'{plugin_name} @{self.instance_suffix}'
+            cooler_name = f'{cooler_name} {self.instance_suffix}'
             
         self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, plugin_name)
 
