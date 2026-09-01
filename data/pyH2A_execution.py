@@ -133,7 +133,9 @@ def lca():
 
 	#result = pyH2A('src/tests/end_to_end/PV_Wind_Storage_main_consumer_FU.md', '.')
 	
-	result = pyH2A('src/tests/end_to_end/Photocatalytic_w_renewable_prod_storage.md', '.')
+	#result = pyH2A('src/tests/end_to_end/Photocatalytic_w_renewable_prod_storage.md', '.')
+
+	result = pyH2A('src/tests/end_to_end/PV_E_w_renewable_DSP_2.md', '.')
 
 	print(result)
 

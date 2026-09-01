@@ -196,7 +196,7 @@ class Hourly_Irradiation_Plugin:
 		
 		if 'Module tilt' in pv:
 			tilt = pv['Module tilt']['Value']
-		else: # if we want to make the tilt equal to latitude, we don't point it through a path in the input fiale, we let it be the default
+		else: # if we want to make the tilt equal to latitude, we don't point it through a path in the input file, we let it be the default
 			tilt = 'Default' 
 
 		(self.hourly_energy, 

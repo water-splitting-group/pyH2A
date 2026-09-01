@@ -10,11 +10,14 @@ Name | Position
 --- | --- 
 Hourly_Irradiation_Plugin | 201 |
 Photovoltaic_Plugin | 202 |
-Electrolyzer_Plugin | 203 |
-Battery_Plugin | 204 |
-Stored_Power_Electrolysis_Plugin | 205 |
-Reverse_Osmosis_Plugin | 301 |
-Power_Management_Plugin | 302 |
+Wind_Plugin | 203 |
+Electrolyzer_Hourly_Plugin | 204 |
+Cooler_Condenser_Plugin | 301 |
+Reverse_Osmosis_Plugin | 302 |
+Electricity_Consumer_Plugin | 303 |
+Battery_Calculation_Plugin | 304 |
+Power_Management_Explicit_Battery_Plugin | 305 |
+RFB_Plugin | 306 |
 Multiple_Modules_Plugin | 401 |
 
 # Display Parameters
@@ -46,6 +49,19 @@ Name | Value | Unit | Comment
 --- | --- | --- | --- 
 Data | {Hourly Irradiation > Horizontal single axis tracking > Value, kWh/m2} | kWh/m2 | Single axis tracking based on Chang 2020
 
+# Hourly Wind
+
+Name | Value | Comment 
+--- | --- | --- | --- 
+File | pyH2A.Lookup_Tables.Hourly_Wind_Data~Jena.615_2005_2023.csv | Location: Jena, DE
+
+# Hourly Main Consumer Profile
+
+Name | Value | Unit 
+--- | --- | --- 
+Cooler condenser | {Cooler Condenser > Cooling water hourly pumping energy > Value, J} | J 
+Electrolyzer | {Electrolyzer > Missing required energy (hourly) > Value, J} | J 
+
 # Technical Operating Parameters and Specifications
 
 Name | Value | Unit | Comment 
@@ -71,11 +87,6 @@ Minimum capacity | 10% | - | Based on Chang 2020, minimum capacity for electroly
 Hydrogen yield per unit energy | 0.0185 | kg/kWh | Based on Chang 2020
 Replacement time | 80,000 | h | Based on Chang 2020, operating time after which electrolyzer stacks have to be replaced
 
-# Electrolysis Using Stored Power
-
-Name | Value | Unit | Comment
---- | --- | --- | --- 
-Fraction of stored power used for electrolysis | 95% | - | Additional electrolysis using stored power 
 
 # Photovoltaic
 
@@ -85,14 +96,51 @@ Nominal power | 1.5 | {Electrolyzer > Nominal power > Value, kW} | kW | Optimal 
 Power loss per year | 0.5% | None | - | Based on Chang 2020
 Efficiency | 22% | None | - | Only used for area calculation
 
+# Wind Turbine
+
+Name | Value | Unit | Comment 
+--- | --- | --- | --- 
+Installed wind capacity | 10 | MW
+Power per wind turbine | 2 | MW | Typical value for land-based turbines (Older ones tend to be below, new ones are higher)
+Power loss per year | 0.5% | -
+
 # Battery
 
 Name | Value | Unit | Comment
 --- | --- | --- | ---
-Nominal capacity | 800 | MWh |
+Usable capacity | 3000 | MWh | 
 Lowest charge level | 20% | - | Lowest level to which battery can be discharged
-Capacity loss per year | 1% | - | Loss of capacity per year
-Round trip efficiency | 100% | - | For lithium ion battery
+Capacity loss per year | 0.5% | - | Loss of capacity per year
+Capacity loss per full charge | 0.1% | - | loss per full charge equivalent
+Round trip efficiency | 80% | - | 
+Highest charge level | 80% | - | 
+Power | 20 | MW | 
+Charging threshold | 20% | -
+Power per cell stack | 10 | kW
+Energy density | 40 | Wh/kg
+Fraction of electrolyte to replace per year | 1% | -
+Fraction of replaced electrolyte to produce per year | 40% | -
+Storage capacity per battery module | 150 | MWh
+Cell stack lifetime | 2 | year
+Electrolyte density | 1400 | kg/m3
+
+# Cell Stack Impact
+
+Name | Value | Unit | Comment
+--- | --- | --- | ---
+GWP per stack | 10 | kg
+Energy per stack | 10 | J
+Toxicity per stack | 10 | -
+Resource use per stack | 10 | kg
+
+# Electrolyte Impact
+
+Name | Value | Unit | Comment
+--- | --- | --- | ---
+Specific GWP | 10 | kg/kg
+Energy intensity | 10 | J/kg
+Specific toxicity | 10 | 1/kg
+Specific resource use | 10 | kg/kg
 
 # Reverse Osmosis
 
@@ -102,11 +150,6 @@ Power demand | 2.71 | kWh/m3 | based on Hausmann 2021 and Kim 2008 (this was cho
 Average operating time fraction | 0.16666666666666666 | - | Assumption that reverse osmosis runs for 4 h/day, relevant for scaling of reverse osmosis plant
 Recovery rate | 40% | - | Fraction of fresh water obtained from given volume of sea water, based Palmer 2021 and Terlouw 2022
 
-# Power Consumption
-
-Name | Value | Unit | Type
---- | --- | --- | ---
-Test consumer | 0 | kWh | on_demand
 
 # Direct Capital Costs - Reverse Osmosis
 
@@ -118,7 +161,7 @@ Reverse osmosis CAPEX | 6000 | {Reverse Osmosis > Capacity > Value, m3/h} | USD 
 
 Name | Value | Path | Unit
 --- | --- | --- | ---
-Battery CAPEX | 0. | {Battery > Design capacity > Value, kWh} | USD
+Battery CAPEX | 0. | {Battery > Gross capacity > Value, kWh} | USD
 
 # Direct Capital Costs - PV
 
@@ -146,6 +189,8 @@ Solar collection area per staffer | 405,000 | m2 | Same as photocatalytic model,
 Number of supervisors | 1 | - | Same as PEC and photocatalytic model, number of shift supervisors
 Number of 8-hour shifts | 3 | - | Same as PEC and photocatalytic model, number of shifts per day
 Hourly labor cost | 50.0 | USD/h | Same as PEC and photocatalytic model,  Burdened labor cost, including overhead (USD per man-hr)
+Wind turbines per staffer | 8 | - | 
+Battery modules per staffer | 10 | - | 
 
 # Other Fixed Operating Costs
 
@@ -164,10 +209,20 @@ Process Water | 10. | None | 1/kg | 0.0006 | None | USD | 1. | - | Seawater reve
 
 Name | Value | Unit
 --- | --- | ---
-Cost | 10000.12 | USD/kWh
+Cost | 2.12 | USD/kWh
 
 # Planned Replacement
 
 Name | Cost_Value | Cost_Path | Cost_Unit | Frequency_Value | Frequency_Unit | Comment
 --- | --- | --- | --- | ---
 Electrolyzer stack replacement | 40% | {Direct Capital Costs - Electrolyzer > Electrolyzer CAPEX > Value, USD} | USD | {Electrolyzer > Actual stack replacement time > Value, year} | year | Based on Chang 2020
+
+# Cooler Condenser
+
+Name | Value | Unit | 
+--- | --- | --- 
+Cold inlet temperature | 20. | degC |
+Cold outlet temperature | 30. | degC |
+Hot outlet temperature | 40. | degC |
+Heat transfer coefficient | 300. | W/m2/delta_K 
+Material weight per area | 34. | kg/m2 | assuming the condensing fluid circulates in tubes whose thickness is 10% of the inner diameter, and taking a safety margin
