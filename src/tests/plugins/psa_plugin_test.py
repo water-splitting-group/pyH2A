@@ -30,6 +30,7 @@ class DummyDCF:
         material,
         weld_efficiency,
         current_year_for_capital_costs,
+        number_of_trains=1,
     ):
         self.inp = {
             "Technical Operating Parameters and Specifications": {
@@ -73,6 +74,10 @@ class DummyDCF:
                 },
                 "Number of beds": {
                     "Value": number_of_beds,
+                    "Unit": "-"
+                },
+                "Number of trains": {
+                    "Value": number_of_trains,
                     "Unit": "-"
                 },
                 "Material": {

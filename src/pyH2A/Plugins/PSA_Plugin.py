@@ -107,7 +107,15 @@ class PSA_Plugin:
 		Maximum allowable gas-phase pressure drop per unit bed length, 
 		defaults to 0.1 bar/m if not given.
 	PSA > Number of beds > Value : float
-		Total number of adsorbent beds in the PSA system.
+		Number of adsorbent beds per PSA train.
+	PSA > Number of trains > Value : float, optional
+		Number of parallel PSA trains; the plant feed is split evenly across
+		trains before bed sizing (each train is a stand-alone single-bed-producer
+		system sized for its share of the feed), and per-train vessel/adsorbent
+		totals are multiplied by the number of trains to get plant-wide totals,
+		see :meth:`calculate_psa`. Defaults to 1 if not given. A warning is
+		printed if the resulting bed diameter exceeds 4.5 m, suggesting an
+		increase in the number of trains to bring it back down.
 	PSA > Material > Value : str, optional
 		Vessel shell material (currently ``carbon_steel``,
 		``low_alloy_steel``, ``stainless_steel_304``,
@@ -152,31 +160,31 @@ class PSA_Plugin:
 	Returns
 	-------
 	Direct Capital Costs - PSA System > PSA system cost > Value : float
-		Total PSA system cost (all beds): vessel purchase cost (Seider et
+		Total PSA system cost (all beds and trains): vessel purchase cost (Seider et
 		al. vertical-vessel cost correlation, CEPCI-escalated to the
 		``Current year for capital costs`` cost basis) plus the initial
 		adsorbent charge cost, see :meth:`calculate_psa`.
 	PSA > Vessel cost > Value : float
-		Vessel purchase cost only (all beds), see :meth:`calculate_psa`.
+		Vessel purchase cost only (all beds and trains), see :meth:`calculate_psa`.
 	PSA > Adsorbent cost > Value : float
-		Cost of the initial adsorbent charge (all beds): ``Adsorbent mass``
+		Cost of the initial adsorbent charge (all beds and trains): ``Adsorbent mass``
 		x ``Adsorbent cost per kg``, see :meth:`calculate_psa`.
 	Planned Replacement > Planned replacement PSA adsorbent > Cost_Value : float
-		Total cost of replacing the full adsorbent charge once (all beds),
+		Total cost of replacing the full adsorbent charge once (all beds and trains),
 		identical to ``Adsorbent cost``, see :meth:`calculate_psa`.
 	Planned Replacement > Planned replacement PSA adsorbent > Frequency_Value : float
 		Adsorbent replacement frequency in years, identical to the declared
 		``Adsorbent replacement interval``.
 	PSA > Bed volume > Value : float
-		Total adsorbent bed volume required across all beds, including void
-		volume.
+		Total adsorbent bed volume required across all beds and trains, including
+		void volume.
 	PSA > Adsorbent mass > Value : float
-		Total mass of adsorbent required across all beds.
+		Total mass of adsorbent required across all beds and trains.
 	PSA > Adsorption time > Value : float
 		Duration of the PSA adsorption step.
 	PSA > Vessel steel mass > Value : float
 		Total steel mass of the bed pressure vessels (cylindrical shell plus
-		flat end caps), across all beds, see
+		flat end caps), across all beds and trains, see
 		:meth:`calculate_psa`.
 	PSA > Pressure drop > Value : float
 		Gas-phase pressure drop across the single producing bed (Ergun
@@ -326,7 +334,23 @@ class PSA_Plugin:
 						"dimension": "dimensionless",
 					},
 					"optional": False,
-					"description": "Total number of beds in the PSA system."
+					"description": "Number of adsorbent beds per PSA train."
+				},
+				"Number of trains": {
+					"Value": {
+						"type": {float,int,},
+						"bounds": (1, None),
+					},
+					"Unit": {
+						"dimension": "dimensionless",
+					},
+					"optional": True,
+					"description": "Number of parallel PSA trains; the plant feed is split evenly "
+								   "across trains before bed sizing, and the per-train Number of "
+								   "beds vessel/adsorbent totals are multiplied by the number of "
+								   "trains, see :meth:`calculate_psa`. Defaults to 1 if not given. "
+								   "A warning is printed if the resulting bed diameter exceeds 4.5 m, "
+								   "suggesting an increase in the number of trains to bring it back down."
 				},
 				"Material": {
 					"Value": {
@@ -478,7 +502,7 @@ class PSA_Plugin:
 						"type": {float,int,},
 						"dimension": "currency",
 					},
-					"description": "Total PSA system cost (all beds): vessel purchase cost (SSLW "
+					"description": "Total PSA system cost (all beds and trains): vessel purchase cost (SSLW "
 								   "correlation, CEPCI-escalated) plus the initial adsorbent "
 								   "charge cost.",
 					"optional": False,
@@ -496,7 +520,7 @@ class PSA_Plugin:
 						"type": {float,int,},
 						"dimension": "time",
 					},
-					"description": "Total cost of replacing the full adsorbent charge once (all beds).",
+					"description": "Total cost of replacing the full adsorbent charge once (all beds and trains).",
 					"optional": False,
 				}
 			},
@@ -507,7 +531,7 @@ class PSA_Plugin:
 						"type": {float,int,},
 						"dimension": "currency",
 					},
-					"description": "Vessel purchase cost only (all beds).",
+					"description": "Vessel purchase cost only (all beds and trains).",
 					"optional": False,
 				},
 				"Adsorbent cost": {
@@ -516,7 +540,7 @@ class PSA_Plugin:
 						"type": {float,int,},
 						"dimension": "currency",
 					},
-					"description": "Cost of the initial adsorbent charge (all beds): Adsorbent "
+					"description": "Cost of the initial adsorbent charge (all beds and trains): Adsorbent "
 								   "mass x Adsorbent cost per kg.",
 					"optional": False,
 				},
@@ -526,7 +550,7 @@ class PSA_Plugin:
 						"type": {float,int,},
 						"dimension": "volume",
 					},
-					"description": "Total adsorbent bed volume required across all beds, including void volume.",
+					"description": "Total adsorbent bed volume required across all beds and trains, including void volume.",
 					"optional": False,
 				},
 				"Adsorbent mass": {
@@ -535,7 +559,7 @@ class PSA_Plugin:
 						"type": {float,int,},
 						"dimension": "mass",
 					},
-					"description": "Total mass of adsorbent required across all beds.",
+					"description": "Total mass of adsorbent required across all beds and trains.",
 					"optional": False,
 				},
 				"Adsorption time": {
@@ -554,7 +578,7 @@ class PSA_Plugin:
 						"dimension": "mass",
 					},
 					"description": "Total steel mass of the bed pressure vessels (cylindrical "
-								   "shell plus flat end caps), across all beds.",
+								   "shell plus flat end caps), across all beds and trains.",
 					"optional": False,
 				},
 				"Pressure drop": {
@@ -587,9 +611,12 @@ class PSA_Plugin:
 
 		material = psa['Material']['Value'] if 'Material' in psa else 'stainless_steel_316'
 		number_of_beds = psa['Number of beds']['Value'].unit['-']
+		number_of_trains = psa['Number of trains']['Value'].unit['-'] if 'Number of trains' in psa else 1
 
 		# Bed sizing: H2/adsorbate mass balance, ideal-gas volumetric flow, single-bed-producer geometry -> adsorbent mass, bed volume, adsorption time, gas density.
-		design_capacity = self.input_dict_resolved['Technical Operating Parameters and Specifications']['Plant design capacity']['Value'].unit['kg/s']
+		# Plant feed is split evenly across trains, so sizing below is per train.
+		design_capacity = (self.input_dict_resolved['Technical Operating Parameters and Specifications']['Plant design capacity']['Value'].unit['kg/s']
+						   / number_of_trains)
 		feed_adsorbate_mole_fraction = psa['Feed adsorbate mole fraction']['Value'].unit['-']
 		adsorbate_molar_mass = psa['Adsorbate molar mass']['Value'].unit['kg/mol']
 		recovery = psa['Recovery']['Value'].unit['-']
@@ -616,9 +643,14 @@ class PSA_Plugin:
 		length_to_diameter_ratio = psa['Length to diameter ratio']['Value'].unit['-']
 		feed_gas_velocity = psa['Feed gas velocity']['Value'].unit['m/s']
 
-		# Single-bed producer: the one producing bed is sized for the full plant feed flow.
+		# Single-bed producer: the one producing bed within each train is sized for that train's share of the plant feed.
 		cross_sectional_area = volumetric_flow / feed_gas_velocity  # m2
 		self.bed_diameter = Quantity(math.sqrt(4 * cross_sectional_area / math.pi), 'm')
+
+		if self.bed_diameter.unit['m'] > 4.5:
+			print(f"Warning: PSA bed diameter ({self.bed_diameter.unit['m']:.2f} m) exceeds 4.5 m. "
+				  f"Consider increasing 'Number of trains' to bring the per-train bed diameter down.")
+
 		self.bed_length = Quantity(length_to_diameter_ratio * self.bed_diameter.unit['m'], 'm')
 		self.single_bed_volume = Quantity(cross_sectional_area * self.bed_length.unit['m'], 'm3')
 
@@ -634,8 +666,8 @@ class PSA_Plugin:
 		adsorption_time = single_bed_adsorbent_mass * working_capacity / self.adsorbate_mass_flow.unit['kg/s']
 		self.adsorption_time = Quantity(adsorption_time, 's')
 
-		self.adsorbent_mass = Quantity(single_bed_adsorbent_mass * number_of_beds, 'kg')
-		self.bed_volume = Quantity(self.single_bed_volume.unit['m3'] * number_of_beds, 'm3')
+		self.adsorbent_mass = Quantity(single_bed_adsorbent_mass * number_of_beds * number_of_trains, 'kg')
+		self.bed_volume = Quantity(self.single_bed_volume.unit['m3'] * number_of_beds * number_of_trains, 'm3')
 
 		# Shell thickness (ASME + wind/dead-load + corrosion allowance, rounded to standard plate), shared by steel mass and cost.
 		operating_pressure_bar = psa['Operating pressure']['Value'].unit['bar'] 
@@ -683,7 +715,7 @@ class PSA_Plugin:
 
 		single_vessel_steel_mass = single_vessel_steel_volume * steel_density  # kg
 
-		self.vessel_steel_mass = Quantity(single_vessel_steel_mass * number_of_beds, 'kg')
+		self.vessel_steel_mass = Quantity(single_vessel_steel_mass * number_of_beds * number_of_trains, 'kg')
 
 		# PSA system cost: SSLW vessel purchase-cost correlation (CEPCI-escalated) plus adsorbent cost.
 		weight = (math.pi * steel_density * thickness
@@ -725,7 +757,7 @@ class PSA_Plugin:
 
 		single_vessel_cost = single_vessel_cost_CE500 * (cepci_current / cepci_base)
 
-		self.vessel_cost = Quantity(single_vessel_cost * number_of_beds, 'USD')
+		self.vessel_cost = Quantity(single_vessel_cost * number_of_beds * number_of_trains, 'USD')
 
 		adsorbent_cost_per_kg = adsorbent['Adsorbent cost per kg']['Value'].unit['USD/kg']
 		self.adsorbent_cost = Quantity(self.adsorbent_mass.unit['kg'] * adsorbent_cost_per_kg, 'USD')
@@ -755,7 +787,13 @@ class PSA_Plugin:
 			max_pressure_drop_per_length = 10000.0  # Pa/m, 0.1 bar/m default
 
 		if pressure_drop_per_length > max_pressure_drop_per_length:
-			print(f"Warning: PSA pressure drop per unit length "
-				  f"({pressure_drop_per_length / 1e5:.4f} bar/m) exceeds the maximum allowable "
-				  f"({max_pressure_drop_per_length / 1e5:.4f} bar/m). Consider decreasing "
-				  f"'Feed gas velocity' to reduce pressure drop.")
+			message = (f"Warning: PSA pressure drop per unit length "
+					  f"({pressure_drop_per_length / 1e5:.4f} bar/m) exceeds the maximum allowable "
+					  f"({max_pressure_drop_per_length / 1e5:.4f} bar/m). Consider decreasing "
+					  f"'Feed gas velocity' to reduce pressure drop.")
+
+			if feed_gas_velocity <= 0.1:
+				message += (" 'Feed gas velocity' is already at or below 0.1 m/s; consider "
+						   "increasing 'Number of trains' instead.")
+
+			print(message)
