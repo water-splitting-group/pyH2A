@@ -250,17 +250,6 @@ class Photocatalytic_Plugin:
 				},
 			},
 		 	"Solar Input": {
-				"Mean solar input": {
-					"Value": {
-						"type": {int, float,},
-						"bounds": (0, None),
-					},
-					"Unit": {
-						"dimension": "power / area", 
-					},
-					"optional": False,
-					"description": "Mean solar input."
-				},
 				"Hourly": {
 					"Value": {
 						"type": {np.ndarray,},
@@ -457,23 +446,27 @@ class Photocatalytic_Plugin:
 		output_inserter_function(self.output_dict, self, dcf, 'Photocatalytic_Plugin') 
 
 	def hydrogen_production(self):
-		'''Calculation of hydrogen produced per day per baggie (in kg).
+		'''Calculation of hydrogen produced per hour and per year, per baggie (in kg).
 		'''
+		hourly_mol_H2_per_m2 = (self.input_dict_resolved['Solar Input']['Hourly']['Value'].unit['Wh/m2']
+								* self.input_dict_resolved['Solar-to-Hydrogen Efficiency']['STH']['Value'].unit['-'] 
+								/ self.H2_molecule_energy.unit['Wh/mol'])
+
+		self.hourly_H2_mass_production_per_surface = Quantity(hourly_mol_H2_per_m2 * self.H2_molecular_weight.unit['kg/mol'], 'kg/m2')
+
+		self.mean_mol_rate_H2_per_surface = Quantity(np.sum(hourly_mol_H2_per_m2), 'mol/year/m2')		
+		self.mean_H2_mass_production_rate_per_surface = Quantity(self.mean_mol_rate_H2_per_surface.unit['mol/year/m2'] * self.H2_molecular_weight.unit['kg/mol'], 'kg/year/m2')
 
 		baggie = self.input_dict_resolved['Reactor Baggies']
 
 		self.baggie_area = Quantity(baggie['Length']['Value'].unit['m'] * baggie['Width']['Value'].unit['m'], 'm2')
 
-		hourly_baggie_insolation_Wh = (self.baggie_area.unit['m2'] 
-										 * self.input_dict_resolved['Solar Input']['Hourly']['Value'].unit['Wh/m2'])
+		self.yearly_averaged_mass_rate_H2_per_baggie = Quantity(self.mean_H2_mass_production_rate_per_surface.unit['kg/year/m2']
+														  *
+														  self.baggie_area.unit['m2'], 
+														  'kg/year')
 
-		hourly_mol_H2_per_baggie = (hourly_baggie_insolation_Wh 
-										* self.input_dict_resolved['Solar-to-Hydrogen Efficiency']['STH']['Value'].unit['-'] 
-										/ self.H2_molecule_energy.unit['Wh/mol'])
-
-		self.hourly_H2_mass_production_per_baggie = Quantity(hourly_mol_H2_per_baggie * self.H2_molecular_weight.unit['kg/mol'], 'kg')
-
-		self.yearly_averaged_mass_rate_H2_per_baggie = Quantity(np.sum(self.hourly_H2_mass_production_per_baggie.unit['kg']), 'kg/year')
+		self.peak_mol_rate_H2_per_surface = Quantity(np.amax(hourly_mol_H2_per_m2), 'mol/h/m2')
 
 
 	def catalyst_activity(self):
@@ -485,25 +478,13 @@ class Photocatalytic_Plugin:
 
 		catalyst_properties = {}
 
-		peak_hourly_irradiation_per_m2 = np.amax(self.input_dict_resolved['Solar Input']['Hourly']['Value'].unit['J/m2'])
-		
-		peak_hourly_mol_H2_per_m2 = (peak_hourly_irradiation_per_m2
-									 * self.input_dict_resolved['Solar-to-Hydrogen Efficiency']['STH']['Value'].unit['-']
-									 / self.H2_molecule_energy.unit['J/mol'])
-
-		mean_mol_rate_H2_per_surface = (self.input_dict_resolved['Solar Input']['Mean solar input']['Value'].unit['W/m2'] 
-										* self.input_dict_resolved['Solar-to-Hydrogen Efficiency']['STH']['Value'].unit['-']
-										/ self.H2_molecule_energy.unit['J/mol'])
-		
-		self.mean_mol_rate_H2_per_surface = Quantity(mean_mol_rate_H2_per_surface, 'mol/s/m2')
-
 		kg_catalyst_per_m2 = (self.input_dict_resolved['Reactor Baggies']['Filling height']['Value'].unit['m']
 							  * self.input_dict_resolved['Catalyst']['Concentration']['Value'].unit['kg/m3'])
 
-		self.activity_H2_rate_per_catalyst_mass = Quantity(peak_hourly_mol_H2_per_m2 / kg_catalyst_per_m2, 'mol/h/kg')
+		self.activity_H2_rate_per_catalyst_mass = Quantity(self.peak_mol_rate_H2_per_surface.unit['mol/h/m2'] / kg_catalyst_per_m2, 'mol/h/kg')
 
 		catalyst_properties['Peak activity'] = self.activity_H2_rate_per_catalyst_mass
-		catalyst_properties['Peak H2 production'] = Quantity(peak_hourly_mol_H2_per_m2, 'mol/m2/h')
+		catalyst_properties['Peak H2 production'] = self.peak_mol_rate_H2_per_surface
 		catalyst_properties['Catalyst Concentration (mass / area)'] = Quantity(kg_catalyst_per_m2, 'kg/m2')
 		catalyst_properties['Catalyst Concentration (mass / volume)'] = self.input_dict_resolved['Catalyst']['Concentration']['Value']
 	
@@ -516,7 +497,7 @@ class Photocatalytic_Plugin:
 
 			mol_catalyst_per_m2 = liter_per_m2 * catalyst_mol_per_L
 
-			peak_TOF_hourly = peak_hourly_mol_H2_per_m2 / mol_catalyst_per_m2
+			peak_TOF_hourly = self.peak_mol_rate_H2_per_surface['mol/h/m2'] / mol_catalyst_per_m2
 			average_TOF_daily = self.mean_mol_rate_H2_per_surface.unit['mol/day/m2'] / mol_catalyst_per_m2
 			TON = average_TOF_daily * self.input_dict_resolved['Catalyst']['Lifetime']['Value'].unit['day']
 
@@ -609,7 +590,7 @@ class Photocatalytic_Plugin:
 	def outlet_flow_properties(self):
 		'''Establishes the thermophysical characteristics of the fluid leaving the reactor, for downstream process sizing'''
 
-		self.outlet_temperature = Quantity(60., 'degC') # hardcoded for the moment, could become an input later
+		self.outlet_temperature = Quantity(60., 'degC') # hardcoded for the moment, could become an input or even an hourly array (from energy balance) later
 		self.outlet_pressure = Quantity(1.01315e5, 'Pa') # hardcoded for the moment, could become an input later
 
 		# Assuming water vapour is saturated in the baggie, determination of the water vapour pressure
@@ -637,9 +618,9 @@ class Photocatalytic_Plugin:
 		# but we assume a production that is independent of the year, so there's no need to run the same calculation multiple times: a single year (year 0) is sufficient, and is the used identical to itself when generating the hourly_mass_flow dict
 		hourly_unsmoothened_output_kg = (self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output by year']['Value'].unit['kg'][0] 
 										*
-										self.hourly_H2_mass_production_per_baggie.unit['kg']
+										self.hourly_H2_mass_production_per_surface.unit['kg/m2']
 										/
-										self.yearly_averaged_mass_rate_H2_per_baggie.unit['kg/year']
+										self.mean_H2_mass_production_rate_per_surface.unit['kg/year/m2']
 										/ 
 										self.outlet_mass_fraction['H2'].unit['-']
 										)

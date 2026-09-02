@@ -11,12 +11,13 @@ Name | Position
 Hourly_Irradiation_Plugin | 201 |
 Photovoltaic_Plugin | 202 |
 Wind_Plugin | 203 |
-Electrolyzer_Plugin | 204 |
+Electrolyzer_Hourly_Plugin | 204 |
 Cooler_Condenser_Plugin | 301 |
 Reverse_Osmosis_Plugin | 302 |
 Electricity_Consumer_Plugin | 303 |
 Battery_Calculation_Plugin | 304 |
 Power_Management_Explicit_Battery_Plugin | 305 |
+RFB_Plugin | 306 |
 Multiple_Modules_Plugin | 401 |
 
 # Display Parameters
@@ -59,6 +60,7 @@ File | pyH2A.Lookup_Tables.Hourly_Wind_Data~Jena.615_2005_2023.csv | Location: J
 Name | Value | Unit 
 --- | --- | --- 
 Cooler condenser | {Cooler Condenser > Cooling water hourly pumping energy > Value, J} | J 
+Electrolyzer | {Electrolyzer > Missing required energy (hourly) > Value, J} | J 
 
 # Technical Operating Parameters and Specifications
 
@@ -81,15 +83,10 @@ Name | Value | Unit | Comment
 --- | --- | --- | --- 
 Nominal power | 5,500 | kW | Production of ca. 1 t of H2 per day to compare with PEC and photocatalytic models
 Power requirement increase per year | 0.3% | - | Based on Chang 2020
-Minimum capacity | 10% | - | Based on Chang 2020, minimum capacity for electrolyzer to operate
+Minimum capacity | 30% | - | 
 Hydrogen yield per unit energy | 0.0185 | kg/kWh | Based on Chang 2020
 Replacement time | 80,000 | h | Based on Chang 2020, operating time after which electrolyzer stacks have to be replaced
 
-# Electrolysis Using Stored Power
-
-Name | Value | Unit | Comment
---- | --- | --- | --- 
-Fraction of stored power used for electrolysis | 95% | - | Additional electrolysis using stored power 
 
 # Photovoltaic
 
@@ -111,8 +108,8 @@ Power loss per year | 0.5% | -
 
 Name | Value | Unit | Comment
 --- | --- | --- | ---
-Design capacity | 3000 | MWh | Full design capacity
-Lowest discharge level | 20% | - | Lowest level to which battery can be discharged
+Gross capacity | 3000 | MWh | 
+Lowest charge level | 20% | - | Lowest level to which battery can be discharged
 Capacity loss per year | 0.5% | - | Loss of capacity per year
 Capacity loss per full charge | 0.1% | - | loss per full charge equivalent
 Round trip efficiency | 80% | - | 
@@ -120,10 +117,31 @@ Highest charge level | 80% | - |
 Power | 20 | MW | 
 Charging threshold | 20% | -
 Power per cell stack | 10 | kW
-Cost per cell stack | 8500 | USD 
 Energy density | 40 | Wh/kg
-Electrolyte regeneration per year | 0.5% | -
+Fraction of electrolyte to replace per year | 1% | -
+Fraction of replaced electrolyte to produce per year | 40% | -
 Storage capacity per battery module | 150 | MWh
+Cell stack lifetime | 2 | year
+Electrolyte density | 1400 | kg/m3
+
+# Cell Stack Impact
+
+Name | Value | Unit | Comment
+--- | --- | --- | ---
+GWP per stack | 10 | kg
+Energy per stack | 10 | J
+Toxicity per stack | 10 | -
+Resource use per stack | 10 | kg
+
+# Electrolyte Impact
+
+Name | Value | Unit
+--- | --- | ---
+Specific GWP | 20 | kg/kg
+Energy intensity | 100 | kWh/kg
+Specific toxicity | 12 | 1/kg
+Specific resource use | 15 | kg/kg
+
 
 # Reverse Osmosis
 
@@ -144,7 +162,7 @@ Reverse osmosis CAPEX | 6000 | {Reverse Osmosis > Capacity > Value, m3/h} | USD 
 
 Name | Value | Path | Unit
 --- | --- | --- | ---
-Battery CAPEX | 0. | {Battery > Design capacity > Value, kWh} | USD
+Battery CAPEX | 0. | {Battery > Gross capacity > Value, kWh} | USD
 
 # Direct Capital Costs - PV
 

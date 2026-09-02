@@ -8,7 +8,7 @@ Default TEA | pyH2A.Config~Defaults_TEA.md
 
 Name | Description | Position
 --- | --- | ---
-Hourly_Irradiation_Plugin | Plugin to calculate solar irradiation from typical meteorological year data | 201 |
+Hourly_Irradiation_Plugin @Baggie | Plugin to calculate solar irradiation from typical meteorological year data | 201 |
 Photocatalytic_Plugin | Computes number of required baggies, cost of baggies and catalyst cost | 301 |
 Catalyst_Separation_Plugin | Computes cost of catalyst separation | 302 |
 Cooler_Condenser_Plugin | Computes first cooler condenser sizing and coolant requirements | 303 |
@@ -17,12 +17,13 @@ Cooler_Condenser_Plugin @second one | Computes second cooler condenser sizing an
 Compressor_Plugin @2  | Computes second compressor power and yearly consumption | 306 |
 Cooler_Condenser_Plugin @3 | Computes third cooler condenser sizing and coolant requirements | 307 |
 PSA_refactored_Plugin | Computes sizing and cost of PSA separation unit | 308
-Photovoltaic_Plugin | - | 309
-Wind_Plugin | - | 310 
-Electricity_Consumer_Plugin | - | 311 |
-Battery_Calculation_Plugin | - | 312 |
-Power_Management_Explicit_Battery_Plugin | - | 313 |
-RFB_Plugin | - | 314 | 
+Hourly_Irradiation_Plugin @PV | Plugin to calculate solar irradiation from typical meteorological year data | 309 |
+Photovoltaic_Plugin | - | 310
+Wind_Plugin | - | 311 
+Electricity_Consumer_Plugin | - | 312 |
+Battery_Calculation_Plugin | - | 313 |
+Power_Management_Explicit_Battery_Plugin | - | 314 |
+RFB_Plugin | - | 315 | 
 Multiple_Modules_Plugin | Modelling of multiple plant modules, adjustment of labor requirement | 401 |
 
 # Display Parameters
@@ -47,7 +48,13 @@ Name | Value | Unit
 --- | --- | --- 
 Capital spent in 1st year of construction | 100% | - 
 
-# Hourly Irradiation
+# Hourly Irradiation Baggie
+
+Name | Value | Comment 
+--- | --- | --- 
+File | pyH2A.Lookup_Tables.Hourly_Irradiation_Data~tmy_34.859_-116.889_2006_2015.csv | Location: Dagget, CA, USA 
+
+# Hourly Irradiation PV
 
 Name | Value | Comment 
 --- | --- | --- 
@@ -69,7 +76,7 @@ Cooler condenser second | {Cooler Condenser second one > Cooling water hourly pu
 Compressor 2 | {Compressor 2 > Hourly energy requirement > Value, J} | J 
 Cooler condenser 3 | {Cooler Condenser 3 > Cooling water hourly pumping energy > Value, J} | J
 
-# Irradiance Area Parameters
+# Irradiance Area Parameters Baggie
 
 Name | Value | Unit | Comment 
 --- | --- | --- | --- 
@@ -80,18 +87,27 @@ Mismatch derating | 98% | - | Values taken from Chang 2020, analogues to silicon
 Dirt derating | 98% | - | Values taken from Chang 2020, analogues to silicon PV
 Temperature coefficient | 0 | 1/delta_degC | No decrease on photocatalyst activity with higher temperature assumed
 
+# Irradiance Area Parameters PV
+
+Name | Value | Unit | Comment 
+--- | --- | --- | --- 
+Array azimuth | 180 | deg 
+Nominal operating temperature | 45 | degC 
+Mismatch derating | 98% | - | Based on Chang 2020
+Dirt derating | 98% | - | Based on Chang 2020
+Temperature coefficient | -0.4% | 1/delta_degC | Based on Chang 2020
+
 # Solar Input
 
 Name | Value | Unit | Comment 
 --- | --- | --- | --- 
-Mean solar input | {Hourly Irradiation > Mean solar input no tracking > Value, kW/m2} | kW/m2 | Solar irradiation for baggies on flat ground without tracking
-Hourly | {Hourly Irradiation > No tracking > Value, kWh/m2} | kWh/m2 
+Hourly | {Hourly Irradiation Baggie > No tracking > Value, kWh/m2} | kWh/m2 
 
 # Irradiation Used
 
 Name | Value | Unit | Comment 
 --- | --- | --- | --- 
-Data | {Hourly Irradiation > Horizontal single axis tracking > Value, kWh/m2} | kWh/m2 | Single axis tracking based on Chang 2020
+Data | {Hourly Irradiation PV > Horizontal single axis tracking > Value, kWh/m2} | kWh/m2 | Single axis tracking based on Chang 2020
 
 # Solar-to-Hydrogen Efficiency
 
@@ -321,7 +337,7 @@ Power loss per year | 0.5% | -
 
 Name | Value | Unit | Comment
 --- | --- | --- | ---
-Usable capacity | 3000 | MWh | 
+Gross capacity | 3000 | MWh | 
 Lowest charge level | 20% | - | Lowest level to which battery can be discharged
 Capacity loss per year | 0.5% | - | Loss of capacity per year
 Capacity loss per full charge | 0.1% | - | loss per full charge equivalent

@@ -407,7 +407,7 @@ class PEC_Plugin:
 	def outlet_flow_properties(self):
 		'''Establishes the thermophysical characteristics of the fluid leaving the reactor, for downstream process sizing'''
 
-		self.outlet_temperature = Quantity(60., 'degC') # hardcoded for the moment, could become an input later
+		self.outlet_temperature = Quantity(60., 'degC') # hardcoded for the moment, could become an input or even an hourly array (from energy balance) later
 		self.outlet_pressure = Quantity(300, 'psi') # hardcoded for the moment, could become an input later
 
 		# Assuming water vapour is saturated in the baggie, determination of the water vapour pressure

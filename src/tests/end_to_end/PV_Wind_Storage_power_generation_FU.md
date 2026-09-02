@@ -92,19 +92,30 @@ Power loss per year | 0.5% | -
 
 Name | Value | Unit | Comment
 --- | --- | --- | ---
-Design capacity | 3000 | MWh | Full design capacity
-Lowest discharge level | 20% | - | Lowest level to which battery can be discharged
+Gross capacity | 3000 | MWh | 
+Lowest charge level | 20% | - | Lowest level to which battery can be discharged
 Capacity loss per year | 0.5% | - | Loss of capacity per year
 Capacity loss per full charge | 0.1% | - | loss per full charge equivalent
-Round trip efficiency | 80% | - | For lithium ion battery
+Round trip efficiency | 80% | - | 
 Highest charge level | 80% | - | 
-Power | 20 | MW | insufficient for a 10 MW customer at night
+Power | 20 | MW | 
 Charging threshold | 20% | -
 Power per cell stack | 10 | kW
-Cost per cell stack | 8500 | USD 
 Energy density | 40 | Wh/kg
-Electrolyte regeneration per year | 0.5% | -
+Fraction of electrolyte to replace per year | 1% | -
+Fraction of replaced electrolyte to produce per year | 40% | -
 Storage capacity per battery module | 150 | MWh
+Cell stack lifetime | 2 | year
+Electrolyte density | 1400 | kg/m3
+
+# Cell Stack Impact
+
+Name | Value | Unit | Comment
+--- | --- | --- | ---
+GWP per stack | 10 | kg
+Energy per stack | 10 | J
+Toxicity per stack | 10 | -
+Resource use per stack | 10 | kg
 
 # Electrolyte Impact
 
@@ -114,7 +125,6 @@ Specific GWP | 20 | kg/kg
 Energy intensity | 100 | kWh/kg
 Specific toxicity | 12 | 1/kg
 Specific resource use | 15 | kg/kg
-Specific cost | 9 | USD/kg
 
 # Direct Capital Costs - Power generation
 
@@ -122,13 +132,6 @@ Name | Value | Path | Unit | Comment
 --- | --- | --- | --- | ---
 PV CAPEX | 818 | {Photovoltaic > Nominal power > Value, kW} | USD | Based on Chang 2020, Chiesa 2021 Middle East PV installation cost, Shah 2021
 Wind CAPEX | 1.2 | {Wind Turbine > Installed wind capacity > Value, W} | USD | Assuming 1.2 M USD per MW installed
-
-# Direct Capital Costs - Storage
-
-Name | Value | Unit | Comment
---- | --- | --- | --- | ---
-Electrolyte initial holdup | {Electrolyte Impact > Initial cost of electrolyte > Value, USD} | USD | Initial amount of electrolyte 
-Battery stack  | {Battery > Cost of cell stacks > Value, USD} | USD | Cost of the cell stacks
 
 # Non-Depreciable Capital Costs
 
@@ -147,18 +150,16 @@ Number of supervisors | 1 | - | Same as PEC and photocatalytic model, number of 
 Number of 8-hour shifts | 3 | - | Same as PEC and photocatalytic model, number of shifts per day
 Hourly labor cost | 50.0 | USD/h | Same as PEC and photocatalytic model,  Burdened labor cost, including overhead (USD per man-hr)
 
-# Planned Replacement
-
-Name | Frequency_Value | Frequency_Unit | Cost_Value | Cost_Unit | Comment 
---- | --- | --- | --- | --- | --- 
-Electrolyte replacement | 1 | year | {Electrolyte Impact > Yearly cost of electrolyte > Value, USD} | USD | the replacement of electrolyte can be continuous, but all calculations are made per year
-
 # Grid Electricity
 
 Name | Value | Unit
 --- | --- | ---
 Cost | 2.12 | USD/kWh
 
+# Planned Replacement
+
+Name | Cost_Value | Cost_Path | Cost_Unit | Frequency_Value | Frequency_Unit | Comment
+--- | --- | --- | --- | ---
 
 # Utilities
 

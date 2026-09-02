@@ -13,9 +13,9 @@ Photocatalytic_Plugin | Computes number of required baggies, cost of baggies and
 Catalyst_Separation_Plugin | Computes cost of catalyst separation | 302 |
 Cooler_Condenser_Plugin | Computes first cooler condenser sizing and coolant requirements | 303 |
 Compressor_Plugin  | Computes compressor power and yearly consumption | 304 |
-Cooler_Condenser_2_Plugin | Computes second cooler condenser sizing and coolant requirements | 305 |
-Compressor_2_Plugin  | Computes second compressor power and yearly consumption | 306 |
-Cooler_Condenser_3_Plugin | Computes third cooler condenser sizing and coolant requirements | 307 |
+Cooler_Condenser_Plugin @2 | Computes second cooler condenser sizing and coolant requirements | 305 |
+Compressor_Plugin @2 | Computes second compressor power and yearly consumption | 306 |
+Cooler_Condenser_Plugin @3 | Computes third cooler condenser sizing and coolant requirements | 307 |
 PSA_refactored_Plugin | Computes sizing and cost of PSA separation unit | 308
 Multiple_Modules_Plugin | Modelling of multiple plant modules, adjustment of labor requirement | 401 |
 
@@ -62,7 +62,6 @@ Temperature coefficient | 0 | 1/delta_degC | No decrease on photocatalyst activi
 
 Name | Value | Unit | Comment 
 --- | --- | --- | --- 
-Mean solar input | {Hourly Irradiation > Mean solar input no tracking > Value, kW/m2} | kW/m2 | Solar irradiation for baggies on flat ground without tracking
 Hourly | {Hourly Irradiation > No tracking > Value, kWh/m2} | kWh/m2 
 
 # Solar-to-Hydrogen Efficiency
@@ -224,6 +223,25 @@ Hot outlet temperature | 40. | degC |
 Heat transfer coefficient | 300. | W/m2/delta_K 
 Material weight per area | 34. | kg/m2 | assuming the condensing fluid circulates in tubes whose thickness is 10% of the inner diameter
 
+# Cooler Condenser 2
+
+Name | Value | Unit | 
+--- | --- | --- 
+Cold inlet temperature | 20. | degC |
+Cold outlet temperature | 30. | degC |
+Hot outlet temperature | 40. | degC |
+Heat transfer coefficient | 300. | W/m2/delta_K 
+Material weight per area | 34. | kg/m2 | assuming the condensing fluid circulates in tubes whose thickness is 10% of the inner diameter
+
+# Cooler Condenser 3
+
+Name | Value | Unit | 
+--- | --- | --- 
+Cold inlet temperature | 20. | degC |
+Cold outlet temperature | 30. | degC |
+Hot outlet temperature | 40. | degC |
+Heat transfer coefficient | 300. | W/m2/delta_K 
+Material weight per area | 34. | kg/m2 | assuming the condensing fluid circulates in tubes whose thickness is 10% of the inner diameter
 
 # PSA
 

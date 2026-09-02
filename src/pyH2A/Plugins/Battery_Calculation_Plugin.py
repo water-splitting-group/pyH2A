@@ -62,7 +62,7 @@ class Battery_Calculation_Plugin:
                 },                      
             },    
             "Battery": {
-                "Usable capacity": { 
+                "Gross capacity": { 
                     "Value": {
                         "type": {int, float,},
                         "bounds": (0, None),
@@ -71,7 +71,7 @@ class Battery_Calculation_Plugin:
                         "dimension": "energy",
                     },                    
                     "optional": False,
-                    "description": "Usable initial energy capacity of the battery."
+                    "description": "Design capacity of the battery, if full charge and discharge of the electrolyte were allowed."
                 },
                 "Lowest charge level": {
                     "Value": {
@@ -215,15 +215,6 @@ class Battery_Calculation_Plugin:
                 },        
             },
             "Battery": {  
-                "Gross capacity": {
-                    "Value": {
-                        "inserted_value": "design_capacity",
-                        "type": {float,},
-                        "dimension": "energy",
-                    },
-                    "description": "Design capacity of the battery, if full charge and discharge of the electrolyte were allowed.",
-                    "optional": False,
-                },  
                 "Number of charge cycles": {
                     "Value": {
                         "inserted_value": "number_charge_cycles",
@@ -248,13 +239,6 @@ class Battery_Calculation_Plugin:
 
     def _run(self, dcf):
         self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Battery_Calculation_Plugin')
-
-        self.design_capacity = Quantity(self.input_dict_resolved['Battery']['Usable capacity']['Value'].unit['J']
-                                       # /
-                                       # self.input_dict_resolved['Battery']['Round trip efficiency']['Value'].unit['-'] # wrong: why would the RTE intervene in it?
-                                        /
-                                        (self.input_dict_resolved['Battery']['Highest charge level']['Value'].unit['-']-self.input_dict_resolved['Battery']['Lowest charge level']['Value'].unit['-']), 
-                                        'J')
         
         self.calculate_power_curtailment()
         self.calculate_capacity_curtailment()
@@ -320,14 +304,14 @@ class Battery_Calculation_Plugin:
         # The capacity upper and lower bounds are proprtional to the (aged) full capacity
         lower_bound_SOE_J = (battery_ageing_factor_calendar 
                              * 
-                             self.design_capacity.unit['J'] 
+                             self.input_dict_resolved['Battery']['Gross capacity']['Value'].unit['J']
                              * 
                              self.input_dict_resolved['Battery']['Lowest charge level']['Value'].unit['-'])
 
 
         upper_bound_SOE_J = (battery_ageing_factor_calendar 
                              * 
-                            self.design_capacity.unit['J'] 
+                            self.input_dict_resolved['Battery']['Gross capacity']['Value'].unit['J']
                              * 
                              self.input_dict_resolved['Battery']['Highest charge level']['Value'].unit['-'])
 
@@ -408,14 +392,14 @@ class Battery_Calculation_Plugin:
         self.number_charge_cycles = Quantity(
                                             (cumulated_charge_J_full_array[-1]+cumulated_discharge_J_full_array[-1])
                                             /
-                                            (2*self.design_capacity.unit['J']), 
+                                            (2*self.input_dict_resolved['Battery']['Gross capacity']['Value'].unit['J']), 
                                             '-')        
 
         #print('number_charge_cycles ', self.number_charge_cycles.unit['-'])
 
     def calculate_sizing(self):
         self.number_modules = Quantity(
-            self.design_capacity.unit['J']
+            self.input_dict_resolved['Battery']['Gross capacity']['Value'].unit['J']
             /
             self.input_dict_resolved['Battery']['Storage capacity per battery module']['Value'].unit['J'] , 
             '-'
