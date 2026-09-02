@@ -12,9 +12,9 @@ Hourly_Irradiation_Plugin | Plugin to calculate solar irradiation from typical m
 Photocatalytic_Plugin | Computes number of required baggies, cost of baggies and catalyst cost | 301 |
 Catalyst_Separation_Plugin | Computes cost of catalyst separation | 302 |
 Cooler_Condenser_Plugin | Computes first cooler condenser sizing and coolant requirements | 303 |
-Compressor_Plugin  | Computes compressor power and yearly consumption | 304 |
-Cooler_Condenser_Plugin @2 | Computes second cooler condenser sizing and coolant requirements | 305 |
-Compressor_2_Plugin  | Computes second compressor power and yearly consumption | 306 |
+Compressor_Plugin | Computes compressor power and yearly consumption | 304 |
+Cooler_Condenser_Plugin @second one | Computes second cooler condenser sizing and coolant requirements | 305 |
+Compressor_Plugin @2  | Computes second compressor power and yearly consumption | 306 |
 Cooler_Condenser_Plugin @3 | Computes third cooler condenser sizing and coolant requirements | 307 |
 PSA_refactored_Plugin | Computes sizing and cost of PSA separation unit | 308
 Photovoltaic_Plugin | - | 309
@@ -64,8 +64,8 @@ File | pyH2A.Lookup_Tables.Hourly_Wind_Data~Jena.615_2005_2023.csv | Location: J
 Name | Value | Unit 
 --- | --- | --- 
 Cooler condenser | {Cooler Condenser > Cooling water hourly pumping energy > Value, J} | J 
-Compressor 1 | {Compressor > Hourly energy requirement > Value, J} | J 
-Cooler condenser 2 | {Cooler Condenser 2 > Cooling water hourly pumping energy > Value, J} | J
+Compressor | {Compressor > Hourly energy requirement > Value, J} | J 
+Cooler condenser second | {Cooler Condenser second one > Cooling water hourly pumping energy > Value, J} | J
 Compressor 2 | {Compressor 2 > Hourly energy requirement > Value, J} | J 
 Cooler condenser 3 | {Cooler Condenser 3 > Cooling water hourly pumping energy > Value, J} | J
 
@@ -255,7 +255,7 @@ Hot outlet temperature | 40. | degC |
 Heat transfer coefficient | 300. | W/m2/delta_K 
 Material weight per area | 34. | kg/m2 | assuming the condensing fluid circulates in tubes whose thickness is 10% of the inner diameter, and taking a safety margin
 
-# Cooler Condenser 2
+# Cooler Condenser second one
 
 Name | Value | Unit | 
 --- | --- | --- 
@@ -330,7 +330,6 @@ Highest charge level | 80% | - |
 Power | 20 | MW | 
 Charging threshold | 20% | -
 Power per cell stack | 10 | kW
-Cost per cell stack | 8500 | USD 
 Energy density | 40 | Wh/kg
 Fraction of electrolyte to replace per year | 1% | -
 Fraction of replaced electrolyte to produce per year | 40% | -

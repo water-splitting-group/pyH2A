@@ -330,7 +330,6 @@ class Cooler_Condenser_Plugin:
 
         plugin_name = 'Cooler_Condenser_Plugin'
         self.cooler_name = 'Cooler Condenser'
-
         if self.instance_suffix is not None:
             plugin_name = f'{plugin_name} @{self.instance_suffix}'
             self.cooler_name = f'{self.cooler_name} {self.instance_suffix}'

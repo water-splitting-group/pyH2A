@@ -41,7 +41,8 @@ class Hourly_Irradiation_Plugin:
 		Mean solar input power with two axis tracking per area.
 	'''
 
-	def __init__(self, dcf, print_info, run = True):
+	def __init__(self, dcf, print_info, run = True, instance_suffix=None):
+		self.instance_suffix = instance_suffix
 		self._set_up(dcf)
 		if run:
 			self._run(dcf)
@@ -51,7 +52,7 @@ class Hourly_Irradiation_Plugin:
 		self.functional_unit = dcf.functional_unit
 
 		self.input_dict = {
-			"Hourly Irradiation": {		
+			"Hourly Irradiation@": {		
 				"File": {
 					"Value": {	
 						"type": {str,},
@@ -60,7 +61,7 @@ class Hourly_Irradiation_Plugin:
 					"description": "Path to a `.csv` file containing hourly irradiance data"
 				},
 			},
-			"Irradiance Area Parameters": {	
+			"Irradiance Area Parameters@": {	
 				"Module tilt": {
 					"Value": {
 						"type": {int, float,},
@@ -131,7 +132,7 @@ class Hourly_Irradiation_Plugin:
 		}
 
 		self.output_dict = {
-			"Hourly Irradiation": {
+			"Hourly Irradiation@": {
 				"No tracking": {
 					"Value": {
 						"inserted_value": "hourly_energy",
@@ -190,9 +191,18 @@ class Hourly_Irradiation_Plugin:
 		}
 
 	def _run(self, dcf):
-		self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Hourly_Irradiation_Plugin')
 
-		pv = self.input_dict_resolved['Irradiance Area Parameters']
+		plugin_name = 'Hourly_Irradiation_Plugin'
+		self.hourly_irradiation_name = 'Hourly Irradiation'
+		self.irradiance_area_parameters_name = 'Irradiance Area Parameters'
+		if self.instance_suffix is not None:
+			plugin_name = f'{plugin_name} @{self.instance_suffix}'
+			self.hourly_irradiation_name = f'{self.hourly_irradiation_name} {self.instance_suffix}' 
+			self.irradiance_area_parameters_name = f'{self.irradiance_area_parameters_name} {self.instance_suffix}' 
+
+		self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, plugin_name)
+
+		pv = self.input_dict_resolved[self.irradiance_area_parameters_name]
 		
 		if 'Module tilt' in pv:
 			tilt = pv['Module tilt']['Value']
@@ -205,7 +215,7 @@ class Hourly_Irradiation_Plugin:
 		 self.yearly_averaged_power, 
 		 self.yearly_averaged_power_sat, 
 		 self.yearly_averaged_power_dat) = calculate_PV_power_ratio(
-												self.input_dict_resolved['Hourly Irradiation']['File']['Value'],
+												self.input_dict_resolved[self.hourly_irradiation_name]['File']['Value'],
 												tilt, 
 												pv['Array azimuth']['Value'],
 												pv['Nominal operating temperature']['Value'], 
@@ -214,7 +224,7 @@ class Hourly_Irradiation_Plugin:
 			 									pv['Dirt derating']['Value']
 												)
 
-		output_inserter_function(self.output_dict, self, dcf, 'Hourly_Irradiation_Plugin') 
+		output_inserter_function(self.output_dict, self, dcf, plugin_name) 
 
 def converter_function(string):
 	'''Converter function for datetime of hourly irradiation data.'''
