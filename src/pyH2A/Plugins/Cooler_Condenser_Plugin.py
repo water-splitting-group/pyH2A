@@ -373,9 +373,9 @@ class Cooler_Condenser_Plugin:
             self.condensed_water_enthalpy = Quantity(0, 'J/kg') # dummy
 
 
-            h = PP.Enthalpy(T = outlet_temperature,
-                            P = dictionary['Main Stream']['Pressure']['Value'].unit['Pa'], 
-                            amount = outlet_mass_fraction, 
+            h = PP.Enthalpy(T = self.outlet_temperature,
+                            P = self.input_dict_resolved['Main Stream']['Pressure']['Value'].unit['Pa'],  
+                            amount = self.outlet_mass_fraction, 
                             phase = 'V', 
                             composition_basis = 'mass'
                             )

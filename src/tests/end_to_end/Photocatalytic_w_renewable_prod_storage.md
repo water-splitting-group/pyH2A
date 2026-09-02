@@ -48,13 +48,7 @@ Name | Value | Unit
 --- | --- | --- 
 Capital spent in 1st year of construction | 100% | - 
 
-# Hourly Irradiation Baggie
-
-Name | Value | Comment 
---- | --- | --- 
-File | pyH2A.Lookup_Tables.Hourly_Irradiation_Data~tmy_34.859_-116.889_2006_2015.csv | Location: Dagget, CA, USA 
-
-# Hourly Irradiation PV
+# Hourly Irradiation
 
 Name | Value | Comment 
 --- | --- | --- 

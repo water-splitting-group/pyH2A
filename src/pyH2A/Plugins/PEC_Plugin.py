@@ -410,7 +410,7 @@ class PEC_Plugin:
 		self.outlet_temperature = Quantity(60., 'degC') # hardcoded for the moment, could become an input or even an hourly array (from energy balance) later
 		self.outlet_pressure = Quantity(300, 'psi') # hardcoded for the moment, could become an input later
 
-		# Assuming water vapour is saturated in the baggie, determination of the water vapour pressure
+		# Assuming water vapour is saturated in the reactor, determination of the water vapour pressure
 		psat = PP.Water_saturation_pressure(self.outlet_temperature)
 
 		mol_fraction = {} # molar fraction of the gas mixture, assuming ideal gas, expressed in mol of species for a total amount of 1 mol 

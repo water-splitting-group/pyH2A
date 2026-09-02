@@ -52,7 +52,7 @@ class Hourly_Irradiation_Plugin:
 		self.functional_unit = dcf.functional_unit
 
 		self.input_dict = {
-			"Hourly Irradiation@": {		
+			"Hourly Irradiation": {		
 				"File": {
 					"Value": {	
 						"type": {str,},
@@ -193,11 +193,9 @@ class Hourly_Irradiation_Plugin:
 	def _run(self, dcf):
 
 		plugin_name = 'Hourly_Irradiation_Plugin'
-		self.hourly_irradiation_name = 'Hourly Irradiation'
 		self.irradiance_area_parameters_name = 'Irradiance Area Parameters'
 		if self.instance_suffix is not None:
 			plugin_name = f'{plugin_name} @{self.instance_suffix}'
-			self.hourly_irradiation_name = f'{self.hourly_irradiation_name} {self.instance_suffix}' 
 			self.irradiance_area_parameters_name = f'{self.irradiance_area_parameters_name} {self.instance_suffix}' 
 
 		self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, plugin_name)
@@ -215,7 +213,7 @@ class Hourly_Irradiation_Plugin:
 		 self.yearly_averaged_power, 
 		 self.yearly_averaged_power_sat, 
 		 self.yearly_averaged_power_dat) = calculate_PV_power_ratio(
-												self.input_dict_resolved[self.hourly_irradiation_name]['File']['Value'],
+												self.input_dict_resolved['Hourly Irradiation']['File']['Value'],
 												tilt, 
 												pv['Array azimuth']['Value'],
 												pv['Nominal operating temperature']['Value'], 

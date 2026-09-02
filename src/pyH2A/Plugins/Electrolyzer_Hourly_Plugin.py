@@ -307,8 +307,6 @@ class Electrolyzer_Hourly_Plugin:
             yearly_data_duration.append(8760)
 
 
-
-
         self.yearly_data_year = Quantity(np.asarray(yearly_data_year), '-')
         self.yearly_data_production = Quantity(np.asarray(yearly_data_production), 'kg')
         self.yearly_data_duration = Quantity(np.asarray(yearly_data_duration), 'h')
@@ -326,7 +324,7 @@ class Electrolyzer_Hourly_Plugin:
         self.outlet_temperature = Quantity(85., 'degC') # hardcoded for the moment, could become an input later
         self.outlet_pressure = Quantity(20, 'bar') # hardcoded for the moment, could become an input later
 
-        # Assuming water vapour is saturated in the baggie, determination of the water vapour pressure
+        # Assuming water vapour is saturated in the electrolyzer, determination of the water vapour pressure
         psat = PP.Water_saturation_pressure(self.outlet_temperature)
 
         mol_fraction = {} # molar fraction of the gas mixture, assuming ideal gas, expressed in mol of species for a total amount of 1 mol 
