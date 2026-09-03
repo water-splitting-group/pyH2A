@@ -100,31 +100,45 @@ Round trip efficiency | 80% | - |
 Highest charge level | 80% | - | 
 Power | 20 | MW | 
 Charging threshold | 20% | -
-Power per cell stack | 10 | kW
-Energy density | 40 | Wh/kg
-Fraction of electrolyte to replace per year | 1% | -
-Fraction of replaced electrolyte to produce per year | 40% | -
 Storage capacity per battery module | 150 | MWh
-Cell stack lifetime | 2 | year
-Electrolyte density | 1400 | kg/m3
 
-# Cell Stack Impact
+# Battery Cell Stack
 
-Name | Value | Unit | Comment
+Name | Value | Unit 
 --- | --- | --- | ---
+Power per cell stack | 10 | kW
+Lifetime | 2 | year
 GWP per stack | 10 | kg
 Energy per stack | 10 | J
 Toxicity per stack | 10 | -
 Resource use per stack | 10 | kg
 
-# Electrolyte Impact
+# Battery Electrolyte
 
 Name | Value | Unit
 --- | --- | ---
+Energy density | 40 | Wh/kg
+Fraction of electrolyte to replace per year | 1% | -
+Fraction of replaced electrolyte to produce per year | 40% | -
+Electrolyte density | 1400 | kg/m3
 Specific GWP | 20 | kg/kg
 Energy intensity | 100 | kWh/kg
 Specific toxicity | 12 | 1/kg
 Specific resource use | 15 | kg/kg
+Tank steel specific GWP | 2 | kg/kg
+Tank steel energy intensity | 6 | kWh/kg
+Tank steel  specific toxicity | 20 | 1/kg
+Tank steel specific resource use | 10 | kg/kg
+
+# Battery Periphery
+
+Name | Value | Unit
+--- | --- | ---
+Number of periphery items | 1 | -
+GWP per periphery item | 10 | kg
+Energy per periphery item | 10 | J
+Toxicity per periphery item | 10 | -
+Resource use per periphery item | 10 | kg
 
 # Direct Capital Costs - Power generation
 
