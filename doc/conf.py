@@ -85,5 +85,7 @@ html_theme = 'furo'  #sphinx_rtd_theme
 html_static_path    = ['style']        # folders to include in output
 html_css_files      = ['custom.css']   # extra style files to apply
 html_logo = './_static/pyH2A.svg'
-
-
+html_js_files = ["script.js"]
+html_extra_path = [
+    'data/io_data.json',
+]

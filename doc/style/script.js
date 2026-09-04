@@ -49,7 +49,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // Load data
     // ------------------------------------------------------------
 
-    fetch("../_static/io_data.json")
+    fetch("../io_data.json")
 
         .then(function (response) {
 
