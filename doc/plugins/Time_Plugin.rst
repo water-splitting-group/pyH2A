@@ -1,5 +1,5 @@
 Time_Plugin
-===================
+===========
 
 The ``Time_Plugin`` generates a dictionary containing the time-related quantities used throughout the calculation workflow.
 
@@ -226,5 +226,5 @@ which contains:
 These quantities are subsequently used by other plugins whenever time indexing, yearly arrays, inflation corrections, or project scheduling information are required.    
 
 
-.. automodule:: pyH2A.Plugins.Time_Plugin
+.. autoclass:: pyH2A.Plugins.Time_Plugin.Time_Plugin
     :members:

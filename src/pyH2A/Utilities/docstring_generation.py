@@ -13,10 +13,9 @@ import textwrap
 
 import numpy as np
 
-from pyH2A.Utilities.input_modification import identify_bottom_keys
-from pyH2A.Utilities.constants import (WILDCARD_MARKER, SPECIAL_MIDDLE_KEYS,
-                                       OPTIONAL_KEY, TYPE_KEY, OPTIONS_KEY)
-from pyH2A.Utilities.IO.output_inserter import special_top_level_keys, special_keys as OUTPUT_SPECIAL_KEYS
+from pyH2A.Utilities.constants import (SPECIAL_MIDDLE_KEYS,
+                                       TYPE_KEY, OPTIONS_KEY, BOUNDS_KEY)
+from pyH2A.Utilities.IO.output_inserter import special_top_level_keys
 
 DESCRIPTION_KEY = 'description'
 
@@ -24,167 +23,401 @@ _TYPE_ORDER = [int, float, str, bool, dict, list, tuple, np.ndarray]
 _TYPE_PROSE = {int: 'int', float: 'float', str: 'str', bool: 'bool',
               dict: 'dict', list: 'list', tuple: 'tuple', np.ndarray: 'ndarray'}
 
-_INDENT = '    '
-_WRAP_WIDTH = 88
 
 def _type_set_to_prose(type_set):
-	'''Convert a set of Python types (e.g. `{int, float}`) to canonical prose
-	(e.g. `"int or float"`), using a fixed order so the result does not depend
-	on set iteration order.
-	'''
+    """Convert a set of Python types to canonical prose.
 
-	ordered = [t for t in _TYPE_ORDER if t in type_set]
-	ordered += [t for t in type_set if t not in _TYPE_ORDER] # fallback for unmapped types
+    Parameters
+    ----------
+    type_set : set of type
+        Set of Python types to convert. Types known to this documentation
+        generator are rendered using the order defined by ``_TYPE_ORDER``.
 
-	return ' or '.join(_TYPE_PROSE.get(t, getattr(t, '__name__', str(t))) for t in ordered)
+    Returns
+    -------
+    str
+        Type names joined by ``" or "``.
 
-def _join_path(top_key, middle_key, bottom_key, table_is_group):
-	'''Join a table/row/column path using the same notation as the existing
-	hand-written docstrings: a double arrow (`>>`) directly after a wildcard
-	table-group key (`table_is_group`), a single arrow (`>`) otherwise
-	(including for a wildcard row within a concrete table).
-	'''
+    Examples
+    --------
+    >>> _type_set_to_prose({int, float})
+    'int or float'
+    >>> _type_set_to_prose({dict})
+    'dict'
+    """
 
-	if table_is_group:
-		return f'{top_key} >> {bottom_key}'
+    ordered = [t for t in _TYPE_ORDER if t in type_set]
+    ordered += [t for t in type_set if t not in _TYPE_ORDER]
 
-	return f'{top_key} > {middle_key} > {bottom_key}'
+    return ' or '.join(
+        _TYPE_PROSE.get(
+            t,
+            getattr(t, '__name__', str(t))
+        )
+        for t in ordered
+    )
 
-def _walk_input_dict(input_dict):
-	'''Walk `input_dict` and yield `(path, type_prose, optional, description)`
-	for every parameter, in dict-insertion order. Skips `sum_tables` metadata
-	entries; relies on `identify_bottom_keys` for Value/Unit(/Path) pairing so
-	this can't disagree with how the input resolver actually resolves rows.
-	'''
 
-	entries = []
+def _format_cell(key, value):
+    """Convert a specification value into documentation text.
 
-	for top_key, table_dict in input_dict.items():
-		table_is_group = WILDCARD_MARKER in top_key
+    Scalar values are converted directly to strings. Type sets are converted
+    to canonical type prose. Nested dictionaries are expanded into separate
+    lines within the same table cell.
 
-		for middle_key, row_dict in table_dict.items():
-			if middle_key in SPECIAL_MIDDLE_KEYS:
-				continue
+    Parameters
+    ----------
+    key : str
+        Specification key associated with ``value``. Special handling is
+        applied to ``TYPE_KEY``, ``OPTIONS_KEY``, and ``BOUNDS_KEY``.
+    value : object
+        Specification value to format.
 
-			optional = row_dict.get(OPTIONAL_KEY, False)
-			description = row_dict.get(DESCRIPTION_KEY, '')
+    Returns
+    -------
+    str
+        Text representation suitable for use as an RST table cell.
 
-			for group in identify_bottom_keys(row_dict, return_as_lists = True).values():
-				value_key = group[0]
-				value_spec = row_dict[value_key]
+    Examples
+    --------
+    >>> _format_cell('type', {int, float})
+    'int or float'
 
-				if TYPE_KEY not in value_spec:
-					continue
+    >>> _format_cell('optional', False)
+    'False'
 
-				type_prose = _type_set_to_prose(value_spec[TYPE_KEY])
+    >>> _format_cell(
+    ...     'Value',
+    ...     {'type': {int, float}, 'bounds': (0, None)}
+    ... )
+    '| type: int or float\\n| bounds: (0, None)'
+    """
 
-				options = value_spec.get(OPTIONS_KEY)
-				if options:
-					type_prose += ' {{{0}}}'.format(', '.join(repr(o) for o in sorted(options)))
+    if value is None:
+        return ''
 
-				path = _join_path(top_key, middle_key, value_key, table_is_group)
-				entries.append((path, type_prose, optional, description))
+    if key == TYPE_KEY:
+        return _type_set_to_prose(value)
 
-	return entries
+    if isinstance(value, dict):
+        parts = []
 
-def _walk_output_row(top_key, middle_key, row_dict):
-	'''Yield `(path, type_prose, optional, description)` for every non-metadata
-	bottom key of a single output row.
-	'''
+        for subkey, subvalue in value.items():
 
-	entries = []
+            if subkey == TYPE_KEY and isinstance(subvalue, set):
+                subvalue = _type_set_to_prose(subvalue)
 
-	optional = row_dict.get(OPTIONAL_KEY, False)
-	description = row_dict.get(DESCRIPTION_KEY, '')
+            elif subkey == OPTIONS_KEY and subvalue:
+                subvalue = ', '.join(
+                    repr(option) for option in sorted(subvalue)
+                )
 
-	for bottom_key, value_spec in row_dict.items():
-		if bottom_key in OUTPUT_SPECIAL_KEYS:
-			continue
+            elif subkey == BOUNDS_KEY and isinstance(subvalue, tuple):
+                lower, upper = subvalue
+                subvalue = f'({lower}, {upper})'
 
-		type_prose = _type_set_to_prose(value_spec[TYPE_KEY])
-		path = f'{top_key} > {middle_key} > {bottom_key}'
-		entries.append((path, type_prose, optional, description))
+            parts.append(f'{subkey}: {subvalue}')
 
-	return entries
+        # Use a line block so Sphinx creates real line breaks.
+        return '\n'.join(f'| {part}' for part in parts)
 
-def _walk_output_dict(output_dict):
-	'''Walk `output_dict` and yield `(path, type_prose, optional, description)`
-	for every output, in dict-insertion order. Handles `special_insertions >
-	sum_all_tables`, which holds both per-table wildcard-group results and
-	per-group aggregate results, none of which are plain output rows.
-	'''
+    return str(value)
 
-	entries = []
 
-	for top_key, table_dict in output_dict.items():
-		if top_key in special_top_level_keys:
-			for group_key, group_dict in table_dict.get('sum_all_tables', {}).items():
-				for row_key, row_dict in group_dict.items():
-					entries.extend(_walk_output_row(group_key, row_key, row_dict))
-			continue
+def _render_table(title, rows):
+    """Render one top-level specification as an RST list-table.
 
-		for middle_key, row_dict in table_dict.items():
-			entries.extend(_walk_output_row(top_key, middle_key, row_dict))
+    The table contains one row for each middle-level specification key.
+    Columns are determined dynamically from the keys present in the rows.
+    The internal ``_name`` key is used for the row name and is not rendered
+    as a separate specification column.
 
-	return entries
+    Parameters
+    ----------
+    title : str
+        Title of the table, normally the top-level specification key.
+    rows : list of dict
+        Specification rows. Each row must contain an internal ``_name`` key
+        identifying the parameter or output represented by that row.
 
-def _render_entry(path, type_prose, optional, description):
-	header = f'{path} : {type_prose}'
-	if optional:
-		header += ', optional'
+    Returns
+    -------
+    list of str
+        RST lines representing the table. Returns an empty list when
+        ``rows`` is empty.
 
-	if not description:
-		return header
+    Examples
+    --------
+    A row such as::
 
-	body = textwrap.fill(description, width = _WRAP_WIDTH,
-						 initial_indent = _INDENT, subsequent_indent = _INDENT)
+        {
+            '_name': 'Design capacity',
+            'Value': {'type': {int, float}, 'bounds': (0, None)},
+            'Unit': {'dimension': 'energy'},
+            'optional': False,
+            'description': 'Full design capacity.'
+        }
 
-	return header + '\n' + body
+    is rendered as a table row with columns for ``Value``, ``Unit``,
+    ``optional``, and ``description``.
+    """
 
-def _render_section(title, underline_char, entries):
-	if not entries:
-		return []
+    if not rows:
+        return []
 
-	lines = [title, underline_char * len(title)]
-	for entry in entries:
-		lines.append(_render_entry(*entry))
+    # Find every inner key used by the rows.
+    # Keep the order in which keys first appear.
+    columns = []
 
-	lines.append('')
+    for row_dict in rows:
+        for key in row_dict:
+            if key not in columns:
+                columns.append(key)
 
-	return lines
+    # _name is our internal helper and must never become a table column.
+    columns = [
+        column for column in columns
+        if column != '_name'
+    ]
 
-def generate_docstring(summary, input_dict, output_dict, notes = None):
-	'''Generate a NumPy-style class docstring from a plugin's `input_dict`/
-	`output_dict` specs.
+    number_of_columns = len(columns) + 1
 
-	Parameters
-	----------
-	summary : str
-		One-line (or short paragraph) summary of what the plugin does. This is
-		the only part of the docstring not derived from `input_dict`/
-		`output_dict`.
-	input_dict : dict
-		Plugin's `input_dict`, as passed to `input_resolver_function`.
-	output_dict : dict
-		Plugin's `output_dict`, as passed to `output_inserter_function`.
-	notes : str, optional
-		Freeform text for content the structured specs cannot express (e.g.
-		the internal sub-keys of a dict-typed output, or plugin-instance
-		attributes read directly by other modules). Rendered as a NumPy
-		"Notes" section.
+    lines = [
+        title,
+        '-' * len(title),
+        '',
+        '.. list-table::',
+        '   :header-rows: 1',
+        '   :widths: ' + ' '.join(
+            ['25'] * number_of_columns
+        ),
+        '',
+        '   * - Name',
+    ]
 
-	Returns
-	-------
-	docstring : str
-		Generated docstring, ready to be assigned to a plugin class's
-		`__doc__`.
-	'''
+    # Header
+    for column in columns:
+        lines.append(f'     - {column}')
 
-	lines = [summary.strip(), '']
-	lines += _render_section('Parameters', '-', _walk_input_dict(input_dict))
-	lines += _render_section('Returns', '-', _walk_output_dict(output_dict))
+    # Rows
+    for row_dict in rows:
 
-	if notes:
-		lines += ['Notes', '-----', notes.strip(), '']
+        name = row_dict['_name']
 
-	return '\n'.join(lines).rstrip() + '\n'
+        lines.append(f'   * - ``{name}``')
+
+        for column in columns:
+
+            value = row_dict.get(column, '')
+            cell = _format_cell(column, value)
+
+            if not cell:
+                lines.append('     -')
+                continue
+
+            cell_lines = cell.splitlines()
+
+            # First line starts the table cell.
+            lines.append(f'     - {cell_lines[0]}')
+
+            # Remaining lines belong to the same cell.
+            for continuation in cell_lines[1:]:
+                lines.append(f'       {continuation}')
+
+    lines.append('')
+
+    return lines
+
+
+def _render_input_tables(input_dict):
+    """Render all input specifications as RST tables.
+
+    Each top-level key in ``input_dict`` becomes a separate table. Middle-level
+    keys become table rows, while the keys inside each middle-level
+    specification become table columns.
+
+    Parameters
+    ----------
+    input_dict : dict
+        Plugin input specification. The expected structure is::
+
+            {
+                'Top level': {
+                    'Parameter': {
+                        'Value': ...,
+                        'Unit': ...,
+                        'optional': ...,
+                        'description': ...
+                    }
+                }
+            }
+
+    Returns
+    -------
+    list of str
+        RST lines containing all generated input tables.
+
+    Notes
+    -----
+    Keys listed in ``SPECIAL_MIDDLE_KEYS`` are skipped because they represent
+    internal input structures rather than normal documented parameters.
+    """
+
+    lines = []
+
+    for top_key, table_dict in input_dict.items():
+        rows = []
+
+        for middle_key, row_dict in table_dict.items():
+
+            if middle_key in SPECIAL_MIDDLE_KEYS:
+                continue
+
+            row = dict(row_dict)
+            row['_name'] = middle_key
+            rows.append(row)
+
+        lines += _render_table(top_key, rows)
+
+    return lines
+
+
+def _render_output_tables(output_dict):
+    """Render all output specifications as RST tables.
+
+    Normal output specifications are rendered directly from their top-level
+    and middle-level keys. Special output structures listed in
+    ``special_top_level_keys`` are expanded through their
+    ``sum_all_tables`` structure.
+
+    Parameters
+    ----------
+    output_dict : dict
+        Plugin output specification. Normal output structures are expected
+        to follow the form::
+
+            {
+                'Top level': {
+                    'Output': {
+                        'Value': ...,
+                        'optional': ...,
+                        'description': ...
+                    }
+                }
+            }
+
+        Special output structures may contain::
+
+            {
+                'special_insertions': {
+                    'sum_all_tables': {
+                        'Group': {
+                            'Output': {...}
+                        }
+                    }
+                }
+            }
+
+    Returns
+    -------
+    list of str
+        RST lines containing all generated output tables.
+    """
+
+    lines = []
+
+    for top_key, table_dict in output_dict.items():
+
+        if top_key in special_top_level_keys:
+
+            sum_all_tables = table_dict.get('sum_all_tables', {})
+
+            for group_key, group_dict in sum_all_tables.items():
+
+                rows = []
+
+                for middle_key, row_dict in group_dict.items():
+
+                    row = dict(row_dict)
+                    row['_name'] = middle_key
+                    rows.append(row)
+
+                lines += _render_table(group_key, rows)
+
+            continue
+
+        rows = []
+
+        for middle_key, row_dict in table_dict.items():
+
+            row = dict(row_dict)
+            row['_name'] = middle_key
+            rows.append(row)
+
+        lines += _render_table(top_key, rows)
+
+    return lines
+
+
+def generate_docstring(summary, input_dict, output_dict, notes=None):
+    """Generate a NumPy-style class docstring from plugin specifications.
+
+    Parameters
+    ----------
+    summary : str
+        One-line or short paragraph summarizing what the plugin does. This is
+        the only part of the generated docstring that is not derived from
+        ``input_dict`` or ``output_dict``.
+
+    input_dict : dict
+        Plugin input specification as passed to
+        ``input_resolver_function``.
+
+    output_dict : dict
+        Plugin output specification as passed to
+        ``output_inserter_function``.
+
+    notes : str, optional
+        Free-form text for information that cannot be expressed by the
+        structured specifications, such as internal sub-keys of a
+        dict-typed output or plugin-instance attributes read directly by
+        other modules. Rendered as a NumPy-style ``Notes`` section.
+
+    Returns
+    -------
+    str
+        Complete generated NumPy-style docstring, ready to be assigned to a
+        plugin class's ``__doc__``.
+    """
+
+    lines = [
+        textwrap.dedent(summary).strip(),
+        '',
+    ]
+
+    lines += [
+        'Parameters',
+        '----------',
+        '',
+    ]
+
+    lines += _render_input_tables(input_dict)
+
+    lines += [
+        'Outputs',
+        '-------',
+        '',
+    ]
+
+    lines += _render_output_tables(output_dict)
+
+    if notes:
+        lines += [
+            'Notes',
+            '-----',
+            '',
+            notes.strip(),
+            '',
+        ]
+
+    return '\n'.join(lines).rstrip() + '\n'

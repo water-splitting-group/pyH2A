@@ -3,59 +3,9 @@ from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import pyH2A.Utilities.find_nearest as fn
 import numpy as np
+from pyH2A.Utilities.docstring_generation import generate_docstring
 
 class Variable_Operating_Cost_Plugin:
-	'''Calculation of variable operating costs.
-
-	Parameters
-	----------
-    Time > Years > Value : dict
-        Dictionary containing plant life time-related quantities
-	Inflation > Inflation correction > Value : float
-		Inflation correction accounting for startup year offset
-	Inflation > Chemical inflator > Value : float
-		Inflation factor for chemicals		
-	Technical Operating Parameters and Specifications > Design output by year > Value : nd.array
-		Yearly output ignoring capacity factor, in (kg of H2).
-	Technical Operating Parameters and Specifications > Operating capacity factor > Value : float or int
-		Operating capacity factor value between 0 and 1.
-	Utilities > [...] > Cost : float, ndarray or str
-		Cost of utility (e.g. $/kWh for electricity). May be either a float, a ndarray with the
-		same length as `dcf.inflation_correction` or a textfile containing cost values (cost values 
-		have to be in second column).
-	Utilities > [...] > Usage : float
-		Usage of utility per functional unit (e.g. kWh/(kg of H2) for electricity).
-	Utilities > [...] > Price_Conversion_Factor : float
-		Conversion factor between cost and usage units. Should be set to 1 if no conversion is
-		required.
-	Utilities > [...] > Cost_Path : str
-		Path for `Cost` entry. If no such path is needed, the Cost_Path column must exist and be left empty.
-	Utilities > [...] > Usage_Path : str
-		Path for `Usage` entry. If no such path is needed, the Usage_Path column must exist and be left empty.
-	[...] Other Variable Operating Operating Cost [...] >> Value : float
-		``sum_all_tables()`` is used.
-
-	Returns
-	-------
-	[...] Other Variable Operating Cost [...] > Summed total > Value : float
-		Summed total for each individual table in "Other Variable Operating Cost"
-		group.
-	Other Variable Operating Cost > Summed group total > Value : float
-		Summed total for all the tables in "Other Variable Operating Cost"
-		group.		
-	Variable Operating Costs > Total > Value : ndarray
-		Sum of inflation corrected utilities costs and other variable operating costs.
-	Variable Operating Costs > Utilities > Value : ndarray
-		Sum of inflation corrected utilities costs.
-	Variable Operating Costs > Other > Value : float
-		Sum of `Other Variable Operating Cost` entries.
-	Variable Operating Costs > Annual > Value : ndarray
-		Total variable operating cost for each year of the analysis, expanded to the full
-		analysis period (non-zero only from the start of operation onward), corrected for
-		inflation, reduced by the applicable fraction during the start-up years, and set to
-		zero before the start of operation (i.e. during construction). Used by the discounted
-		cash flow analysis.
-	'''
 
 	def __init__(self, dcf, print_info, run = True):
 		self._set_up(dcf)
@@ -305,6 +255,9 @@ class Variable_Operating_Cost_Plugin:
 				},
 			}
 		}
+  
+		self.__doc__ = generate_docstring("Calculation of variable operating costs.",
+                                    self.input_dict, self.output_dict)
 
 	def _run(self, dcf):
 		self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Variable_Operating_Cost_Plugin')

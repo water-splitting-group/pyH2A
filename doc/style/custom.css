@@ -6,3 +6,13 @@ p {
 dl.py .field-list dt {
     text-transform: unset !important;
 }
+
+/* Make NumPy docstring section headings smaller */
+dl.py.class > dt {
+    font-size: 1rem !important;
+}
+
+dl.py.class > dd > section > h2,
+dl.py.class > dd > section > h3 {
+    font-size: 1.1rem !important;
+}

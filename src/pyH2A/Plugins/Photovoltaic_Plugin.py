@@ -2,40 +2,9 @@ from pyH2A.Utilities.input_modification import read_textfile, hourly_to_daily_po
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import numpy as np
+from pyH2A.Utilities.docstring_generation import generate_docstring
 
 class Photovoltaic_Plugin:
-	'''Simulation of electricity production using PV.
-
-	Parameters
-	----------
-    Time > Years > Value : dict
-        Dictionary containing plant life time-related quantities	
-	Irradiation Used > Data > Value : str or ndarray
-		Hourly power ratio data for electricity production calculation. Either a 
-		path to a text file containing the data or ndarray. A suitable array 
-		can be retrieved from "Hourly Irradiation > *type of tracking* > Value".
-	Photovoltaic > Nominal power > Value : float
-		Nominal power of PV array.
-	Photovoltaic > Power loss per year > Value : float
-		Reduction in power produced by PV array per year due to degradation. Percentage or value
-		> 0. Reduction calculated as: (1 - loss per year) ^ year.
-	Photovoltaic > Efficiency > Value : float
-		Power conversion efficiency of used solar cells. Percentage or value between 0 and 1.
-
-	Returns
-	-------
-	Power Generation > PV hourly power generation > Value : dict
-		Hourly power generation of PV array (dictionary of years).
-	Power Generation > Available energy (hourly) > Value : dict
-		Available power, hourly basis, dictionary of years
-    Power Generation > Available energy (daily) > Value : dict
-		Available energy, daily basis, dictionary of years .
-	Non-Depreciable Capital Costs > Land required > Value : float
-		Total land required.
-	Non-Depreciable Capital Costs > Solar collection area > Value : float
-		Solar collection area.
-	'''
-
 
 	def __init__(self, dcf, print_info, run = True):
 		self._set_up(dcf)
@@ -170,6 +139,9 @@ class Photovoltaic_Plugin:
 				},
 			},
 		}
+  
+		self.__doc__ = generate_docstring("Simulation of electricity production using PV.",
+                                    self.input_dict, self.output_dict)
 
 	def _run(self, dcf):
 		self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Photovoltaic_Plugin')

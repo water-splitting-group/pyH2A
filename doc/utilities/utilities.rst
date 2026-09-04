@@ -17,4 +17,5 @@ Utilities
    quantity
    quantity_guide
    utilities_guide
+   docstring_generation
    
