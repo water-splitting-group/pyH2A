@@ -2,7 +2,7 @@ from pathlib import Path
 import json
 import pkgutil
 
-import pyH2A
+import pyH2A.Plugins as Plugins
 from pyH2A.Utilities.input_modification import import_plugin
 
 
@@ -71,7 +71,7 @@ def read_tree(tree, plugin_name, direction, path=""):
 def find_plugins():
     return sorted(
         module.name
-        for module in pkgutil.iter_modules(pyH2A.Plugins.__path__)
+        for module in pkgutil.iter_modules(Plugins.__path__)
         if module.name.endswith("_Plugin")
     )
 
