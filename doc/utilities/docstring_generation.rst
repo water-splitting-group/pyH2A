@@ -1,5 +1,5 @@
 docstring_generation
 ============
 
-.. automodule:: pyH2A.Utilities.find_nearest
+.. automodule:: pyH2A.Utilities.docstring_generation
     :members:
