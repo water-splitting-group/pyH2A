@@ -8,16 +8,16 @@ Default TEA | pyH2A.Config~Defaults_TEA.md
 
 Name | Description | Position
 --- | --- | ---
-Hourly_Irradiation_Plugin @Baggie | Plugin to calculate solar irradiation from typical meteorological year data | 201 |
+Hourly_Irradiation_Plugin @ Baggie | Plugin to calculate solar irradiation from typical meteorological year data | 201 |
 Photocatalytic_Plugin | Computes number of required baggies, cost of baggies and catalyst cost | 301 |
 Catalyst_Separation_Plugin | Computes cost of catalyst separation | 302 |
 Cooler_Condenser_Plugin | Computes first cooler condenser sizing and coolant requirements | 303 |
 Compressor_Plugin | Computes compressor power and yearly consumption | 304 |
-Cooler_Condenser_Plugin @second one | Computes second cooler condenser sizing and coolant requirements | 305 |
-Compressor_Plugin @2  | Computes second compressor power and yearly consumption | 306 |
-Cooler_Condenser_Plugin @3 | Computes third cooler condenser sizing and coolant requirements | 307 |
+Cooler_Condenser_Plugin @ second one | Computes second cooler condenser sizing and coolant requirements | 305 |
+Compressor_Plugin @ 2  | Computes second compressor power and yearly consumption | 306 |
+Cooler_Condenser_Plugin @ 3 | Computes third cooler condenser sizing and coolant requirements | 307 |
 PSA_refactored_Plugin | Computes sizing and cost of PSA separation unit | 308
-Hourly_Irradiation_Plugin @PV | Plugin to calculate solar irradiation from typical meteorological year data | 309 |
+Hourly_Irradiation_Plugin @ PV | Plugin to calculate solar irradiation from typical meteorological year data | 309 |
 Photovoltaic_Plugin | - | 310
 Wind_Plugin | - | 311 
 Electricity_Consumer_Plugin | - | 312 |
@@ -66,11 +66,11 @@ Name | Value | Unit
 --- | --- | --- 
 Cooler condenser | {Cooler Condenser > Cooling water hourly pumping energy > Value, J} | J 
 Compressor | {Compressor > Hourly energy requirement > Value, J} | J 
-Cooler condenser second | {Cooler Condenser second one > Cooling water hourly pumping energy > Value, J} | J
-Compressor 2 | {Compressor 2 > Hourly energy requirement > Value, J} | J 
-Cooler condenser 3 | {Cooler Condenser 3 > Cooling water hourly pumping energy > Value, J} | J
+Cooler condenser second | {Cooler Condenser @ second one > Cooling water hourly pumping energy > Value, J} | J
+Compressor 2 | {Compressor @ 2 > Hourly energy requirement > Value, J} | J 
+Cooler condenser 3 | {Cooler Condenser @ 3 > Cooling water hourly pumping energy > Value, J} | J
 
-# Irradiance Area Parameters Baggie
+# Irradiance Area Parameters @ Baggie
 
 Name | Value | Unit | Comment 
 --- | --- | --- | --- 
@@ -81,7 +81,7 @@ Mismatch derating | 98% | - | Values taken from Chang 2020, analogues to silicon
 Dirt derating | 98% | - | Values taken from Chang 2020, analogues to silicon PV
 Temperature coefficient | 0 | 1/delta_degC | No decrease on photocatalyst activity with higher temperature assumed
 
-# Irradiance Area Parameters PV
+# Irradiance Area Parameters @ PV
 
 Name | Value | Unit | Comment 
 --- | --- | --- | --- 
@@ -95,13 +95,13 @@ Temperature coefficient | -0.4% | 1/delta_degC | Based on Chang 2020
 
 Name | Value | Unit | Comment 
 --- | --- | --- | --- 
-Hourly | {Hourly Irradiation Baggie > No tracking > Value, kWh/m2} | kWh/m2 
+Hourly | {Hourly Irradiation @ Baggie > No tracking > Value, kWh/m2} | kWh/m2 
 
 # Irradiation Used
 
 Name | Value | Unit | Comment 
 --- | --- | --- | --- 
-Data | {Hourly Irradiation PV > Horizontal single axis tracking > Value, kWh/m2} | kWh/m2 | Single axis tracking based on Chang 2020
+Data | {Hourly Irradiation @ PV > Horizontal single axis tracking > Value, kWh/m2} | kWh/m2 | Single axis tracking based on Chang 2020
 
 # Solar-to-Hydrogen Efficiency
 
@@ -248,7 +248,7 @@ Compression ratio | 4.35 | -
 Polytropic coefficient | 1.4 | -
 Efficiency | 0.7 | - | 75% efficiency of the compressor itself, but we account for a bit of loss in the rest of the chain (e.g. electric motor)
 
-# Compressor 2
+# Compressor @ 2
 
 Name | Value | Unit | Comment
 --- | --- | --- | 
@@ -265,7 +265,7 @@ Hot outlet temperature | 40. | degC |
 Heat transfer coefficient | 300. | W/m2/delta_K 
 Material weight per area | 34. | kg/m2 | assuming the condensing fluid circulates in tubes whose thickness is 10% of the inner diameter, and taking a safety margin
 
-# Cooler Condenser second one
+# Cooler Condenser @ second one
 
 Name | Value | Unit | 
 --- | --- | --- 
@@ -275,7 +275,7 @@ Hot outlet temperature | 40. | degC |
 Heat transfer coefficient | 300. | W/m2/delta_K 
 Material weight per area | 34. | kg/m2 | assuming the condensing fluid circulates in tubes whose thickness is 10% of the inner diameter, and taking a safety margin
 
-# Cooler Condenser 3
+# Cooler Condenser @ 3
 
 Name | Value | Unit | 
 --- | --- | --- 
@@ -366,7 +366,7 @@ Specific toxicity | 12 | 1/kg
 Specific resource use | 15 | kg/kg
 Tank steel specific GWP | 2 | kg/kg
 Tank steel energy intensity | 6 | kWh/kg
-Tank steel  specific toxicity | 20 | 1/kg
+Tank steel specific toxicity | 20 | 1/kg
 Tank steel specific resource use | 10 | kg/kg
 
 # Battery Periphery

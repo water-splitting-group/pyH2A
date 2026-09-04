@@ -687,7 +687,7 @@ def input_resolver_function(input_dict, dcf_class, plugin_name):
             # Replace '@' in table names by the plugin instance number
             if '@' in top_key:
                 if instance_suffix is not None:
-                    top_key = top_key.replace('@', f' {instance_suffix}')
+                    top_key = top_key.replace('@', f' @ {instance_suffix}')
                 else:
                     top_key = top_key.replace('@', '')
 

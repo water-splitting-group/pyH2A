@@ -292,7 +292,7 @@ def output_inserter_function(output_dict,
             # Replace '@' in table names by the plugin instance number
             if '@' in top_key:
                 if instance_suffix is not None:
-                    top_key = top_key.replace('@', f' {instance_suffix}')
+                    top_key = top_key.replace('@', f' @ {instance_suffix}')
                 else:
                     top_key = top_key.replace('@', '')            
 

@@ -143,7 +143,7 @@ Specific toxicity | 12 | 1/kg
 Specific resource use | 15 | kg/kg
 Tank steel specific GWP | 2 | kg/kg
 Tank steel energy intensity | 6 | kWh/kg
-Tank steel  specific toxicity | 20 | 1/kg
+Tank steel specific toxicity | 20 | 1/kg
 Tank steel specific resource use | 10 | kg/kg
 
 # Battery Periphery
