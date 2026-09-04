@@ -18,3 +18,5 @@ Utilities
    quantity_guide
    utilities_guide
    lca_utilities
+   docstring_generation
+   
