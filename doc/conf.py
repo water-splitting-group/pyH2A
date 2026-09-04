@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.abspath('..'))
 sys.path.insert(0, os.path.abspath('../src/'))
 
 from pyH2A import __version__
-
+from pyH2A.Utilities.io_information_generator import generate
 
 # -- Project information -----------------------------------------------------
 
@@ -28,6 +28,8 @@ author = 'Water Splitting Group, Jacob Schneidewind'
 # The full version, including alpha/beta/rc tags
 release = __version__
 version = __version__
+
+generate()
 
 # -- General configuration ---------------------------------------------------
 
