@@ -8,7 +8,7 @@ from pyH2A.Utilities.input_modification import convert_input_to_dictionary
     [
         {
             "input": {
-                "file_path": "src/tests/Utilities/Arbitrary_Input_Merger/arbitrary_input_merger_test_data/override_two.md"
+                "file_path": "tests/Utilities/Arbitrary_Input_Merger/arbitrary_input_merger_test_data/override_two.md"
             },
             "expected": {
                 "Process": {
@@ -39,17 +39,17 @@ from pyH2A.Utilities.input_modification import convert_input_to_dictionary
                 },
                 "Input files to merge": {
                     "Mid priority": {
-                        "Value": "src/tests/Utilities/Arbitrary_Input_Merger/arbitrary_input_merger_test_data/override_one.md",
+                        "Value": "tests/Utilities/Arbitrary_Input_Merger/arbitrary_input_merger_test_data/override_one.md",
                     },
                     "Lowest priority": {
-                        "Value": "src/tests/Utilities/Arbitrary_Input_Merger/arbitrary_input_merger_test_data/base_input.md",
+                        "Value": "tests/Utilities/Arbitrary_Input_Merger/arbitrary_input_merger_test_data/base_input.md",
                     },
                 },
             },
         },
         {
             "input": {
-                "file_path": "src/tests/Utilities/Arbitrary_Input_Merger/arbitrary_input_merger_test_data/missing_reference.md"
+                "file_path": "tests/Utilities/Arbitrary_Input_Merger/arbitrary_input_merger_test_data/missing_reference.md"
             },
             "expected": {
                 "Error": FileNotFoundError,

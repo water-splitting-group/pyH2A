@@ -7,8 +7,8 @@ from pyH2A.Utilities.Unit_Handler import Quantity
     [
         {
             "input": {
-                "input_file": "src/tests/end_to_end/PV_E_Electricity_Production_Test.md",
-                "output_directory": "src/tests/end_to_end/",
+                "input_file": "tests/end_to_end/PV_E_Electricity_Production_Test.md",
+                "output_directory": "/tests/end_to_end/",
             },
             "expected": {
                 "lcoe": Quantity(0.02858462133297927, "USD/kWh")

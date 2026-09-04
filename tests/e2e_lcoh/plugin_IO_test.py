@@ -8,8 +8,8 @@ from tests.Utilities.check_dicts_for_testing import check_dicts
 
 def test_plugin_IO():
 
-    result = pyH2A('src/tests/end_to_end/Testing_Plugin_IO.md', 
-                   'src/tests/end_to_end/')
+    result = pyH2A('tests/end_to_end/Testing_Plugin_IO.md', 
+                   'tests/end_to_end/')
         
     expected_input_x_sum_testing_dcf = {
         'Adsorber': {

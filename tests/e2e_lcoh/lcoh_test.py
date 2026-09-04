@@ -7,8 +7,8 @@ from pyH2A.Utilities.Unit_Handler import Quantity
     [
         {
             "input": {
-                "input_file": "src/tests/end_to_end/PEC_Base_test.md",
-                "output_directory": "src/tests/end_to_end/",
+                "input_file": "tests/end_to_end/PEC_Base_test.md",
+                "output_directory": "tests/end_to_end/",
             },
             "expected": {
                 "lcoh": Quantity(139.41887561917213, "USD/kg")
@@ -16,8 +16,8 @@ from pyH2A.Utilities.Unit_Handler import Quantity
         },
         {
             "input": {
-                "input_file": "src/tests/end_to_end/Photocatalytic_Base_test.md",
-                "output_directory": "src/tests/end_to_end/",
+                "input_file": "tests/end_to_end/Photocatalytic_Base_test.md",
+                "output_directory": "tests/end_to_end/",
             },
             "expected": {
                 "lcoh": Quantity(185.44329282256822, "USD/kg")
@@ -25,8 +25,8 @@ from pyH2A.Utilities.Unit_Handler import Quantity
         },
         {
             "input": {
-                "input_file": "src/tests/end_to_end/PV_E_Base_test.md",
-                "output_directory": "src/tests/end_to_end/",
+                "input_file": "tests/end_to_end/PV_E_Base_test.md",
+                "output_directory": "tests/end_to_end/",
             },
             "expected": {
                 "lcoh": Quantity(4.194302976489675, "USD/kg")
@@ -34,8 +34,8 @@ from pyH2A.Utilities.Unit_Handler import Quantity
         },
         {
             "input": {
-                "input_file": "src/tests/end_to_end/Thermal_Base_test.md",
-                "output_directory": "src/tests/end_to_end/",
+                "input_file": "tests/end_to_end/Thermal_Base_test.md",
+                "output_directory": "tests/end_to_end/",
             },
             "expected": {
                 "lcoh": Quantity(3.270581409704611, "USD/kg")
@@ -43,8 +43,8 @@ from pyH2A.Utilities.Unit_Handler import Quantity
         },
         {
             "input": {
-                "input_file": "src/tests/end_to_end/Thermal_Base_Merge.md",
-                "output_directory": "src/tests/end_to_end/",
+                "input_file": "tests/end_to_end/Thermal_Base_Merge.md",
+                "output_directory": "tests/end_to_end/",
             },
             "expected": {
                 "lcoh": Quantity(3.0993930498121895, "USD/kg")
