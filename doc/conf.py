@@ -31,7 +31,7 @@ def _generate_plugin_docstring(app, what, name, obj, options, lines):
 
     class DummyDCF:
         class functional_unit:
-            dimension = 'dimensionless'
+            dimension = 'functional unit'
 
         unit = None
 
