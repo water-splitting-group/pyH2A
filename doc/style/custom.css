@@ -6,3 +6,230 @@ p {
 dl.py .field-list dt {
     text-transform: unset !important;
 }
+
+
+
+
+#io-browser {
+    margin: 2rem 0;
+    width: calc(100% - 20px);
+    max-width: none;
+}
+
+
+/* ------------------------------------------------------------
+   Controls
+   ------------------------------------------------------------ */
+
+#io-controls {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 1rem;
+    align-items: center;
+    margin-bottom: 1rem;
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+}
+
+
+#io-search {
+    width: 280px;
+    min-width: 280px;
+}
+
+
+#io-plugin {
+    width: 220px;
+    min-width: 220px;
+}
+
+
+#io-direction {
+    width: 180px;
+    min-width: 180px;
+}
+
+
+#io-search,
+#io-plugin,
+#io-direction {
+    box-sizing: border-box;
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+
+#io-controls label {
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+
+/* ------------------------------------------------------------
+   Count
+   ------------------------------------------------------------ */
+
+#io-count {
+    margin-bottom: 0.75rem;
+    font-size: 0.9rem;
+}
+
+
+/* ------------------------------------------------------------
+   Table container
+   ------------------------------------------------------------ */
+
+#io-table-container {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+
+/* ------------------------------------------------------------
+   Table
+   ------------------------------------------------------------ */
+
+#io-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: auto;
+}
+
+
+/* ------------------------------------------------------------
+   Table cells
+   ------------------------------------------------------------ */
+
+#io-table th,
+#io-table td {
+    padding: 0.6rem;
+    border: 1px solid #ddd;
+    text-align: left;
+    vertical-align: top;
+}
+
+
+/* ------------------------------------------------------------
+   Column headings
+   ------------------------------------------------------------ */
+
+#io-table th {
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+
+/* ------------------------------------------------------------
+   Variable column
+   ------------------------------------------------------------ */
+
+#io-table th:first-child,
+#io-table td:first-child {
+    min-width: 220px;
+    white-space: nowrap;
+}
+
+
+/* ------------------------------------------------------------
+   Plugin columns
+   ------------------------------------------------------------ */
+
+#io-table th:not(:first-child),
+#io-table td:not(:first-child) {
+    min-width: 120px;
+}
+
+
+/* ------------------------------------------------------------
+   Table hover
+   ------------------------------------------------------------ */
+
+#io-table tbody tr:hover {
+    background: #f5f5f5;
+}
+
+
+/* ------------------------------------------------------------
+   Pagination
+   ------------------------------------------------------------ */
+
+#io-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+
+#io-pagination button {
+    padding: 0.4rem 0.8rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: transparent;
+    cursor: pointer;
+}
+
+
+#io-pagination button:hover:not(:disabled) {
+    background: #f5f5f5;
+}
+
+
+#io-pagination button:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+
+#io-page {
+    white-space: nowrap;
+    min-width: 90px;
+    text-align: center;
+}
+
+
+/* ------------------------------------------------------------
+   Empty result
+   ------------------------------------------------------------ */
+
+#io-empty {
+    display: none;
+    margin-top: 1rem;
+    padding: 1rem;
+    border: 1px dashed #aaa;
+    text-align: center;
+}
+
+
+/* ------------------------------------------------------------
+   Small screens
+   ------------------------------------------------------------ */
+
+@media (max-width: 800px) {
+
+    #io-browser {
+        width: calc(100% - 20px);
+    }
+
+
+    #io-table {
+        width: max-content;
+        min-width: 100%;
+    }
+
+
+    #io-table th:first-child,
+    #io-table td:first-child {
+        min-width: 220px;
+    }
+
+
+    #io-table th:not(:first-child),
+    #io-table td:not(:first-child) {
+        min-width: 120px;
+    }
+}

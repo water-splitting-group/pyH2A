@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.abspath('..'))
 sys.path.insert(0, os.path.abspath('../src/'))
 
 from pyH2A import __version__
-
+from pyH2A.Utilities.io_information_generator import generate
 
 # -- Project information -----------------------------------------------------
 
@@ -42,6 +42,8 @@ extensions = ['sphinx.ext.autodoc',
     		  'numpydoc',
     		  'autodocsumm'
 ]
+
+generate()
 
 autodoc_default_options = {
     'autosummary': True,
@@ -83,5 +85,4 @@ html_theme = 'furo'  #sphinx_rtd_theme
 html_static_path    = ['style']        # folders to include in output
 html_css_files      = ['custom.css']   # extra style files to apply
 html_logo = './_static/pyH2A.svg'
-
-
+html_js_files = ["script.js"]
