@@ -23,7 +23,7 @@ def test_docstring_generation_full():
     """
 
     auto_gen_doc = generate_docstring(summary, input_dict, output_dict)
-    print(auto_gen_doc)
+
     correct_doc = """Simulation of electricity storage using a battery.
 Simulation assumes that battery is charged and completely discharged every day.
 (no electricity storage across days, only one discharge per day, not multiple ones).
