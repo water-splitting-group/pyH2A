@@ -1,5 +1,5 @@
 Time_Plugin
-===================
+===========
 
 The ``Time_Plugin`` generates a dictionary containing the time-related quantities used throughout the calculation workflow.
 
