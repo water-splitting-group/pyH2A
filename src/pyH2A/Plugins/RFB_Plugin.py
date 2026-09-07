@@ -25,7 +25,6 @@ class RFB_Plugin:
 					"Unit": {
 						"dimension": "dimensionless",
 					},
-					"optional": False,
 					"description": "Dictionary containing all time-related quantities."
 				}, 
 			},  	
@@ -71,51 +70,7 @@ class RFB_Plugin:
 						"dimension": "time",
 					},
 					"description": "Lifetime duration of each stack."
-				},				
-				"GWP per stack": {
-					"Value": {
-						"type": {float, int,},
-						"bounds": (0, None),
-					},
-					"Unit": {
-						"dimension": "mass", 
-					},
-					"optional": True,						
-					"description": "Mass of CO2 equivalent per stack produced."
-				},		
-				"Energy per stack": {
-					"Value": {
-						"type": {float, int,},
-						"bounds": (0, None),
-					},
-					"Unit": {
-						"dimension": "energy",
-					},
-					"optional": True,						
-					"description": "Energy consumed per stack produced."
-				},	
-				"Toxicity per stack": {
-					"Value": {
-						"type": {float, int,},
-						"bounds": (0, None),
-					},
-					"Unit": {
-						"dimension": "dimensionless", 
-					},
-					"optional": True,											
-					"description": "Toxicity in Comparative Toxic Unit."
-				},	
-				"Resource use per stack": {
-					"Value": {
-						"type": {float, int,},
-						"bounds": (0, None),
-					},
-					"Unit": {
-						"dimension": "mass", 
-					},
-					"optional": True,			
-					"description": "Resource use per stack produced."
-				},																		
+				},																				
 			},			
 			"Battery Electrolyte": {	
 				"Energy density": {
@@ -157,95 +112,7 @@ class RFB_Plugin:
 						"dimension": "mass/volume",
 					},
 					"description": "Density of the electrolytes. Used to assess the volume of electrolytes."
-				},			
-				"Specific GWP": {
-					"Value": {
-						"type": {float, int,},
-						"bounds": (0, None),
-					},
-					"Unit": {
-						"dimension": "mass/mass", # I didn't make it dimensionless because it's a typical case where at some point we might want to have a matrix operation where this value, and the next ones, are multiplies by the mass of product
-					},
-					"optional": True,						
-					"description": "Mass of CO2 equivalent per mass of electrolyte produced."
-				},		
-				"Energy intensity": {
-					"Value": {
-						"type": {float, int,},
-						"bounds": (0, None),
-					},
-					"Unit": {
-						"dimension": "energy/mass",
-					},
-					"optional": True,						
-					"description": "Energy consumed per mass of electrolyte produced."
-				},	
-				"Specific toxicity": {
-					"Value": {
-						"type": {float, int,},
-						"bounds": (0, None),
-					},
-					"Unit": {
-						"dimension": "1/mass", 
-					},
-					"optional": True,											
-					"description": "Toxicity in Comparative Toxic Unit per mass of electrolyte produced."
-				},	
-				"Specific resource use": {
-					"Value": {
-						"type": {float, int,},
-						"bounds": (0, None),
-					},
-					"Unit": {
-						"dimension": "mass/mass", # same remark as for GWP
-					},
-					"optional": True,			
-					"description": "Resource use per mass of electrolyte produced."
-				},	
-				"Tank steel specific GWP": {
-					"Value": {
-						"type": {float, int,},
-						"bounds": (0, None),
-					},
-					"Unit": {
-						"dimension": "mass/mass", 
-					},
-					"optional": True,						
-					"description": "Mass of CO2 equivalent per mass of steel constituting the tanks."
-				},		
-				"Tank steel energy intensity": {
-					"Value": {
-						"type": {float, int,},
-						"bounds": (0, None),
-					},
-					"Unit": {
-						"dimension": "energy/mass",
-					},
-					"optional": True,						
-					"description": "Energy consumed per mass of steel."
-				},	
-				"Tank steel specific toxicity": {
-					"Value": {
-						"type": {float, int,},
-						"bounds": (0, None),
-					},
-					"Unit": {
-						"dimension": "1/mass", 
-					},
-					"optional": True,											
-					"description": "Toxicity in Comparative Toxic Unit per mass of steel."
-				},	
-				"Tank steel specific resource use": {
-					"Value": {
-						"type": {float, int,},
-						"bounds": (0, None),
-					},
-					"Unit": {
-						"dimension": "mass/mass", # same remark as for GWP
-					},
-					"optional": True,			
-					"description": "Resource use per mass of steel."
-				},																		
+				},																				
 			},
 			"Battery Periphery": {	
 				"Number of periphery items": {
@@ -258,88 +125,136 @@ class RFB_Plugin:
 					},
 					"description": "Lumped system of pumps, cables, piping..."
 				},
-				"GWP per periphery item": {
-					"Value": {
-						"type": {float, int,},
+			},	
+			"RFB Specific Impacts": {
+				"Stack": {
+					"GWP_Value": {
+						"type": {int, float},
 						"bounds": (0, None),
 					},
-					"Unit": {
-						"dimension": "mass", 
-					},
-					"optional": True,						
-					"description": "Mass of CO2 equivalent per periphery item."
-				},		
-				"Energy per periphery item": {
-					"Value": {
-						"type": {float, int,},
+					"GWP_Unit": {
+						"dimension": "mass" 
+					},	
+					"Energy_Value": {
+						"type": {int, float},
 						"bounds": (0, None),
 					},
-					"Unit": {
-						"dimension": "energy",
-					},
-					"optional": True,						
-					"description": "Energy consumed per periphery item."
-				},	
-				"Toxicity per periphery item": {
-					"Value": {
-						"type": {float, int,},
+					"Energy_Unit": {
+						"dimension": "energy" 
+					},		
+					"Toxicity_Value": {
+						"type": {int, float},
 						"bounds": (0, None),
 					},
-					"Unit": {
-						"dimension": "dimensionless", 
-					},
-					"optional": True,											
-					"description": "Toxicity in Comparative Toxic Unit."
-				},	
-				"Resource use per periphery item": {
-					"Value": {
-						"type": {float, int,},
+					"Toxicity_Unit": {
+						"dimension": "dimensionless" 
+					},		
+					"Resource_use_Value": {
+						"type": {int, float},
 						"bounds": (0, None),
 					},
-					"Unit": {
-						"dimension": "mass", 
+					"Resource_use_Unit": {
+						"dimension": "mass" 
+					},														
+					"description": "Impact per stack."
+				}, 
+				"Electrolyte": {
+					"GWP_Value": {
+						"type": {int, float},
+						"bounds": (0, None),
 					},
-					"optional": True,			
-					"description": "Resource use per periphery item."
-				},	
-			},			
+					"GWP_Unit": {
+						"dimension": "mass/mass" 
+					},	
+					"Energy_Value": {
+						"type": {int, float},
+						"bounds": (0, None),
+					},
+					"Energy_Unit": {
+						"dimension": "energy/mass" 
+					},		
+					"Toxicity_Value": {
+						"type": {int, float},
+						"bounds": (0, None),
+					},
+					"Toxicity_Unit": {
+						"dimension": "1/mass" 
+					},		
+					"Resource_use_Value": {
+						"type": {int, float},
+						"bounds": (0, None),
+					},
+					"Resource_use_Unit": {
+						"dimension": "mass/mass" 
+					},														
+					"description": "Impact per mass of electrolyte."
+				}, 	
+				"Periphery": {
+					"GWP_Value": {
+						"type": {int, float},
+						"bounds": (0, None),
+					},
+					"GWP_Unit": {
+						"dimension": "mass" 
+					},	
+					"Energy_Value": {
+						"type": {int, float},
+						"bounds": (0, None),
+					},
+					"Energy_Unit": {
+						"dimension": "energy" 
+					},		
+					"Toxicity_Value": {
+						"type": {int, float},
+						"bounds": (0, None),
+					},
+					"Toxicity_Unit": {
+						"dimension": "dimensionless" 
+					},		
+					"Resource_use_Value": {
+						"type": {int, float},
+						"bounds": (0, None),
+					},
+					"Resource_use_Unit": {
+						"dimension": "mass" 
+					},														
+					"description": "Impact per periphery item."
+				}, 
+				"Steel": {
+					"GWP_Value": {
+						"type": {int, float},
+						"bounds": (0, None),
+					},
+					"GWP_Unit": {
+						"dimension": "mass/mass" 
+					},	
+					"Energy_Value": {
+						"type": {int, float},
+						"bounds": (0, None),
+					},
+					"Energy_Unit": {
+						"dimension": "energy/mass" 
+					},		
+					"Toxicity_Value": {
+						"type": {int, float},
+						"bounds": (0, None),
+					},
+					"Toxicity_Unit": {
+						"dimension": "1/mass" 
+					},		
+					"Resource_use_Value": {
+						"type": {int, float},
+						"bounds": (0, None),
+					},
+					"Resource_use_Unit": {
+						"dimension": "mass/mass" 
+					},														
+					"description": "Impact per mass of steel."
+				}, 								
+			},  					
 		}
 
-		self.output_dict = {
-			"Battery": {
-				"GWP over lifetime": {
-					"Value": {
-						"inserted_value": "total_gwp",
-						"type": {float,},
-						"dimension": "mass",
-					},
-					"description": "GWP for the entire battery system.",
-				},	
-				"Energy over lifetime": {
-					"Value": {
-						"inserted_value": "total_energy",
-						"type": {float,},
-						"dimension": "energy",
-					},
-					"description": "Energy consumption for the entire battery system.",
-				},	
-				"Toxicity over lifetime": {
-					"Value": {
-						"inserted_value": "total_toxicity",
-						"type": {float,},
-						"dimension": "dimensionless",
-					},
-					"description": "Toxicity for the entire battery system.",
-				},	
-				"Resource use over lifetime": {
-					"Value": {
-						"inserted_value": "total_resource_use",
-						"type": {float,},
-						"dimension": "mass",
-					},
-					"description": "Resource use for the entire battery system.",
-				},	
-			},			
+		self.output_dict = {		
 			"Battery Cell Stack": {
 				"Number of cell stacks": {
 					"Value": {
@@ -351,44 +266,12 @@ class RFB_Plugin:
 				},	
 				"Number of cell stacks over lifetime": {
 					"Value": {
-						"inserted_value": "lifetime_number_cell_stacks",
+						"inserted_value": "total_stack",
 						"type": {float,},
 						"dimension": "dimensionless",
 					},
 					"description": "Number of cell stacks needed over the lifetime of the battery, accounting for replacement.",
 				},					
-				"GWP over lifetime": {
-					"Value": {
-						"inserted_value": "total_stack_gwp",
-						"type": {float,},
-						"dimension": "mass",
-					},
-					"description": "GWP associated to the stacks during the entire battery lifetime.",
-				},	
-				"Energy over lifetime": {
-					"Value": {
-						"inserted_value": "total_stack_energy",
-						"type": {float,},
-						"dimension": "energy",
-					},
-					"description": "Energy consumption associated to the stacks during the entire battery lifetime.",
-				},	
-				"Toxicity over lifetime": {
-					"Value": {
-						"inserted_value": "total_stack_toxicity",
-						"type": {float,},
-						"dimension": "dimensionless",
-					},
-					"description": "Toxicity associated to the stacks during the entire battery lifetime.",
-				},	
-				"Resource use over lifetime": {
-					"Value": {
-						"inserted_value": "total_stack_resource_use",
-						"type": {float,},
-						"dimension": "mass",
-					},
-					"description": "Resource use associated to the stacks during the entire battery lifetime.",
-				},	
 			},			
 			"Battery Electrolyte": {
 				"Initial amount": {
@@ -401,111 +284,130 @@ class RFB_Plugin:
 				},
 				"Amount over lifetime": {
 					"Value": {
-						"inserted_value": "total_electrolyte_amount",
+						"inserted_value": "total_electrolyte",
 						"type": {float,},
 						"dimension": "mass",
 					},
 					"description": "Mass of electrolyte to produce during the entire battery lifetime.",
 				},					
-				"GWP over lifetime": {
-					"Value": {
+			},	
+			"RFB Lifetime Impacts": {
+				"Stack": {
+					"GWP_Value": {
+						"inserted_value": "total_stack_gwp",
+						"type": {float,},
+						"dimension": "mass",
+					},
+					"Energy_Value": {
+						"inserted_value": "total_stack_energy",
+						"type": {float,},
+						"dimension": "energy",
+					},		
+					"Toxicity_Value": {
+						"inserted_value": "total_stack_toxicity",
+						"type": {float,},
+						"dimension": "dimensionless",
+					},		
+					"Resource_use_Value": {
+						"inserted_value": "total_stack_resource_use",
+						"type": {float,},
+						"dimension": "mass",
+					},													
+					"description": "Impact of the stacks for the entire the battery lifetime.",
+				},
+				"Electrolyte": {
+					"GWP_Value": {
 						"inserted_value": "total_electrolyte_gwp",
 						"type": {float,},
 						"dimension": "mass",
 					},
-					"description": "GWP associated to the electolyte amount used during the entire battery lifetime.",
-				},	
-				"Energy over lifetime": {
-					"Value": {
+					"Energy_Value": {
 						"inserted_value": "total_electrolyte_energy",
 						"type": {float,},
 						"dimension": "energy",
-					},
-					"description": "Energy consumption associated to the electolyte amount used during the entire battery lifetime.",
-				},	
-				"Toxicity over lifetime": {
-					"Value": {
+					},		
+					"Toxicity_Value": {
 						"inserted_value": "total_electrolyte_toxicity",
 						"type": {float,},
 						"dimension": "dimensionless",
-					},
-					"description": "Toxicity associated to the electolyte amount used during the entire battery lifetime.",
-				},	
-				"Resource use over lifetime": {
-					"Value": {
+					},		
+					"Resource_use_Value": {
 						"inserted_value": "total_electrolyte_resource_use",
 						"type": {float,},
 						"dimension": "mass",
-					},
-					"description": "Resource use associated to the electolyte amount used during the entire battery lifetime.",
+					},													
+					"description": "Impact of the electrolyte for the entire the battery lifetime.",
 				},	
-				"Tank steel GWP": {
-					"Value": {
-						"inserted_value": "steel_gwp",
-						"type": {float,},
-						"dimension": "mass",
-					},
-					"description": "GWP associated to the tanks steel.",
-				},	
-				"Tank steel energy": {
-					"Value": {
-						"inserted_value": "steel_energy",
-						"type": {float,},
-						"dimension": "energy",
-					},
-					"description": "Energy consumption associated to the tanks steel.",
-				},	
-				"Tank steel toxicity": {
-					"Value": {
-						"inserted_value": "steel_toxicity",
-						"type": {float,},
-						"dimension": "dimensionless",
-					},
-					"description": "Toxicity associated to the tanks steel.",
-				},	
-				"Tank steel resource use": {
-					"Value": {
-						"inserted_value": "steel_resource_use",
-						"type": {float,},
-						"dimension": "mass",
-					},
-					"description": "Resource use associated to the tanks steel.",
-				},
-			},	
-			"Battery Periphery": {
-				"GWP over lifetime": {
-					"Value": {
+				"Periphery": {
+					"GWP_Value": {
 						"inserted_value": "total_periphery_gwp",
 						"type": {float,},
 						"dimension": "mass",
 					},
-					"description": "GWP associated to the periphery.",
-				},	
-				"Energy over lifetime": {
-					"Value": {
+					"Energy_Value": {
 						"inserted_value": "total_periphery_energy",
 						"type": {float,},
 						"dimension": "energy",
-					},
-					"description": "Energy consumption associated to the periphery.",
-				},	
-				"Toxicity over lifetime": {
-					"Value": {
+					},		
+					"Toxicity_Value": {
 						"inserted_value": "total_periphery_toxicity",
 						"type": {float,},
 						"dimension": "dimensionless",
-					},
-					"description": "Toxicity associated to the periphery.",
-				},	
-				"Resource use over lifetime": {
-					"Value": {
+					},		
+					"Resource_use_Value": {
 						"inserted_value": "total_periphery_resource_use",
 						"type": {float,},
 						"dimension": "mass",
+					},													
+					"description": "Impact of the periphery for the entire the battery lifetime.",
+				},
+				"Steel": {
+					"GWP_Value": {
+						"inserted_value": "total_steel_gwp",
+						"type": {float,},
+						"dimension": "mass",
 					},
-					"description": "Resource use associated to the periphery.",
-				},	
-			},				
+					"Energy_Value": {
+						"inserted_value": "total_steel_energy",
+						"type": {float,},
+						"dimension": "energy",
+					},		
+					"Toxicity_Value": {
+						"inserted_value": "total_steel_toxicity",
+						"type": {float,},
+						"dimension": "dimensionless",
+					},		
+					"Resource_use_Value": {
+						"inserted_value": "total_steel_resource_use",
+						"type": {float,},
+						"dimension": "mass",
+					},													
+					"description": "Impact of the steel for the entire the battery lifetime.",
+				},		
+				"Battery": {
+					"GWP_Value": {
+						"inserted_value": "total_battery_gwp",
+						"type": {float,},
+						"dimension": "mass",
+					},
+					"Energy_Value": {
+						"inserted_value": "total_battery_energy",
+						"type": {float,},
+						"dimension": "energy",
+					},		
+					"Toxicity_Value": {
+						"inserted_value": "total_battery_toxicity",
+						"type": {float,},
+						"dimension": "dimensionless",
+					},		
+					"Resource_use_Value": {
+						"inserted_value": "total_battery_resource_use",
+						"type": {float,},
+						"dimension": "mass",
+					},													
+					"description": "Impact of the battery for its entire lifetime.",
+				},												
+			},			
 		}
 
 
@@ -517,7 +419,7 @@ class RFB_Plugin:
 		self.calculate_electrolyte()
 		self.calculate_stack()
 		self.calculate_periphery()
-		self.calculate_total_impact()
+		self.calculate_impact()
 
 		output_inserter_function(self.output_dict, self, dcf, 'RFB_Plugin') 
 
@@ -539,7 +441,7 @@ class RFB_Plugin:
 										 *
 										 self.input_dict_resolved['Battery Electrolyte']['Fraction of replaced electrolyte to produce per year']['Value'].unit['-'])
 
-		self.total_electrolyte_amount = Quantity(
+		self.total_electrolyte = Quantity(
 												np.sum(self.input_dict_resolved['Time']['Years']['Value']['Operation years ones'].unit['-']) # this assumes that the renewal occurs continuously all along the year. 
 												*																						# If we considered that the renewal occurs as a discrete refilling at the beginning of each new  year, we would need the number of years - 1 
 												yearly_electrolyte_produced_kg
@@ -547,46 +449,6 @@ class RFB_Plugin:
 												self.initial_electrolyte_amount.unit['kg']
 												, 
 												'kg')
-
-		if 'Specific GWP' in self.input_dict_resolved['Battery Electrolyte']:
-			self.total_electrolyte_gwp = Quantity(
-									self.input_dict_resolved['Battery Electrolyte']['Specific GWP']['Value'].unit['kg/kg']
-									*
-									self.total_electrolyte_amount.unit['kg'], 
-									'kg'
-									) 
-		else:
-			self.total_electrolyte_gwp = Quantity(0, 'kg')
-
-		if 'Energy intensity' in self.input_dict_resolved['Battery Electrolyte']:
-			self.total_electrolyte_energy = Quantity(
-									self.input_dict_resolved['Battery Electrolyte']['Energy intensity']['Value'].unit['J/kg']
-									*
-									self.total_electrolyte_amount.unit['kg'], 
-									'J'
-									) 	
-		else:
-			self.total_electrolyte_energy = Quantity(0, 'J')					
-
-		if 'Specific toxicity' in self.input_dict_resolved['Battery Electrolyte']:
-			self.total_electrolyte_toxicity = Quantity(
-									self.input_dict_resolved['Battery Electrolyte']['Specific toxicity']['Value'].unit['1/kg']
-									*
-									self.total_electrolyte_amount.unit['kg'], 
-									'-'
-									) 
-		else:
-			self.total_electrolyte_toxicity = Quantity(0, '-')			
-			
-		if 'Specific resource use' in self.input_dict_resolved['Battery Electrolyte']:
-			self.total_electrolyte_resource_use = Quantity(
-									self.input_dict_resolved['Battery Electrolyte']['Specific resource use']['Value'].unit['kg/kg']
-									*
-									self.total_electrolyte_amount.unit['kg'], 
-									'kg'
-									) 			
-		else:
-			self.total_electrolyte_resource_use = Quantity(0, 'kg')
 
 		# The amount of steel for tanks assumes tanks of the same size as in the following paper
 		# "Life cycle assessment of an industrial-scale vanadium flow battery, Blume et al (2022), DOI: 10.1111/jiec.13328"
@@ -596,55 +458,18 @@ class RFB_Plugin:
 		reference_capacity_MWh = 8
 		reference_density_kg_per_m3 = 1350 # 506746 kg / 375.4 m3
 		reference_tank_steel_kg = 264622
-		tank_steel_kg = (reference_tank_steel_kg 
-						* 
-						self.input_dict_resolved['Battery']['Gross capacity']['Value'].unit['MWh']
-						/
-						reference_capacity_MWh
-						*
-						reference_density_kg_per_m3
-						/
-						self.input_dict_resolved['Battery Electrolyte']['Electrolyte density']['Value'].unit['kg/m3'])
+		self.total_steel = Quantity(
+							reference_tank_steel_kg 
+							* 
+							self.input_dict_resolved['Battery']['Gross capacity']['Value'].unit['MWh']
+							/
+							reference_capacity_MWh
+							*
+							reference_density_kg_per_m3
+							/
+							self.input_dict_resolved['Battery Electrolyte']['Electrolyte density']['Value'].unit['kg/m3'], 
+							'kg')
 
-		if 'Tank steel specific GWP' in self.input_dict_resolved['Battery Electrolyte']:
-			self.steel_gwp = Quantity(
-									self.input_dict_resolved['Battery Electrolyte']['Tank steel specific GWP']['Value'].unit['kg/kg']
-									*
-									tank_steel_kg, 
-									'kg'
-									) 
-		else:
-			self.steel_gwp = Quantity(0, 'kg')			
-
-		if 'Tank steel energy intensity' in self.input_dict_resolved['Battery Electrolyte']:
-			self.steel_energy = Quantity(
-									self.input_dict_resolved['Battery Electrolyte']['Tank steel energy intensity']['Value'].unit['J/kg']
-									*
-									tank_steel_kg, 
-									'J'
-									) 	
-		else:
-			self.steel_energy = Quantity(0, 'J')					
-
-		if 'Tank steel specific toxicity' in self.input_dict_resolved['Battery Electrolyte']:
-			self.steel_toxicity = Quantity(
-									self.input_dict_resolved['Battery Electrolyte']['Tank steel specific toxicity']['Value'].unit['1/kg']
-									*
-									tank_steel_kg, 
-									'-'
-									) 	
-		else:
-			self.steel_toxicity = Quantity(0, '-')				
-			
-		if 'Tank steel specific resource use' in self.input_dict_resolved['Battery Electrolyte']:
-			self.steel_resource_use = Quantity(
-									self.input_dict_resolved['Battery Electrolyte']['Tank steel specific resource use']['Value'].unit['kg/kg']
-									*
-									tank_steel_kg, 
-									'kg'
-									) 
-		else:
-			self.steel_resource_use = Quantity(0, 'kg')			
 
 	def calculate_stack(self):
 
@@ -655,7 +480,7 @@ class RFB_Plugin:
 										'-'
 										)
 
-		self.lifetime_number_cell_stacks = Quantity(
+		self.total_stack = Quantity(
 										self.number_cell_stacks.unit['-']
 										*
 										(np.sum(self.input_dict_resolved['Time']['Years']['Value']['Operation years ones'].unit['-'])
@@ -665,109 +490,22 @@ class RFB_Plugin:
 										'-'
 										)
 
-		if 'GWP per stack' in self.input_dict_resolved['Battery Cell Stack']:
-			self.total_stack_gwp = Quantity(
-									self.input_dict_resolved['Battery Cell Stack']['GWP per stack']['Value'].unit['kg']
-									*
-									self.lifetime_number_cell_stacks.unit['-'], 
-									'kg'
-									) 
-		else:
-			self.total_stack_gwp = Quantity(0, 'kg')			
-			
-		if 'Energy per stack' in self.input_dict_resolved['Battery Cell Stack']:
-			self.total_stack_energy = Quantity(
-									self.input_dict_resolved['Battery Cell Stack']['Energy per stack']['Value'].unit['J']
-									*
-									self.lifetime_number_cell_stacks.unit['-'], 
-									'J'
-									) 	
-		else:
-			self.total_stack_energy = Quantity(0, 'J')					
-
-		if 'Toxicity per stack' in self.input_dict_resolved['Battery Cell Stack']:
-			self.total_stack_toxicity = Quantity(
-									self.input_dict_resolved['Battery Cell Stack']['Toxicity per stack']['Value'].unit['-']
-									*
-									self.lifetime_number_cell_stacks.unit['-'], 
-									'-'
-									) 
-		else:
-			self.total_stack_toxicity = Quantity(0, '-')			
-			
-		if 'Resource use per stack' in self.input_dict_resolved['Battery Cell Stack']:
-			self.total_stack_resource_use = Quantity(
-									self.input_dict_resolved['Battery Cell Stack']['Resource use per stack']['Value'].unit['kg']
-									*
-									self.lifetime_number_cell_stacks.unit['-'], 
-									'kg'
-									) 
-		else:
-			self.total_stack_resource_use = Quantity(0, 'kg')			
-
 	def calculate_periphery(self):
-		if 'GWP per periphery item' in self.input_dict_resolved['Battery Periphery']:
-			self.total_periphery_gwp = Quantity(
-									self.input_dict_resolved['Battery Periphery']['GWP per periphery item']['Value'].unit['kg']
-									*
-									self.input_dict_resolved['Battery Periphery']['Number of periphery items']['Value'].unit['-'], 
-									'kg'
-									) 
-		else:
-			self.total_periphery_gwp = Quantity(0, 'kg')			
-
-		if 'Energy per periphery item' in self.input_dict_resolved['Battery Periphery']:
-			self.total_periphery_energy = Quantity(
-									self.input_dict_resolved['Battery Periphery']['Energy per periphery item']['Value'].unit['J']
-									*
-									self.input_dict_resolved['Battery Periphery']['Number of periphery items']['Value'].unit['-'], 
-									'J'
-									) 
-		else:
-			self.total_periphery_energy = Quantity(0, 'J')						
-
-		if 'Toxicity per periphery item' in self.input_dict_resolved['Battery Periphery']:
-			self.total_periphery_toxicity = Quantity(
-									self.input_dict_resolved['Battery Periphery']['Toxicity per periphery item']['Value'].unit['-']
-									*
-									self.input_dict_resolved['Battery Periphery']['Number of periphery items']['Value'].unit['-'], 
-									'-'
-									) 
-		else:
-			self.total_periphery_toxicity = Quantity(0, '-')			
-			
-		if 'Resource use per periphery item' in self.input_dict_resolved['Battery Periphery']:
-			self.total_periphery_resource_use = Quantity(
-									self.input_dict_resolved['Battery Periphery']['Resource use per periphery item']['Value'].unit['kg']
-									*
-									self.input_dict_resolved['Battery Periphery']['Number of periphery items']['Value'].unit['-'], 
-									'kg'
-									) 
-		else:
-			self.total_periphery_resource_use = Quantity(0, 'kg')						
+		''' Simply pick up the dictionary entry to generate a variable with the same standard name as the other elements'''
+		self.total_periphery = self.input_dict_resolved['Battery Periphery']['Number of periphery items']['Value']
 
 
-	def calculate_total_impact(self):
-		self.total_gwp = Quantity(self.total_electrolyte_gwp.unit['kg']
-							+ self.steel_gwp.unit['kg']
-							+ self.total_stack_gwp.unit['kg']
-							+ self.total_periphery_gwp.unit['kg'], 
-							'kg')
+	def calculate_impact(self):
+		'''Double loop generating each impact of each element, and summing up the total elments contributiuons for each impact'''
 
-		self.total_energy = Quantity(self.total_electrolyte_energy.unit['J']
-							+ self.steel_energy.unit['J']
-							+ self.total_stack_energy.unit['J']
-							+ self.total_periphery_energy.unit['J'], 
-							'J')
-		
-		self.total_toxicity = Quantity(self.total_electrolyte_toxicity.unit['-']
-							+ self.steel_toxicity.unit['-']
-							+ self.total_stack_toxicity.unit['-']
-							+ self.total_periphery_toxicity.unit['-'], 
-							'-')
-		
-		self.total_resource_use = Quantity(self.total_electrolyte_resource_use.unit['kg']
-							+ self.steel_resource_use.unit['kg']
-							+ self.total_stack_resource_use.unit['kg']
-							+ self.total_periphery_resource_use.unit['kg'], 
-							'kg')
+		impact_categories = {'GWP': 'kg', 'Energy': 'J', 'Resource_use': 'kg', 'Toxicity': '-'}
+		for impact_name, impact_unit in impact_categories.items():
+			grand_total = 0
+			for subsystem_name in self.input_dict_resolved['RFB Specific Impacts']:
+				subsystem_quantity = getattr(self, f"total_{subsystem_name.lower()}")
+				value_key = f"{impact_name}_Value"
+				impact_per_unit = self.input_dict_resolved['RFB Specific Impacts'][subsystem_name][value_key].base_value
+				total_impact = subsystem_quantity.base_value * impact_per_unit
+				setattr(self, f"total_{subsystem_name.lower()}_{impact_name.lower()}", Quantity(total_impact, impact_unit))
+				grand_total += total_impact
+			setattr(self, f"total_battery_{impact_name.lower()}", Quantity(grand_total, impact_unit))

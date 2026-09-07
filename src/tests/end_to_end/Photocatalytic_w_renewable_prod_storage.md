@@ -347,10 +347,6 @@ Name | Value | Unit
 --- | --- | --- | ---
 Power per cell stack | 10 | kW
 Lifetime | 2 | year
-GWP per stack | 10 | kg
-Energy per stack | 10 | J
-Toxicity per stack | 10 | -
-Resource use per stack | 10 | kg
 
 # Battery Electrolyte
 
@@ -360,24 +356,21 @@ Energy density | 40 | Wh/kg
 Fraction of electrolyte to replace per year | 1% | -
 Fraction of replaced electrolyte to produce per year | 40% | -
 Electrolyte density | 1400 | kg/m3
-Specific GWP | 20 | kg/kg
-Energy intensity | 100 | kWh/kg
-Specific toxicity | 12 | 1/kg
-Specific resource use | 15 | kg/kg
-Tank steel specific GWP | 2 | kg/kg
-Tank steel energy intensity | 6 | kWh/kg
-Tank steel specific toxicity | 20 | 1/kg
-Tank steel specific resource use | 10 | kg/kg
 
 # Battery Periphery
 
 Name | Value | Unit
 --- | --- | ---
 Number of periphery items | 1 | -
-GWP per periphery item | 10 | kg
-Energy per periphery item | 10 | J
-Toxicity per periphery item | 10 | -
-Resource use per periphery item | 10 | kg
+
+# RFB Specific Impacts
+
+Name | GWP_Value | GWP_Unit | Energy_Value | Energy_Unit | Toxicity_Value | Toxicity_Unit | Resource_use_Value | Resource_use_Unit
+--- | --- | --- | --- | --- | --- | --- | --- | --- 
+Stack | 10 | kg | 10 | J | 10 | - | 10 | kg
+Electrolyte | 20 | kg/kg | 100 | kWh/kg | 12 | 1/kg | 2 | kg/kg
+Steel | 2 | kg/kg | 6 | kWh/kg | 20 | 1/kg | 10 | kg/kg
+Periphery | 10 | kg | 10 | J | 10 | - | 10 | kg
 
 # Direct Capital Costs - Power generation
 
