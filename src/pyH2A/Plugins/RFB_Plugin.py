@@ -3,8 +3,7 @@ from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
 class RFB_Plugin:
-	'''Calculation of Redox Flow Battery amount of electrolytes and their total impact, as well as the number of stack cells.
-				
+	'''Calculation of Redox Flow Battery amount of electrolytes as well as the number of stack cells, and their impacts.
 	'''
 	def __init__(self, dcf, print_info, run = True):
 		self._set_up(dcf)
@@ -425,6 +424,8 @@ class RFB_Plugin:
 
 
 	def calculate_electrolyte(self):
+		'''Calculate the amount of electrolyte in the battery, the amount that needs to be produced during lifetime to replace the faded one, and the grand total (initial + replacement).
+		The amount of steel that constitutes the tanks containing the electrolyte is calculated as well'''
 
 		self.initial_electrolyte_amount = Quantity(
 												self.input_dict_resolved['Battery']['Gross capacity']['Value'].unit['J']
@@ -472,6 +473,7 @@ class RFB_Plugin:
 
 
 	def calculate_stack(self):
+		''' Calculate the number of cell stacks in the battery, and the total number of cell stack that need to be manufactured during the battery lifetime'''
 
 		self.number_cell_stacks = Quantity(
 										self.input_dict_resolved['Battery']['Power']['Value'].unit['W']
