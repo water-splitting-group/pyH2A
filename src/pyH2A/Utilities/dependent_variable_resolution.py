@@ -43,7 +43,7 @@ def resolve_dependent_variable(dcf, dependent_variable_string):
 
 def split_dependent_variable_path(dependent_variable_string):
 	'''Split a "{top_key > middle_key > bottom_key, unit}" dependent-variable string into
-	the last component of its path and its unit.
+	a descriptive header for its path and its unit.
 
 	Parameters
 	----------
@@ -53,12 +53,83 @@ def split_dependent_variable_path(dependent_variable_string):
 	Returns
 	-------
 	header : str
-		Last component of the path (e.g. 'Levelized cost', 'Climate change'), used by
-		callers as a default header/label and to build things like plot titles.
+		Descriptive component of the path (e.g. 'Levelized cost', 'Climate change'), used
+		by callers as a default header/label and to build things like plot titles.
 	unit : str
 		Unit string from the path.
+
+	Notes
+	-----
+	Most paths in pyH2A end in the generic bottom key ``Value`` (per the
+	``top_key > middle_key > bottom_key`` convention used throughout input files), in which
+	case the *second-to-last* path component is the descriptive one (e.g.
+	'Dependent Variables > Levelized cost > Value'). Some paths instead reach into a
+	dict of named results *below* their own ``Value`` key (e.g.
+	'Life Cycle Assessment > Results > Value > Climate change'), in which case the last
+	component is already the descriptive one. This picks whichever applies.
 	'''
 
 	path_alone, unit = parse_path_with_unit(dependent_variable_string)
+	parsed_path = parse_parameter(path_alone)
 
-	return parse_parameter(path_alone)[-1], unit
+	if parsed_path[-1] == 'Value' and len(parsed_path) >= 2:
+		header = parsed_path[-2]
+	else:
+		header = parsed_path[-1]
+
+	return header, unit
+
+def configure_dependent_variable(row, default_string = None, derive_label = True):
+	'''Resolve a dependent-variable string, header, unit, and label from an input-file row.
+
+	Shared by `Sensitivity_Analysis.configure_dependent_variable` and
+	`Monte_Carlo_Analysis.configure_dependent_variable`, which differ only in where they
+	look up `row` and how they want to handle a missing `Value`/`Label` - both expressed
+	here via `default_string`/`derive_label`, rather than each module re-implementing the
+	same path/unit/label parsing.
+
+	Parameters
+	----------
+	row : dict
+		The 'Dependent Variable' (or 'Dependent variable') row itself, e.g.
+		``self.inp['Monte_Carlo_Analysis']['Dependent Variable']`` or
+		``self.inp['Sensitivity_Analysis'].get('Dependent variable', {})``. May optionally
+		contain 'Value' and 'Label' entries.
+	default_string : str, optional
+		Path with unit used when `row` has no 'Value' entry. If not provided (``None``),
+		a missing 'Value' raises ``KeyError`` instead.
+	derive_label : bool, optional
+		If ``True`` (default), a missing 'Label' falls back to ``'{header} ({unit})'``.
+		If ``False``, a missing 'Label' is left as ``None``, leaving the caller free to
+		apply its own fallback (e.g. a hardcoded default display string).
+
+	Returns
+	-------
+	dependent_variable_string : str
+		The resolved path with unit.
+	header : str
+		Descriptive header, see `split_dependent_variable_path`.
+	unit : str
+		Unit string from the path.
+	label : str or None
+		Resolved display label.
+	'''
+
+	if 'Value' not in row:
+		if default_string is None:
+			raise KeyError(
+				"Dependent Variable row must define 'Value', a path with unit, e.g. "
+				"'{Dependent Variables > Levelized cost > Value, USD/kg}'."
+			)
+		dependent_variable_string = default_string
+	else:
+		dependent_variable_string = row['Value']
+
+	header, unit = split_dependent_variable_path(dependent_variable_string)
+
+	if derive_label:
+		label = row.get('Label', '{0} ({1})'.format(header, unit))
+	else:
+		label = row.get('Label')
+
+	return dependent_variable_string, header, unit, label
