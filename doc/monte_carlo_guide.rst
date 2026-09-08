@@ -47,10 +47,10 @@ Monte_Carlo_Analysis table
 
 	# Monte_Carlo_Analysis
 
-	Name | Value
-	--- | ---
+	Name | Value | Label
+	--- | --- | ---
 	Samples | 50000
-	Dependent Variable | h2_cost
+	Dependent Variable | {Dependent Variables > Levelized cost > Value, USD/kg} | H2 Cost ($/kg)
 	Target Response Range | 1.5; 2.6
 	Output File | examples/PV_E_example/Monte_Carlo_Output.csv
 
@@ -58,15 +58,22 @@ Monte_Carlo_Analysis table
   entire model from scratch, so the run time scales roughly linearly with this number (samples
   are distributed across all available CPU cores, see :ref:`mc_performance_label`).
 - **Dependent Variable** — the single model output that Monte Carlo analysis tracks for every
-  sample, such as:
+  sample, given as a path with unit in ``{top_key > middle_key > bottom_key, unit}`` notation,
+  resolved against each sample's ``Discounted_Cash_Flow`` object (see
+  :func:`~pyH2A.Analysis.Monte_Carlo_Analysis._resolve_dependent_variable`; no config dict is
+  consulted). For example:
 
-  - ``h2_cost`` — the levelized cost of hydrogen (:attr:`~pyH2A.Discounted_Cash_Flow.Discounted_Cash_Flow.h2_cost`).
-  - ``Climate change``, ``Cumulative energy demand``, or
-    ``Climate change no LT - Global warming potential (GWP100) no LT`` — an LCA impact category
-    result (:attr:`~pyH2A.Plugins.Life_Cycle_Assessment_Plugin.Life_Cycle_Assessment_Plugin.lca_results`).
-    Requires an active ``# Life Cycle
-    Assessment`` section (see :doc:`lca_guide`); the string must match one of the impact names
-    produced by the openLCA matrix export in use.
+  - ``{Dependent Variables > Levelized cost > Value, USD/kg}`` — the levelized cost of hydrogen.
+  - ``{Life Cycle Assessment > Results > Value > Climate change, kg CO2-Eq/kg H2}`` — an LCA
+    impact category result
+    (:attr:`~pyH2A.Plugins.Life_Cycle_Assessment_Plugin.Life_Cycle_Assessment_Plugin.lca_results`).
+    Requires an active ``# Life Cycle Assessment`` section (see :doc:`lca_guide`); the path's
+    last component must match one of the impact names produced by the openLCA matrix export in
+    use, and the unit must be a valid conversion target for that impact's ``Quantity`` (the
+    Quantity's own supplied unit always works, with no conversion applied).
+
+  An optional ``Label`` row (e.g. ``Dependent Variable > Label``) sets the display label used on
+  plot axes; if omitted, it defaults to ``{last path component} ({unit})``.
 
   Choosing the dependent variable is really choosing the question you want answered: "how does
   H2 cost respond to this uncertainty?" versus "how does this technology's carbon footprint
