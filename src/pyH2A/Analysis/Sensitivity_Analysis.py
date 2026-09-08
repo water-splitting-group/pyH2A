@@ -4,41 +4,16 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from pyH2A.Discounted_Cash_Flow import Discounted_Cash_Flow
-from pyH2A.Utilities.input_modification import num, convert_input_to_dictionary, parse_parameter, parse_path_with_unit, get_by_path, set_by_path
+from pyH2A.Utilities.input_modification import num, convert_input_to_dictionary, parse_parameter, get_by_path, set_by_path
 from pyH2A.Utilities.output_utilities import make_bold, Figure_Lean, dynamic_value_formatting
+# These used to be local, per-module duplicates of logic Monte_Carlo_Analysis also
+# carried. Both modules now share these single implementations in Utilities.
+from pyH2A.Utilities.dependent_variable_resolution import (
+	resolve_dependent_variable,
+	configure_dependent_variable,
+)
 
-# NOTE: this is a local, per-module fix; the same dead-attribute pattern may exist
-# elsewhere in the Analysis package - see tracked issue if one exists.
-def _resolve_dependent_variable(dcf, dependent_variable_string):
-	'''Resolve the tracked output value from a (fully processed) ``Discounted_Cash_Flow`` object.
-
-	Parameters
-	----------
-	dcf : Discounted_Cash_Flow
-		Fully processed ``Discounted_Cash_Flow`` object (i.e. after its workflow has run),
-		whose ``.inp`` contains resolved ``Quantity`` objects.
-	dependent_variable_string : str
-		Path with unit, in "{top_key > middle_key > bottom_key, unit}" notation,
-		identifying which value in ``dcf.inp`` to read out.
-
-	Returns
-	-------
-	value : float
-		Numeric value of the resolved ``Quantity``, in the requested unit.
-
-	Notes
-	-----
-	No error handling is performed here: an invalid/non-resolving path is allowed to raise
-	its natural ``KeyError``/``AttributeError``, rather than silently falling back to a
-	default value. Only a missing ``Dependent variable`` row/table (handled by the caller,
-	before this function is ever called) defaults silently.
-	'''
-
-	path_alone, unit = parse_path_with_unit(dependent_variable_string)
-	parsed_path = parse_parameter(path_alone)
-	quantity = get_by_path(dcf.inp, parsed_path)
-
-	return quantity.unit[unit]
+_DEFAULT_DEPENDENT_VARIABLE_STRING = '{Dependent Variables > Levelized cost > Value, USD/kg}'
 
 class Sensitivity_Analysis:
 	'''Sensitivity analysis for multiple parameters.
@@ -99,21 +74,20 @@ class Sensitivity_Analysis:
 		Notes
 		-----
 		Missing table or missing row both silently default; an invalid path, once provided,
-		still fails loudly inside `_resolve_dependent_variable()` (see note there). Display
-		label and unit are read directly from the `Dependent variable` row itself (`Value`
-		for the path/unit, `Label` for the display name) - the row is self-describing, no
-		shared or per-module config dict is consulted. A missing `Label` column falls back
-		to `None`, same as a missing row entirely, and callers fall back to today's
-		hardcoded default display text.
+		still fails loudly inside `resolve_dependent_variable()` (see note there). Parsing
+		the row into `dependent_variable_string`/`header`/`unit`/`label` is delegated to
+		:func:`~pyH2A.Utilities.dependent_variable_resolution.configure_dependent_variable`
+		(shared with `Monte_Carlo_Analysis`): the row is self-describing, no shared or
+		per-module config dict is consulted. A missing `Label` column falls back to `None`
+		here (unlike `Monte_Carlo_Analysis`'s auto-derived default), same as a missing row
+		entirely, and callers fall back to today's hardcoded default display text.
 		'''
 
-		dependent_variable_row = self.inp.get('Sensitivity_Analysis', {}).get('Dependent variable', {})
+		row = self.inp.get('Sensitivity_Analysis', {}).get('Dependent variable', {})
 
-		self.dependent_variable_string = dependent_variable_row.get(
-			'Value', '{Dependent Variables > Levelized cost > Value, USD/kg}')
-		self.dependent_variable_label = dependent_variable_row.get('Label')
-
-		_, self.dependent_variable_unit = parse_path_with_unit(self.dependent_variable_string)
+		(self.dependent_variable_string, self.dependent_variable_header,
+		 self.dependent_variable_unit, self.dependent_variable_label) = configure_dependent_variable(
+			row, default_string = _DEFAULT_DEPENDENT_VARIABLE_STRING, derive_label = False)
 
 	def perform_sensitivity_analysis(self, format_cutoff = 7):
 		'''Perform sensitivity analysis.
@@ -134,7 +108,7 @@ class Sensitivity_Analysis:
 		-----
 		Parameters to vary are read from the `Parameters - Sensitivity_Analysis` table. The
 		tracked output value for both the varied cases and the base case is read via
-		`_resolve_dependent_variable()`, using `self.dependent_variable_string` (configured
+		`resolve_dependent_variable()`, using `self.dependent_variable_string` (configured
 		from the `Sensitivity_Analysis` table, see `__init__`).
 		'''
 
@@ -180,7 +154,7 @@ class Sensitivity_Analysis:
 
 				dcf = Discounted_Cash_Flow(input_dict, print_info = False)
 
-				sensitivity_results[name]['Values'][shown_value] = _resolve_dependent_variable(dcf, self.dependent_variable_string)
+				sensitivity_results[name]['Values'][shown_value] = resolve_dependent_variable(dcf, self.dependent_variable_string)
 
 		return sensitivity_results
 
@@ -278,7 +252,7 @@ class Sensitivity_Analysis:
 			ax = figure.ax		
 
 		number_of_entries = len(df.columns)
-		base_case = _resolve_dependent_variable(self.base_case, self.dependent_variable_string)
+		base_case = resolve_dependent_variable(self.base_case, self.dependent_variable_string)
 
 		if self.dependent_variable_label is None:
 			xlabel = r'Cost sensitivity / USD per kg $H_{2}$'
