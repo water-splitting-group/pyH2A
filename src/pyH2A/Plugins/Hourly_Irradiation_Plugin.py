@@ -41,7 +41,8 @@ class Hourly_Irradiation_Plugin:
 		Mean solar input power with two axis tracking per area.
 	'''
 
-	def __init__(self, dcf, print_info, run = True):
+	def __init__(self, dcf, print_info, run = True, instance_suffix=None):
+		self.instance_suffix = instance_suffix
 		self._set_up(dcf)
 		if run:
 			self._run(dcf)
@@ -60,7 +61,7 @@ class Hourly_Irradiation_Plugin:
 					"description": "Path to a `.csv` file containing hourly irradiance data"
 				},
 			},
-			"Irradiance Area Parameters": {	
+			"Irradiance Area Parameters@": {	
 				"Module tilt": {
 					"Value": {
 						"type": {int, float,},
@@ -131,7 +132,7 @@ class Hourly_Irradiation_Plugin:
 		}
 
 		self.output_dict = {
-			"Hourly Irradiation": {
+			"Hourly Irradiation@": {
 				"No tracking": {
 					"Value": {
 						"inserted_value": "hourly_energy",
@@ -190,13 +191,20 @@ class Hourly_Irradiation_Plugin:
 		}
 
 	def _run(self, dcf):
-		self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Hourly_Irradiation_Plugin')
 
-		pv = self.input_dict_resolved['Irradiance Area Parameters']
+		plugin_name = 'Hourly_Irradiation_Plugin'
+		self.irradiance_area_parameters_name = 'Irradiance Area Parameters'
+		if self.instance_suffix is not None:
+			plugin_name = f'{plugin_name} @{self.instance_suffix}'
+			self.irradiance_area_parameters_name = f'{self.irradiance_area_parameters_name} {self.instance_suffix}' 
+
+		self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, plugin_name)
+
+		pv = self.input_dict_resolved[self.irradiance_area_parameters_name]
 		
 		if 'Module tilt' in pv:
 			tilt = pv['Module tilt']['Value']
-		else: # if we want to make the tilt equal to latitude, we don't point it through a path in the input fiale, we let it be the default
+		else: # if we want to make the tilt equal to latitude, we don't point it through a path in the input file, we let it be the default
 			tilt = 'Default' 
 
 		(self.hourly_energy, 
@@ -214,7 +222,7 @@ class Hourly_Irradiation_Plugin:
 			 									pv['Dirt derating']['Value']
 												)
 
-		output_inserter_function(self.output_dict, self, dcf, 'Hourly_Irradiation_Plugin') 
+		output_inserter_function(self.output_dict, self, dcf, plugin_name) 
 
 def converter_function(string):
 	'''Converter function for datetime of hourly irradiation data.'''
@@ -248,23 +256,31 @@ def import_hourly_data(file_name):
 	``@lru_cache`` is used for fast repeated reads
 	'''
 
-	data = np.genfromtxt(file_import(file_name, mode = 'r'), 
-						  delimiter = ',', skip_header = 17, 
-						  skip_footer = 9, converters = {0: converter_function})
+	file_read = file_import(file_name, mode='r')
 
 	strings = ['Latitude (decimal degrees)', 'Longitude (decimal degrees)']
 	location = {}
 
-	file_read = file_import(file_name, mode = 'r')
 	for row_counter, line in enumerate(file_read):
+
+		if line.startswith("time(UTC)"):
+			skip_header = row_counter + 1
+			break
 
 		split = line.split(':')
 
 		if split[0] in strings:
-			location[split[0]] = float(split[1].strip(' '))
-		else:
-			break
+			location[split[0]] = float(split[1].strip())
+
 	file_read.close()
+
+	data = np.genfromtxt(
+		file_import(file_name, mode='r'),
+		delimiter=',',
+		skip_header=skip_header,
+		skip_footer=9,
+		converters={0: converter_function}
+	)
 
 	data_dict = {'Time': Quantity(data[:,0], '-'), 
 				 'Temperature': Quantity(data[:,1], 'degC'), 
