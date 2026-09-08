@@ -163,15 +163,19 @@ class TestCalculateDistance:
 
 # ── _mc_response_worker ────────────────────────────────────────────────────────
 
+H2_COST_PATH = '{Dependent Variables > Levelized cost > Value, USD/kg}'
+CLIMATE_CHANGE_PATH = '{Life Cycle Assessment > Results > Value > Climate change, kg}'
+
+
 class TestMcResponseWorker:
 
     @patch('pyH2A.Analysis.Monte_Carlo_Analysis.Discounted_Cash_Flow')
     def test_returns_h2_cost_for_every_sample(self, mock_dcf_class):
         mock_inst = MagicMock()
-        mock_inst.h2_cost = 3.5
+        mock_inst.inp = {'Dependent Variables': {'Levelized cost': {'Value': Quantity(3.5, 'USD/kg')}}}
         mock_dcf_class.return_value = mock_inst
 
-        result = _mc_response_worker(np.array([[1.0], [2.0], [3.0]]), {}, {}, 'h2_cost')
+        result = _mc_response_worker(np.array([[1.0], [2.0], [3.0]]), {}, {}, H2_COST_PATH)
 
         assert result == [3.5, 3.5, 3.5]
         assert mock_dcf_class.call_count == 3
@@ -182,13 +186,13 @@ class TestMcResponseWorker:
         mock_inst.inp = {'Life Cycle Assessment': {'Results': {'Value': {'Climate change': Quantity(0.45, 'kg')}}}}
         mock_dcf_class.return_value = mock_inst
 
-        result = _mc_response_worker(np.array([[1.0], [2.0]]), {}, {}, 'Climate change')
+        result = _mc_response_worker(np.array([[1.0], [2.0]]), {}, {}, CLIMATE_CHANGE_PATH)
 
         assert result == [0.45, 0.45]
 
     @patch('pyH2A.Analysis.Monte_Carlo_Analysis.Discounted_Cash_Flow')
     def test_empty_batch_returns_empty_list_without_calling_dcf(self, mock_dcf_class):
-        result = _mc_response_worker(np.empty((0, 1)), {}, {}, 'h2_cost')
+        result = _mc_response_worker(np.empty((0, 1)), {}, {}, H2_COST_PATH)
         assert result == []
         mock_dcf_class.assert_not_called()
 
@@ -198,12 +202,14 @@ class TestMcResponseWorker:
 
         def capture(inp, print_info=False):
             received.append(inp)
-            return MagicMock(h2_cost=1.0)
+            mock_inst = MagicMock()
+            mock_inst.inp = {'Dependent Variables': {'Levelized cost': {'Value': Quantity(1.0, 'USD/kg')}}}
+            return mock_inst
 
         mock_dcf_class.side_effect = capture
 
         original_inp = {'key': 'original'}
-        _mc_response_worker(np.array([[1.0], [2.0]]), original_inp, {}, 'h2_cost')
+        _mc_response_worker(np.array([[1.0], [2.0]]), original_inp, {}, H2_COST_PATH)
 
         assert original_inp == {'key': 'original'}
         assert all(d is not original_inp for d in received)
@@ -212,11 +218,13 @@ class TestMcResponseWorker:
     @patch('pyH2A.Analysis.Monte_Carlo_Analysis.Discounted_Cash_Flow')
     def test_set_by_path_called_with_parameter_value_and_type(
             self, mock_dcf_class, mock_set_by_path):
-        mock_dcf_class.return_value = MagicMock(h2_cost=2.0)
+        mock_inst = MagicMock()
+        mock_inst.inp = {'Dependent Variables': {'Levelized cost': {'Value': Quantity(2.0, 'USD/kg')}}}
+        mock_dcf_class.return_value = mock_inst
 
         path = ['Section', 'Param', 'Value']
         parameters = {'p': {'Parameter': path, 'Index': 0, 'Type': 'value'}}
-        _mc_response_worker(np.array([[7.0]]), {}, parameters, 'h2_cost')
+        _mc_response_worker(np.array([[7.0]]), {}, parameters, H2_COST_PATH)
 
         args, kwargs = mock_set_by_path.call_args
         assert args[1] == path
@@ -274,30 +282,41 @@ class TestSaveResults:
 
 class TestConfigureDependentVariable:
 
-    def _mc_for(self, dep_var):
-        return _make_mc(inp={'Monte_Carlo_Analysis': {'Dependent Variable': {'Value': dep_var}}})
+    def _mc_for(self, dep_var, label=None):
+        row = {'Value': dep_var}
+        if label is not None:
+            row['Label'] = label
+        return _make_mc(inp={'Monte_Carlo_Analysis': {'Dependent Variable': row}})
 
-    def test_h2_cost_sets_correct_label_and_header(self):
-        mc = self._mc_for('h2_cost')
+    def test_h2_cost_sets_correct_default_label_header_and_unit(self):
+        mc = self._mc_for('{Dependent Variables > Levelized cost > Value, USD/kg}')
         mc.configure_dependent_variable()
-        assert mc.dependent_variable == 'h2_cost'
-        assert 'H2 Cost' in mc.dependent_variable_label
-        assert 'cost' in mc.target_range_header
+        assert mc.dependent_variable_string == '{Dependent Variables > Levelized cost > Value, USD/kg}'
+        assert mc.dependent_variable_header == 'Levelized cost'
+        assert mc.dependent_variable_unit == 'USD/kg'
+        assert mc.dependent_variable_label == 'Levelized cost (USD/kg)'
+        assert 'Levelized cost' in mc.target_range_header
 
-    def test_climate_change_sets_correct_label(self):
-        mc = self._mc_for('Climate change')
+    def test_climate_change_sets_correct_header_and_unit(self):
+        mc = self._mc_for('{Life Cycle Assessment > Results > Value > Climate change, kg CO2-Eq/kg H2}')
         mc.configure_dependent_variable()
-        assert mc.dependent_variable == 'Climate change'
+        assert mc.dependent_variable_header == 'Climate change'
+        assert mc.dependent_variable_unit == 'kg CO2-Eq/kg H2'
         assert 'Climate change' in mc.dependent_variable_label
 
-    def test_cumulative_energy_demand_sets_correct_label(self):
-        mc = self._mc_for('Cumulative energy demand')
+    def test_cumulative_energy_demand_sets_correct_header(self):
+        mc = self._mc_for('{Life Cycle Assessment > Results > Value > Cumulative energy demand, kWh / kg}')
         mc.configure_dependent_variable()
         assert 'energy demand' in mc.dependent_variable_label.lower()
 
-    def test_unsupported_variable_raises_value_error(self):
+    def test_explicit_label_overrides_default(self):
+        mc = self._mc_for('{Dependent Variables > Levelized cost > Value, USD/kg}', label='H2 Cost ($/kg)')
+        mc.configure_dependent_variable()
+        assert mc.dependent_variable_label == 'H2 Cost ($/kg)'
+
+    def test_invalid_path_string_raises_value_error(self):
         mc = self._mc_for('not_a_valid_variable')
-        with pytest.raises(ValueError, match='Unsupported Dependent Variable'):
+        with pytest.raises(ValueError, match='Expected a string wrapped in braces'):
             mc.configure_dependent_variable()
 
     def test_missing_dependent_variable_key_raises_key_error(self):
@@ -334,7 +353,7 @@ class TestTargetResponseComponents:
         mc = _make_mc(
             results=results,
             target_response_range=np.array([2.0, 3.0]),
-            dependent_variable='h2_cost',
+            dependent_variable_string='h2_cost',
         )
         with pytest.raises(ValueError, match='No Monte Carlo samples'):
             mc.target_response_components()
