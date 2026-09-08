@@ -243,12 +243,14 @@ Monte Carlo analysis with LCA
    Carlo with LCA.
 
 To propagate parameter uncertainty through LCA as well, include ``Monte_Carlo_Analysis``
-in the input file and set ``Dependent Variable`` to one of the impact assessment metrics
-which is included in Characterisation matrix (C) of the openLCA matrix export. For example,
-to collect ``Climate change`` index from the results of EF Impact Assessment Method
-(Environmental Footprint Impact Assessment Method), set the dependent variable to ``Climate change``,
-as illustrated in the example below. The Monte Carlo engine will sample the specified input parameters,
-re-run the full pipeline (including LCA) for each sample, and collect the chosen output.:
+in the input file and set ``Dependent Variable`` to a path (with unit) pointing at one of the
+impact assessment metrics which is included in Characterisation matrix (C) of the openLCA
+matrix export, in ``{Life Cycle Assessment > Results > Value > <impact name>, unit}`` notation.
+For example, to collect the ``Climate change`` index from the results of EF Impact Assessment
+Method (Environmental Footprint Impact Assessment Method), set the dependent variable as
+illustrated in the example below. The Monte Carlo engine will sample the specified input
+parameters, re-run the full pipeline (including LCA) for each sample, and collect the chosen
+output.:
 
 .. code-block:: markdown
 
@@ -257,7 +259,7 @@ re-run the full pipeline (including LCA) for each sample, and collect the chosen
 	Name | Value
 	--- | ---
 	Samples | 50000
-	Dependent Variable | Climate change
+	Dependent Variable | {Life Cycle Assessment > Results > Value > Climate change, kg CO2-Eq/kg H2}
 	Output File | examples/LCA_example/Monte_Carlo_Output.csv
 
 
