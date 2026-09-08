@@ -15,10 +15,10 @@ import pyH2A.Utilities.find_nearest as fn
 from pyH2A.Utilities.input_modification import convert_input_to_dictionary,parse_parameter, parse_parameter_to_array, parse_path_with_unit, get_by_path, set_by_path, read_textfile, file_import, reverse_parameter_to_string
 from pyH2A.Discounted_Cash_Flow import Discounted_Cash_Flow
 from pyH2A.Utilities.output_utilities import make_bold, format_scientific, dynamic_value_formatting, insert_image, Figure_Lean
-from pyH2A.Analysis.config import DEPENDENT_VARIABLE_CONFIG
+from pyH2A.Analysis.dependent_variable import resolve_dependent_variable, split_dependent_variable_path
 
 
-def _mc_response_worker(value_batch, inp, parameters, dependent_variable):
+def _mc_response_worker(value_batch, inp, parameters, dependent_variable_string):
 	'''Module-level worker for parallel Monte Carlo execution.
 
 	Parameters
@@ -29,8 +29,9 @@ def _mc_response_worker(value_batch, inp, parameters, dependent_variable):
 		Full input dictionary template.
 	parameters : dict
 		Parameter metadata containing path, type, and index mappings.
-	dependent_variable : str
-		Response key to evaluate in every sample.
+	dependent_variable_string : str
+		Path with unit, in "{top_key > middle_key > bottom_key, unit}" notation,
+		identifying which value to read out of every sample's ``Discounted_Cash_Flow``.
 
 	Returns
 	-------
@@ -44,10 +45,7 @@ def _mc_response_worker(value_batch, inp, parameters, dependent_variable):
 			set_by_path(input_dict, parameter['Parameter'], value_set[parameter['Index']],
 						value_type=parameter['Type'])
 		dcf = Discounted_Cash_Flow(input_dict, print_info=False)
-		if dependent_variable == 'h2_cost':
-			response_values.append(dcf.inp['Dependent Variables']['Levelized cost']['Value'].supplied_value)
-		else:
-			response_values.append(dcf.inp['Life Cycle Assessment']['Results']['Value'][dependent_variable].supplied_value)
+		response_values.append(resolve_dependent_variable(dcf, dependent_variable_string))
 	return response_values
 
 
@@ -226,10 +224,17 @@ class Monte_Carlo_Analysis:
 	Monte_Carlo_Analysis > Samples > Value : int
 		Number of samples for Monte Carlo analysis.
 	Monte_Carlo_Analysis > Dependent Variable > Value : str
-		Dependent response variable used in Monte Carlo filtering and plots.
-		Supported values are ``h2_cost``, ``Climate change``,
-		``Cumulative energy demand``, and
-		``Climate change no LT - Global warming potential (GWP100) no LT``.
+		Path (with unit) identifying which value to track as the Monte Carlo response,
+		in "{top_key > middle_key > bottom_key, unit}" notation, e.g.
+		'{Dependent Variables > Levelized cost > Value, USD/kg}' for H2 cost, or
+		'{Life Cycle Assessment > Results > Value > Climate change, kg CO2-Eq/kg H2}'
+		for an LCA impact category (requires an active ``Life Cycle Assessment``
+		section, see :doc:`lca_guide`). Resolved via
+		:func:`~pyH2A.Analysis.dependent_variable.resolve_dependent_variable`, no config dict
+		is consulted.
+	Monte_Carlo_Analysis > Dependent Variable > Label : str, optional
+		Display label used for plot axes, e.g. 'H2 Cost ($/kg)'. Defaults to
+		'{last path component} ({unit})' if not provided.
 	Monte_Carlo_Analysis > Target Response Range > Value : str
 		Target response range for the configured dependent variable in the
 		following format: lower value; higher value (e.g. ``1.5; 4.0``).
@@ -265,8 +270,6 @@ class Monte_Carlo_Analysis:
 	Order of parameters can be changed, which for example affects the mapping onto different
 	axis in `plot_colored_scatter` (first parameter is on x axis, second on y axis, etc.).
 	'''
-
-	_DEPENDENT_VARIABLE_CONFIG = DEPENDENT_VARIABLE_CONFIG
 
 	def __init__(self, input_file):
 		'''Initialize and execute the Monte Carlo analysis workflow.
@@ -317,28 +320,31 @@ class Monte_Carlo_Analysis:
 	def configure_dependent_variable(self):
 		'''Configure the dependent Monte Carlo response variable.
 
-		Supported dependent variables are the keys of
-		``_DEPENDENT_VARIABLE_CONFIG``.
+		Notes
+		-----
+		The `Dependent Variable > Value` row is a path with unit, in
+		"{top_key > middle_key > bottom_key, unit}" notation, resolved against a
+		sample's `Discounted_Cash_Flow` object via
+		:func:`~pyH2A.Analysis.dependent_variable.resolve_dependent_variable` -
+		no shared or per-module config dict is consulted. `header` (used for the
+		saved results file and plot titles) defaults to the path's last component;
+		`label` (used for axis labels) defaults to '{header} ({unit})', unless
+		overridden via an optional `Dependent Variable > Label` row.
 		'''
 
 		monte = self.inp['Monte_Carlo_Analysis']
 		if 'Dependent Variable' not in monte or 'Value' not in monte['Dependent Variable']:
 			raise KeyError(
-				"Monte_Carlo_Analysis must define 'Dependent Variable > Value'."
-			)
-		self.dependent_variable = monte['Dependent Variable']['Value']
-		
-		config = self._DEPENDENT_VARIABLE_CONFIG.get(self.dependent_variable)		
-		if config is None:
-			supported = "', '".join(self._DEPENDENT_VARIABLE_CONFIG.keys())
-			raise ValueError(
-				f"Unsupported Dependent Variable '{self.dependent_variable}'. "
-				f"Use one of the supported values: '{supported}'."
+				"Monte_Carlo_Analysis must define 'Dependent Variable > Value', "
+				"a path with unit, e.g. "
+				"'{Dependent Variables > Levelized cost > Value, USD/kg}'."
 			)
 
-		self.dependent_variable_header = config['header']
-		self.dependent_variable_label = config['label']
-		self.dependent_variable_unit = config['unit']
+		self.dependent_variable_string = monte['Dependent Variable']['Value']
+		self.dependent_variable_header, unit = split_dependent_variable_path(self.dependent_variable_string)
+		self.dependent_variable_unit = unit
+		self.dependent_variable_label = monte['Dependent Variable'].get(
+			'Label', '{0} ({1})'.format(self.dependent_variable_header, unit))
 		self.target_range_header = f"Target {self.dependent_variable_header} range:"
 
 	def process_parameters(self):  
@@ -431,7 +437,7 @@ class Monte_Carlo_Analysis:
 							value_type = parameter['Type'])
 
 			dcf = Discounted_Cash_Flow(input_dict, print_info = False)
-			response_values.append(self.get_dependent_variable_value(dcf))
+			response_values.append(resolve_dependent_variable(dcf, self.dependent_variable_string))
 
 		return np.asarray(response_values)
 
@@ -467,7 +473,7 @@ class Monte_Carlo_Analysis:
 
 		with concurrent.futures.ProcessPoolExecutor(max_workers = max_workers) as executor:
 			future_to_batch_index = {
-				executor.submit(_mc_response_worker, batch, self.inp, self.parameters, self.dependent_variable): batch_index
+				executor.submit(_mc_response_worker, batch, self.inp, self.parameters, self.dependent_variable_string): batch_index
 				for batch_index, batch in enumerate(value_batches)
 			}
 
@@ -775,8 +781,8 @@ class Monte_Carlo_Analysis:
 
 		Notes
 		-----
-		The dependent response is stored in the last column of `self.results`, whether it is
-		`h2_cost` or a configured LCA result key.
+		The dependent response is stored in the last column of `self.results`, whatever
+		path `self.dependent_variable_string` resolves to.
 		'''
 
 		results_sorted = self.results[np.argsort(self.results[:,-1])]
@@ -790,7 +796,7 @@ class Monte_Carlo_Analysis:
 			observed_max = np.max(results_sorted[:,-1])
 			raise ValueError(
 				f"No Monte Carlo samples fell within the requested target range "
-				f"[{lower_bound}, {upper_bound}] for '{self.dependent_variable}'. "
+				f"[{lower_bound}, {upper_bound}] for '{self.dependent_variable_string}'. "
 				f"Observed sample range was [{observed_min}, {observed_max}]. "
 				"Widen the target range or increase the number of Monte Carlo samples."
 			)
