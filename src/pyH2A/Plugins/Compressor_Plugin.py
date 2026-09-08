@@ -249,8 +249,8 @@ class Compressor_Plugin:
 
         output_inserter_function(self.output_dict, self, dcf, plugin_name) 
 
-        print(self.compressor_name, ' peak_shaft_power ', self.peak_shaft_power)
-        print(self.compressor_name, ' yearly_shaft_energy ', self.yearly_shaft_energy.unit['MWh'])        
+        #print(self.compressor_name, ' peak_shaft_power ', self.peak_shaft_power)
+        #print(self.compressor_name, ' yearly_shaft_energy ', self.yearly_shaft_energy.unit['MWh'])        
 
 
     def calculate_compression(self):

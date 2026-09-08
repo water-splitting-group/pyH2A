@@ -53,7 +53,7 @@ Data | {Hourly Irradiation > Horizontal single axis tracking > Value, kWh/m2} | 
 
 Name | Value | Comment 
 --- | --- | --- | --- 
-File | pyH2A.Lookup_Tables.Hourly_Wind_Data~Jena.615_2005_2023.csv | Location: Jena, DE
+File | pyH2A.Lookup_Tables.Hourly_Wind_Data~Almeria.494_2005_2023.csv | Location: Almeria, Spain
 
 # Hourly Main Consumer Profile
 
@@ -83,7 +83,8 @@ Name | Value | Unit | Comment
 --- | --- | --- | --- 
 Nominal power | 5,500 | kW | Production of ca. 1 t of H2 per day to compare with PEC and photocatalytic models
 Power requirement increase per year | 0.3% | - | Based on Chang 2020
-Minimum capacity | 30% | - | 
+Minimum capacity | 10% | - | 
+Minimum operating power coefficient | 2 | - | 
 Hydrogen yield per unit energy | 0.0185 | kg/kWh | Based on Chang 2020
 Replacement time | 80,000 | h | Based on Chang 2020, operating time after which electrolyzer stacks have to be replaced
 
@@ -92,7 +93,7 @@ Replacement time | 80,000 | h | Based on Chang 2020, operating time after which 
 
 Name | Value | Path | Unit | Comment
 --- | --- | --- | --- | --- 
-Nominal power | 1.5 | {Electrolyzer > Nominal power > Value, kW} | kW | Optimal PV oversize ratio, same as Chang 2020
+Nominal power | 2 | {Electrolyzer > Nominal power > Value, kW} | kW | Optimal PV oversize ratio, same as Chang 2020
 Power loss per year | 0.5% | None | - | Based on Chang 2020
 Efficiency | 22% | None | - | Only used for area calculation
 
@@ -100,7 +101,7 @@ Efficiency | 22% | None | - | Only used for area calculation
 
 Name | Value | Unit | Comment 
 --- | --- | --- | --- 
-Installed wind capacity | 10 | MW
+Installed wind capacity | 20 | MW
 Power per wind turbine | 2 | MW | Typical value for land-based turbines (Older ones tend to be below, new ones are higher)
 Power loss per year | 0.5% | -
 
@@ -108,7 +109,7 @@ Power loss per year | 0.5% | -
 
 Name | Value | Unit | Comment
 --- | --- | --- | ---
-Gross capacity | 3000 | MWh | 
+Gross capacity | 900 | MWh | 
 Lowest charge level | 20% | - | Lowest level to which battery can be discharged
 Capacity loss per year | 0.5% | - | Loss of capacity per year
 Capacity loss per full charge | 0.1% | - | loss per full charge equivalent

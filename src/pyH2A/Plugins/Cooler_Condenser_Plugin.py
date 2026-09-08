@@ -345,10 +345,10 @@ class Cooler_Condenser_Plugin:
 
         output_inserter_function(self.output_dict, self, dcf, plugin_name) 
 
-        print(self.cooler_name, ' yearly coolant mass ', self.yearly_coolant_mass)
-        print(self.cooler_name, ' steel mass', self.material_mass)
-        print(self.cooler_name, ' yearly condensed water mass ', self.yearly_condensed_water_mass)
-        print(self.cooler_name, ' yearly cooling energy ', self.yearly_pumping_energy.unit['MWh'])
+        #print(self.cooler_name, ' yearly coolant mass ', self.yearly_coolant_mass)
+        #print(self.cooler_name, ' steel mass', self.material_mass)
+        #print(self.cooler_name, ' yearly condensed water mass ', self.yearly_condensed_water_mass)
+        #print(self.cooler_name, ' yearly cooling energy ', self.yearly_pumping_energy.unit['MWh'])
 
 
     def outlet_stream_properties(self):

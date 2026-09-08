@@ -1,8 +1,9 @@
-from pyH2A.Utilities.input_modification import hourly_to_daily_power, smoothened_production
+from pyH2A.Utilities.input_modification import hourly_to_daily_power, smoothened_production, moving_average
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Physical_Properties.Physical_properties import Physical_properties as PP
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import numpy as np
+import matplotlib.pyplot as plt
 
 class Electrolyzer_Hourly_Plugin:
     '''Simulation of hydrogen production using electrolysis.
@@ -66,6 +67,17 @@ class Electrolyzer_Hourly_Plugin:
                     "optional": False,
                     "description": "Minimum capacity required for electrolyzer operation. Percentage or value between 0 and 1."
                 },
+                "Minimum operating power coefficient": {
+                    "Value": {
+                        "type": {int,float,},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "dimensionless",
+                    },
+                    "optional": False,
+                    "description": "Proportionality coefficient: electrolyzer minimum power = coefficient * energy excess. The actual minimum is curtailed by the previous Minimum capacity value. "
+                },                
                 "Hydrogen yield per unit energy": {
                     "Value": {
                         "type": {int,float,},
@@ -267,34 +279,37 @@ class Electrolyzer_Hourly_Plugin:
 
         for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']:
             year = round(year)
-            energy_generation = energy_generation_yearly_data[year].unit['J']
+            energy_generation_J = energy_generation_yearly_data[year].unit['J']
 
             electrolyzer_power_demand, power_increase_ratio = calculate_electrolyzer_power_demand(
                               self.input_dict_resolved['Electrolyzer']['Power requirement increase per year']['Value'].unit['-'],
                               self.input_dict_resolved['Electrolyzer']['Nominal power']['Value'].unit['W'],
                               year) # returns: power (Watt), dimensionless
 
-            electrolyzer_energy_demand = 3600*electrolyzer_power_demand # integrate the power over 1 hour, since we ultimately think in terms of energy involved in each 1-hour slot
-            electrolyzer_energy_demand *= np.ones(len(energy_generation))
+            electrolyzer_energy_demand_J = 3600*electrolyzer_power_demand # integrate the power over 1 hour, since we ultimately think in terms of energy involved in each 1-hour slot
+            electrolyzer_energy_demand_J *= np.ones(len(energy_generation_J))
 
             # Energy that exceeds the power demand remains available
-            unused_energy = np.zeros_like(energy_generation)
-            is_overproducing = energy_generation > electrolyzer_energy_demand
-            unused_energy[is_overproducing] = energy_generation[is_overproducing] - electrolyzer_energy_demand[is_overproducing]
-            yearly_data_unused_energy[year] = Quantity(unused_energy, 'J')
-            yearly_data_unused_energy_daily[year] = Quantity(hourly_to_daily_power(unused_energy), 'J')            
+            unused_energy_J = np.zeros_like(energy_generation_J)
+            is_overproducing = energy_generation_J > electrolyzer_energy_demand_J
+            unused_energy_J[is_overproducing] = energy_generation_J[is_overproducing] - electrolyzer_energy_demand_J[is_overproducing]
+            yearly_data_unused_energy[year] = Quantity(unused_energy_J, 'J')
+            yearly_data_unused_energy_daily[year] = Quantity(hourly_to_daily_power(unused_energy_J), 'J')            
 
             # Energy that is missing to maintain the electrolyzer above its minimum operating threshold will have to be provided by the battery
-            missing_energy = np.zeros_like(energy_generation)
-            threshold = self.input_dict_resolved['Electrolyzer']['Minimum capacity']['Value'].unit['-'] * electrolyzer_energy_demand
-            is_underproducing = energy_generation < threshold
-            missing_energy[is_underproducing] = electrolyzer_energy_demand[is_underproducing] - energy_generation[is_underproducing]
+            missing_energy = np.zeros_like(energy_generation_J)
+            averaging_overproduction_period = Quantity(1, 'day')
+            moving_averaged_unused_energy_J = moving_average(unused_energy_J, round(averaging_overproduction_period.unit['h']))
+            minimum_hourly_energy_J = self.input_dict_resolved['Electrolyzer']['Minimum operating power coefficient']['Value'].unit['-'] * moving_averaged_unused_energy_J 
+            minimum_hourly_energy_J = np.clip(minimum_hourly_energy_J, self.input_dict_resolved['Electrolyzer']['Minimum capacity']['Value'].unit['-'] * electrolyzer_energy_demand_J, electrolyzer_energy_demand_J)
+            is_underproducing = energy_generation_J < minimum_hourly_energy_J
+            missing_energy[is_underproducing] = minimum_hourly_energy_J[is_underproducing] - energy_generation_J[is_underproducing]
             yearly_data_missing_energy[year] = Quantity(missing_energy, 'J')
 
             # The energy effectively consumed by the electrolyzer is the generated energy, 
-            # saturated on the lower bound by the threshold (the missing energy would come from the battery)
-            # and on the upper bound by the electrolyzer demand (the extra energy is available for the rest of the power chain)
-            electrolyzer_energy_consumption = np.clip(energy_generation, threshold, electrolyzer_energy_demand)
+            # saturated on the lower bound by the minimum_hourly_energy_J (the missing energy would come from the battery)
+            # and on the upper bound by the electrolyzer demand (the extra energy is available for the rest of the power chain).
+            electrolyzer_energy_consumption = np.clip(energy_generation_J, minimum_hourly_energy_J, electrolyzer_energy_demand_J)
 
             h2_produced = calculate_hydrogen_production(
                                 electrolyzer_energy_consumption,
@@ -306,12 +321,14 @@ class Electrolyzer_Hourly_Plugin:
             yearly_data_production.append(np.sum(h2_produced))
             yearly_data_duration.append(8760)
 
-
+        #plt.plot(minimum_hourly_energy_J)
+        #plt.show()
         self.yearly_data_year = Quantity(np.asarray(yearly_data_year), '-')
         self.yearly_data_production = Quantity(np.asarray(yearly_data_production), 'kg')
         self.yearly_data_duration = Quantity(np.asarray(yearly_data_duration), 'h')
 
         self.h2_production = self.yearly_data_production
+        #print('h2_production kg', np.sum(self.h2_production.unit['kg']))
         
         self.yearly_data_unused_energy = yearly_data_unused_energy
         self.yearly_data_unused_energy_daily = yearly_data_unused_energy_daily

@@ -1102,3 +1102,10 @@ def smoothened_production(a, s):
 	return np.repeat(np.add.reduceat(a, np.arange(0, len(a), s)) /
 					np.minimum(s, len(a) - np.arange(0, len(a), s)), 
 					np.diff(np.r_[np.arange(0, len(a), s), len(a)]))
+
+def moving_average(array, period):
+	''' Calculates the moving average, that is: result[i] = sum(array[i-period+1:i+1])/period '''
+	cumsum = np.cumsum(np.insert(array, 0, 0))
+	n = np.arange(1, len(array) + 1)
+	starts = np.maximum(n - period, 0)
+	return (cumsum[n] - cumsum[starts]) / np.minimum(n, period)

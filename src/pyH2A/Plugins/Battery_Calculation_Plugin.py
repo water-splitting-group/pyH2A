@@ -395,6 +395,7 @@ class Battery_Calculation_Plugin:
                                             (2*self.input_dict_resolved['Battery']['Gross capacity']['Value'].unit['J']), 
                                             '-')        
 
+        #print('total_unsatisfied_demand MWh ', self.total_unsatisfied_demand.unit['MWh'])
         #print('number_charge_cycles ', self.number_charge_cycles.unit['-'])
 
     def calculate_sizing(self):
