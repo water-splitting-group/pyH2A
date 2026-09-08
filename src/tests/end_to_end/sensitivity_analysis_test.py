@@ -27,7 +27,7 @@ import pytest
 
 from pyH2A.Analysis.Sensitivity_Analysis import (
     Sensitivity_Analysis,
-    _resolve_dependent_variable,
+    resolve_dependent_variable,
 )
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
@@ -143,7 +143,7 @@ def test_resolve_dependent_variable_valid_path():
             "Levelized cost": {"Value": Quantity(BASE_CASE_LCOH, "USD/kg")},
         },
     }
-    result = _resolve_dependent_variable(fake_dcf, "{Dependent Variables > Levelized cost > Value, USD/kg}")
+    result = resolve_dependent_variable(fake_dcf, "{Dependent Variables > Levelized cost > Value, USD/kg}")
     assert result == pytest.approx(BASE_CASE_LCOH, abs=TOLERANCE)
 
 
@@ -155,7 +155,7 @@ def test_resolve_dependent_variable_invalid_path_raises():
         },
     }
     with pytest.raises(KeyError, match="Nonexistent Row"):
-        _resolve_dependent_variable(fake_dcf, "{Dependent Variables > Nonexistent Row > Value, USD/kg}")
+        resolve_dependent_variable(fake_dcf, "{Dependent Variables > Nonexistent Row > Value, USD/kg}")
 
 
 def test_missing_dependent_variable_row_falls_back(tmp_path, results):
@@ -176,7 +176,7 @@ def test_missing_dependent_variable_row_falls_back(tmp_path, results):
     sa_variant = Sensitivity_Analysis(str(variant_path))
     assert sa_variant.dependent_variable_string == "{Dependent Variables > Levelized cost > Value, USD/kg}"
 
-    base_case_value = _resolve_dependent_variable(sa_variant.base_case, sa_variant.dependent_variable_string)
+    base_case_value = resolve_dependent_variable(sa_variant.base_case, sa_variant.dependent_variable_string)
     assert base_case_value == pytest.approx(BASE_CASE_LCOH, abs=TOLERANCE)
 
     variant_results = sa_variant.perform_sensitivity_analysis()
