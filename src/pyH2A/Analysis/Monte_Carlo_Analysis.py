@@ -15,7 +15,7 @@ import pyH2A.Utilities.find_nearest as fn
 from pyH2A.Utilities.input_modification import convert_input_to_dictionary,parse_parameter, parse_parameter_to_array, parse_path_with_unit, get_by_path, set_by_path, read_textfile, file_import, reverse_parameter_to_string
 from pyH2A.Discounted_Cash_Flow import Discounted_Cash_Flow
 from pyH2A.Utilities.output_utilities import make_bold, format_scientific, dynamic_value_formatting, insert_image, Figure_Lean
-from pyH2A.Analysis.dependent_variable import resolve_dependent_variable, split_dependent_variable_path
+from pyH2A.Utilities.dependent_variable_resolution import resolve_dependent_variable, split_dependent_variable_path
 
 
 def _mc_response_worker(value_batch, inp, parameters, dependent_variable_string):
@@ -230,7 +230,7 @@ class Monte_Carlo_Analysis:
 		'{Life Cycle Assessment > Results > Value > Climate change, kg CO2-Eq/kg H2}'
 		for an LCA impact category (requires an active ``Life Cycle Assessment``
 		section, see :doc:`lca_guide`). Resolved via
-		:func:`~pyH2A.Analysis.dependent_variable.resolve_dependent_variable`, no config dict
+		:func:`~pyH2A.Utilities.dependent_variable_resolution.resolve_dependent_variable`, no config dict
 		is consulted.
 	Monte_Carlo_Analysis > Dependent Variable > Label : str, optional
 		Display label used for plot axes, e.g. 'H2 Cost ($/kg)'. Defaults to
@@ -325,7 +325,7 @@ class Monte_Carlo_Analysis:
 		The `Dependent Variable > Value` row is a path with unit, in
 		"{top_key > middle_key > bottom_key, unit}" notation, resolved against a
 		sample's `Discounted_Cash_Flow` object via
-		:func:`~pyH2A.Analysis.dependent_variable.resolve_dependent_variable` -
+		:func:`~pyH2A.Utilities.dependent_variable_resolution.resolve_dependent_variable` -
 		no shared or per-module config dict is consulted. `header` (used for the
 		saved results file and plot titles) defaults to the path's last component;
 		`label` (used for axis labels) defaults to '{header} ({unit})', unless
