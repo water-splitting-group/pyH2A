@@ -65,6 +65,8 @@ Power loss per year | 0.5% | -
 
 Name | Value | Unit | Comment 
 --- | --- | --- | --- 
+Design output by year | {Electrolyzer > H2 production (yearly) > Value, kg} | kg | Hydrogen production by electrolyzer (direct and via stored power) is considered as design output by year
+Operating capacity factor | 100% | - | Set to 100%, operating capacity factor is considered during modelling of electrolyzer operation
 Plant modules | 10 | - | Modelling of 10 modules for calculation of staff cost to facilitate comparison with PEC and photocatalytic model
 Fraction of output that reaches gate | 100% | -
 
@@ -156,6 +158,8 @@ Cost of land | 500.0 | USD/acre | Same as PEC and Photocatalytic model, based on
 Name | Value | Unit | Comment 
 --- | --- | --- | --- 
 Solar collection area per staffer | 405,000 | m2 | Same as photocatalytic model, solar collection area that can be overseen by one staff member
+Wind turbines per staffer | 8 | - | 
+Battery modules per staffer | 10 | - | 
 Number of supervisors | 1 | - | Same as PEC and photocatalytic model, number of shift supervisors
 Number of 8-hour shifts | 3 | - | Same as PEC and photocatalytic model, number of shifts per day
 Hourly labor cost | 50.0 | USD/h | Same as PEC and photocatalytic model,  Burdened labor cost, including overhead (USD per man-hr)

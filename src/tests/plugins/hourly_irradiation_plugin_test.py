@@ -1,11 +1,11 @@
 import pytest
 import numpy as np
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+from pyH2A.Utilities.functional_unit import resolve_functional_unit
 from pyH2A.Plugins.Hourly_Irradiation_Plugin import (
     Hourly_Irradiation_Plugin,
     import_hourly_data,
 )
-from pyH2A.Utilities.functional_unit import resolve_functional_unit
 
 
 class DummyDCF:
@@ -21,7 +21,8 @@ class DummyDCF:
         dirt_derating,
         temp_coeff,
     ):
-        self.functional_unit = resolve_functional_unit('kg')
+
+        self.functional_unit = resolve_functional_unit('kg')                
         self.inp = {
             "Hourly Irradiation": {"File": {"Value": hourly_file}},
             "Irradiance Area Parameters": {

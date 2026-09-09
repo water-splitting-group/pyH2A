@@ -201,6 +201,7 @@ class Wind_Plugin:
 		wind_energy_generation_yearly_array = []
 
 		for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']:
+			year = round(year)
 			ageing_factor = (1-self.input_dict_resolved['Wind Turbine']['Power loss per year']['Value'].unit['-'])**year
 			self.wind_electric_energy_generation_yearly_data[year] = Quantity(
 																		ageing_factor

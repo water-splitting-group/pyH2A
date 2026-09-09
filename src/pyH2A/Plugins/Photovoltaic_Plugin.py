@@ -204,6 +204,7 @@ class Photovoltaic_Plugin:
 		yearly_energy_generation = []
 
 		for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']:
+			year = round(year)
 			data_loss_corrected = self.calculate_photovoltaic_loss_correction(data, year)
 
 			# Multiplying irradiance data (J/m2) by nominal power in kW 
