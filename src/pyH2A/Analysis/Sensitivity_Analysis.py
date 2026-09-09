@@ -11,9 +11,8 @@ from pyH2A.Utilities.output_utilities import make_bold, Figure_Lean, dynamic_val
 from pyH2A.Utilities.dependent_variable_resolution import (
 	resolve_dependent_variable,
 	configure_dependent_variable,
+	DEFAULT_DEPENDENT_VARIABLE_STRING,
 )
-
-_DEFAULT_DEPENDENT_VARIABLE_STRING = '{Dependent Variables > Levelized cost > Value, USD/kg}'
 
 class Sensitivity_Analysis:
 	'''Sensitivity analysis for multiple parameters.
@@ -87,7 +86,7 @@ class Sensitivity_Analysis:
 
 		(self.dependent_variable_string, self.dependent_variable_header,
 		 self.dependent_variable_unit, self.dependent_variable_label) = configure_dependent_variable(
-			row, default_string = _DEFAULT_DEPENDENT_VARIABLE_STRING, derive_label = False)
+			row, default_string = DEFAULT_DEPENDENT_VARIABLE_STRING, derive_label = False)
 
 	def perform_sensitivity_analysis(self, format_cutoff = 7):
 		'''Perform sensitivity analysis.
