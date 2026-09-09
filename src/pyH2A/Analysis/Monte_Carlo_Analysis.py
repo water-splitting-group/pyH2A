@@ -15,7 +15,7 @@ import pyH2A.Utilities.find_nearest as fn
 from pyH2A.Utilities.input_modification import convert_input_to_dictionary,parse_parameter, parse_parameter_to_array, parse_path_with_unit, get_by_path, set_by_path, read_textfile, file_import, reverse_parameter_to_string
 from pyH2A.Discounted_Cash_Flow import Discounted_Cash_Flow
 from pyH2A.Utilities.output_utilities import make_bold, format_scientific, dynamic_value_formatting, insert_image, Figure_Lean
-from pyH2A.Utilities.dependent_variable_resolution import resolve_dependent_variable, configure_dependent_variable
+from pyH2A.Utilities.dependent_variable_resolution import resolve_dependent_variable, configure_dependent_variable, DEFAULT_DEPENDENT_VARIABLE_STRING
 
 
 def _mc_response_worker(value_batch, inp, parameters, dependent_variable_string):
@@ -223,7 +223,7 @@ class Monte_Carlo_Analysis:
 	----------
 	Monte_Carlo_Analysis > Samples > Value : int
 		Number of samples for Monte Carlo analysis.
-	Monte_Carlo_Analysis > Dependent Variable > Value : str
+	Monte_Carlo_Analysis > Dependent Variable > Value : str, optional
 		Path (with unit) identifying which value to track as the Monte Carlo response,
 		in "{top_key > middle_key > bottom_key, unit}" notation, e.g.
 		'{Dependent Variables > Levelized cost > Value, USD/kg}' for H2 cost, or
@@ -231,7 +231,8 @@ class Monte_Carlo_Analysis:
 		for an LCA impact category (requires an active ``Life Cycle Assessment``
 		section, see :doc:`lca_guide`). Resolved via
 		:func:`~pyH2A.Utilities.dependent_variable_resolution.resolve_dependent_variable`, no config dict
-		is consulted.
+		is consulted. If the `Dependent Variable` table/row/`Value` is missing entirely,
+		this silently defaults to H2 cost (same default as `Sensitivity_Analysis`).
 	Monte_Carlo_Analysis > Dependent Variable > Label : str, optional
 		Display label used for plot axes, e.g. 'H2 Cost ($/kg)'. Defaults to
 		'{last path component} ({unit})' if not provided.
@@ -329,16 +330,18 @@ class Monte_Carlo_Analysis:
 		no shared or per-module config dict is consulted. Parsing the row into
 		`dependent_variable_string`/`header`/`unit`/`label` is delegated to
 		:func:`~pyH2A.Utilities.dependent_variable_resolution.configure_dependent_variable`
-		(shared with `Sensitivity_Analysis`), required here (missing `Value` raises
-		`KeyError`); `label` defaults to '{header} ({unit})' when no `Dependent Variable >
-		Label` row is provided.
+		(shared with `Sensitivity_Analysis`). A missing table/row/`Value` silently defaults
+		to `DEFAULT_DEPENDENT_VARIABLE_STRING` (H2 cost), same as `Sensitivity_Analysis`;
+		`label` defaults to '{header} ({unit})' when no `Dependent Variable > Label` row
+		is provided.
 		'''
 
 		monte = self.inp['Monte_Carlo_Analysis']
 		row = monte.get('Dependent Variable', {})
 
 		(self.dependent_variable_string, self.dependent_variable_header,
-		 self.dependent_variable_unit, self.dependent_variable_label) = configure_dependent_variable(row)
+		 self.dependent_variable_unit, self.dependent_variable_label) = configure_dependent_variable(
+			row, default_string = DEFAULT_DEPENDENT_VARIABLE_STRING)
 
 		self.target_range_header = f"Target {self.dependent_variable_header} range:"
 
