@@ -2,6 +2,7 @@ from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 from pyH2A.Utilities.saturated_cumsum import saturated_cumsum
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 class Battery_Calculation_Plugin:
@@ -61,7 +62,7 @@ class Battery_Calculation_Plugin:
                 },                      
             },    
             "Battery": {
-                "Design capacity": { 
+                "Gross capacity": { 
                     "Value": {
                         "type": {int, float,},
                         "bounds": (0, None),
@@ -70,9 +71,9 @@ class Battery_Calculation_Plugin:
                         "dimension": "energy",
                     },                    
                     "optional": False,
-                    "description": "Full design capacity of battery."
+                    "description": "Design capacity of the battery, if full charge and discharge of the electrolyte were allowed."
                 },
-                "Lowest discharge level": {
+                "Lowest charge level": {
                     "Value": {
                         "type": {int, float,},
                         "bounds": (0, 1),
@@ -238,7 +239,7 @@ class Battery_Calculation_Plugin:
 
     def _run(self, dcf):
         self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Battery_Calculation_Plugin')
-
+        
         self.calculate_power_curtailment()
         self.calculate_capacity_curtailment()
         if 'Storage capacity per battery module' in self.input_dict_resolved['Battery']:
@@ -293,7 +294,6 @@ class Battery_Calculation_Plugin:
     def calculate_capacity_curtailment(self):
 
         operating_years_relative = self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']
-
         # The battery capacity evolves with years
         if 'Capacity loss per year' in self.input_dict_resolved['Battery']:
             battery_yearly_ageing_factor_calendar = 1-self.input_dict_resolved['Battery']['Capacity loss per year']['Value'].unit['-']
@@ -304,20 +304,20 @@ class Battery_Calculation_Plugin:
         # The capacity upper and lower bounds are proprtional to the (aged) full capacity
         lower_bound_SOE_J = (battery_ageing_factor_calendar 
                              * 
-                             self.input_dict_resolved['Battery']['Design capacity']['Value'].unit['J'] 
+                             self.input_dict_resolved['Battery']['Gross capacity']['Value'].unit['J']
                              * 
-                             self.input_dict_resolved['Battery']['Lowest discharge level']['Value'].unit['-'])
+                             self.input_dict_resolved['Battery']['Lowest charge level']['Value'].unit['-'])
 
 
         upper_bound_SOE_J = (battery_ageing_factor_calendar 
                              * 
-                             self.input_dict_resolved['Battery']['Design capacity']['Value'].unit['J'] 
+                            self.input_dict_resolved['Battery']['Gross capacity']['Value'].unit['J']
                              * 
                              self.input_dict_resolved['Battery']['Highest charge level']['Value'].unit['-'])
 
         if 'Capacity loss per full charge' in self.input_dict_resolved['Battery']:
             # The capacity loss per full charge refers to the total capacity ; only a fraction of which is effectively usable anyway, 
-            # therefore the loss of usable capacity is only a fraction 'Highest charge level' of the nominal 'Design capacity'
+            # therefore the loss of usable capacity is only a fraction 'Highest charge level' of the 'Design capacity'
             ageing_per_cycle = self.input_dict_resolved['Battery']['Capacity loss per full charge']['Value'].unit['-'] * self.input_dict_resolved['Battery']['Highest charge level']['Value'].unit['-'] 
         else: 
             ageing_per_cycle = 0
@@ -389,12 +389,12 @@ class Battery_Calculation_Plugin:
         self.number_charge_cycles = Quantity(
                                             (cumulated_charge_J_full_array[-1]+cumulated_discharge_J_full_array[-1])
                                             /
-                                            (2*self.input_dict_resolved['Battery']['Design capacity']['Value'].unit['J']), 
+                                            (2*self.input_dict_resolved['Battery']['Gross capacity']['Value'].unit['J']), 
                                             '-')        
 
     def calculate_sizing(self):
         self.number_modules = Quantity(
-            self.input_dict_resolved['Battery']['Design capacity']['Value'].unit['J']
+            self.input_dict_resolved['Battery']['Gross capacity']['Value'].unit['J']
             /
             self.input_dict_resolved['Battery']['Storage capacity per battery module']['Value'].unit['J'] , 
             '-'

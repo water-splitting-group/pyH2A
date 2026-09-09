@@ -12,7 +12,7 @@ Hourly_Irradiation_Plugin | 201 |
 Photovoltaic_Plugin | 202 |
 Electricity_Consumer_Plugin | 203 |
 Battery_Calculation_Plugin | 204 |
-Power_Management_Explicit_Battery_Plugin | 302 |
+Power_Management_Hourly_Plugin | 302 |
 
 
 
@@ -29,7 +29,7 @@ Name | Value | Comment
 --- | --- | --- | --- 
 File | pyH2A.Lookup_Tables.Hourly_Irradiation_Data~tmy_34.859_-116.889_2006_2015.csv | Location: Dagget, CA, USA 
 
-# Hourly Consumer Profile
+# Hourly Main Consumer Profile
 Name | Value  
 --- | --- | --- 
 File | pyH2A.Lookup_Tables.Hourly_Consumption~Constant_consumption_10MW.csv 
@@ -78,26 +78,25 @@ Efficiency | 22% | None | - | Only used for area calculation
 
 Name | Value | Unit | Comment
 --- | --- | --- | ---
-Design capacity | 3000 | MWh | Full design capacity
-Lowest discharge level | 20% | - | Lowest level to which battery can be discharged
+Gross capacity | 3000 | MWh | Full design capacity
+Lowest charge level | 20% | - | Lowest level to which battery can be discharged
 Capacity loss per year | 1% | - | Loss of capacity per year
 Round trip efficiency | 80% | - | For lithium ion battery
 Highest charge level | 80% | - | 
 Power | 20 | MW | insufficient for a 10 MW customer at night
 Charging threshold | 20% | -
 
-
-# Power Consumption
+# Flexible Power Demand
 
 Name | Value | Unit 
 --- | --- | --- | ---
-Test consumer | 00 | MWh 
+Test consumer | 1000 | MWh 
 
 # Direct Capital Costs - Battery
 
 Name | Value | Path | Unit
 --- | --- | --- | ---
-Battery CAPEX | 0. | {Battery > Design capacity > Value, kWh} | USD
+Battery CAPEX | 0. | {Battery > Gross capacity > Value, kWh} | USD
 
 # Direct Capital Costs - PV
 
@@ -131,13 +130,11 @@ PV OPEX (fraction of CAPEX) | 2% | {Direct Capital Costs - PV > PV CAPEX > Value
 Name | Usage_Value | Usage_Path | Usage_Unit | Cost_Value | Cost_Path | Cost_Unit | Price_Conversion_Factor_Value | Price_Conversion_Factor_Unit | Comment
 --- | --- | --- | --- | --- | --- | --- | --- | --- | ---
 
-
 # Grid Electricity
 
 Name | Value | Unit
 --- | --- | ---
 Cost | 10000.12 | USD/kWh
-
 
 # Planned Replacement
 

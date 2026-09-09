@@ -1,13 +1,13 @@
 import pytest
 import numpy as np
-from pyH2A.Plugins.Power_Management_Explicit_Battery_Plugin import Power_Management_Explicit_Battery_Plugin
+from pyH2A.Plugins.Power_Management_Hourly_Plugin import Power_Management_Hourly_Plugin
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 from pyH2A.Utilities.functional_unit import resolve_functional_unit
 
 
 
 class DummyDCF:
-    """Minimal DCF object for Power_Management_Explicit_Battery_Plugin testing with configurable inputs."""
+    """Minimal DCF object for Power_Management_Hourly_Plugin testing with configurable inputs."""
 
     def __init__(
         self,
@@ -92,21 +92,21 @@ class DummyDCF:
             "expected": {
                 "remaining_available": Quantity(np.array([12., 0.]), 'kWh'),
                 "production_oversizing": Quantity(1.9148936170212767, '-'),
+                "total_energy_demand": Quantity(np.array([470, 470]), 'kWh'),                
                 "total_unfulfilled": Quantity(np.array([1.0, 5.0]), 'kWh'),
                 "electricity_cost": Quantity(np.array([3.14159, 15.70795]), 'USD'),
-                "total_energy_demand": Quantity(np.array([470, 470]), 'kWh'),
             },
         },
     ],
 )
-def test_power_management_explicit_battery_plugin(case):
-    """Test Power_Management_Explicit_Battery_Plugin using base inputs (direct names style)."""
+def test_power_management_hourly_plugin(case):
+    """Test Power_Management_Hourly_Plugin using base inputs (direct names style)."""
 
     # Unpack inputs from case
     dcf = DummyDCF(**case["input"])
 
     # Run plugin
-    plugin = Power_Management_Explicit_Battery_Plugin(dcf, print_info=False)
+    plugin = Power_Management_Hourly_Plugin(dcf, print_info=False)
     expected = case["expected"]
 
     # Tolerance (very small)
@@ -125,6 +125,13 @@ def test_power_management_explicit_battery_plugin(case):
     )
 
     np.testing.assert_allclose(
+        plugin.total_energy_demand.unit['J'],
+        expected["total_energy_demand"].unit['J'],
+        rtol=tolerance,
+        atol=tolerance,
+    )    
+
+    np.testing.assert_allclose(
         plugin.total_unfulfilled.unit['J'],
         expected["total_unfulfilled"].unit['J'],
         rtol=tolerance,
@@ -138,11 +145,4 @@ def test_power_management_explicit_battery_plugin(case):
         atol=tolerance,
     )
 
-    np.testing.assert_allclose(
-        plugin.total_energy_demand.unit['J'],
-        expected["total_energy_demand"].unit['J'],
-        rtol=tolerance,
-        atol=tolerance,
-    )    
-    
 

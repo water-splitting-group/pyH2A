@@ -13,40 +13,6 @@ def saturated_cumsum(
 ):
     """
     Function that calculates a cumulated sum subject to lower and upper bound curtailment, in the presence of charging/discharging yields.
-
-    Parameters
-    ----------
-    requested_variation : ndarray
-        Variation that would be observed in the absence of curtailment and yield (e.g. available charging energy).
-    nominal_lower_bound : ndarray
-        Lower saturation limit.
-    nominal_upper_bound : ndarray
-        Upper saturation limit.
-    loss_per_cycle : float
-        Fraction of the initial nominal upper bound that is loss when a full charge or discharge equivalent is performed
-    initial_state : float
-        Initial value of the cumulated sum.
-    positive_variation_yield : float
-        Fraction of accepted positive variation effectively stored.
-    negative_variation_yield : float
-        Fraction of withdrawn state effectively delivered.
-
-    Returns
-    -------
-    state : ndarray
-        Saturated cumulative state.
-    instant_deficit : ndarray
-        Part of the requested negative variation that could not be delivered. Counted positively
-    instant_excess : ndarray
-        Part of the positive variation that could not be accepted.
-    cumulated_deficit : float
-        sum of instant_deficit
-    cumulated_excess : float
-        sum of instant_excess
-    cumulated_charge: array
-        cumulated positive variations of the state 
-    cumulated_charge: array
-        cumulated absolute value of the negative variations of the state         
     """
 
     n = len(requested_variation)

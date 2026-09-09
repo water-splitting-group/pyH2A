@@ -37,11 +37,11 @@ class DummyDCF:
             },         
             "Power Demand": {"Main consumer hourly unsatisfied demand": {"Value": unsatisfied_demand, "Unit" : "kWh"}},      
             "Battery": {
-                "Design capacity": {
+                "Gross capacity": {
                     "Value": design_capacity,
                     "Unit": "MWh",   
                 },
-                "Lowest discharge level": {
+                "Lowest charge level": {
                     "Value": lowest_discharge_level,
                     "Unit": "-",   
                 }, 
