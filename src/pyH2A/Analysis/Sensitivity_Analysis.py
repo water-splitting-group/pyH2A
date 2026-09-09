@@ -255,10 +255,10 @@ class Sensitivity_Analysis:
 
 		if self.dependent_variable_label is None:
 			xlabel = r'Cost sensitivity / USD per kg $H_{2}$'
-			value_format = '${0:.2f}'.format
+			value_format = '{0:.2f}'.format
 		else:
-			xlabel = '{0} / {1}'.format(self.dependent_variable_label, self.dependent_variable_unit)
-			value_format = lambda value: '{0:.2f} {1}'.format(value, self.dependent_variable_unit)
+			xlabel = '{0} ({1})'.format(self.dependent_variable_label, self.dependent_variable_unit)
+			value_format = '{0:.2f}'.format
 
 		max_value = df.loc['High - Value'].max(skipna = True)
 		min_value = df.loc['Low - Value'].min(skipna = True)
