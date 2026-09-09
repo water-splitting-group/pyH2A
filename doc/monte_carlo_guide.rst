@@ -50,7 +50,7 @@ Monte_Carlo_Analysis table
 	Name | Value | Label
 	--- | --- | ---
 	Samples | 50000
-	Dependent Variable | {Dependent Variables > Levelized cost > Value, USD/kg} | H2 Cost ($/kg)
+	Dependent Variable | {Dependent Variables > Levelized cost > Value, USD/kg} | H2 Cost
 	Target Response Range | 1.5; 2.6
 	Output File | examples/PV_E_example/Monte_Carlo_Output.csv
 
@@ -60,8 +60,8 @@ Monte_Carlo_Analysis table
 - **Dependent Variable** — the single model output that Monte Carlo analysis tracks for every
   sample, given as a path with unit in ``{top_key > middle_key > bottom_key, unit}`` notation,
   resolved against each sample's ``Discounted_Cash_Flow`` object (see
-  :func:`~pyH2A.Analysis.Monte_Carlo_Analysis._resolve_dependent_variable`; no config dict is
-  consulted). For example:
+  :func:`~pyH2A.Utilities.dependent_variable_resolution.resolve_dependent_variable`; no config
+  dict is consulted). For example:
 
   - ``{Dependent Variables > Levelized cost > Value, USD/kg}`` — the levelized cost of hydrogen.
   - ``{Life Cycle Assessment > Results > Value > Climate change, kg CO2-Eq/kg H2}`` — an LCA
@@ -72,8 +72,11 @@ Monte_Carlo_Analysis table
     use, and the unit must be a valid conversion target for that impact's ``Quantity`` (the
     Quantity's own supplied unit always works, with no conversion applied).
 
-  An optional ``Label`` row (e.g. ``Dependent Variable > Label``) sets the display label used on
-  plot axes; if omitted, it defaults to ``{last path component} ({unit})``.
+  An optional ``Label`` row (e.g. ``Dependent Variable > Label``) sets a bare descriptive display
+  name used on plot axes (e.g. ``H2 Cost``) - do not include the unit here; it is combined in
+  automatically wherever a label is displayed, sourced once from the path's own unit rather than
+  expected to be typed by hand. If ``Label`` is omitted, it defaults to the path's last
+  component (e.g. ``Levelized cost``).
 
   Choosing the dependent variable is really choosing the question you want answered: "how does
   H2 cost respond to this uncertainty?" versus "how does this technology's carbon footprint
