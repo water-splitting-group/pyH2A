@@ -11,7 +11,8 @@ class Compressor_Plugin:
     The total mass flowrate and composition stay constant during the compression. The other properties of the Main Stream are updated. 
 
     '''
-    def __init__(self, dcf, print_info, run = True):
+    def __init__(self, dcf, print_info, run = True, instance_suffix=None):
+        self.instance_suffix = instance_suffix
         self._set_up(dcf)
         if run:
             self._run(dcf)
@@ -21,7 +22,20 @@ class Compressor_Plugin:
         self.functional_unit = dcf.functional_unit  
         
         self.input_dict = {
-            "Compressor": {
+            "Time": {
+                "Years": {
+                    "Value": {
+                        "type": {dict,},
+                        "bounds": (None, None),
+                    },
+                    "Unit": {
+                        "dimension": "dimensionless",
+                    },
+                    "optional": False,
+                    "description": "Dictionary containing all time-related quantities."
+                }, 
+            },                   
+            "Compressor@": {
                 "Compression ratio": {
                     "Value": {
                         "type": {int,float,},
@@ -114,7 +128,18 @@ class Compressor_Plugin:
                     "optional": False,
                     "description": "Mixture inlet mass fraction of each component."
                 }, 
-                "Design mass by year": {
+                "Mass flow (hourly)": {
+                    "Value": {
+                        "type": {dict,},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "mass",
+                    },
+                    "optional": False,
+                    "description": "Mixture inlet mass flow, dictionary of years whose items are hourly arrays."
+                },                  
+                "Design mass flow by year": {
                     "Value": {
                         "type": {np.ndarray,},
                         "bounds": (0, None),
@@ -123,7 +148,7 @@ class Compressor_Plugin:
                         "dimension": "mass",
                     },
                     "optional": False,
-                    "description": "Mixture inlet mass by year excluding operating capacity factor (array of years)."
+                    "description": "Mixture inlet mass flowrate, yearly averaged, excluding operating capacity factor."
                 },    
                 "Peak mass flowrate": {
                     "Value": {
@@ -134,13 +159,13 @@ class Compressor_Plugin:
                         "dimension": "mass/time",
                     },
                     "optional": False,
-                    "description": "Mixture outlet mass flowrate on peak production day."
+                    "description": "Mixture inlet mass flowrate on peak production day."
                 },                                           
             },
         }
 
         self.output_dict = {
-            "Compressor": {
+            "Compressor@": {
                 "Peak compression power": {
                     "Value": {
                         "inserted_value": "peak_compression_power",
@@ -159,7 +184,16 @@ class Compressor_Plugin:
                     "optional": False,
                     "description": "Shaft power required to drive the compressor at the plant design capacity flowrate."
                 },   
-                "Yearly power requirement": {
+                "Hourly energy requirement": {
+                    "Value": {
+                        "inserted_value": "hourly_shaft_energy",
+                        "type": {dict,},
+                        "dimension": "energy",
+                    },
+                    "optional": False,
+                    "description": "Dictionary of years containing arrays of hourly energy needed at the shaft to drive the compressor."
+                },                
+                "Yearly energy requirement": {
                     "Value": {
                         "inserted_value": "yearly_shaft_energy",
                         "type": {np.ndarray,},
@@ -203,75 +237,77 @@ class Compressor_Plugin:
 
     def _run(self, dcf):    
 
-        self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Compressor_Plugin')
+        plugin_name = 'Compressor_Plugin'
+        self.compressor_name = 'Compressor'
+        if self.instance_suffix is not None:
+            plugin_name = f'{plugin_name} @{self.instance_suffix}'
+            self.compressor_name = f'{self.compressor_name} {self.instance_suffix}'        
 
-        (self.outlet_temperature,
-         self.outlet_pressure,
-         self.outlet_enthalpy, 
-         self.peak_compression_power, 
-         self.peak_shaft_power, 
-         self.yearly_shaft_energy
-         ) = calculate_compression(self.input_dict_resolved)
+        self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, plugin_name)
 
-        output_inserter_function(self.output_dict, self, dcf, 'Compressor_Plugin') 
+        self.calculate_compression()
 
-
-def calculate_compression(dictionary, compressor_name = 'Compressor'):
-    '''Using inlet stream and compressor characteristics, shaft work and outlet stream properties are calculated.
-    '''
-    if 'Polytropic coefficient' in dictionary[compressor_name]:
-        k = dictionary[compressor_name]['Polytropic coefficient']['Value'].unit['-']
-    else:
-        k = constant.IDEAL_GAS_DIATOMIC_HEAT_CAPACITY_RATIO.unit['-']
-
-    outlet_temperature = Quantity(
-                                    dictionary['Main Stream']['Temperature']['Value'].unit['K']
-                                    * dictionary[compressor_name]['Compression ratio']['Value'].unit['-']**((k-1)/k), 
-                                    'K')
-
-    outlet_pressure = Quantity(
-                                    dictionary['Main Stream']['Pressure']['Value'].unit['Pa']
-                                    * dictionary[compressor_name]['Compression ratio']['Value'].unit['-'], 
-                                    'Pa')
-
-    h = PP.Enthalpy(T = outlet_temperature,
-                    P = outlet_pressure, 
-                    amount = dictionary['Main Stream']['Mass fraction']['Value'], 
-                    phase = 'V', 
-                    composition_basis = 'mass'
-                    )
-    
-    outlet_enthalpy = Quantity(h.unit['J'], 'J/kg')
-
-    peak_compression_power = Quantity(
-                                        dictionary['Main Stream']['Peak mass flowrate']['Value'].unit['kg/s']
-                                        *
-                                        (outlet_enthalpy.unit['J/kg']-dictionary['Main Stream']['Specific enthalpy']['Value'].unit['J/kg']), 
-                                        'W'
-                                    )
-
-    peak_shaft_power = Quantity(
-                                peak_compression_power.unit['W']
-                                /
-                                (dictionary[compressor_name]['Efficiency']['Value'].unit['-']), 
-                                'W')
-
-    yearly_shaft_energy = Quantity(
-                                peak_shaft_power.unit['Wh_per_year'] 
-                                *
-                                dictionary['Technical Operating Parameters and Specifications']['Operating capacity factor']['Value'].unit['-']
-                                * 
-                                dictionary['Main Stream']['Design mass by year']['Value'].unit['kg']
-                                /
-                                dictionary['Main Stream']['Peak mass flowrate']['Value'].unit['kg/year'],
-                                'Wh')
-
-    return (outlet_temperature, 
-            outlet_pressure, 
-            outlet_enthalpy, 
-            peak_compression_power, 
-            peak_shaft_power, 
-            yearly_shaft_energy)
+        output_inserter_function(self.output_dict, self, dcf, plugin_name) 
 
 
+    def calculate_compression(self):
+        '''Using inlet stream and compressor characteristics, shaft work and outlet stream properties are calculated.
+        '''
+        if 'Polytropic coefficient' in self.input_dict_resolved[self.compressor_name]:
+            k = self.input_dict_resolved[self.compressor_name]['Polytropic coefficient']['Value'].unit['-']
+        else:
+            k = constant.IDEAL_GAS_DIATOMIC_HEAT_CAPACITY_RATIO.unit['-']
+
+        self.outlet_temperature = Quantity(
+                                        self.input_dict_resolved['Main Stream']['Temperature']['Value'].unit['K']
+                                        * self.input_dict_resolved[self.compressor_name]['Compression ratio']['Value'].unit['-']**((k-1)/k), 
+                                        'K')
+
+        self.outlet_pressure = Quantity(
+                                        self.input_dict_resolved['Main Stream']['Pressure']['Value'].unit['Pa']
+                                        * self.input_dict_resolved[self.compressor_name]['Compression ratio']['Value'].unit['-'], 
+                                        'Pa')
+
+        h = PP.Enthalpy(T = self.outlet_temperature,
+                        P = self.outlet_pressure, 
+                        amount = self.input_dict_resolved['Main Stream']['Mass fraction']['Value'], 
+                        phase = 'V', 
+                        composition_basis = 'mass'
+                        )
+        
+        self.outlet_enthalpy = Quantity(h.unit['J'], 'J/kg')
+
+        self.peak_compression_power = Quantity(
+                                            self.input_dict_resolved['Main Stream']['Peak mass flowrate']['Value'].unit['kg/s']
+                                            *
+                                            (self.outlet_enthalpy.unit['J/kg']-self.input_dict_resolved['Main Stream']['Specific enthalpy']['Value'].unit['J/kg']), 
+                                            'W'
+                                        )
+
+        self.peak_shaft_power = Quantity(
+                                    self.peak_compression_power.unit['W']
+                                    /
+                                    (self.input_dict_resolved[self.compressor_name]['Efficiency']['Value'].unit['-']), 
+                                    'W')
+
+        self.hourly_shaft_energy = {}
+        for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']:
+            year = round(year)
+            self.hourly_shaft_energy[year] = Quantity(
+                                    self.peak_shaft_power.unit['W'] 
+                                    * 
+                                    self.input_dict_resolved['Main Stream']['Mass flow (hourly)']['Value'][year].unit['kg']
+                                    /
+                                    self.input_dict_resolved['Main Stream']['Peak mass flowrate']['Value'].unit['kg/h'],
+                                    'Wh')
+
+        self.yearly_shaft_energy = Quantity(
+                                    self.peak_shaft_power.unit['Wh_per_year'] 
+                                    *
+                                    self.input_dict_resolved['Technical Operating Parameters and Specifications']['Operating capacity factor']['Value'].unit['-']
+                                    * 
+                                    self.input_dict_resolved['Main Stream']['Design mass flow by year']['Value'].unit['kg']
+                                    /
+                                    self.input_dict_resolved['Main Stream']['Peak mass flowrate']['Value'].unit['kg/year'],
+                                    'Wh')
 
