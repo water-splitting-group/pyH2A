@@ -31,7 +31,7 @@ Name | Value | Comment
 --- | --- | --- | --- 
 File | pyH2A.Lookup_Tables.Hourly_Irradiation_Data~tmy_34.859_-116.889_2006_2015.csv | Location: Dagget, CA, USA 
 
-# Hourly Consumer Profile
+# Hourly Main Consumer Profile
 Name | Value  
 --- | --- | --- 
 File | pyH2A.Lookup_Tables.Hourly_Consumption~Constant_consumption_10MW.csv 
@@ -57,6 +57,8 @@ Data | {Hourly Irradiation > Horizontal single axis tracking > Value, kWh/m2} | 
 
 Name | Value | Unit | Comment 
 --- | --- | --- | --- 
+Design output by year | {Electrolyzer > H2 production (yearly) > Value, kg} | kg | Hydrogen production by electrolyzer (direct and via stored power) is considered as design output by year
+Operating capacity factor | 100% | - | Set to 100%, operating capacity factor is considered during modelling of electrolyzer operation
 Plant modules | 10 | - | Modelling of 10 modules for calculation of staff cost to facilitate comparison with PEC and photocatalytic model
 Fraction of output that reaches gate | 100% | -
 

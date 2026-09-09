@@ -32,12 +32,17 @@ class Electricity_Consumer_Plugin:
 				}, 
 			},  	
 			"Hourly Main Consumer Profile": {		
-				"File": {
+				"<...>": {
 					"Value": {	
-						"type": {str,},
+						"type": {str, np.ndarray, dict},
+					},
+					"Unit": {
+						"dimension": "energy",
 					},
 					"optional": False,
-					"description": "Path to a `.csv` file containing hourly power consumption"
+					"description": "Path to a `.csv` file containing hourly power consumption, "
+									"or array of hourly consumptions over a single year, "
+									"or dictionary of years containing arrays of hourly consumptions (one array per year)"
 				},	
 			},
 			"Power Generation": {	
@@ -94,8 +99,7 @@ class Electricity_Consumer_Plugin:
 
 		self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Electricity_Consumer_Plugin')
 
-		self.consumption_data = import_hourly_data(self.input_dict_resolved['Hourly Main Consumer Profile']['File']['Value'])
-
+		self.generate_consumption_data_dictionary()
 		self.calculate_supply_demand_difference()
 
 		output_inserter_function(self.output_dict, self, dcf, 'Electricity_Consumer_Plugin') 
@@ -108,16 +112,14 @@ class Electricity_Consumer_Plugin:
 													  to total_electric_energy_available_yearly_data | unsatisfied_demand , respectively
 		'''
 
-
-
 		self.unsatisfied_demand = {}
 		self.total_electric_energy_available_yearly_data = {}
 
 		for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']:
+			year = round(year)
 			energy_excess = (self.input_dict_resolved['Power Generation']['Available energy (hourly)']['Value'][year].unit['J']
 							-
-							self.consumption_data['Consumption'].unit['J'] # for the moment the consumption is constant from a year to another ; 
-																		   # however we might later want something like self.consumption_data['Consumption'].unit['J']*(1+yearly_demand_increase)**year
+							self.hourly_consumption_dict[year].unit['J'] 
 							)
 
 			self.total_electric_energy_available_yearly_data[year] = Quantity(np.where(energy_excess>0, energy_excess, 0), 'J')
@@ -125,12 +127,40 @@ class Electricity_Consumer_Plugin:
 
 		# total energy consumed during each year. For the moment all the years are identical, but in the long run we might need to distinguish years, hence the fact that we make it an array already
 		# this is also easing compatibility with the Power_Management_Explicit_Battery_Plugin, where the flexible customers can have different yearly consumptions as well
-		self.yearly_consumption = Quantity(np.sum(self.consumption_data['Consumption'].unit['J'])
+		self.yearly_consumption = Quantity(np.sum(self.hourly_consumption_dict[year].unit['J'])
 											*
 											self.input_dict_resolved['Time']['Years']['Value']['Operation years ones'].unit['-']
 											,'J')
 			
-	
+	def generate_consumption_data_dictionary(self):
+		'''generates a dictionary that associates, 
+		to each relative operation year, 
+		an array of hourly consumption of all the on-demand customes together'''
+		hourly_consumption_dict = {}
+		for consumer in self.input_dict_resolved['Hourly Main Consumer Profile']: 
+			hourly_consumption_dict[consumer] = {}
+			if isinstance(self.input_dict_resolved['Hourly Main Consumer Profile'][consumer]['Value'], str):
+				file_data = import_hourly_data(self.input_dict_resolved['Hourly Main Consumer Profile'][consumer]['Value']) 
+				for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']:
+					year = round(year)
+					hourly_consumption_dict[consumer][year] = file_data['Consumption'] # for the moment we keep each year's consumption equal, but in the future we might want something like consumption * (1 + yearly_increase)**year
+
+			elif isinstance(self.input_dict_resolved['Hourly Main Consumer Profile'][consumer]['Value'], dict): # consumer is a yearly dict of hourly consumptions, which is directly usable
+				hourly_consumption_dict[consumer] = self.input_dict_resolved['Hourly Main Consumer Profile'][consumer]['Value']
+
+			else: # case of an array 
+				for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']:
+					year = round(year)
+					hourly_consumption_dict[consumer][year] = self.input_dict_resolved['Hourly Main Consumer Profile'][consumer]['Value'] # same remark as above
+		# at this stage, hourly_consumption_dict is a dict {consumer: dictionary of {year:array of hourly consumptions (Quantity object) }}
+
+		self.hourly_consumption_dict = {
+								round(year): Quantity(
+												sum((consumption[year].unit['J'] for consumption in hourly_consumption_dict.values()))
+												, 'J')
+											for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']
+								}
+
 @lru_cache(maxsize = None)
 def import_hourly_data(file_name):
 	'''Imports hourly wind data and location coordinates from the `.csv` format.
