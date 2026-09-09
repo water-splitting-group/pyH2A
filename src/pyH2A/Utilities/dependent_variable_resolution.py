@@ -11,6 +11,12 @@ value reachable on `dcf.inp` usable as a dependent variable (H2 cost, any LCA im
 
 from pyH2A.Utilities.input_modification import parse_parameter, parse_path_with_unit, get_by_path
 
+DEFAULT_DEPENDENT_VARIABLE_STRING = '{Dependent Variables > Levelized cost > Value, USD/kg}'
+'''Default dependent variable (H2 cost): used by `Sensitivity_Analysis` and
+`Monte_Carlo_Analysis` alike as the `default_string` passed to
+`configure_dependent_variable()`, so a missing `Dependent Variable`/`Dependent variable`
+row falls back to tracking H2 cost instead of raising.'''
+
 def resolve_dependent_variable(dcf, dependent_variable_string):
 	'''Resolve the tracked output value from a (fully processed) ``Discounted_Cash_Flow`` object.
 
