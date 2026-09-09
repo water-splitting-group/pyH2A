@@ -234,8 +234,9 @@ class Monte_Carlo_Analysis:
 		is consulted. If the `Dependent Variable` table/row/`Value` is missing entirely,
 		this silently defaults to H2 cost (same default as `Sensitivity_Analysis`).
 	Monte_Carlo_Analysis > Dependent Variable > Label : str, optional
-		Display label used for plot axes, e.g. 'H2 Cost ($/kg)'. Defaults to
-		'{last path component} ({unit})' if not provided.
+		Bare descriptive name used for plot axes, e.g. 'H2 Cost' - the unit is not
+		included here; it is combined in automatically from the path's own unit wherever
+		a label is displayed. Defaults to the path's last component if not provided.
 	Monte_Carlo_Analysis > Target Response Range > Value : str
 		Target response range for the configured dependent variable in the
 		following format: lower value; higher value (e.g. ``1.5; 4.0``).
@@ -332,8 +333,11 @@ class Monte_Carlo_Analysis:
 		:func:`~pyH2A.Utilities.dependent_variable_resolution.configure_dependent_variable`
 		(shared with `Sensitivity_Analysis`). A missing table/row/`Value` silently defaults
 		to `DEFAULT_DEPENDENT_VARIABLE_STRING` (H2 cost), same as `Sensitivity_Analysis`;
-		`label` defaults to '{header} ({unit})' when no `Dependent Variable > Label` row
-		is provided.
+		`label` defaults to `header` (a bare descriptive name, e.g. 'Levelized cost') when
+		no `Dependent Variable > Label` row is provided. `label` never has `unit` baked
+		into it - plotting methods combine the two themselves at display time (e.g.
+		'{label} ({unit})'), so the unit is always sourced once from the parsed path
+		rather than expected to be typed into `Label` by hand.
 		'''
 
 		monte = self.inp['Monte_Carlo_Analysis']
@@ -907,7 +911,8 @@ class Monte_Carlo_Analysis:
 		for key, item in self.parameters.items():
 			self.shortest_target_distance[key] = self.target_distances_sorted[0][item['Index']]
 
-		self.shortest_target_distance[self.dependent_variable_label] = self.target_distances_sorted[0][-2]
+		dependent_variable_display = '{0} ({1})'.format(self.dependent_variable_label, self.dependent_variable_unit)
+		self.shortest_target_distance[dependent_variable_display] = self.target_distances_sorted[0][-2]
 		self.shortest_target_distance['Distance'] = self.target_distances_sorted[0][-1]
 
 	def full_distance_response_relationship(self, metric = 'cityblock', reduction_factor = 25,
@@ -968,7 +973,8 @@ class Monte_Carlo_Analysis:
 			Higher x axis limit.
 		xlabel_string : str, optional
 			String for x axis label. Defaults to the configured dependent variable's label
-			(``self.dependent_variable_label``) when not provided.
+			and unit (``'{self.dependent_variable_label} ({self.dependent_variable_unit})'``)
+			when not provided.
 		ylabel_string : str, optional
 			String for y axis label.
 		image_kwargs: dict, optional
@@ -988,7 +994,7 @@ class Monte_Carlo_Analysis:
 		'''
 
 		if xlabel_string is None:
-			xlabel_string = self.dependent_variable_label
+			xlabel_string = '{0} ({1})'.format(self.dependent_variable_label, self.dependent_variable_unit)
 
 		kwargs = {**{'right': 0.95, 'bottom': 0.15, 'top': 0.95,
 	 			     'fig_width': 7, 'fig_height': 4, 'font_size': 12,
@@ -1322,7 +1328,8 @@ class Monte_Carlo_Analysis:
 			String for x axis label.
 		ylabel_string : str, optional
 			String for y axis label. Defaults to the configured dependent variable's label
-			(``self.dependent_variable_label``) when not provided.
+			and unit (``'{self.dependent_variable_label} ({self.dependent_variable_unit})'``)
+			when not provided.
 		linewidth : float, optional
 			Line width for smoothed trendline.
 		markersize : float, optional
@@ -1349,7 +1356,7 @@ class Monte_Carlo_Analysis:
 		'''
 
 		if ylabel_string is None:
-			ylabel_string = self.dependent_variable_label
+			ylabel_string = '{0} ({1})'.format(self.dependent_variable_label, self.dependent_variable_unit)
 
 		kwargs = {**{'left': 0.1, 'right': 0.9, 'bottom': 0.1, 'top': 0.95,
 	 			     'fig_width': 7, 'fig_height': 4, 'font_size': 12,
