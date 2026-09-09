@@ -105,9 +105,9 @@ def configure_dependent_variable(row, default_string = None, derive_label = True
 		Path with unit used when `row` has no 'Value' entry. If not provided (``None``),
 		a missing 'Value' raises ``KeyError`` instead.
 	derive_label : bool, optional
-		If ``True`` (default), a missing 'Label' falls back to ``'{header} ({unit})'``.
-		If ``False``, a missing 'Label' is left as ``None``, leaving the caller free to
-		apply its own fallback (e.g. a hardcoded default display string).
+		If ``True`` (default), a missing 'Label' falls back to `header`. If ``False``, a
+		missing 'Label' is left as ``None``, leaving the caller free to apply its own
+		fallback (e.g. a hardcoded default display string).
 
 	Returns
 	-------
@@ -118,7 +118,7 @@ def configure_dependent_variable(row, default_string = None, derive_label = True
 	unit : str
 		Unit string from the path.
 	label : str or None
-		Resolved display label.
+		Resolved display label. 
 	'''
 
 	if 'Value' not in row:
@@ -134,7 +134,7 @@ def configure_dependent_variable(row, default_string = None, derive_label = True
 	header, unit = split_dependent_variable_path(dependent_variable_string)
 
 	if derive_label:
-		label = row.get('Label', '{0} ({1})'.format(header, unit))
+		label = row.get('Label', header)
 	else:
 		label = row.get('Label')
 
