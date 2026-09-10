@@ -59,34 +59,18 @@ class Sensitivity_Analysis:
 	Display label and unit for the tracked dependent variable are read directly from the
 	`Dependent variable` row itself (`Value` for the path/unit, `Label` for the display
 	name) - the row is self-describing, no shared or per-module config dict is consulted.
-	See `configure_dependent_variable()`.
+	Missing table or missing row both silently default to H2 cost; an invalid path, once
+	provided, still fails loudly inside `resolve_dependent_variable()` (see note there).
+	See :func:`~pyH2A.Utilities.dependent_variable_resolution.configure_dependent_variable`.
 	'''
 
 	def __init__(self, input_file):
 		self.inp = convert_input_to_dictionary(input_file)
 		self.base_case = Discounted_Cash_Flow(input_file, print_info = False)
-		self.configure_dependent_variable()
-
-	def configure_dependent_variable(self):
-		'''Configure the dependent variable tracked as the sensitivity analysis output.
-
-		Notes
-		-----
-		Missing table or missing row both silently default; an invalid path, once provided,
-		still fails loudly inside `resolve_dependent_variable()` (see note there). Parsing
-		the row into `dependent_variable_string`/`header`/`unit`/`label` is delegated to
-		:func:`~pyH2A.Utilities.dependent_variable_resolution.configure_dependent_variable`
-		(shared with `Monte_Carlo_Analysis`): the row is self-describing, no shared or
-		per-module config dict is consulted. A missing `Label` column falls back to `None`
-		here (unlike `Monte_Carlo_Analysis`'s auto-derived default), same as a missing row
-		entirely, and callers fall back to today's hardcoded default display text.
-		'''
-
-		row = self.inp.get('Sensitivity_Analysis', {}).get('Dependent variable', {})
-
 		(self.dependent_variable_string, self.dependent_variable_header,
 		 self.dependent_variable_unit, self.dependent_variable_label) = configure_dependent_variable(
-			row, default_string = DEFAULT_DEPENDENT_VARIABLE_STRING, derive_label = False)
+			self.inp, 'Sensitivity_Analysis', row_name = 'Dependent variable',
+			default_string = DEFAULT_DEPENDENT_VARIABLE_STRING, derive_label = False)
 
 	def perform_sensitivity_analysis(self, format_cutoff = 7):
 		'''Perform sensitivity analysis.
