@@ -304,7 +304,10 @@ class Monte_Carlo_Analysis:
 			self.color = 'darkgreen'
 			self.display_name = 'Model'
 
-		self.configure_dependent_variable()
+		(self.dependent_variable_string, self.dependent_variable_header,
+		 self.dependent_variable_unit, self.dependent_variable_label) = configure_dependent_variable(
+			self.inp, 'Monte_Carlo_Analysis', default_string = DEFAULT_DEPENDENT_VARIABLE_STRING)
+		self.target_range_header = f"Target {self.dependent_variable_header} range:"
 
 		if 'Input File' in self.inp['Monte_Carlo_Analysis']:
 			self.read_results(self.inp['Monte_Carlo_Analysis']['Input File']['Value'])
@@ -318,36 +321,6 @@ class Monte_Carlo_Analysis:
 		self.determine_principal_components()
 		self.development_distance()
 		self.full_distance_response_relationship()
-
-	def configure_dependent_variable(self):
-		'''Configure the dependent Monte Carlo response variable.
-
-		Notes
-		-----
-		The `Dependent Variable > Value` row is a path with unit, in
-		"{top_key > middle_key > bottom_key, unit}" notation, resolved against a
-		sample's `Discounted_Cash_Flow` object via
-		:func:`~pyH2A.Utilities.dependent_variable_resolution.resolve_dependent_variable` -
-		no shared or per-module config dict is consulted. Parsing the row into
-		`dependent_variable_string`/`header`/`unit`/`label` is delegated to
-		:func:`~pyH2A.Utilities.dependent_variable_resolution.configure_dependent_variable`
-		(shared with `Sensitivity_Analysis`). A missing table/row/`Value` silently defaults
-		to `DEFAULT_DEPENDENT_VARIABLE_STRING` (H2 cost), same as `Sensitivity_Analysis`;
-		`label` defaults to `header` (a bare descriptive name, e.g. 'Levelized cost') when
-		no `Dependent Variable > Label` row is provided. `label` never has `unit` baked
-		into it - plotting methods combine the two themselves at display time (e.g.
-		'{label} ({unit})'), so the unit is always sourced once from the parsed path
-		rather than expected to be typed into `Label` by hand.
-		'''
-
-		monte = self.inp['Monte_Carlo_Analysis']
-		row = monte.get('Dependent Variable', {})
-
-		(self.dependent_variable_string, self.dependent_variable_header,
-		 self.dependent_variable_unit, self.dependent_variable_label) = configure_dependent_variable(
-			row, default_string = DEFAULT_DEPENDENT_VARIABLE_STRING)
-
-		self.target_range_header = f"Target {self.dependent_variable_header} range:"
 
 	def process_parameters(self):  
 		'''
