@@ -1,13 +1,10 @@
-from pathlib import Path
 import json
 import pkgutil
+from pathlib import Path
 
-import pyH2A.Plugins as Plugins
+import pyH2A.Plugins as plugins
 from pyH2A.Utilities.input_modification import import_plugin
 
-
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
-OUTPUT = PROJECT_ROOT / "doc" / "data" / "io_data.json"
 
 METADATA_KEYS = {
     "type",
@@ -16,6 +13,8 @@ METADATA_KEYS = {
     "optional",
     "description",
     "inserted_value",
+    "Unit",
+    "_Unit"
 }
 
 
@@ -25,60 +24,99 @@ class DummyDCF:
         unit = None
 
 
-def is_interface(value):
-    return (
-        isinstance(value, dict)
-        and any(key in value for key in METADATA_KEYS)
+def _is_variable(data):
+    """Return True if a dictionary describes a variable."""
+
+    if not isinstance(data, dict):
+        return False
+
+    return any(
+        key in data
+        for key in (
+            "type",
+            "dimension",
+            "bounds",
+            "inserted_value",
+        )
     )
 
 
-def read_tree(tree, plugin_name, direction, path=""):
+def _walk_dict(
+    data,
+    path="",
+    inherited_optional=False,
+):
+    """Recursively collect complete variable paths."""
+
     rows = []
 
-    if not isinstance(tree, dict):
+    if not isinstance(data, dict):
         return rows
 
-    for name, value in tree.items():
+    optional = data.get(
+        "optional",
+        inherited_optional,
+    )
 
-        current_path = f"{path}.{name}" if path else name
+    for key, value in data.items():
 
-        if is_interface(value):
+        if key in METADATA_KEYS:
+            continue
+        
+        if key == "sum_all_tables": rows.append({"path": f"{path} > {key}", "optional": optional}); continue        
+        
+        current_path = (
+            f"{path} > {key}"
+            if path
+            else str(key)
+        )
 
-            rows.append({
-                "plugin": plugin_name,
-                "path": current_path,
-                "direction": direction,
-                "type": value.get("type", ""),
-                "dimension": value.get("dimension", ""),
-                "description": value.get("description", ""),
-                "optional": bool(value.get("optional", False)),
-            })
+        if not isinstance(value, dict):
+            continue
 
-        elif isinstance(value, dict):
-
-            rows.extend(
-                read_tree(
-                    value,
-                    plugin_name,
-                    direction,
-                    current_path,
-                )
+        if _is_variable(value):
+            rows.append(
+                {
+                    "path": current_path,
+                    "optional": value.get(
+                        "optional",
+                        optional,
+                    ),
+                }
             )
+
+            continue
+
+        rows.extend(
+            _walk_dict(
+                value,
+                current_path,
+                optional,
+            )
+        )
 
     return rows
 
 
-def find_plugins():
-    return sorted(
-        module.name
-        for module in pkgutil.iter_modules(Plugins.__path__)
-        if module.name.endswith("_Plugin")
-    )
+def _get_plugins():
+    """Discover all pyH2A plugins."""
+
+    plugin_modules = []
+
+    for module in pkgutil.iter_modules(
+        plugins.__path__
+    ):
+        if module.name.endswith("_Plugin"):
+            plugin_modules.append(module.name)
+
+    return sorted(plugin_modules)
 
 
-def load_plugin(name):
+def _load_plugin(plugin_module_name):
+    """Load a plugin without running a model."""
+
     plugin_class = import_plugin(
-        name,
+        plugin_module_name,
         plugin_module=True,
     )
 
@@ -89,40 +127,50 @@ def load_plugin(name):
     )
 
 
-def generate():
+def _collect_plugin_data(plugin_module_name):
+    """Collect input and output paths for one plugin."""
 
-    print("Generating Plugin I/O data...")
+    plugin = _load_plugin(
+        plugin_module_name
+    )
 
-    plugins = find_plugins()
-
-    print(f"Found {len(plugins)} plugins.")
+    plugin_name = plugin_module_name.removesuffix(
+        "_Plugin"
+    )
 
     rows = []
 
-    for name in plugins:
-
-        print(f"  {name}")
-
-        plugin = load_plugin(name)
-
-        rows.extend(
-            read_tree(
-                plugin.input_dict,
-                name,
-                "Input",
-            )
+    for row in _walk_dict(
+        plugin.input_dict
+    ):
+        rows.append(
+            {
+                "plugin": plugin_name,
+                "path": row["path"],
+                "direction": "Input",
+                "optional": row["optional"],
+            }
         )
 
-        rows.extend(
-            read_tree(
-                plugin.output_dict,
-                name,
-                "Output",
-            )
+    for row in _walk_dict(
+        plugin.output_dict
+    ):
+        rows.append(
+            {
+                "plugin": plugin_name,
+                "path": row["path"],
+                "direction": "Output",
+                "optional": row["optional"],
+            }
         )
 
-    # Merge Input + Output entries with the same path.
-    merged = {}
+    return rows
+
+
+def _combine_input_output(rows):
+    """Combine identical input and output paths."""
+
+    combined = {}
 
     for row in rows:
 
@@ -131,38 +179,84 @@ def generate():
             row["path"],
         )
 
-        if key not in merged:
-            merged[key] = row
+        if key not in combined:
+            combined[key] = row.copy()
+            continue
 
-        else:
-            merged[key]["direction"] = "Input/Output"
+        combined[key]["direction"] = "Input/Output"
 
-    rows = sorted(
-        merged.values(),
-        key=lambda row: (
-            row["plugin"].lower(),
-            row["path"].lower(),
-        ),
-    )
+        combined[key]["optional"] = (
+            combined[key]["optional"]
+            or row["optional"]
+        )
 
-    OUTPUT.parent.mkdir(
+    return list(combined.values())
+
+
+def _write_json(rows, output_path):
+    """Write rows to a JSON file."""
+
+    output_path.parent.mkdir(
         parents=True,
         exist_ok=True,
     )
 
-    OUTPUT.write_text(
-        json.dumps(
-            rows,
-            indent=2,
-            ensure_ascii=False,
-        ),
+    with output_path.open(
+        "w",
         encoding="utf-8",
+    ) as file:
+        json.dump(
+            rows,
+            file,
+            indent=4,
+        )
+
+
+def generate():
+    """Generate Plugin I/O data for the documentation."""
+
+    repository_root = (
+        Path(__file__).resolve().parents[3]
     )
 
-    print(
-        f"Done. Wrote {len(rows)} interfaces to:"
+    data_path = (
+        repository_root
+        / "doc"
+        / "data"
+        / "io_data.json"
     )
-    print(f"  {OUTPUT}")
+
+    rows = []
+
+    for plugin_module_name in _get_plugins():
+        rows.extend(
+            _collect_plugin_data(
+                plugin_module_name
+            )
+        )
+
+    rows = _combine_input_output(
+        rows
+    )
+
+    rows.sort(
+        key=lambda row: (
+            row["path"],
+            row["plugin"],
+        )
+    )
+
+    _write_json(
+        rows,
+        data_path,
+    )
+    
+    print(
+        f"Generated Plugin I/O data: "
+        f"{data_path}"
+    )
+
+    return data_path
 
 
 if __name__ == "__main__":
