@@ -12,7 +12,7 @@ Interactive overview of the inputs and outputs of all pyH2A plugins.
            <input
                id="io-search"
                type="search"
-               placeholder="Search..."
+               placeholder="Search variables..."
            />
 
            <select id="io-plugin">
