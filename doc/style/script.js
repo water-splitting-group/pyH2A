@@ -38,7 +38,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // Settings
     // ------------------------------------------------------------
 
-    const rowsPerPage = 20;
+    const rowsPerPage = 50;
 
     let currentPage = 1;
 
@@ -54,7 +54,6 @@ document.addEventListener("DOMContentLoaded", function () {
         .then(function (response) {
 
             if (!response.ok) {
-
                 throw new Error(
                     "Could not load io_data.json"
                 );
@@ -166,31 +165,19 @@ document.addEventListener("DOMContentLoaded", function () {
 
             // ----------------------------------------------------
             // Search
+            //
+            // Search only the variable identity.
+            // Plugin names and metadata are deliberately excluded.
             // ----------------------------------------------------
 
             if (text) {
 
-                const searchable = [
-
-                    row.plugin,
-
-                    row.path,
-
-                    row.direction,
-
-                    row.type,
-
-                    row.dimension,
-
-                    row.description
-
-                ]
-                    .join(" ")
-                    .toLowerCase();
-
+                const variableName =
+                    getVariableName(row.path)
+                        .toLowerCase();
 
                 if (
-                    !searchable.includes(text)
+                    !variableName.includes(text)
                 ) {
 
                     return false;
@@ -213,38 +200,9 @@ document.addEventListener("DOMContentLoaded", function () {
             getFilteredData();
 
 
-        // --------------------------------------------------------
-        // Clear table
-        // --------------------------------------------------------
-
         tableHeader.innerHTML = "";
 
         tableBody.innerHTML = "";
-
-
-        // --------------------------------------------------------
-        // Determine plugins
-        // --------------------------------------------------------
-
-        let plugins;
-
-
-        if (plugin.value) {
-
-            plugins = [
-                plugin.value
-            ];
-
-        } else {
-
-            plugins = [
-                ...new Set(
-                    data.map(function (row) {
-                        return row.plugin;
-                    })
-                )
-            ].sort();
-        }
 
 
         // --------------------------------------------------------
@@ -258,6 +216,35 @@ document.addEventListener("DOMContentLoaded", function () {
                 })
             )
         ].sort();
+
+
+        // --------------------------------------------------------
+        // Determine plugins
+        //
+        // Only plugins that occur in the filtered data are shown.
+        // --------------------------------------------------------
+
+        let plugins = [
+            ...new Set(
+                rows.map(function (row) {
+                    return row.plugin;
+                })
+            )
+        ].sort();
+
+
+        // --------------------------------------------------------
+        // Explicit plugin selection
+        //
+        // If a plugin is selected, only that plugin is displayed.
+        // --------------------------------------------------------
+
+        if (plugin.value) {
+
+            plugins = [
+                plugin.value
+            ];
+        }
 
 
         // --------------------------------------------------------
@@ -286,11 +273,9 @@ document.addEventListener("DOMContentLoaded", function () {
             (currentPage - 1) *
             rowsPerPage;
 
-
         const end =
             start +
             rowsPerPage;
-
 
         const visibleVariables =
             variables.slice(
@@ -337,13 +322,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
             // ----------------------------------------------------
-            // Variable name
+            // Variable
             // ----------------------------------------------------
 
             const variableCell =
                 document.createElement("td");
 
             variableCell.textContent =
+                variable;
+
+            variableCell.title =
                 variable;
 
             tr.appendChild(
@@ -381,7 +369,6 @@ document.addEventListener("DOMContentLoaded", function () {
                         )
                     ];
 
-
                     cell.textContent =
                         directions.join(" / ");
                 }
@@ -413,7 +400,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
         // --------------------------------------------------------
-        // Pagination display
+        // Pagination
         // --------------------------------------------------------
 
         pageDisplay.textContent =
@@ -426,7 +413,6 @@ document.addEventListener("DOMContentLoaded", function () {
         prevButton.disabled =
             currentPage === 1;
 
-
         nextButton.disabled =
             currentPage === totalPages;
 
@@ -435,15 +421,15 @@ document.addEventListener("DOMContentLoaded", function () {
         // Empty state
         // --------------------------------------------------------
 
+        const hasResults =
+            variables.length > 0;
+
+
         empty.style.display =
-            variables.length === 0
-                ? "block"
-                : "none";
+            hasResults
+                ? "none"
+                : "block";
 
-
-        // --------------------------------------------------------
-        // Hide pagination if there are no results
-        // --------------------------------------------------------
 
         const pagination =
             document.getElementById(
@@ -451,70 +437,155 @@ document.addEventListener("DOMContentLoaded", function () {
             );
 
 
-        if (variables.length === 0) {
-
-            pagination.style.display =
-                "none";
-
-        } else {
-
-            pagination.style.display =
-                "flex";
-        }
+        pagination.style.display =
+            hasResults
+                ? "flex"
+                : "none";
     }
 
 
     // ------------------------------------------------------------
-    // Get variable name from path
+    // Get display variable name
     // ------------------------------------------------------------
 
     function getVariableName(path) {
 
         if (!path) {
+            return "";
+        }
 
+
+        const parts =
+            path
+                .split(".")
+                .filter(function (part) {
+                    return part !== "";
+                });
+
+
+        if (parts.length === 0) {
             return "";
         }
 
 
         // --------------------------------------------------------
-        // Wildcard paths
+        // Wildcard variables
         //
-        // Keep the complete wildcard path.
-        //
-        // Example:
-        //
-        // <...> Direct Capital Cost <...>.<...>
-        //
-        // remains:
-        //
-        // <...> Direct Capital Cost <...>.<...>
+        // Wildcard paths are implementation details. Keep the
+        // meaningful owning table/group and remove the artificial
+        // wildcard placeholder where possible.
         // --------------------------------------------------------
 
-        if (path.includes("<...>")) {
+        if (
+            parts.some(function (part) {
+                return part.includes("<...>");
+            })
+        ) {
 
-            return path.trim();
+            return formatWildcardPath(parts);
         }
 
 
         // --------------------------------------------------------
-        // Normal paths
+        // Normal variables
+        // --------------------------------------------------------
+
+        return formatNormalPath(parts);
+    }
+
+
+    // ------------------------------------------------------------
+    // Format normal path
+    // ------------------------------------------------------------
+
+    function formatNormalPath(parts) {
+
+        if (parts.length === 1) {
+            return parts[0];
+        }
+
+
+        const bottom =
+            parts[parts.length - 1];
+
+        const middle =
+            parts[parts.length - 2];
+
+
+        // --------------------------------------------------------
+        // Remove "Value" when it is the only value below a
+        // variable.
         //
-        // Example:
+        // A path such as:
         //
-        // Battery.Design capacity
+        // Electrolyzer.Nominal power.Value
         //
         // becomes:
         //
-        // Design capacity
+        // Electrolyzer . Nominal power
+        //
+        // while Cost_Value / Usage_Value are retained.
         // --------------------------------------------------------
 
-        const parts =
-            path.split(".");
+        if (bottom === "Value") {
+
+            return parts
+                .slice(0, -1)
+                .join(" . ");
+        }
 
 
-        return parts[
-            parts.length - 1
-        ];
+        // --------------------------------------------------------
+        // Handle *_Value names.
+        //
+        // Cost_Value -> Cost
+        // Usage_Value -> Usage
+        //
+        // These are only shortened when the path contains the
+        // corresponding value key.
+        // --------------------------------------------------------
+
+        if (bottom.endsWith("_Value")) {
+
+            const valueName =
+                bottom.slice(
+                    0,
+                    -"_Value".length
+                );
+
+            return [
+                ...parts.slice(0, -1),
+                valueName
+            ].join(" . ");
+        }
+
+
+        return parts.join(" . ");
+    }
+
+
+    // ------------------------------------------------------------
+    // Format wildcard path
+    // ------------------------------------------------------------
+
+    function formatWildcardPath(parts) {
+
+        const meaningfulParts =
+            parts.filter(function (part) {
+
+                return (
+                    part !== "<...>" &&
+                    part.trim() !== ""
+                );
+            });
+
+
+        if (meaningfulParts.length === 0) {
+            return parts.join(" . ");
+        }
+
+
+        return meaningfulParts.join(" . ");
     }
 
 
@@ -546,7 +617,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
             const rows =
                 getFilteredData();
-
 
             const variables = [
                 ...new Set(

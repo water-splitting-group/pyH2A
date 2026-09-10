@@ -84,6 +84,7 @@ dl.py .field-list dt {
 #io-table-container {
     width: 100%;
     overflow-x: auto;
+    overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
 }
 
@@ -93,7 +94,8 @@ dl.py .field-list dt {
    ------------------------------------------------------------ */
 
 #io-table {
-    width: 100%;
+    width: max-content;
+    min-width: 100%;
     border-collapse: collapse;
     table-layout: auto;
 }
@@ -128,8 +130,18 @@ dl.py .field-list dt {
 
 #io-table th:first-child,
 #io-table td:first-child {
-    min-width: 220px;
-    white-space: nowrap;
+    min-width: 300px;
+    max-width: 700px;
+}
+
+
+/* ------------------------------------------------------------
+   Variable names
+   ------------------------------------------------------------ */
+
+#io-table td:first-child {
+    white-space: normal;
+    overflow-wrap: anywhere;
 }
 
 
@@ -140,6 +152,7 @@ dl.py .field-list dt {
 #io-table th:not(:first-child),
 #io-table td:not(:first-child) {
     min-width: 120px;
+    white-space: nowrap;
 }
 
 
@@ -224,7 +237,7 @@ dl.py .field-list dt {
 
     #io-table th:first-child,
     #io-table td:first-child {
-        min-width: 220px;
+        min-width: 260px;
     }
 
 
