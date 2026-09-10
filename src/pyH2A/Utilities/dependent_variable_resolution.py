@@ -42,15 +42,20 @@ def resolve_dependent_variable(dcf, dependent_variable_string):
 
 	return quantity.unit[unit]
 
-def configure_dependent_variable(row, default_string = None, derive_label = True):
+def configure_dependent_variable(inp, table, row_name = 'Dependent Variable',
+								 default_string = None, derive_label = True):
 	'''Resolve a dependent-variable string, header, unit, and label from an input-file row.
 
 	Parameters
 	----------
-	row : dict
-		The 'Dependent Variable' row itself (e.g.
-		``self.inp['Monte_Carlo_Analysis']['Dependent Variable']``), optionally
-		containing 'Value' and 'Label'.
+	inp : dict
+		Full input dictionary (e.g. ``self.inp``).
+	table : str
+		Name of the table the row lives in (e.g. 'Monte_Carlo_Analysis'). Looked up with
+		``.get()``, so a missing table is treated the same as a missing row.
+	row_name : str, optional
+		Name of the row within `table` (e.g. 'Dependent Variable' vs `Sensitivity_Analysis`'s
+		lowercase 'Dependent variable'). Defaults to 'Dependent Variable'.
 	default_string : str, optional
 		Path with unit used when `row` has no 'Value'. If ``None`` (default), a missing
 		'Value' raises ``KeyError``. Otherwise a warning is printed and this is used.
@@ -73,6 +78,8 @@ def configure_dependent_variable(row, default_string = None, derive_label = True
 	label : str or None
 		Resolved display label.
 	'''
+
+	row = inp.get(table, {}).get(row_name, {})
 
 	if 'Value' not in row:
 		if default_string is None:
