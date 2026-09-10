@@ -14,7 +14,6 @@ METADATA_KEYS = {
     "description",
     "inserted_value",
     "Unit",
-    "_Unit"
 }
 
 
@@ -61,6 +60,9 @@ def _walk_dict(
     for key, value in data.items():
 
         if key in METADATA_KEYS:
+            continue
+        
+        if "_unit" in str(key).lower():
             continue
         
         if key == "sum_all_tables": rows.append({"path": f"{path} > {key}", "optional": optional}); continue        
