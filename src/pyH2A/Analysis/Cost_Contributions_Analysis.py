@@ -76,22 +76,26 @@ class Cost_Contributions_Analysis:
 			ax = figure.ax
 
 		if plugin is None:
-			self.contributions = self.base_case.contributions
-			self.data = self.base_case.contributions['Data']
+			self.contributions = self.base_case.plugs['Discounted_Cash_Flow_Plugin'].contributions
 		else:
 			selected_plugin = self.base_case.plugs[plugin]
 			self.contributions = getattr(selected_plugin, plugin_property)
-			self.data = self.contributions['Data']
+
+		# 'Data' and 'Total' entries are Quantity objects; plotting/arithmetic below
+		# needs plain numbers, so unwrap once here via .supplied_value rather than at
+		# every usage site.
+		self.data = {key: quantity.supplied_value for key, quantity in self.contributions['Data'].items()}
+		total_value = self.contributions['Total'].supplied_value
 
 		sorted_keys = sorted(self.data, key = self.data.get)
 		sorted_contributions = {}
 
 		for key in sorted_keys:
 			sorted_contributions[key] = self.data[key]
-		
+
 		cmap = plt.get_cmap('plasma')
 
-		label_offset = self.contributions['Total'] / label_offset
+		label_offset = total_value / label_offset
 
 		for counter, key in enumerate(sorted_contributions):
 			if '-' in key:
@@ -102,20 +106,20 @@ class Cost_Contributions_Analysis:
 			value = sorted_contributions[key]
 
 			color_value = counter / len(sorted_contributions)
-			ax.barh(name, sorted_contributions[key], 
+			ax.barh(name, sorted_contributions[key],
 				    color = cmap(color_value), zorder = 5)
-			ax.annotate(millify(value), xy = (max(value, 0) + label_offset, counter), 
+			ax.annotate(millify(value), xy = (max(value, 0) + label_offset, counter),
 						va = 'center', ha = 'center')
 
-		ax.barh(make_bold(self.contributions['Table Group']), 
-						  self.contributions['Total'], 
+		ax.barh(make_bold(self.contributions['Table Group']),
+						  total_value,
 						  color = 'darkgreen', zorder = 5)
-		ax.annotate(millify(self.contributions['Total']), 
-							xy = (self.contributions['Total'] + label_offset, 
-								  len(sorted_contributions)), 
+		ax.annotate(millify(total_value),
+							xy = (total_value + label_offset,
+								  len(sorted_contributions)),
 							va = 'center', ha = 'center')
 
-		if self.contributions['Table Group'] == 'Total cost of hydrogen':
+		if self.contributions['Table Group'] == 'Total Cost of Product':
 			x_label_string = x_label_string_H2
 
 		ax.set_xlabel(x_label_string)
