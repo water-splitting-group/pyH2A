@@ -1,12 +1,20 @@
 import re
 import numpy as np
 
+from functools import lru_cache
+
 from pyH2A.Utilities.Unit_Handler.config import FLAT_MULTIPLIERS, FLAT_BASES, FLAT_DIMENSIONS, ABSOLUTE_TEMPERATURE
 
 # Regex pattern for lenient parsing. Splits by math operators and keeps them as tokens.
 # Filters out spaces and empty strings automatically based on regex logic.
 TOKEN_PATTERN = re.compile(r'([*/()])|\s+')
 
+OPERATORS = {'*', '/', '(', ')'}
+
+# Pattern for matching references in unit strings, e.g., 'kg[H2] / J[electricity]'.
+REFERENCE_PATTERN = re.compile(r'(\w+)(?:\[([^\[\]]*)\])?')
+
+@lru_cache(maxsize=1024)
 def parse_composite_unit(unit_str):
     """
     Parse a composite unit (like 'kWh / cm2' or '(kWh * m)/m2') string into conversion multiplier, 
@@ -80,10 +88,7 @@ def parse_composite_unit(unit_str):
     
     return combined_multiplier, combined_base_str, combined_dim_str
 
-
-REFERENCE_PATTERN = re.compile(r'(\w+)(?:\[([^\[\]]*)\])?')
-
-
+@lru_cache(maxsize=1024)
 def parse_reference(unit_str):
     """
     Split a composite unit string into its clean unit expression and a
@@ -118,13 +123,13 @@ def parse_reference(unit_str):
         empty list, so it fails naturally downstream during unit parsing.
     """
     if '[' not in unit_str:
-        return unit_str.strip(), []
+        return unit_str.strip(), ()
 
-    reference = [m.group(2).strip() if m.group(2) else None for m in REFERENCE_PATTERN.finditer(unit_str)]
+    reference = tuple([m.group(2).strip() if m.group(2) else None for m in REFERENCE_PATTERN.finditer(unit_str)])
     clean_unit_str = REFERENCE_PATTERN.sub(r'\1', unit_str).strip()
 
     if '[' in clean_unit_str or ']' in clean_unit_str:
-        return unit_str, []
+        return unit_str, ()
 
     return clean_unit_str, reference
 
@@ -193,6 +198,50 @@ def check_reference_match(requested_reference, stored_reference, unit_tokens):
 
     return True
 
+@lru_cache(maxsize=1024)
+def format_with_reference(string: str, reference: tuple) -> str:
+    """
+    Attach bracketed reference labels to a unit string, one per real
+    unit token, in the order they appear.
+
+    Parameters
+    ----------
+    string : str
+        Unit expression that may include `*`, `/`, and parentheses.
+    reference : tuple
+        One entry per REAL unit token only (operator tokens are never
+        represented at all, not even as None), in the order those
+        units appear. Each entry is that token's label, or None if it
+        had no (or an empty) label. Empty if no [ is present.
+
+    Returns
+    -------
+    labeled_string : str
+        Unit expression with bracketed reference labels attached to each
+        real unit token, e.g. `'kg[H2] / J[electricity]'`. If `reference` is empty, the original string is returned
+        unmodified.
+    """
+
+    tokens = [
+        token.strip()
+        for token in TOKEN_PATTERN.split(string)
+        if token and token.strip()
+    ]
+
+    reference_iter = iter(reference)
+    labeled_tokens = []
+
+    for token in tokens:
+        if token in OPERATORS:
+            labeled_tokens.append(token)
+            continue
+
+        label = next(reference_iter, None)
+        labeled_tokens.append(
+            f'{token}[{label}]' if label else token
+        )
+
+    return ' '.join(labeled_tokens)
 
 class UnitDictionary(dict):
     """
@@ -252,7 +301,7 @@ class UnitDictionary(dict):
         clean_target_unit, requested_reference = parse_reference(target_unit)
         unit_tokens = [
             t.strip() for t in TOKEN_PATTERN.split(clean_target_unit)
-            if t and t.strip() and t.strip() not in ('*', '/', '(', ')')
+            if t and t.strip() and t.strip() not in OPERATORS
         ]
         check_reference_match(requested_reference, self._quantity.reference, unit_tokens)
 
@@ -292,9 +341,12 @@ class Quantity:
     """
     __slots__ = ['supplied_value',
                  'supplied_unit',
+                 'supplied_unit_reference',
                  'base_value',
                  'base_unit',
+                 'base_unit_reference',
                  'dimension',
+                 'dimension_reference',
                  'unit',
                  'is_absolute_temp',
                  'reference']
@@ -331,7 +383,7 @@ class Quantity:
                 )
 
             raw_tokens = [t.strip() for t in TOKEN_PATTERN.split(clean_unit_str) if t and t.strip()]
-            unit_token_count = len([t for t in raw_tokens if t not in ('*', '/', '(', ')')])
+            unit_token_count = len([t for t in raw_tokens if t not in OPERATORS])
 
             if len(reference) != unit_token_count:
                 raise ValueError(
@@ -339,9 +391,9 @@ class Quantity:
                     f"{unit_token_count} unit token(s) - lengths must match."
                 )
 
-            # reference= is already in the same compact, real-tokens-only shape parse_reference
+            # reference is already in the same compact, real-tokens-only shape parse_reference
             # itself now produces -- no expansion needed, just take a defensive copy.
-            self.reference = list(reference)
+            self.reference = tuple(reference)
 
         self.supplied_unit = clean_unit_str
         self.is_absolute_temp = False
@@ -359,37 +411,37 @@ class Quantity:
             self.base_value = self.supplied_value * supplied_multiplier
             self.base_unit = base_unit_str
             self.dimension = dim_str
+
+        # Create units and dimension with reference labels attached, 
+        # if any were supplied. This is purely for display purposes and does not affect the underlying unit math.
+        if self.reference:
+            self.supplied_unit_reference = format_with_reference(self.supplied_unit, self.reference)
+            self.base_unit_reference = format_with_reference(self.base_unit, self.reference)
+            self.dimension_reference = format_with_reference(self.dimension, self.reference)
+        else:
+            self.supplied_unit_reference = self.supplied_unit
+            self.base_unit_reference = self.base_unit
+            self.dimension_reference = self.dimension
             
         # Provide the required dictionary attribute for lazy multi-unit access
         self.unit = UnitDictionary(self)
-        
+
+
+     
     def __repr__(self):
         """
-        Provide a compact representation using base units.
+        Provide a compact representation using supplied units.
 
         Returns
         -------
         representation : str
-            String form `Quantity(<base_value>, '<base_unit>')`. If
+            String form `Quantity(<supplied_value>, '<supplied_unit>')`. If
             reference labels were supplied, each labeled unit token in
-            `base_unit` is reattached with its bracketed label, e.g.
+            `supplied_unit` is reattached with its bracketed label, e.g.
             `'J / kg'` with reference list `['energy', 'H2']` becomes
             `'J[energy] / kg[H2]'`.
         """
-        if self.reference:
-            # self.reference is now compact (one entry per REAL unit token only, no operator
-            # slots), while base_unit.split(' ') still includes operators -- walk base_unit's
-            # own tokens and only advance through self.reference at non-operator positions.
-            reference_iter = iter(self.reference)
-            labeled_base_unit = ' '.join(
-                token if token in ('*', '/', '(', ')') else (
-                    f"{token}[{label}]" if (label := next(reference_iter)) else token
-                )
-                for token in self.base_unit.split(' ')
-            )
-            return f"Quantity({self.base_value}, '{labeled_base_unit}')"
-
-        return f"Quantity({self.base_value}, '{self.base_unit}')"
+        return f"Quantity({self.supplied_value}, '{self.supplied_unit_reference}')"
 
 
 
@@ -408,23 +460,73 @@ def test_quantity():
     #array_test = 10
     
     test_energy = Quantity(array_test, 'kWh / m2 / day')
-    print(test_energy)  # Should show the original value and unit
-    print(test_energy.dimension)
+    #print(test_energy)  # Should show the original value and unit
+    #print(test_energy.dimension)
 
 
     # test_frequency = Quantity(1, '1 / day')
     # print(test_frequency)  # Should show the original value and unit
 
-    test_energy = Quantity(10, 'J')
-    print(test_energy.unit['eV'])  # Should convert to electronvolts
+    # test_energy = Quantity(10, 'J')
+    # print(test_energy.unit['eV'])  # Should convert to electronvolts
 
-    test_dimensionless = Quantity(0.99, '-')
-    print(test_dimensionless.dimension)
+    # test_dimensionless = Quantity(0.99, '-')
+    # print(test_dimensionless.dimension)
 
 
+    # reference_quantity = Quantity(10, 'kg[H_${2}$] / (Wh[energy] * m[length])')
+    # print(reference_quantity.reference)  # Should show the original value and unit with reference
+    # print(reference_quantity.unit['kg[H_${2}$] / (J[energy] * m[length])'])  # Should convert to Joules with reference
+
+    # print(reference_quantity.supplied_unit)
+
+    # reference_quantity_supplied = Quantity(10, 'kg / J', reference=['H_${2}$', 'energy'])
+    # print(reference_quantity_supplied.unit['g[H_${2}$] / Wh[energy]'])  # Should show the original value and unit with reference
+
+    # reference_quantity_other_supplied = Quantity(2, 'kg/J', reference = ['H2', None])
+    # print(reference_quantity_other_supplied)
+
+    # reference_temp = Quantity(25, 'delta_K[reference] / day')
+    # print(reference_temp.supplied_unit_reference)  
+    # print(reference_temp.base_unit_reference)
+    # print(reference_temp.dimension_reference)
 
    # print(test_energy.unit['J / m2 / s'])  # Should convert to Joules
+
+    #print(format_with_reference('kg/(J*m)', ['H2', None, 'electricity']))  # Should show 'kg[H2] / J[energy]'
+
+    quantity = Quantity(1, '(kg[H2] * m[distance]) / s[time]')
+    quantity_declared = Quantity(1, '(kg * m) / s', reference=['H2', 'distance', 'time'])
+
+    print(quantity)  # Should show the original value and unit with reference
+    print(quantity_declared)  # Should show the original value and unit with reference
+
+def speed_test():
+    """
+    Run a simple speed test of quantity parsing and conversion.
+
+    Returns
+    -------
+    None : None
+        Prints example outputs to stdout.
+    """
+    import time
+
+    start_time = time.time()
+    for _ in range(1000000):
+        #test_energy = Quantity(1, 'kWh[H2O] / m2[area] / day[time]')
+        test_energy = Quantity(1, 'kWh / m2 / day')
+        #_ = test_energy.unit['J[H2O] / m2[area] / s']
+        _ = test_energy.unit['J / m2 / s']
+
+    end_time = time.time()
+
+    print(f"Speed test completed in {end_time - start_time:.4f} seconds.")
+
+    print(format_with_reference.cache_info())
+
 
 
 if __name__ == "__main__":
     test_quantity()
+    #speed_test()
