@@ -17,7 +17,9 @@ class Reverse_Osmosis_Plugin:
         Average daily operating hours of reverse osmosis plant, used for scaling of reverse osmosis plant.
     Reverse Osmosis > Recovery rate > Value : float
         Fraction of fresh water obtained from given volume of sea water.
-  
+    Reverse Osmosis > Device throughput > Value : float, optional
+        Sea-water processing throughput of one reverse osmosis device.
+
     Returns
     -------
     Power Consumption > Reverse osmosis consumption (yearly) > Value : nd.array
@@ -25,7 +27,11 @@ class Reverse_Osmosis_Plugin:
     Power Consumption > Reverse osmosis consumption (yearly) > Type : str
         Type of power consumer, type is 'flexible', uses both stored and available power.
     Reverse Osmosis > Capacity > Value : float
-        Maximum sea water processing capacity per hour of reverse osmosis plant.   
+        Maximum sea water processing capacity per hour of reverse osmosis plant.
+    Reverse Osmosis > Number of devices required > Value : float
+        Number of reverse osmosis devices required, calculated as total maximum
+        sea-water demand divided by device throughput. Inserted when Life Cycle
+        Assessment is present.
     '''
 
 
@@ -98,6 +104,17 @@ class Reverse_Osmosis_Plugin:
                     "optional": False,
                     "description": "Fraction of fresh water obtained from given volume of sea water."
                 },
+                "Device throughput": {
+                    "Value": {
+                        "type": {float,},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "volume / time",
+                    },
+                    "optional": True,
+                    "description": "Sea-water processing throughput of one reverse osmosis device."
+                },
             },
         }
 
@@ -127,6 +144,16 @@ class Reverse_Osmosis_Plugin:
                     "description": "Maximum sea water processing capacity per hour of reverse osmosis plant.",
                     "optional": False,
                 },
+                "Number of devices required": {
+                    "Value": {
+                        "inserted_value": "number_of_devices_required",
+                        "type": {int,float,}, 
+                        "dimension": "dimensionless",
+                    },
+                    "description": "Number of reverse osmosis devices required, calculated as "
+                                   "maximum yearly sea-water demand divided by throughput of one device.",
+                    "optional": True,
+                },
             },
         }
 
@@ -135,6 +162,9 @@ class Reverse_Osmosis_Plugin:
 
         self.calculate_electricity_demand()
         self.calculate_reverse_osmosis_scaling()
+        device_throughput_resolved = self.input_dict_resolved['Reverse Osmosis'].get('Device throughput')
+        if device_throughput_resolved is not None:
+           self.calculate_number_of_reverse_osmosis_devices(device_throughput_resolved)
         self.consumption_type = "flexible"
 
         output_inserter_function(self.output_dict, self, dcf, 'Reverse_Osmosis_Plugin') 
@@ -167,6 +197,19 @@ class Reverse_Osmosis_Plugin:
         '''
 
         maximum_yearly_sea_water_demand_m3 = max(self.sea_water_demand_by_year.unit['m3'])
-        self.maximum_sea_water_processing_flowrate = Quantity(maximum_yearly_sea_water_demand_m3 
-                                                              / self.input_dict_resolved['Reverse Osmosis']['Average operating time fraction']['Value'].unit['-'], 
+        self.maximum_sea_water_processing_flowrate = Quantity(maximum_yearly_sea_water_demand_m3
+                                                              / self.input_dict_resolved['Reverse Osmosis']['Average operating time fraction']['Value'].unit['-'],
                                                      'm3/year')
+
+    def calculate_number_of_reverse_osmosis_devices(self, device_throughput_resolved):
+        '''Calculation of required number of reverse osmosis devices.
+        '''
+
+        maximum_yearly_sea_water_demand_m3 = max(self.sea_water_demand_by_year.unit['m3'])
+
+        device_throughput_m3_per_year = device_throughput_resolved['Value'].unit['m3/year']
+
+        if device_throughput_m3_per_year == 0:
+            raise ValueError("Reverse osmosis device throughput must be greater than zero.")
+
+        self.number_of_devices_required = Quantity(maximum_yearly_sea_water_demand_m3 / device_throughput_m3_per_year, '-')
