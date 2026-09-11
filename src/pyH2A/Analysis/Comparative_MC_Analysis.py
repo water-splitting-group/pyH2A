@@ -24,7 +24,7 @@ class Comparative_MC_Analysis:
 	def __init__(self, input_file):
 		self.inp = convert_input_to_dictionary(input_file)
 		self.models = self.get_models()
-		self.check_target_price_range_consistency()
+		self.check_target_response_range_consistency()
 
 	def get_models(self):
 		'''Get models which are to be compared from `Comparative_MC_Analysis` 
@@ -46,19 +46,19 @@ class Comparative_MC_Analysis:
 
 		return models
 
-	def check_target_price_range_consistency(self):
-		'''Check that the same target price ranges are specified
+	def check_target_response_range_consistency(self):
+		'''Check that the same target response ranges are specified
 		for all models which are to be compared.
 		'''
 
 		model_keys = list(self.models)
 
-		target_price_range = np.asarray(self.models[model_keys[0]]['Model'].target_price_range)
+		target_response_range = np.asarray(self.models[model_keys[0]]['Model'].target_response_range)
 		for model_key in model_keys[1:]:
-			model_range = self.models[model_key]['Model'].target_price_range
-			assert np.array_equal(target_price_range, model_range), 'Target price ranges differ between input files. Reference: {0}, model: {1}'.format(target_price_range, model_range)
+			model_range = self.models[model_key]['Model'].target_response_range
+			assert np.array_equal(target_response_range, model_range), 'Target response ranges differ between input files. Reference: {0}, model: {1}'.format(target_response_range, model_range)
 
-		self.target_price_range = target_price_range
+		self.target_response_range = target_response_range
 
 	def plot_comparative_distance_histogram(self, ax = None, figure_lean = True, 
 											table_kwargs = {}, image_kwargs = {}, 
@@ -141,11 +141,11 @@ class Comparative_MC_Analysis:
 			figure.execute()
 			return figure.fig
 
-	def plot_comparative_distance_cost_relationship(self, ax = None, figure_lean = True,
+	def plot_comparative_distance_response_relationship(self, ax = None, figure_lean = True,
 													table_kwargs = {}, image_kwargs = {}, 
 											        plot_kwargs = {}, dist_kwargs = {},
 													**kwargs):
-		'''Plot comparative development distance/H2 cost relationship.
+		'''Plot comparative development distance/response relationship.
 
 		Parameters
 		----------
@@ -164,7 +164,7 @@ class Comparative_MC_Analysis:
 			:func:`~pyH2A.Utilities.output_utilities.Figure_Lean`, has priority over `**kwargs`.
 		dist_kwargs: dict, optional
 			Dictionary containg optional keyword arguments for
-			:func:`~pyH2A.Analysis.Monte_Carlo_Analysis.Monte_Carlo_Analysis.plot_distance_cost_relationship`
+			:func:`~pyH2A.Analysis.Monte_Carlo_Analysis.Monte_Carlo_Analysis.plot_distance_response_relationship`
 		**kwargs: 
 			Additional `kwargs` passed to 
 			:func:`~pyH2A.Utilities.output_utilities.Figure_Lean`
@@ -198,14 +198,14 @@ class Comparative_MC_Analysis:
 		else:
 			return_figure = False
 
-		ax.axhspan(self.target_price_range[0], self.target_price_range[1], color = 'grey', alpha = 0.7)
+		ax.axhspan(self.target_response_range[0], self.target_response_range[1], color = 'grey', alpha = 0.7)
 
 		for counter, (model_name, model) in enumerate(self.models.items()):
 			ycoord = 1 - 1.1 * (counter / model_number) - table_kwargs['height']
 
 			table_kwargs['ypos'] = ycoord
 
-			model['Model'].plot_distance_cost_relationship(ax = ax, figure_lean = False, 
+			model['Model'].plot_distance_response_relationship(ax = ax, figure_lean = False, 
 														   table_kwargs = table_kwargs,
 														   **dist_kwargs)
 
@@ -224,7 +224,7 @@ class Comparative_MC_Analysis:
 							   table_kwargs = {}, image_kwargs = {}, 
 							   plot_kwargs = {}, dist_kwargs = {},
 							   hist_kwargs = {}, **kwargs):
-		'''Plot combining development distance histogram and distance/H2 cost
+		'''Plot combining development distance histogram and distance/response
 		relationship.
 
 		Parameters
@@ -246,7 +246,7 @@ class Comparative_MC_Analysis:
 			:func:`~pyH2A.Utilities.output_utilities.Figure_Lean`, has priority over `**kwargs`.
 		dist_kwargs: dict, optional
 			Dictionary containg optional keyword arguments for
-			:func:`~pyH2A.Analysis.Monte_Carlo_Analysis.Monte_Carlo_Analysis.plot_distance_cost_relationship`
+			:func:`~pyH2A.Analysis.Monte_Carlo_Analysis.Monte_Carlo_Analysis.plot_distance_response_relationship`
 		hist_kwargs: dict, optional
 			Dictionary containg optional keyword arguments for
 			:func:`~pyH2A.Analysis.Monte_Carlo_Analysis.Monte_Carlo_Analysis.plot_distance_histogram`
@@ -285,7 +285,7 @@ class Comparative_MC_Analysis:
 		figure = Figure_Lean(provided_figure_and_axis = (fig, ax0), **kwargs)
 
 		for model_name, model in self.models.items():
-			model['Model'].plot_distance_cost_relationship(figure_lean = False, ax = ax0 ,
+			model['Model'].plot_distance_response_relationship(figure_lean = False, ax = ax0 ,
 														   parameter_table = False,
 														   **dist_kwargs)
 		
@@ -294,7 +294,7 @@ class Comparative_MC_Analysis:
 											     image_kwargs = image_kwargs,
 											     hist_kwargs = hist_kwargs)
 
-		ax0.axhspan(self.target_price_range[0], self.target_price_range[1], color = 'grey', alpha = 0.7)
+		ax0.axhspan(self.target_response_range[0], self.target_response_range[1], color = 'grey', alpha = 0.7)
 
 		ax0.text(-0.16, 1.04, 'A', transform=ax0.transAxes, size = 24, weight='bold')
 		ax0.text(1.36, 1.04, 'B', transform=ax0.transAxes, size = 24, weight='bold')
