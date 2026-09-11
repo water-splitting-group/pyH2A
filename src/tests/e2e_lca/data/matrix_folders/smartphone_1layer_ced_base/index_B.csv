@@ -1,0 +1,4 @@
+index,is input,flow ID,flow name,flow category,flow unit,flow type,location ID,location name,location code
+0,true,d43946a1-f22e-4fb6-9ad1-c9cf360351ac,"Energy, from coal",Elementary flows/Resource/unspecified,MJ,elementary,,,
+1,false,643975a8-03da-44bb-873f-4fe8e7740fe6,Carbon dioxide,Elementary flows/Emission to air/high population density,kg,elementary,,,
+2,false,1cd5b120-d5cb-3da7-ac0d-6cfa18e4313f,"Sulfur dioxide, DE",Elementary flows/Emission to air/high population density,kg,elementary,,,
