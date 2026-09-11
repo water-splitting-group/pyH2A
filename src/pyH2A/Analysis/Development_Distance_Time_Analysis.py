@@ -179,8 +179,8 @@ class Development_Distance_Time_Analysis:
 		self.monte_carlo.development_distance(log_normalize = self.log_normalize,
 											  sum_distance = True)
 
-		self.monte_carlo.full_distance_cost_relationship(log_normalize = self.log_normalize,
-														 sum_distance = True)
+		self.monte_carlo.full_distance_response_relationship(log_normalize = self.log_normalize,
+															 sum_distance = True)
 
 	def fit_historical_development_distance(self):
 		'''Linear and asymptotic models are fitted to historical distances and are used 
@@ -378,7 +378,7 @@ class Development_Distance_Time_Analysis:
 			figure.execute()
 			return figure.fig
 
-	def plot_distance_cost_relationship(self, ax = None, figure_lean = True,
+	def plot_distance_response_relationship(self, ax = None, figure_lean = True,
 										linear_axis_y_pos = -0.25,
 										expo_axis_y_pos = -0.5,
 										linear_axis_label = 'Year (linear model)',
@@ -409,7 +409,7 @@ class Development_Distance_Time_Analysis:
 			:func:`~pyH2A.Analysis.Development_Distance_Time_Analysis.Development_Distance_Time_Analysis.determine_distance_time_correspondence`.
 		dist_kwargs: dict, optional
 			Dictionary containg optional keyword arguments for
-			:func:`~pyH2A.Analysis.Monte_Carlo_Analysis.Monte_Carlo_Analysis.plot_distance_cost_relationship`
+			:func:`~pyH2A.Analysis.Monte_Carlo_Analysis.Monte_Carlo_Analysis.plot_distance_response_relationship`
 		table_kwargs : dict, optional
 			Dictionary containing optional keyword arguments for 
 			:func:`~pyH2A.Analysis.Monte_Carlo_Analysis.Monte_Carlo_Analysis.render_parameter_table`
@@ -449,7 +449,7 @@ class Development_Distance_Time_Analysis:
 
 		cm = plt.get_cmap('plasma')
 
-		self.monte_carlo.plot_distance_cost_relationship(ax = ax, figure_lean = False,
+		self.monte_carlo.plot_distance_response_relationship(ax = ax, figure_lean = False,
 														 xlim = [0, 1],
 														table_kwargs = table_kwargs,
 														image_kwargs = image_kwargs,
