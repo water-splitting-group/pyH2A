@@ -3,7 +3,7 @@ from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import numpy as np
 
-class Power_Management_Explicit_Battery_Plugin:
+class Power_Management_Hourly_Plugin:
     '''Management of electricity production and consumption.
     
     '''
@@ -170,12 +170,12 @@ class Power_Management_Explicit_Battery_Plugin:
 
     def _run(self, dcf):    
 
-        self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Power_Management_Explicit_Battery_Plugin')  
+        self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Power_Management_Hourly_Plugin')  
 
         self.calculate_consumers()
         self.calculate_electricity_cost()
 
-        output_inserter_function(self.output_dict, self, dcf, 'Power_Management_Explicit_Battery_Plugin') 
+        output_inserter_function(self.output_dict, self, dcf, 'Power_Management_Hourly_Plugin') 
 
     def calculate_consumers(self):
         '''

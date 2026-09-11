@@ -22,7 +22,7 @@ Photovoltaic_Plugin | - | 310
 Wind_Plugin | - | 311 
 Electricity_Consumer_Plugin | - | 312 |
 Battery_Calculation_Plugin | - | 313 |
-Power_Management_Explicit_Battery_Plugin | - | 314 |
+Power_Management_Hourly_Plugin | - | 314 |
 RFB_Plugin | - | 315 | 
 Multiple_Modules_Plugin | Modelling of multiple plant modules, adjustment of labor requirement | 401 |
 

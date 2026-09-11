@@ -19,7 +19,7 @@ Photovoltaic_Plugin | 202
 Wind_Plugin | 203 
 Electricity_Consumer_Plugin | 204 |
 Battery_Calculation_Plugin | 205 |
-Power_Management_Explicit_Battery_Plugin | 206 |
+Power_Management_Hourly_Plugin | 206 |
 RFB_Plugin | 207 | 
 Multiple_Modules_Plugin | 401 
 

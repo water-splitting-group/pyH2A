@@ -16,7 +16,7 @@ Cooler_Condenser_Plugin | 301 |
 Reverse_Osmosis_Plugin | 302 |
 Electricity_Consumer_Plugin | 303 |
 Battery_Calculation_Plugin | 304 |
-Power_Management_Explicit_Battery_Plugin | 305 |
+Power_Management_Hourly_Plugin | 305 |
 RFB_Plugin | 306 |
 Multiple_Modules_Plugin | 401 |
 
