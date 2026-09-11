@@ -26,8 +26,8 @@ class Cost_Contributions_Analysis:
 
 	def cost_breakdown_plot(self, ax = None, figure_lean = True,
 							plugin = None, plugin_property = None,
-							label_offset = 5.5, x_label_string = 'Cost / USD',
-							x_label_string_H2 = r'Levelized cost / USD per kg $H_{2}$',
+							label_offset = 5.5, x_label_string = 'Cost (USD)',
+							x_label_string_H2 = r'Levelized cost (USD/kg $H_{2}$)',
 							plot_kwargs = {}, **kwargs):
 		'''Plotting cost breakdown plot.
 
@@ -92,7 +92,7 @@ class Cost_Contributions_Analysis:
 
 		for key in sorted_keys:
 			sorted_contributions[key] = self.data[key]
-
+		
 		cmap = plt.get_cmap('plasma')
 
 		label_offset = total_value / label_offset
