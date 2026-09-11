@@ -6,39 +6,59 @@ import matplotlib.patches as patches
 from pyH2A.Discounted_Cash_Flow import Discounted_Cash_Flow
 from pyH2A.Utilities.input_modification import convert_input_to_dictionary, parse_parameter, get_by_path, set_by_path
 from pyH2A.Utilities.output_utilities import make_bold, Figure_Lean, format_value_dollar_sign
+from pyH2A.Utilities.dependent_variable_resolution import resolve_dependent_variable, configure_dependent_variable, DEFAULT_DEPENDENT_VARIABLE_STRING
 
 class Waterfall_Analysis:
-	'''Perform waterfall analysis to study the compounded effect 
+	'''Perform waterfall analysis to study the compounded effect
 	of changing multiple parameters.
 
 	Parameters
 	----------
-	Waterfall_Analysis > [...] > Name : str
+	Waterfall_Analysis > Dependent Variable > Value : str, optional
+		Path (with unit) identifying which value to track, in
+		"{top_key > middle_key > bottom_key, unit}" notation. If the
+		`Waterfall_Analysis` table or the `Dependent Variable` row is missing
+		entirely, this silently defaults to H2 cost.
+	Waterfall_Analysis > Dependent Variable > Label : str, optional
+		Bare descriptive name used on the plot's y axis, e.g. 'H2 Cost'. Defaults to
+		the path's last component if not provided.
+	Parameters - Waterfall_Analysis > [...] > Name : str
 		Display name for parameter, e.g. used for plot labels.
-	Waterfall_Analysis > [...] > Type : str
+	Parameters - Waterfall_Analysis > [...] > Type : str
 		Type of parameter values. If `Type` is 'value', provided values are
-		used as is. If `Type` is 'factor', provided values are multiplied 
+		used as is. If `Type` is 'factor', provided values are multiplied
 		with base value of parameter in input file.
-	Waterfall_Analysis > [...] > Value : float
+	Parameters - Waterfall_Analysis > [...] > Value : float
 		New value or factor for parameter.
-	Waterfall_Analysis > [...] > Show Percent : bool or str, optional
+	Parameters - Waterfall_Analysis > [...] > Show Percent : bool or str, optional
 		If there is any entry for `Show Percent` the parameter
 		will be displayed as a percentage value in waterfall chart.
 
 	Notes
 	-----
-	`Waterfall_Analysis` contains parameters which are to be varied in
-	waterfall analysis. First column specifies path to parameter in input file 
+	`Waterfall_Analysis` and `Parameters - Waterfall_Analysis` are separate tables
+	(mirroring `Sensitivity_Analysis`/`Parameters - Sensitivity_Analysis` and
+	`Monte_Carlo_Analysis`/`Parameters - Monte_Carlo_Analysis`). `Waterfall_Analysis`
+	holds module-level configuration (currently just `Dependent Variable`).
+
+	`Parameters - Waterfall_Analysis` contains parameters which are to be varied in
+	waterfall analysis. First column specifies path to parameter in input file
 	(top key > middle key > bottom key format, e.g. Catalyst > Cost per kg ($) > Value).
 	Order of varied parameters determines in which order they are applied.
-	In the order they are provided, each parameter is changed to the provided value. 
+	In the order they are provided, each parameter is changed to the provided value.
 	The relative change of introducing each change is computed,
-	and the new H2 cost (compound result of applying all changes) is calculated.
+	and the new dependent-variable value (compound result of applying all changes) is
+	calculated via :func:`~pyH2A.Utilities.dependent_variable_resolution.resolve_dependent_variable`.
 	'''
 
 	def __init__(self, input_file):
 		self.inp = convert_input_to_dictionary(input_file)
 		self.base_case = Discounted_Cash_Flow(input_file, print_info = False)
+
+		(self.dependent_variable_string, self.dependent_variable_header,
+		 self.dependent_variable_unit, self.dependent_variable_label) = configure_dependent_variable(
+			self.inp, 'Waterfall_Analysis', default_string = DEFAULT_DEPENDENT_VARIABLE_STRING)
+
 		self.results = self.perform_waterfall_analysis()
 
 
@@ -46,10 +66,10 @@ class Waterfall_Analysis:
 		'''Perform waterfall analysis
 		'''
 
-		waterfall = self.inp['Waterfall_Analysis']
+		waterfall = self.inp['Parameters - Waterfall_Analysis']
 
 		results = {}
-		results['Base Case'] = {'Value': self.base_case.h2_cost}
+		results['Base Case'] = {'Value': resolve_dependent_variable(self.base_case, self.dependent_variable_string)}
 
 		for i in range(len(waterfall)):
 			keys = list(waterfall)[0:i+1]
@@ -99,7 +119,7 @@ class Waterfall_Analysis:
 
 		dcf = Discounted_Cash_Flow(inp_modified, print_info = False)
 
-		output[variable]['Value'] = dcf.h2_cost
+		output[variable]['Value'] = resolve_dependent_variable(dcf, self.dependent_variable_string)
 		output[variable]['Shown Value'] = shown_value
 		output[variable]['Base Value'] = self.show_percent(base_value, dic[key])
 
@@ -119,10 +139,10 @@ class Waterfall_Analysis:
 			return value
 
 	def plot_waterfall_chart(self, ax = None, figure_lean = True,
-							 width = 0.7, connection_width = 1.0, 
+							 width = 0.7, connection_width = 1.0,
 							 label_offset = 20, plot_sorted = False,
-							 y_axis_label = r'Levelized cost / USD per kg $H_{2}$', 
-							 currency = '$', decimal_places = 2, cutoff = 6,
+							 y_axis_label = None,
+							 currency = '', decimal_places = 2, cutoff = 6,
 							 plot_kwargs = {},
 							 **kwargs):
 		'''Plot waterfall chart.
@@ -141,8 +161,16 @@ class Waterfall_Analysis:
 			Offset of label for bars.
 		plot_sorted : bool, optional
 			If `plot_sorted` is True, bars are plotted in a sorted manner. If it
-			False, they are plotted in the order they are provided in the 
-			input file. 
+			False, they are plotted in the order they are provided in the
+			input file.
+		y_axis_label : str, optional
+			String for y axis label. Defaults to the configured dependent variable's
+			label and unit (``'{self.dependent_variable_label} ({self.dependent_variable_unit})'``)
+			when not provided.
+		currency : str, optional
+			Symbol prepended to each bar's value annotation (see
+			:func:`~pyH2A.Utilities.output_utilities.format_value_dollar_sign`). Empty by
+			default: the unit is already stated once on `y_axis_label`.
 		plot_kwargs: dict, optional
 			Dictionary containing optional keyword arguments for
 			:func:`~pyH2A.Utilities.output_utilities.Figure_Lean`, has priority over `**kwargs`.
@@ -157,6 +185,9 @@ class Waterfall_Analysis:
 		'''
 
 		results = self.results
+
+		if y_axis_label is None:
+			y_axis_label = '{0} ({1})'.format(self.dependent_variable_label, self.dependent_variable_unit)
 
 		kwargs = {**{'left': 0.12, 'right': 0.95, 'bottom': 0.3, 'top': 0.95,
 				     'fig_width': 0.5 * len(results) + 4, 'fig_height': 5,
