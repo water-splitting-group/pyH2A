@@ -1,0 +1,2138 @@
+[
+    {
+        "plugin": "Capital_Cost",
+        "top": "<...> Direct Capital Cost <...>",
+        "medium": "<...>",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": true
+    },
+    {
+        "plugin": "Capital_Cost",
+        "top": "<...> Indirect Capital Cost <...>",
+        "medium": "<...>",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": true
+    },
+    {
+        "plugin": "Other_Fixed_Operating_Cost",
+        "top": "<...> Other Fixed Operating Cost <...>",
+        "medium": "<...>",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": true
+    },
+    {
+        "plugin": "Capital_Cost",
+        "top": "<...> Other Non-Depreciable Capital Cost <...>",
+        "medium": "<...>",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": true
+    },
+    {
+        "plugin": "Variable_Operating_Cost",
+        "top": "<...> Other Variable Operating Cost <...>",
+        "medium": "<...>",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": true
+    },
+    {
+        "plugin": "Replacement",
+        "top": "<...> Unplanned Replacement <...>",
+        "medium": "<...>",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": true
+    },
+    {
+        "plugin": "Battery",
+        "top": "Battery",
+        "medium": "Capacity loss per year",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Battery",
+        "top": "Battery",
+        "medium": "Design capacity",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Battery",
+        "top": "Battery",
+        "medium": "Lowest discharge level",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Battery",
+        "top": "Battery",
+        "medium": "Round trip efficiency",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Photocatalytic",
+        "top": "Catalyst",
+        "medium": "Concentration",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Photocatalytic",
+        "top": "Catalyst",
+        "medium": "Cost per unit of mass",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Catalyst_Separation",
+        "top": "Catalyst",
+        "medium": "Lifetime",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Photocatalytic",
+        "top": "Catalyst",
+        "medium": "Lifetime",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Photocatalytic",
+        "top": "Catalyst",
+        "medium": "Molar attenuation coefficient",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": true
+    },
+    {
+        "plugin": "Photocatalytic",
+        "top": "Catalyst",
+        "medium": "Molar weight",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": true
+    },
+    {
+        "plugin": "Catalyst_Separation",
+        "top": "Catalyst Separation",
+        "medium": "Filtration cost",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Capital_Cost",
+        "top": "Construction",
+        "medium": "<...>",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Time",
+        "top": "Construction",
+        "medium": "<...>",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Discounted_Cash_Flow",
+        "top": "Dependent Variables",
+        "medium": "Levelized cost",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Discounted_Cash_Flow",
+        "top": "Dependent Variables",
+        "medium": "Levelized cost contributions",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Capital_Cost",
+        "top": "Depreciable Capital Costs",
+        "medium": "Annual equity",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Discounted_Cash_Flow",
+        "top": "Depreciable Capital Costs",
+        "medium": "Annual equity",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Capital_Cost",
+        "top": "Depreciable Capital Costs",
+        "medium": "Inflated",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Capital_Cost",
+        "top": "Depreciable Capital Costs",
+        "medium": "Inflation corrected",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Discounted_Cash_Flow",
+        "top": "Depreciable Capital Costs",
+        "medium": "Inflation corrected",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Capital_Cost",
+        "top": "Depreciable Capital Costs",
+        "medium": "Initial equity",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Discounted_Cash_Flow",
+        "top": "Depreciable Capital Costs",
+        "medium": "Initial equity",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Capital_Cost",
+        "top": "Depreciable Capital Costs",
+        "medium": "Total",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Capital_Cost",
+        "top": "Direct Capital Costs",
+        "medium": "Inflated",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "PEC",
+        "top": "Direct Capital Costs - PEC Cells",
+        "medium": "PEC cell cost",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Photocatalytic",
+        "top": "Direct Capital Costs - Photocatalyst",
+        "medium": "Catalyst cost",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Photocatalytic",
+        "top": "Direct Capital Costs - Reactor Baggies",
+        "medium": "Baggie cost",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Solar_Concentrator",
+        "top": "Direct Capital Costs - Solar Concentrator",
+        "medium": "Solar concentrator cost",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Stored_Power_Electrolysis",
+        "top": "Electrolysis Using Stored Power",
+        "medium": "Fraction of stored power used for electrolysis",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Electrolyzer",
+        "top": "Electrolyzer",
+        "medium": "Actual stack replacement time",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Stored_Power_Electrolysis",
+        "top": "Electrolyzer",
+        "medium": "Actual stack replacement time",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Electrolyzer",
+        "top": "Electrolyzer",
+        "medium": "H2 production (yearly)",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Stored_Power_Electrolysis",
+        "top": "Electrolyzer",
+        "medium": "H2 production (yearly)",
+        "bottom": "Value",
+        "direction": "Input/Output",
+        "optional": false
+    },
+    {
+        "plugin": "Electrolyzer",
+        "top": "Electrolyzer",
+        "medium": "Hydrogen yield per unit energy",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Stored_Power_Electrolysis",
+        "top": "Electrolyzer",
+        "medium": "Hydrogen yield per unit energy",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Electrolyzer",
+        "top": "Electrolyzer",
+        "medium": "Minimum capacity",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Stored_Power_Electrolysis",
+        "top": "Electrolyzer",
+        "medium": "Minimum capacity",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Electrolyzer",
+        "top": "Electrolyzer",
+        "medium": "Nominal power",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Stored_Power_Electrolysis",
+        "top": "Electrolyzer",
+        "medium": "Nominal power",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Electrolyzer",
+        "top": "Electrolyzer",
+        "medium": "Power requirement increase per year",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Stored_Power_Electrolysis",
+        "top": "Electrolyzer",
+        "medium": "Power requirement increase per year",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Electrolyzer",
+        "top": "Electrolyzer",
+        "medium": "Replacement time",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Stored_Power_Electrolysis",
+        "top": "Electrolyzer",
+        "medium": "Replacement time",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Electrolyzer",
+        "top": "Electrolyzer",
+        "medium": "Yearly operation data",
+        "bottom": "Duration",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Stored_Power_Electrolysis",
+        "top": "Electrolyzer",
+        "medium": "Yearly operation data",
+        "bottom": "Duration",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Electrolyzer",
+        "top": "Electrolyzer",
+        "medium": "Yearly operation data",
+        "bottom": "Production",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Stored_Power_Electrolysis",
+        "top": "Electrolyzer",
+        "medium": "Yearly operation data",
+        "bottom": "Production",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Electrolyzer",
+        "top": "Electrolyzer",
+        "medium": "Yearly operation data",
+        "bottom": "Year",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Stored_Power_Electrolysis",
+        "top": "Electrolyzer",
+        "medium": "Yearly operation data",
+        "bottom": "Year",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Discounted_Cash_Flow",
+        "top": "Financial Input Values",
+        "medium": "After-tax real IRR",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Time",
+        "top": "Financial Input Values",
+        "medium": "Assumed start-up year",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Inflation",
+        "top": "Financial Input Values",
+        "medium": "Basis year",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Inflation",
+        "top": "Financial Input Values",
+        "medium": "Current year for capital costs",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Discounted_Cash_Flow",
+        "top": "Financial Input Values",
+        "medium": "Decommissioning costs (fraction of depreciable capital investment)",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Discounted_Cash_Flow",
+        "top": "Financial Input Values",
+        "medium": "Depreciation schedule length",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Discounted_Cash_Flow",
+        "top": "Financial Input Values",
+        "medium": "Federal taxes",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Capital_Cost",
+        "top": "Financial Input Values",
+        "medium": "Fraction equity financing",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Discounted_Cash_Flow",
+        "top": "Financial Input Values",
+        "medium": "Fraction equity financing",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Other_Fixed_Operating_Cost",
+        "top": "Financial Input Values",
+        "medium": "Fraction of fixed operating costs during start-up",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Discounted_Cash_Flow",
+        "top": "Financial Input Values",
+        "medium": "Fraction of revenues during start-up",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Variable_Operating_Cost",
+        "top": "Financial Input Values",
+        "medium": "Fraction of variable operating costs during start-up",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Discounted_Cash_Flow",
+        "top": "Financial Input Values",
+        "medium": "Inflation rate",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Inflation",
+        "top": "Financial Input Values",
+        "medium": "Inflation rate",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Discounted_Cash_Flow",
+        "top": "Financial Input Values",
+        "medium": "Interest rate on debt",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Time",
+        "top": "Financial Input Values",
+        "medium": "Plant life",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Inflation",
+        "top": "Financial Input Values",
+        "medium": "Reference year",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Time",
+        "top": "Financial Input Values",
+        "medium": "Reference year",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Discounted_Cash_Flow",
+        "top": "Financial Input Values",
+        "medium": "Salvage value (fraction of total capital investment)",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Discounted_Cash_Flow",
+        "top": "Financial Input Values",
+        "medium": "Start-up time",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Other_Fixed_Operating_Cost",
+        "top": "Financial Input Values",
+        "medium": "Start-up time",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Variable_Operating_Cost",
+        "top": "Financial Input Values",
+        "medium": "Start-up time",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Discounted_Cash_Flow",
+        "top": "Financial Input Values",
+        "medium": "State taxes",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Discounted_Cash_Flow",
+        "top": "Financial Input Values",
+        "medium": "Working Capital (fraction of yearly change in operating costs)",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Discounted_Cash_Flow",
+        "top": "Fixed Operating Costs",
+        "medium": "Annual",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Other_Fixed_Operating_Cost",
+        "top": "Fixed Operating Costs",
+        "medium": "Annual",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Labor_Operating_Cost",
+        "top": "Fixed Operating Costs",
+        "medium": "Hourly labor cost",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Labor_Operating_Cost",
+        "top": "Fixed Operating Costs",
+        "medium": "Labor cost",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Labor_Operating_Cost",
+        "top": "Fixed Operating Costs",
+        "medium": "Labor cost - inflated",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Other_Fixed_Operating_Cost",
+        "top": "Fixed Operating Costs",
+        "medium": "Labor cost - inflated",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Multiple_Modules",
+        "top": "Fixed Operating Costs",
+        "medium": "Number of 8-hour shifts",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Multiple_Modules",
+        "top": "Fixed Operating Costs",
+        "medium": "Number of supervisors",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Multiple_Modules",
+        "top": "Fixed Operating Costs",
+        "medium": "Solar collection area per staffer",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Labor_Operating_Cost",
+        "top": "Fixed Operating Costs",
+        "medium": "Staff",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Multiple_Modules",
+        "top": "Fixed Operating Costs",
+        "medium": "Staff",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Other_Fixed_Operating_Cost",
+        "top": "Fixed Operating Costs",
+        "medium": "Total",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Power_Management",
+        "top": "Grid Electricity",
+        "medium": "Cost",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": true
+    },
+    {
+        "plugin": "Power_Management",
+        "top": "Grid Electricity",
+        "medium": "Used grid electricity (yearly)",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": true
+    },
+    {
+        "plugin": "Hourly_Irradiation",
+        "top": "Hourly Irradiation",
+        "medium": "File",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Hourly_Irradiation",
+        "top": "Hourly Irradiation",
+        "medium": "Horizontal single axis tracking",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Hourly_Irradiation",
+        "top": "Hourly Irradiation",
+        "medium": "Mean solar input no tracking",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Hourly_Irradiation",
+        "top": "Hourly Irradiation",
+        "medium": "Mean solar input single axis tracking",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Hourly_Irradiation",
+        "top": "Hourly Irradiation",
+        "medium": "Mean solar input two axis tracking",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Hourly_Irradiation",
+        "top": "Hourly Irradiation",
+        "medium": "No tracking",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Hourly_Irradiation",
+        "top": "Hourly Irradiation",
+        "medium": "Two axis tracking",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Capital_Cost",
+        "top": "Indirect Capital Costs",
+        "medium": "Inflated",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Inflation",
+        "top": "Inflation",
+        "medium": "CEPCI inflator",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Capital_Cost",
+        "top": "Inflation",
+        "medium": "CI inflator",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Inflation",
+        "top": "Inflation",
+        "medium": "CI inflator",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Inflation",
+        "top": "Inflation",
+        "medium": "Chemical inflator",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Variable_Operating_Cost",
+        "top": "Inflation",
+        "medium": "Chemical inflator",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Capital_Cost",
+        "top": "Inflation",
+        "medium": "Combined inflator",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Inflation",
+        "top": "Inflation",
+        "medium": "Combined inflator",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Other_Fixed_Operating_Cost",
+        "top": "Inflation",
+        "medium": "Combined inflator",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Replacement",
+        "top": "Inflation",
+        "medium": "Combined inflator",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Capital_Cost",
+        "top": "Inflation",
+        "medium": "Inflation correction",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Discounted_Cash_Flow",
+        "top": "Inflation",
+        "medium": "Inflation correction",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Inflation",
+        "top": "Inflation",
+        "medium": "Inflation correction",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Other_Fixed_Operating_Cost",
+        "top": "Inflation",
+        "medium": "Inflation correction",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Replacement",
+        "top": "Inflation",
+        "medium": "Inflation correction",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Variable_Operating_Cost",
+        "top": "Inflation",
+        "medium": "Inflation correction",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Capital_Cost",
+        "top": "Inflation",
+        "medium": "Inflation factor full",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Discounted_Cash_Flow",
+        "top": "Inflation",
+        "medium": "Inflation factor full",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Inflation",
+        "top": "Inflation",
+        "medium": "Inflation factor full",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Other_Fixed_Operating_Cost",
+        "top": "Inflation",
+        "medium": "Inflation factor full",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Replacement",
+        "top": "Inflation",
+        "medium": "Inflation factor full",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Variable_Operating_Cost",
+        "top": "Inflation",
+        "medium": "Inflation factor full",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Inflation",
+        "top": "Inflation",
+        "medium": "Labor inflator",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Labor_Operating_Cost",
+        "top": "Inflation",
+        "medium": "Labor inflator",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Hourly_Irradiation",
+        "top": "Irradiance Area Parameters",
+        "medium": "Array azimuth",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Hourly_Irradiation",
+        "top": "Irradiance Area Parameters",
+        "medium": "Dirt derating",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Hourly_Irradiation",
+        "top": "Irradiance Area Parameters",
+        "medium": "Mismatch derating",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Hourly_Irradiation",
+        "top": "Irradiance Area Parameters",
+        "medium": "Module tilt",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": true
+    },
+    {
+        "plugin": "Hourly_Irradiation",
+        "top": "Irradiance Area Parameters",
+        "medium": "Nominal operating temperature",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Hourly_Irradiation",
+        "top": "Irradiance Area Parameters",
+        "medium": "Temperature coefficient",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Photovoltaic",
+        "top": "Irradiation Used",
+        "medium": "Data",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "PEC",
+        "top": "Land Area Requirement",
+        "medium": "Cell angle",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "PEC",
+        "top": "Land Area Requirement",
+        "medium": "East/West spacing",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Solar_Concentrator",
+        "top": "Land Area Requirement",
+        "medium": "East/West spacing",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "PEC",
+        "top": "Land Area Requirement",
+        "medium": "South spacing",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Solar_Concentrator",
+        "top": "Land Area Requirement",
+        "medium": "South spacing",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Solar_Thermal",
+        "top": "Non-Depreciable Capital Costs",
+        "medium": "Additional land area",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Capital_Cost",
+        "top": "Non-Depreciable Capital Costs",
+        "medium": "Annual",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Discounted_Cash_Flow",
+        "top": "Non-Depreciable Capital Costs",
+        "medium": "Annual",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Capital_Cost",
+        "top": "Non-Depreciable Capital Costs",
+        "medium": "Cost of land",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Capital_Cost",
+        "top": "Non-Depreciable Capital Costs",
+        "medium": "Inflated",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Capital_Cost",
+        "top": "Non-Depreciable Capital Costs",
+        "medium": "Inflation corrected",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Discounted_Cash_Flow",
+        "top": "Non-Depreciable Capital Costs",
+        "medium": "Inflation corrected",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Capital_Cost",
+        "top": "Non-Depreciable Capital Costs",
+        "medium": "Land required",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "PEC",
+        "top": "Non-Depreciable Capital Costs",
+        "medium": "Land required",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Photocatalytic",
+        "top": "Non-Depreciable Capital Costs",
+        "medium": "Land required",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Photovoltaic",
+        "top": "Non-Depreciable Capital Costs",
+        "medium": "Land required",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Solar_Concentrator",
+        "top": "Non-Depreciable Capital Costs",
+        "medium": "Land required",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Solar_Thermal",
+        "top": "Non-Depreciable Capital Costs",
+        "medium": "Land required",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Multiple_Modules",
+        "top": "Non-Depreciable Capital Costs",
+        "medium": "Solar collection area",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "PEC",
+        "top": "Non-Depreciable Capital Costs",
+        "medium": "Solar collection area",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Photocatalytic",
+        "top": "Non-Depreciable Capital Costs",
+        "medium": "Solar collection area",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Photovoltaic",
+        "top": "Non-Depreciable Capital Costs",
+        "medium": "Solar collection area",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Solar_Concentrator",
+        "top": "Non-Depreciable Capital Costs",
+        "medium": "Solar collection area",
+        "bottom": "Value",
+        "direction": "Input/Output",
+        "optional": false
+    },
+    {
+        "plugin": "Capital_Cost",
+        "top": "Non-Depreciable Capital Costs",
+        "medium": "Total",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Catalyst_Separation",
+        "top": "Other Variable Operating Cost - Catalyst Separation",
+        "medium": "Catalyst separation (yearly cost)",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Power_Management",
+        "top": "Other Variable Operating Cost - Grid Electricity",
+        "medium": "Cost of grid electricity (yearly)",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": true
+    },
+    {
+        "plugin": "PEC",
+        "top": "PEC Cells",
+        "medium": "Cell cost",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "PEC",
+        "top": "PEC Cells",
+        "medium": "Length",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "PEC",
+        "top": "PEC Cells",
+        "medium": "Lifetime",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "PEC",
+        "top": "PEC Cells",
+        "medium": "Number",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Solar_Concentrator",
+        "top": "PEC Cells",
+        "medium": "Number",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "PEC",
+        "top": "PEC Cells",
+        "medium": "Width",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Photovoltaic",
+        "top": "Photovoltaic",
+        "medium": "Efficiency",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Photovoltaic",
+        "top": "Photovoltaic",
+        "medium": "Nominal power",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Photovoltaic",
+        "top": "Photovoltaic",
+        "medium": "Power loss per year",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Replacement",
+        "top": "Planned Replacement",
+        "medium": "<...>",
+        "bottom": "Cost",
+        "direction": "Input",
+        "optional": true
+    },
+    {
+        "plugin": "Replacement",
+        "top": "Planned Replacement",
+        "medium": "<...>",
+        "bottom": "Frequency",
+        "direction": "Input",
+        "optional": true
+    },
+    {
+        "plugin": "Photocatalytic",
+        "top": "Planned Replacement",
+        "medium": "Planned Replacement Baggie",
+        "bottom": "Cost",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Photocatalytic",
+        "top": "Planned Replacement",
+        "medium": "Planned Replacement Baggie",
+        "bottom": "Frequency",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "PEC",
+        "top": "Planned Replacement",
+        "medium": "Planned replacement PEC cells",
+        "bottom": "Cost",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "PEC",
+        "top": "Planned Replacement",
+        "medium": "Planned replacement PEC cells",
+        "bottom": "Frequency",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Photocatalytic",
+        "top": "Planned Replacement",
+        "medium": "Planned replacement catalyst",
+        "bottom": "Cost",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Photocatalytic",
+        "top": "Planned Replacement",
+        "medium": "Planned replacement catalyst",
+        "bottom": "Frequency",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Power_Management",
+        "top": "Power Consumption",
+        "medium": "<...>",
+        "bottom": "Type",
+        "direction": "Input",
+        "optional": true
+    },
+    {
+        "plugin": "Power_Management",
+        "top": "Power Consumption",
+        "medium": "<...>",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": true
+    },
+    {
+        "plugin": "Reverse_Osmosis",
+        "top": "Power Consumption",
+        "medium": "Reverse osmosis consumption (yearly)",
+        "bottom": "Type",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Reverse_Osmosis",
+        "top": "Power Consumption",
+        "medium": "Reverse osmosis consumption (yearly)",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Stored_Power_Electrolysis",
+        "top": "Power Consumption",
+        "medium": "Stored energy electrolysis (yearly)",
+        "bottom": "Type",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Stored_Power_Electrolysis",
+        "top": "Power Consumption",
+        "medium": "Stored energy electrolysis (yearly)",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Battery",
+        "top": "Power Generation",
+        "medium": "Available energy (daily)",
+        "bottom": "Value",
+        "direction": "Input/Output",
+        "optional": false
+    },
+    {
+        "plugin": "Electrolyzer",
+        "top": "Power Generation",
+        "medium": "Available energy (daily)",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Photovoltaic",
+        "top": "Power Generation",
+        "medium": "Available energy (daily)",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Power_Management",
+        "top": "Power Generation",
+        "medium": "Available energy (daily)",
+        "bottom": "Value",
+        "direction": "Input/Output",
+        "optional": true
+    },
+    {
+        "plugin": "Battery",
+        "top": "Power Generation",
+        "medium": "Available energy (hourly)",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Electrolyzer",
+        "top": "Power Generation",
+        "medium": "Available energy (hourly)",
+        "bottom": "Value",
+        "direction": "Input/Output",
+        "optional": false
+    },
+    {
+        "plugin": "Photovoltaic",
+        "top": "Power Generation",
+        "medium": "Available energy (hourly)",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Power_Management",
+        "top": "Power Generation",
+        "medium": "Available energy (yearly)",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": true
+    },
+    {
+        "plugin": "Photovoltaic",
+        "top": "Power Generation",
+        "medium": "PV hourly power generation",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Photovoltaic",
+        "top": "Power Generation",
+        "medium": "PV yearly power generation",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Battery",
+        "top": "Power Generation",
+        "medium": "Stored energy (daily)",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Power_Management",
+        "top": "Power Generation",
+        "medium": "Stored energy (daily)",
+        "bottom": "Value",
+        "direction": "Input/Output",
+        "optional": true
+    },
+    {
+        "plugin": "Stored_Power_Electrolysis",
+        "top": "Power Generation",
+        "medium": "Stored energy (daily)",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Power_Management",
+        "top": "Power Generation",
+        "medium": "Stored energy (yearly)",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": true
+    },
+    {
+        "plugin": "Photocatalytic",
+        "top": "Reactor Baggies",
+        "medium": "Additional land area",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Photocatalytic",
+        "top": "Reactor Baggies",
+        "medium": "Cost material bottom",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Photocatalytic",
+        "top": "Reactor Baggies",
+        "medium": "Cost material top",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Photocatalytic",
+        "top": "Reactor Baggies",
+        "medium": "Cost of port",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Photocatalytic",
+        "top": "Reactor Baggies",
+        "medium": "Filling height",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Photocatalytic",
+        "top": "Reactor Baggies",
+        "medium": "Length",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Photocatalytic",
+        "top": "Reactor Baggies",
+        "medium": "Lifetime",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Photocatalytic",
+        "top": "Reactor Baggies",
+        "medium": "Markup factor",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Photocatalytic",
+        "top": "Reactor Baggies",
+        "medium": "Number",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Photocatalytic",
+        "top": "Reactor Baggies",
+        "medium": "Number of ports per baggie",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Photocatalytic",
+        "top": "Reactor Baggies",
+        "medium": "Other costs per baggie",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Photocatalytic",
+        "top": "Reactor Baggies",
+        "medium": "Width",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Replacement",
+        "top": "Replacement",
+        "medium": "Contributions",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Discounted_Cash_Flow",
+        "top": "Replacement",
+        "medium": "Total",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Replacement",
+        "top": "Replacement",
+        "medium": "Total",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Reverse_Osmosis",
+        "top": "Reverse Osmosis",
+        "medium": "Average operating time fraction",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Reverse_Osmosis",
+        "top": "Reverse Osmosis",
+        "medium": "Capacity",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Reverse_Osmosis",
+        "top": "Reverse Osmosis",
+        "medium": "Power demand",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Reverse_Osmosis",
+        "top": "Reverse Osmosis",
+        "medium": "Recovery rate",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Solar_Concentrator",
+        "top": "Solar Concentrator",
+        "medium": "Concentration factor",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Solar_Concentrator",
+        "top": "Solar Concentrator",
+        "medium": "Cost",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Photocatalytic",
+        "top": "Solar Input",
+        "medium": "Hourly",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "PEC",
+        "top": "Solar Input",
+        "medium": "Mean solar input",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Photocatalytic",
+        "top": "Solar Input",
+        "medium": "Mean solar input",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Solar_Thermal",
+        "top": "Solar Input",
+        "medium": "Mean solar input",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "PEC",
+        "top": "Solar-to-Hydrogen Efficiency",
+        "medium": "STH",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Photocatalytic",
+        "top": "Solar-to-Hydrogen Efficiency",
+        "medium": "STH",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Solar_Thermal",
+        "top": "Solar-to-Hydrogen Efficiency",
+        "medium": "STH",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Production",
+        "top": "Technical Operating Parameters and Specifications",
+        "medium": "Design output by year",
+        "bottom": "Value",
+        "direction": "Input/Output",
+        "optional": true
+    },
+    {
+        "plugin": "Reverse_Osmosis",
+        "top": "Technical Operating Parameters and Specifications",
+        "medium": "Design output by year",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Variable_Operating_Cost",
+        "top": "Technical Operating Parameters and Specifications",
+        "medium": "Design output by year",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Production",
+        "top": "Technical Operating Parameters and Specifications",
+        "medium": "Fraction of output that reaches gate",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Production",
+        "top": "Technical Operating Parameters and Specifications",
+        "medium": "Operating capacity factor",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Reverse_Osmosis",
+        "top": "Technical Operating Parameters and Specifications",
+        "medium": "Operating capacity factor",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Variable_Operating_Cost",
+        "top": "Technical Operating Parameters and Specifications",
+        "medium": "Operating capacity factor",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Discounted_Cash_Flow",
+        "top": "Technical Operating Parameters and Specifications",
+        "medium": "Output at gate by year",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Production",
+        "top": "Technical Operating Parameters and Specifications",
+        "medium": "Output at gate by year",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "PEC",
+        "top": "Technical Operating Parameters and Specifications",
+        "medium": "Plant design capacity",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Photocatalytic",
+        "top": "Technical Operating Parameters and Specifications",
+        "medium": "Plant design capacity",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Production",
+        "top": "Technical Operating Parameters and Specifications",
+        "medium": "Plant design capacity",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": true
+    },
+    {
+        "plugin": "Solar_Thermal",
+        "top": "Technical Operating Parameters and Specifications",
+        "medium": "Plant design capacity",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Multiple_Modules",
+        "top": "Technical Operating Parameters and Specifications",
+        "medium": "Plant modules",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Production",
+        "top": "Technical Operating Parameters and Specifications",
+        "medium": "Total design output",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Production",
+        "top": "Technical Operating Parameters and Specifications",
+        "medium": "Total output at gate",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Battery",
+        "top": "Time",
+        "medium": "Years",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Capital_Cost",
+        "top": "Time",
+        "medium": "Years",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Discounted_Cash_Flow",
+        "top": "Time",
+        "medium": "Years",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Electrolyzer",
+        "top": "Time",
+        "medium": "Years",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Inflation",
+        "top": "Time",
+        "medium": "Years",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Other_Fixed_Operating_Cost",
+        "top": "Time",
+        "medium": "Years",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Photovoltaic",
+        "top": "Time",
+        "medium": "Years",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Power_Management",
+        "top": "Time",
+        "medium": "Years",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Production",
+        "top": "Time",
+        "medium": "Years",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Replacement",
+        "top": "Time",
+        "medium": "Years",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Stored_Power_Electrolysis",
+        "top": "Time",
+        "medium": "Years",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Time",
+        "top": "Time",
+        "medium": "Years",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Variable_Operating_Cost",
+        "top": "Time",
+        "medium": "Years",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Capital_Cost",
+        "top": "Total Capital Costs",
+        "medium": "Inflated",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Capital_Cost",
+        "top": "Total Capital Costs",
+        "medium": "Total",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Variable_Operating_Cost",
+        "top": "Utilities",
+        "medium": "<...>",
+        "bottom": "Cost",
+        "direction": "Input",
+        "optional": true
+    },
+    {
+        "plugin": "Variable_Operating_Cost",
+        "top": "Utilities",
+        "medium": "<...>",
+        "bottom": "Price_Conversion_Factor",
+        "direction": "Input",
+        "optional": true
+    },
+    {
+        "plugin": "Variable_Operating_Cost",
+        "top": "Utilities",
+        "medium": "<...>",
+        "bottom": "Usage",
+        "direction": "Input",
+        "optional": true
+    },
+    {
+        "plugin": "Discounted_Cash_Flow",
+        "top": "Variable Operating Costs",
+        "medium": "Annual",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Variable_Operating_Cost",
+        "top": "Variable Operating Costs",
+        "medium": "Annual",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Variable_Operating_Cost",
+        "top": "Variable Operating Costs",
+        "medium": "Other",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Variable_Operating_Cost",
+        "top": "Variable Operating Costs",
+        "medium": "Total",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Variable_Operating_Cost",
+        "top": "Variable Operating Costs",
+        "medium": "Utilities",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Catalyst_Separation",
+        "top": "Water Volume",
+        "medium": "Volume",
+        "bottom": "Value",
+        "direction": "Input",
+        "optional": false
+    },
+    {
+        "plugin": "Photocatalytic",
+        "top": "Water Volume",
+        "medium": "Volume",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Capital_Cost",
+        "top": "special_insertions",
+        "medium": "sum_all_tables",
+        "bottom": "",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Other_Fixed_Operating_Cost",
+        "top": "special_insertions",
+        "medium": "sum_all_tables",
+        "bottom": "",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Replacement",
+        "top": "special_insertions",
+        "medium": "sum_all_tables",
+        "bottom": "",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Variable_Operating_Cost",
+        "top": "special_insertions",
+        "medium": "sum_all_tables",
+        "bottom": "",
+        "direction": "Output",
+        "optional": false
+    }
+]

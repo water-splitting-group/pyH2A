@@ -6,3 +6,207 @@ p {
 dl.py .field-list dt {
     text-transform: unset !important;
 }
+
+
+
+
+#io-browser {
+    margin: 2rem 0;
+    width: 100%;
+    max-width: none;
+}
+
+#io-controls {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 1rem;
+    align-items: center;
+    margin-bottom: 1rem;
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+}
+
+#io-search {
+    width: 280px;
+    min-width: 280px;
+}
+
+#io-plugin {
+    width: 220px;
+    min-width: 220px;
+}
+
+#io-direction {
+    width: 180px;
+    min-width: 180px;
+}
+
+#io-search,
+#io-plugin,
+#io-direction {
+    box-sizing: border-box;
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+#io-controls label {
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+#io-count {
+    margin-bottom: 0.75rem;
+    font-size: 0.9rem;
+}
+
+#io-table-container {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+}
+
+#io-table {
+    width: max-content;
+    min-width: 100%;
+    border-collapse: collapse;
+    table-layout: auto;
+}
+
+#io-table th,
+#io-table td {
+    padding: 0.6rem;
+    border: 1px solid #ddd;
+    text-align: left;
+    vertical-align: top;
+}
+
+#io-table th {
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+#io-table th:nth-child(1),
+#io-table td:nth-child(1) {
+    min-width: 180px;
+}
+
+#io-table th:nth-child(2),
+#io-table td:nth-child(2) {
+    min-width: 220px;
+}
+
+#io-table th:nth-child(3),
+#io-table td:nth-child(3) {
+    min-width: 180px;
+}
+
+#io-table th:nth-child(n + 4),
+#io-table td:nth-child(n + 4) {
+    min-width: 130px;
+    white-space: nowrap;
+}
+
+#io-table td {
+    overflow-wrap: anywhere;
+}
+
+#io-table tbody tr:hover {
+    background: #f5f5f5;
+}
+
+.io-optional-label {
+    display: inline-block;
+    margin-left: 0.6rem;
+    padding: 0.1rem 0.35rem;
+    border: 1px solid #aaa;
+    border-radius: 3px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+}
+
+#io-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+#io-pagination button {
+    padding: 0.4rem 0.8rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: transparent;
+    cursor: pointer;
+}
+
+#io-pagination button:hover:not(:disabled) {
+    background: #f5f5f5;
+}
+
+#io-pagination button:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+#io-page {
+    min-width: 90px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+#io-empty {
+    display: none;
+    margin-top: 1rem;
+    padding: 1rem;
+    border: 1px dashed #aaa;
+    text-align: center;
+}
+
+@media (max-width: 800px) {
+    #io-browser {
+        width: 100%;
+    }
+
+    #io-controls {
+        align-items: stretch;
+    }
+
+    #io-search {
+        width: 240px;
+        min-width: 240px;
+    }
+
+    #io-plugin {
+        width: 180px;
+        min-width: 180px;
+    }
+
+    #io-direction {
+        width: 160px;
+        min-width: 160px;
+    }
+
+    #io-table th:nth-child(1),
+    #io-table td:nth-child(1) {
+        min-width: 150px;
+    }
+
+    #io-table th:nth-child(2),
+    #io-table td:nth-child(2) {
+        min-width: 180px;
+    }
+
+    #io-table th:nth-child(3),
+    #io-table td:nth-child(3) {
+        min-width: 150px;
+    }
+
+    #io-table th:nth-child(n + 4),
+    #io-table td:nth-child(n + 4) {
+        min-width: 120px;
+    }
+}
