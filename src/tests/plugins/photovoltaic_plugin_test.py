@@ -1,6 +1,7 @@
 import pytest
 import numpy as np
 from pyH2A.Plugins.Photovoltaic_Plugin import Photovoltaic_Plugin
+from pyH2A.Utilities.functional_unit import resolve_functional_unit
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 from pyH2A.Utilities.functional_unit import resolve_functional_unit
 
@@ -15,6 +16,8 @@ class DummyDCF:
         power_loss_per_year,
         efficiency,
     ):
+        
+        self.functional_unit = resolve_functional_unit('kWh') 
 
         self.functional_unit = resolve_functional_unit('kg')
         self.inp = {
@@ -109,6 +112,9 @@ class DummyDCF:
                     5: Quantity(np.array([159553.62931249992 , 159553.62931249992]), 'kWh'),
                     6: Quantity(np.array([151575.94784687494, 151575.94784687494]), 'kWh'),
                 },
+                "electric_energy_generation_yearly_array": Quantity(
+                    np.array([319107.25862499996, 303151.89569374995]), 
+                    'kWh')
             },
         }
     ],
@@ -148,3 +154,8 @@ def test_photovoltaic_plugin(case):
             rtol=tolerance,
             atol=tolerance,
         )
+
+        assert plugin.electric_energy_generation_yearly_array.unit['kWh'] == pytest.approx(
+        expected["electric_energy_generation_yearly_array"].unit['kWh'], 
+        abs=tolerance
+    )
