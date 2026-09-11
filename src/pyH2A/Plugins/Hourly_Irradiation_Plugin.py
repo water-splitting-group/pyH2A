@@ -246,7 +246,7 @@ def import_Chang_data(file_name):
 
 	return data_dict, location
 	
-@lru_cache(maxsize = None)
+@lru_cache(maxsize = 1024)
 def import_hourly_data(file_name):
 	'''Imports hourly irradiation data and location coordinates from the `.csv` format provided 
 	by: https://re.jrc.ec.europa.eu/pvg_tools/en/#TMY.
@@ -279,7 +279,7 @@ def import_hourly_data(file_name):
 
 	return data_dict, location
 
-@lru_cache(maxsize = None)
+@lru_cache(maxsize = 1024)
 def calculate_PV_power_ratio(file_name, 
 							 module_tilt, 
 							 array_azimuth, 
@@ -293,7 +293,7 @@ def calculate_PV_power_ratio(file_name,
 
 	Notes
 	-----
-	This function is ``@lru_cache``'d, so every argument besides `file_name`
+	This function is ``@lru_cache``', so every argument besides `file_name`
 	arrives as a plain float (or the string `'Default'` for `module_tilt`),
 	in the unit named by its parameter, rather than as a `Quantity` object -
 	`Quantity` has no `__eq__`/`__hash__`, so caching on `Quantity`
