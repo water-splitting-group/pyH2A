@@ -3,6 +3,7 @@ import numpy as np
 import pytest
 import scipy.sparse
 
+from pyH2A.Utilities import lca_utils
 from pyH2A.Utilities.lca_utils import (
     _csv_rows,
     _load_impact_index,
@@ -183,6 +184,19 @@ class TestFactorize:
         A_sparse = scipy.sparse.csc_matrix(A_dense)
         f = np.array([1000., 0., 0.])
         np.testing.assert_allclose(factorize(A_sparse)(f), [1.0, 20.0, 5.2], rtol=1e-10)
+
+    @pytest.mark.parametrize('disabled', [(), ('pypardiso',), ('pypardiso', 'scikit_umfpack')])
+    def test_every_available_sparse_backend_agrees(self, monkeypatch, disabled):
+        """Whichever optional solver is installed, all backends solve identically.
+
+        Each parametrisation disables one more of them, so the scipy splu
+        fallback is exercised even when the [performance] extra is installed."""
+        for name in disabled:
+            monkeypatch.setattr(lca_utils, name, None)
+        A_dense = np.array([[1000., 0., 0.], [-20., 1., 0.], [-5.2, 0., 1.]])
+        f = np.array([1000., 0., 0.])
+        solver = factorize(scipy.sparse.csc_matrix(A_dense))
+        np.testing.assert_allclose(solver(f), [1.0, 20.0, 5.2], rtol=1e-10)
 
 
 # ── tech_process_indices ───────────────────────────────────────────────────

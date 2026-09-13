@@ -29,20 +29,16 @@ breakdown of the same underlying bill of materials and elementary flows.
 
 Caching note
 ------------
-Life_Cycle_Assessment_Plugin._cache is a single process-wide class attribute (shared by every LCA
-instance for the lifetime of the pytest process, not reset between tests or
-even between test files run in the same session), and it is not keyed by
-matrix folder, so running more than one matrix folder within the same
-process (such as when running multiple scenarios within one pytest session)
-requires manually clearing both the RAM cache and that folder's
-on-disk Initial_Artifacts cache before switching folders (otherwise a later
-folder would silently reuse an earlier folder's cached artifacts, producing
-incorrect results).
+Life_Cycle_Assessment_Plugin._cache is a single process-wide class attribute
+shared by every LCA instance for the lifetime of the pytest process, but it is
+keyed by (matrix folder, export fingerprint), so switching matrix folder
+between groups invalidates it on its own. The tests below clear caches only to
+exercise a particular caching path, never for correctness.
 
 All groups (1-layer, 2-layer, and 3-layer per impact method) are driven by a
 single parametrized test, ``test_scenarios``, that exercises all three LCA
 caching paths across each group's scenarios in parametrize-list (execution)
-order: scenario labeled "base" clears both caches itself before running (cold
+order: scenario labeled "base" clears the disk cache itself before running (cold
 disk+RAM); scenario labeled "S2", where present, clears only RAM (warm disk); any
 remaining scenarios (S3-S5), where present, rely on RAM staying warm from the
 previous scenario. 1-layer and 2-layer groups only have a base scenario, so
@@ -59,7 +55,6 @@ from pyH2A.Plugins.Life_Cycle_Assessment_Plugin import Life_Cycle_Assessment_Plu
 from pyH2A.Plugins.Life_Cycle_Assessment_Plugin.config import CONFIG
 from pyH2A.run_pyH2A import pyH2A
 from pyH2A.Utilities.input_modification import convert_input_to_dictionary
-from pyH2A.Utilities.lca_utils import get_cache_paths
 
 
 # ── Paths ──────────────────────────────────────────────────────────────────
@@ -71,8 +66,8 @@ _INPUT_FILES_DIR = _HERE / 'data' / 'input_files'
 # ── Shared helpers ─────────────────────────────────────────────────────────
 
 def _clear_ram_only():
-    for k in Life_Cycle_Assessment_Plugin._cache:
-        Life_Cycle_Assessment_Plugin._cache[k] = None
+    """Force the next run onto the disk-cache path without touching disk."""
+    Life_Cycle_Assessment_Plugin._cache_key = None
 
 
 def _clear_disk(matrix_folder):
@@ -157,7 +152,7 @@ def test_scenarios(group, scenario_index):
     explicitly clears RAM while leaving disk warm (load_all_from_disk_to_ram
     reads the artifacts saved above, bypassing factorization); scenarios 2-4
     (S3-S5), where present, rely on RAM staying warm from the previous
-    scenario (initialize_all_artifacts exits on the early-exit guard without
+    scenario (initialize_all_artifacts exits on the cache-key guard without
     any disk I/O).
 
     Note: The disk cache is cleared unconditionally on scenario 0, even though
@@ -169,12 +164,9 @@ def test_scenarios(group, scenario_index):
     from a previous session or from before a refactor."""
     scenarios = _SCENARIOS_BY_GROUP[group]
     if scenario_index == 0:
-        # since one pytest session runs in one process, Life_Cycle_Assessment_Plugin._cache should be deleted for every group's first scenario (cold start)
-        # to avoid reusing another group's cached matrices.
-        _clear_ram_only()
-        # clear the disk cache path, so that the LCA run will recompute all artifacts from scratch between groups.
-        get_cache_paths.cache_clear()
-        # clear the disk cache as explained in the docstring note above
+        # Clear the disk cache as explained in the docstring note above, so that the LCA run
+        # recomputes all artifacts from scratch. The RAM cache invalidates itself: it is keyed
+        # by (matrix folder, export fingerprint), which differs between groups.
         _, matrix_folder = _load_scenario(scenarios[0][0])
         _clear_disk(matrix_folder)
     elif scenario_index == 1:
