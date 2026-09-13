@@ -86,3 +86,5 @@ celerybeat-schedule
 *.cube
 
 build
+# LCA cached artifacts
+Initial_Artifacts/

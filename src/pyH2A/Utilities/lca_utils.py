@@ -1,6 +1,5 @@
 from __future__ import annotations
 import csv
-from functools import lru_cache
 import importlib
 import os
 from typing import List
@@ -19,6 +18,9 @@ try:
     scikit_umfpack = importlib.import_module('scikits.umfpack')
 except ImportError:
     scikit_umfpack = None
+
+# Source files of an openLCA export that the cached artifacts are derived from.
+SOURCE_FILES = ('A', 'B', 'C', 'index_A.csv', 'index_C.csv')
 
 
 def _csv_rows(path: str) -> List[List[str]]:
@@ -55,11 +57,22 @@ def _load_tech_index(folder: str) -> dict:
         where ``row_index`` is the integer row/column index in A and
         ``flow_unit`` is the unit string of the associated flow.
         Returns an empty dict if ``index_A.csv`` does not exist.
+
+    Raises
+    ------
+    ValueError
+        If a provider UUID appears on more than one row, which would silently
+        drop technosphere columns.
     '''
     path = os.path.join(folder, 'index_A.csv')
     if not os.path.exists(path):
         return {}
-    return {row[1]: (int(row[0]), row[8]) for row in _csv_rows(path)}
+    rows = _csv_rows(path)
+    index = {row[1]: (int(row[0]), row[8]) for row in rows}
+    if len(index) != len(rows):
+        raise ValueError(f"{path} contains duplicate provider IDs; "
+                         "multi-output processes are not supported.")
+    return index
 
 
 def _load_impact_index(folder: str) -> List[dict]:
@@ -105,6 +118,28 @@ def find_matrix_path(folder: str, name: str):
         if os.path.exists(p):
             return p
     return None
+
+
+def export_fingerprint(matrix_folder: str) -> str:
+    '''Identity of the openLCA export; changes whenever any source file does.
+
+    Used to invalidate cached artifacts when the export is replaced. Files that
+    cannot be resolved are skipped, so a missing matrix still surfaces as the
+    explicit error from :func:`load_matrices_from_folder`.
+
+    Parameters
+    ----------
+    matrix_folder : str
+        Path to the openLCA matrix export folder.
+
+    Returns
+    -------
+    str
+        Name, size and modification time of every source file of the export.
+    '''
+    paths = [find_matrix_path(matrix_folder, name) for name in SOURCE_FILES]
+    return str([(name, os.path.getsize(p), os.path.getmtime(p))
+                for name, p in zip(SOURCE_FILES, paths) if p])
 
 
 def matrix_of(file_path: str):
@@ -192,7 +227,8 @@ def tech_process_indices(matrix_folder: str, matrix_a) -> numpy.ndarray:
     -------
     numpy.ndarray
         Four-column object array with ``[index, uuid, value, flow_unit]`` per
-        row for nonzero components of the first technosphere column.
+        row for nonzero components of the first technosphere column, ordered by
+        index so that the first row is always the reference flow.
     '''
     col0 = matrix_a[:, 0]
     a_col0 = numpy.asarray(col0.toarray() if scipy.sparse.issparse(matrix_a) else col0).reshape(-1)
@@ -202,6 +238,7 @@ def tech_process_indices(matrix_folder: str, matrix_a) -> numpy.ndarray:
         for uuid, (idx, flow_unit) in _load_tech_index(matrix_folder).items()
         if idx in nonzero
     ]
+    rows.sort(key=lambda row: row[0])
     return numpy.array(rows, dtype=object)
 
 
@@ -227,16 +264,17 @@ def load_matrices_from_folder(matrix_folder: str):
         Intervention matrix.
     C : numpy.ndarray or scipy.sparse.spmatrix
         Characterization matrix.
-    f : numpy.ndarray
-        Demand vector.
 
     Raises
     ------
     ValueError
         If any required matrix or index file could not be loaded.
-    '''
-    print("Loading matrices from folder:")
 
+    Notes
+    -----
+    The exported demand vector ``f`` is not read: the demand is always one unit
+    of the reference flow, which is built directly by the caller.
+    '''
     def _load(name):
         path = find_matrix_path(matrix_folder, name)
         return matrix_of(path) if path is not None else None
@@ -245,23 +283,19 @@ def load_matrices_from_folder(matrix_folder: str):
     techno_index_uuid = tech_process_indices(matrix_folder, A) if A is not None else None
     B = _load('B')
     C = _load('C')
-    f = _load('f')
     impact_index = _load_impact_index(matrix_folder)
-    missing = [name for name, m in zip(('A', 'B', 'C', 'f', 'index_A.csv'),
-                                       (A, B, C, f, techno_index_uuid))
+    missing = [name for name, m in zip(('A', 'B', 'C', 'index_A.csv'),
+                                       (A, B, C, techno_index_uuid))
                if m is None]
     if missing:
         raise ValueError(f"{', '.join(missing)} could not be loaded from the specified folder.")
-    return impact_index, techno_index_uuid, A, B, C, f
+    return impact_index, techno_index_uuid, A, B, C
 
 
-@lru_cache(maxsize=None)
 def get_cache_paths(matrix_folder: str) -> dict:
-    '''Create the ``Initial_Artifacts`` cache directory and return its ``.npz`` file paths.
+    '''Create the ``Initial_Artifacts`` cache directory and return its file paths.
 
-    Creates the directory if it does not already exist. Results are cached by
-    :func:`functools.lru_cache` so the directory is created at most once per
-    process per ``matrix_folder`` path.
+    Creates the directory if it does not already exist.
 
     Parameters
     ----------
@@ -271,18 +305,19 @@ def get_cache_paths(matrix_folder: str) -> dict:
     Returns
     -------
     dict
-        Mapping from each ``LCA._cache`` key to its ``.npz`` file path inside
-        the ``Initial_Artifacts`` subdirectory.
+        Mapping from each ``Life_Cycle_Assessment_Plugin._cache`` key to its
+        ``.npz`` file path inside the ``Initial_Artifacts`` subdirectory, plus
+        ``'fingerprint'`` for the export identity written by
+        :func:`export_fingerprint`.
     '''
     cache_dir = Path(matrix_folder) / 'Initial_Artifacts'
     cache_dir.mkdir(parents=True, exist_ok=True)
-    b_suffix = Path(find_matrix_path(matrix_folder, 'B') or 'B.npz').suffix
-    c_suffix = Path(find_matrix_path(matrix_folder, 'C') or 'C.npz').suffix
     return {
         'base_scaling_vector': cache_dir / 'base_scaling_vector.npz',
         'A0_column':           cache_dir / 'A0_column.npz',
         'basis_component':     cache_dir / 'basis_component.npz',
-        'matrix_B':            cache_dir / f'matrix_B{b_suffix}',
-        'matrix_C':            cache_dir / f'matrix_C{c_suffix}',
+        'h_base':              cache_dir / 'h_base.npz',
+        'h_basis':             cache_dir / 'h_basis.npz',
         'impact_index':        cache_dir / 'impact_index.npz',
+        'fingerprint':         cache_dir / 'fingerprint.txt',
     }
