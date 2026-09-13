@@ -15,6 +15,7 @@ Plugins allow for modelling of different hydrogen production pathways. They proc
    Fixed_Operating_Cost_Plugin
    Hourly_Irradiation_Plugin
    Inflation_Plugin
+   Life_Cycle_Assessment_Plugin
    Multiple_Modules_Plugin
    PEC_Plugin
    Photocatalytic_Plugin
