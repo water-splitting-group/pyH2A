@@ -317,7 +317,7 @@ Artifact folder and maintenance
 ================================
 
 On first run, pyH2A factorises the technosphere matrix and pre-computes basis vectors. These,
-together with copies of the intervention and characterisation matrices and the impact category
+together with the characterised impact operator and the impact category
 index, are saved to an ``Initial_Artifacts`` subdirectory inside the matrix export folder so that
 subsequent runs (including every Monte Carlo worker) can skip both the expensive factorisation
 and re-loading the original openLCA export.
@@ -326,15 +326,18 @@ and re-loading the original openLCA export.
 
 	<export_folder>/
 	    Initial_Artifacts/
-	        base_scaling_vector.npz   — A⁻¹f for the original demand vector
+	        base_scaling_vector.npz   — A⁻¹f for a demand of one unit of the reference flow
 	        A0_column.npz             — UUIDs, values and units of nonzero column-0 entries
 	        basis_component.npz       — A⁻¹ eᵢ columns for each foreground component
-	        matrix_B.npz              — copy of the intervention matrix
-	        matrix_C.npz              — copy of the characterisation matrix
+	        h_base.npz                — C·B·A⁻¹f, the impacts of the base scaling vector
+	        h_basis.npz               — C·B·A⁻¹ eᵢ, the impacts of each basis column
 	        impact_index.npz          — impact category names and units
+	        fingerprint.txt           — identity of the export these artifacts came from
 
-The artifacts are valid as long as the matrix export does not change. **Delete the
-``Initial_Artifacts`` folder whenever you export the new matrices from openLCA**.
+The artifacts carry a fingerprint of the openLCA export they were built from (the size and
+modification time of ``A``, ``B``, ``C``, ``index_A.csv`` and ``index_C.csv``). Re-exporting the
+matrices changes that fingerprint, so pyH2A recomputes the artifacts by itself — there is no
+need to delete the ``Initial_Artifacts`` folder by hand.
 
 Within a Python process, the artifacts are also held in a process-local RAM cache
 (``LCA._cache``). Multiprocessing workers each build their own RAM cache from disk on first

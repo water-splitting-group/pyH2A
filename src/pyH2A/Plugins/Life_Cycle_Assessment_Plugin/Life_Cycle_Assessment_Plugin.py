@@ -1,17 +1,24 @@
-import shutil
 import numpy as np
 
 from pyH2A.Plugins.Life_Cycle_Assessment_Plugin.config import CONFIG
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.lca_utils import (
     atomic_savez,
+    export_fingerprint,
     factorize,
-    find_matrix_path,
     get_cache_paths,
     load_matrices_from_folder,
-    matrix_of,
 )
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+
+
+def flow_unit(unit: str) -> str:
+    '''Strip the pluralisation suffix openLCA attaches to some flow units.
+
+    ``"Item(s)"`` becomes ``"Item"``; parentheses are grouping syntax to the
+    unit parser and cannot be passed through.
+    '''
+    return unit.replace('(s)', '')
 
 
 class Life_Cycle_Assessment_Plugin:
@@ -43,10 +50,10 @@ class Life_Cycle_Assessment_Plugin:
     Life Cycle Assessment > Results > Value : dict
         LCIA results keyed by impact name. Each value is a
         :class:`~pyH2A.Utilities.Unit_Handler.quantity.Quantity` instance,
-        inherently expressed per 1 unit of the functional flow (the demand
-        vector's first entry is always solved as exactly ``1.0``, regardless
-        of the real magnitude reported by openLCA), as a composite unit of
-        ``<impact unit> / <functional unit>``. Computed by :meth:`perform_lca`.
+        inherently expressed per 1 unit of the reference flow (the demand is
+        always exactly one unit of it, regardless of the magnitude reported by
+        openLCA), as a composite unit of
+        ``<impact unit> / <reference flow unit>``. Computed by :meth:`perform_lca`.
     ['Life_Cycle_Assessment_Plugin'].lca_results : dict
         Identical to the value inserted into ``dcf.inp`` above, accessible
         directly off the plugin instance via
@@ -57,38 +64,46 @@ class Life_Cycle_Assessment_Plugin:
         Scenario-specific technosphere column values aligned to the cached
         ``A0_column`` ordering. Set by :meth:`apply_component_updates`.
     self.scaling_vector : numpy.ndarray
-        Scenario-specific activity scaling vector. Set by :meth:`build_scaling_vector`.
+        Scenario-specific activity scaling vector, for contribution analysis.
+        Computed on demand; not used by :meth:`perform_lca`.
 
     Raises
     ------
     ValueError
         Raised when no LCA input tables are found in ``dcf.inp``, when a UUID
         present in the technosphere matrix is absent from the LCA input tables,
-        or when the declared Functional Unit's dimension does not match the
-        dimension of the Unit declared for the functional flow (the UUID at
-        ``A0_column`` index 0) in the LCA input tables (see
+        when a resolved component value is negative, or when the export's
+        reference flow unit differs from the declared Functional Unit (see
         :meth:`apply_component_updates`).
+    KeyError
+        Raised when an impact unit of the export has no entry in
+        ``Life_Cycle_Assessment_Plugin/config.py``.
     ZeroDivisionError
-        Raised when the Sherman-Morrison denominator is too small for a stable
-        rank-1 update.
+        Raised when the Sherman-Morrison denominator is singular to working
+        precision.
 
     Notes
     -----
     All caches are class-level and process-local. Disk artifacts are stored
     inside an ``Initial_Artifacts`` subdirectory of the matrix export folder,
-    managed by :func:`pyH2A.Utilities.lca_utils.get_cache_paths`.
+    managed by :func:`pyH2A.Utilities.lca_utils.get_cache_paths`. Both the RAM
+    and disk caches are keyed by
+    :func:`~pyH2A.Utilities.lca_utils.export_fingerprint`, so switching matrix
+    folder or replacing the export invalidates them.
     '''
 
-    _SM_TOL = 1e-12  # Tolerance for detecting numerical singularity in the Sherman-Morrison update denominator.
+    _SM_TOL = 1e-8  # Relative tolerance for cancellation in the Sherman-Morrison update denominator.
     # Class-level RAM cache. Not shared across multiprocessing workers; disk caching covers cross-process reuse.
     _cache = {
         'base_scaling_vector':    None,
         'A0_column':        None,
         'basis_component':  None,
-        'matrix_B':         None,
-        'matrix_C':         None,
+        'h_base':           None,
+        'h_basis':          None,
         'impact_index':     None,
     }
+    # (matrix folder, export fingerprint) the RAM cache above was built from.
+    _cache_key = None
 
     def __init__(self, dcf, print_info, run = True):
         self._set_up(dcf)
@@ -147,9 +162,8 @@ class Life_Cycle_Assessment_Plugin:
         '''Resolve the matrix folder and run the full LCA calculation workflow.
 
         Loads all matrices, prepares the class-level cache, cross-checks the
-        declared Functional Unit against the matrix's own functional flow (see
-        :meth:`apply_component_updates`), builds the scenario scaling vector via
-        Sherman-Morrison update, and computes LCIA results.
+        declared Functional Unit against the matrix's own reference flow (see
+        :meth:`apply_component_updates`), and computes LCIA results.
         '''
 
         self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Life_Cycle_Assessment_Plugin')
@@ -158,45 +172,46 @@ class Life_Cycle_Assessment_Plugin:
 
         self.initialize_all_artifacts()
         self.apply_component_updates(dcf)
-        self.build_scaling_vector()
         self.perform_lca()
 
         output_inserter_function(self.output_dict, self, dcf, 'Life_Cycle_Assessment_Plugin')
 
     def initialize_all_artifacts(self):
-        '''Prepare all matrix artifacts and component basis vectors.
+        '''Prepare all cached artifacts for this matrix folder.
 
-        Fills the class-level RAM cache from disk if available. If any cache
-        file is missing, computes all artifacts from scratch and writes them
-        to disk atomically for reuse by future processes.
+        Both caches are keyed by the export's fingerprint, so replacing the
+        openLCA export or switching matrix folder invalidates them.
 
         Notes
         -----
         Populates ``_cache`` with keys ``base_scaling_vector``, ``A0_column``
         (nonzero first-column entries as UUIDs, values, and flow units),
         ``basis_component`` (precomputed ``A^{-1} e_i`` basis vectors),
-        ``matrix_B`` and ``matrix_C`` (sparse originals), and ``impact_index``.
-        Disk paths are resolved by :func:`~pyH2A.Utilities.lca_utils.get_cache_paths`,
-        which also creates the ``Initial_Artifacts`` subdirectory on first call.
-        Disk writes use :func:`~pyH2A.Utilities.lca_utils.atomic_savez` for atomic
-        file replacement.
+        ``h_base`` and ``h_basis`` (the precomputed LCIA operator), and
+        ``impact_index``. Disk paths are resolved by
+        :func:`~pyH2A.Utilities.lca_utils.get_cache_paths`, which also creates the
+        ``Initial_Artifacts`` subdirectory.
+
+        Every artifact is written through
+        :func:`~pyH2A.Utilities.lca_utils.atomic_savez` and the fingerprint is
+        written last, so an interrupted write simply leaves no fingerprint and
+        the next run recomputes.
         '''
 
-        # Try to load artifacts from RAM (process-local cache).
-        if all(Life_Cycle_Assessment_Plugin._cache[k] is not None for k in Life_Cycle_Assessment_Plugin._cache):
+        fingerprint = export_fingerprint(self.matrix_folder)
+        if Life_Cycle_Assessment_Plugin._cache_key == (self.matrix_folder, fingerprint):
             return
 
-        # Not in RAM: try to load artifacts from disk cache
         paths = get_cache_paths(self.matrix_folder)
 
-        try:
-
+        if paths['fingerprint'].exists() and paths['fingerprint'].read_text() == fingerprint:
             self.load_all_from_disk_to_ram(paths)
-
-        except FileNotFoundError:
-
+        else:
             self.compute_all_artifacts_from_scratch()
             self.save_all_to_disk(paths)
+            paths['fingerprint'].write_text(fingerprint)
+
+        Life_Cycle_Assessment_Plugin._cache_key = (self.matrix_folder, fingerprint)
 
     def load_all_from_disk_to_ram(self, paths: dict):
         '''Load all cached artifacts from disk into process-local RAM.
@@ -206,20 +221,14 @@ class Life_Cycle_Assessment_Plugin:
         paths : dict
             Mapping from each ``_cache`` key to its ``.npz`` file path,
             as built in :meth:`initialize_all_artifacts`.
-
-        Raises
-        ------
-        FileNotFoundError
-            Propagated from :func:`numpy.load` or :func:`~pyH2A.Utilities.lca_utils.matrix_of`
-            when a cache file is absent from disk.
         '''
 
         Life_Cycle_Assessment_Plugin._cache['base_scaling_vector']   = np.asarray(np.load(paths['base_scaling_vector'])['base_scaling_vector'])
         a0 = np.load(paths['A0_column'])
         Life_Cycle_Assessment_Plugin._cache['A0_column']       = (np.asarray(a0['uuids'], dtype=str), np.asarray(a0['values']), np.asarray(a0['units'], dtype=str))
         Life_Cycle_Assessment_Plugin._cache['basis_component'] = np.asarray(np.load(paths['basis_component'])['basis_component'])
-        Life_Cycle_Assessment_Plugin._cache['matrix_B']        = matrix_of(str(paths['matrix_B']))
-        Life_Cycle_Assessment_Plugin._cache['matrix_C']        = matrix_of(str(paths['matrix_C']))
+        Life_Cycle_Assessment_Plugin._cache['h_base']          = np.asarray(np.load(paths['h_base'])['h_base'])
+        Life_Cycle_Assessment_Plugin._cache['h_basis']         = np.asarray(np.load(paths['h_basis'])['h_basis'])
         Life_Cycle_Assessment_Plugin._cache['impact_index']    = list(np.load(str(paths['impact_index']), allow_pickle=True)['impact_index'])
 
     def compute_all_artifacts_from_scratch(self):
@@ -227,26 +236,25 @@ class Life_Cycle_Assessment_Plugin:
 
         Loads matrices via :func:`~pyH2A.Utilities.lca_utils.load_matrices_from_folder`,
         factorizes the technosphere matrix, solves for the base scaling vector,
-        precomputes Sherman-Morrison basis columns, and populates ``_cache``.
+        precomputes Sherman-Morrison basis columns and the LCIA operator, and
+        populates ``_cache``.
 
         Notes
         -----
-        The demand vector's first entry (``f[0]``) is always solved as
-        exactly ``1.0``, regardless of the real magnitude reported by
-        openLCA, so that the resulting scaling vector - and every downstream
-        LCIA result - is inherently expressed per 1 unit of the functional
-        flow, without needing a separate normalization step or cached
-        artifact for the real demand magnitude.
+        The demand is always exactly one unit of the reference flow, so the
+        demand vector is built here rather than read from the export. The base
+        scaling vector - and every downstream LCIA result - is therefore
+        inherently expressed per 1 unit of the reference flow, without needing
+        a separate normalization step.
         '''
         (   impact_index,
             techno_index_uuid_values,
             A,
             B,
             C,
-            f,
         ) = load_matrices_from_folder(self.matrix_folder)
         solver = factorize(A)
-        f_vector = np.asarray(f, dtype=float).reshape(-1).copy()
+        f_vector = np.zeros(A.shape[0])
         f_vector[0] = 1.0
         Life_Cycle_Assessment_Plugin._cache['base_scaling_vector'] = solver(f_vector)
          # Cache uuid, value, and flow unit columns of techno_index_uuid_values (UUID and unit columns are strings and cannot be serialised as numeric).
@@ -266,9 +274,13 @@ class Life_Cycle_Assessment_Plugin:
         basis_component = np.asarray(solver(eye_subset))
         Life_Cycle_Assessment_Plugin._cache['basis_component'] = basis_component
         Life_Cycle_Assessment_Plugin._cache['impact_index'] = impact_index
-        # Cache the original sparse B and C matrices for future reuse
-        Life_Cycle_Assessment_Plugin._cache['matrix_B'] = B
-        Life_Cycle_Assessment_Plugin._cache['matrix_C'] = C
+        # Impacts are affine in the scenario's component values, so characterize the base scaling
+        # vector and the basis columns once here. Each sample then costs one (impacts x components)
+        # matrix-vector product instead of a pass over B and C. See ``perform_lca``.
+        characterization = C @ B
+        Life_Cycle_Assessment_Plugin._cache['h_base'] = np.asarray(
+            characterization @ Life_Cycle_Assessment_Plugin._cache['base_scaling_vector']).reshape(-1)
+        Life_Cycle_Assessment_Plugin._cache['h_basis'] = np.asarray(characterization @ basis_component)
 
 
     def save_all_to_disk(self, paths: dict):
@@ -282,29 +294,19 @@ class Life_Cycle_Assessment_Plugin:
 
         Notes
         -----
-        This method is intended for use after computing artifacts that are not
-        present in RAM or on disk, to save them for future reuse. It writes the current RAM cache state to
-        disk using atomic file replacement.
-        In case of permission issues during atomic save, the cache will simply not be saved for future runs.
-        This is a non-critical failure and may occur when base case is not run from run_pyH2A while Monte Carlo samples
-        is set to very low values and multiple processes attempt to write the same cache file simultaneously.
-        Log the error and continue without caching. All workers compute identical results, so the loser can
-        safely ignore it.
+        Writes the current RAM cache state to disk using atomic file
+        replacement, for reuse by future processes. The caller writes the
+        export fingerprint afterwards, so a write interrupted here leaves a
+        cache that the next run ignores rather than trusts.
         '''
-        try:
-            atomic_savez(paths['base_scaling_vector'],   base_scaling_vector=Life_Cycle_Assessment_Plugin._cache['base_scaling_vector'])
-            atomic_savez(paths['A0_column'],       uuids=np.asarray(Life_Cycle_Assessment_Plugin._cache['A0_column'][0], dtype=str),
-                                                   values=np.asarray(Life_Cycle_Assessment_Plugin._cache['A0_column'][1], dtype=float),
-                                                   units=np.asarray(Life_Cycle_Assessment_Plugin._cache['A0_column'][2], dtype=str))
-            atomic_savez(paths['basis_component'], basis_component=Life_Cycle_Assessment_Plugin._cache['basis_component'])
-            atomic_savez(paths['impact_index'],    impact_index=np.array(Life_Cycle_Assessment_Plugin._cache['impact_index'], dtype=object))
-            # Copy the original sparse B and C files to disk (Initial_Artifacts)
-            mat_b = find_matrix_path(self.matrix_folder, 'B')
-            mat_c = find_matrix_path(self.matrix_folder, 'C')
-            shutil.copy2(mat_b, str(paths['matrix_B']))
-            shutil.copy2(mat_c, str(paths['matrix_C']))
-        except PermissionError:
-            pass
+        atomic_savez(paths['base_scaling_vector'],   base_scaling_vector=Life_Cycle_Assessment_Plugin._cache['base_scaling_vector'])
+        atomic_savez(paths['A0_column'],       uuids=np.asarray(Life_Cycle_Assessment_Plugin._cache['A0_column'][0], dtype=str),
+                                               values=np.asarray(Life_Cycle_Assessment_Plugin._cache['A0_column'][1], dtype=float),
+                                               units=np.asarray(Life_Cycle_Assessment_Plugin._cache['A0_column'][2], dtype=str))
+        atomic_savez(paths['basis_component'], basis_component=Life_Cycle_Assessment_Plugin._cache['basis_component'])
+        atomic_savez(paths['h_base'],          h_base=Life_Cycle_Assessment_Plugin._cache['h_base'])
+        atomic_savez(paths['h_basis'],         h_basis=Life_Cycle_Assessment_Plugin._cache['h_basis'])
+        atomic_savez(paths['impact_index'],    impact_index=np.array(Life_Cycle_Assessment_Plugin._cache['impact_index'], dtype=object))
 
     def apply_component_updates(self, dcf):
         '''Store resolved LCA input values aligned to the technosphere column,
@@ -323,8 +325,8 @@ class Life_Cycle_Assessment_Plugin:
         dcf : pyH2A.Discounted_Cash_Flow
             Discounted cash flow object whose input dictionary contains at
             least one table whose name contains ``"LCA"``, and whose resolved
-            ``functional_unit`` is cross-checked against the ``Unit`` declared
-            for the functional-flow row in that table (see
+            ``functional_unit`` is cross-checked against the flow unit the
+            export records for the reference flow (see
             :func:`~pyH2A.Utilities.functional_unit.resolve_functional_unit`).
 
         Raises
@@ -332,11 +334,9 @@ class Life_Cycle_Assessment_Plugin:
         ValueError
             Raised when no LCA tables are found in ``dcf.inp``, when a UUID
             present in the cached technosphere column is absent from the
-            input tables, or when the functional-flow row's declared
-            dimension does not match ``dcf.functional_unit.dimension``. The
-            UUID-presence check runs first for every row (including the
-            functional-flow row), so the Functional Unit cross-check can
-            assume that UUID is already present by the time it runs.
+            input tables, when a resolved component value is negative, or when
+            the export's reference flow unit differs from
+            ``dcf.functional_unit.unit``.
 
         Array-like ``Value`` entries are reduced to a scalar by summation.
         The ordering of ``self.component_values`` follows ``A0_column``, not
@@ -369,103 +369,101 @@ class Life_Cycle_Assessment_Plugin:
 
         self.component_values = A0_values.copy()
         for i, uuid in enumerate(A0_uuids):
-            if str(uuid) in uuid_to_quantity:
-                # openLCA flow units sometimes carry a pluralization suffix (e.g. "Item(s)")
-                # that the unit parser cannot handle, since parentheses are grouping syntax.
-                target_unit = str(A0_units[i]).replace('(s)', '')
-                converted_value = uuid_to_quantity[str(uuid)].unit[target_unit]
-                self.component_values[i] = np.sign(A0_values[i]) * abs(converted_value)
-            else:
+            if str(uuid) not in uuid_to_quantity:
                 raise ValueError(
                     f"UUID '{uuid}' from the technosphere matrix is missing from the input "
                     "LCA component tables. All UUIDs must be present for a complete scenario definition."
                 )
+            converted_value = uuid_to_quantity[str(uuid)].unit[flow_unit(str(A0_units[i]))]
+            if converted_value < 0:
+                raise ValueError(
+                    f"Negative value for LCA component '{uuid}'. Declare magnitudes only; "
+                    "the sign is taken from the technosphere matrix."
+                )
+            self.component_values[i] = np.sign(A0_values[i]) * converted_value
 
-        # Dimension of the functional flow declared in the '# LCA' table is cross-checked
-        # against the Functional Unit declared in the '# Functional Unit' table. The
-        # functional flow is always the first row of the technosphere column; its presence
-        # in uuid_to_quantity is already guaranteed by the loop above, which would have
-        # raised ValueError otherwise.
-        functional_flow_quantity = uuid_to_quantity[str(A0_uuids[0])]
-        if functional_flow_quantity.dimension != dcf.functional_unit.dimension:
+        # Results are expressed per 1 unit of the reference flow in the export's own unit, so
+        # that unit has to be the one cost results are expressed per. The reference flow is the
+        # first row of the technosphere column.
+        reference_flow_unit = flow_unit(str(A0_units[0]))
+        if reference_flow_unit != dcf.functional_unit.unit:
             raise ValueError(
                 f"Functional Unit mismatch: the input file declares Functional Unit "
-                f"'{dcf.functional_unit.unit}' (dimension '{dcf.functional_unit.dimension}'), but the "
-                f"'# LCA' table declares the functional flow's Unit as "
-                f"'{functional_flow_quantity.supplied_unit}' (dimension '{functional_flow_quantity.dimension}'). "
-                f"Cost results (per {dcf.functional_unit.unit}) and LCA results (per "
-                f"{functional_flow_quantity.supplied_unit}) would otherwise be silently expressed on two "
-                "different physical bases. Update the '# Functional Unit' table's Unit, or the functional-flow "
-                "row's Unit in the LCA component table, so both share the same dimension."
+                f"'{dcf.functional_unit.unit}', but the reference flow of the openLCA export is in "
+                f"'{reference_flow_unit}'. LCA results are expressed per 1 unit of that flow, so cost "
+                "and LCA results would otherwise be reported on two different bases."
             )
-
-    def build_scaling_vector(self):
-        '''Compute the scenario scaling vector using a Sherman-Morrison rank-1 update.
-
-        Reads ``self.component_values`` (set by :meth:`apply_component_updates`)
-        and applies the rank-1 correction to the base scaling vector.
-
-        Raises
-        ------
-        ZeroDivisionError
-            Raised when ``abs(1 + correction[0])`` is below ``self._SM_TOL``.
-            No direct-solve fallback is applied.
-
-        Notes
-        -----
-        The update formula is:
-        ``x' = y - z * (y[0] / (1 + z[0]))``,
-        where ``y`` is the base scaling vector, ``z = basis @ delta_coeff``
-        is the correction vector, and ``delta_coeff`` is the element-wise
-        difference between the scenario and original first-column values.
-        Precomputed basis columns (``A^{-1} e_i``) avoid a full linear solve
-        per Monte Carlo sample. The result is stored on ``self.scaling_vector``.
-        '''
-        base_scaling_vector = Life_Cycle_Assessment_Plugin._cache['base_scaling_vector']
-        # Difference between the scenario and original values for the nonzero entries of the first technosphere column, aligned by UUID matching.
-        delta_coeff = self.component_values - Life_Cycle_Assessment_Plugin._cache['A0_column'][1]
-        correction = np.asarray(Life_Cycle_Assessment_Plugin._cache['basis_component'] @ delta_coeff).reshape(-1)
-        numerator = base_scaling_vector[0]
-        denominator = 1.0 + correction[0]
-        if abs(denominator) <= self._SM_TOL:
-            raise ZeroDivisionError(
-                "Sherman-Morrison denominator is too small; "
-                "fallback direct solve is disabled."
-            )
-
-        self.scaling_vector = base_scaling_vector - correction * (numerator / denominator)
 
     def perform_lca(self):
         '''Perform the life cycle impact assessment calculation.
 
-        Computes intermediate flows and final impact results using the intervention
-        and characterization matrices. Results are stored in the class instance.
+        Applies the Sherman-Morrison rank-1 update to the precomputed LCIA
+        operator, which characterizes the base scaling vector and the basis
+        columns once per export (see :meth:`compute_all_artifacts_from_scratch`).
+        Impacts are therefore obtained without touching the intervention or
+        characterization matrices.
+
+        Raises
+        ------
+        ZeroDivisionError
+            Raised when ``1 + correction[0]`` is lost to cancellation relative
+            to ``correction[0]``, i.e. when the scenario's technosphere matrix
+            is numerically singular. No direct-solve fallback is applied.
 
         Notes
         -----
-        Stores results on ``self.lca_results`` as a dictionary mapping impact
-        names to ``Quantity`` instances. No normalization is performed here:
-        since :meth:`compute_all_artifacts_from_scratch` always solves with
-        the demand vector's first entry forced to ``1.0``, ``h[i]`` is
-        already expressed per 1 unit of the functional flow. Each result is
-        expressed as a composite unit of ``<impact unit> / <functional unit>``
-        (e.g. ``'kg / kg'``), where the functional unit's flow unit is read
-        directly from the cached ``A0_column`` (technosphere row 0, the
-        reference/functional flow, always present as the process's own
-        product-output entry and always first in ``A0_column`` since it is
-        the lowest possible row index).
-        '''
-        g = Life_Cycle_Assessment_Plugin._cache['matrix_B'] @ self.scaling_vector
-        h = Life_Cycle_Assessment_Plugin._cache['matrix_C'] @ g
+        With ``delta`` the element-wise change in the first technosphere column,
+        ``P`` the basis columns (``A^{-1} e_i``) and ``y`` the base scaling
+        vector, the scenario scaling vector is
+        ``x = y - (P @ delta) * (y[0] / (1 + (P @ delta)[0]))``.
+        Since impacts are linear in ``x``, the same factor applies to the
+        characterized quantities directly:
+        ``h = h_base - (h_basis @ delta) * (y[0] / (1 + P[0] @ delta))``.
+        ``P[0] @ delta`` is ``(P @ delta)[0]``, so the full correction vector is
+        never formed here; :attr:`scaling_vector` builds it on demand.
 
-        # openLCA flow units sometimes carry a pluralization suffix (e.g. "Item(s)")
-        # that the unit parser cannot handle, since parentheses are grouping syntax.
-        functional_unit_unit = str(Life_Cycle_Assessment_Plugin._cache['A0_column'][2][0]).replace('(s)', '')
+        Stores results on ``self.lca_results`` as a dictionary mapping impact
+        names to ``Quantity`` instances, each expressed as a composite unit of
+        ``<impact unit> / <reference flow unit>`` (e.g. ``'kg / kg'``). No
+        normalization is performed: the demand is one unit of the reference
+        flow by construction.
+        '''
+        cache = Life_Cycle_Assessment_Plugin._cache
+        # Difference between the scenario and original values for the nonzero entries of the
+        # first technosphere column, aligned by UUID matching.
+        self.delta = self.component_values - cache['A0_column'][1]
+        correction_0 = cache['basis_component'][0] @ self.delta
+        denominator = 1.0 + correction_0
+        if abs(denominator) <= self._SM_TOL * (1.0 + abs(correction_0)):
+            raise ZeroDivisionError(
+                "Sherman-Morrison denominator is singular to working precision; "
+                "fallback direct solve is disabled."
+            )
+        self.factor = cache['base_scaling_vector'][0] / denominator
+        h = cache['h_base'] - (cache['h_basis'] @ self.delta) * self.factor
+
+        reference_flow_unit = flow_unit(str(cache['A0_column'][2][0]))
+        unknown_units = {i['impact_unit'] for i in cache['impact_index']} - CONFIG.keys()
+        if unknown_units:
+            raise KeyError(
+                f"Impact units missing from Life_Cycle_Assessment_Plugin/config.py: "
+                f"{sorted(unknown_units)}"
+            )
 
         self.lca_results = {}
-        for i in Life_Cycle_Assessment_Plugin._cache['impact_index']:
-            unit_map = CONFIG[i['impact_unit']]
+        for i in cache['impact_index']:
             self.lca_results[i['impact_name']] = Quantity(
                 h[i['index']],
-                f"{unit_map['unit']} / {functional_unit_unit}"
+                f"{CONFIG[i['impact_unit']]['unit']} / {reference_flow_unit}"
             )
+
+    @property
+    def scaling_vector(self):
+        '''Per-process activity levels for this scenario, for contribution analysis.
+
+        Computed on demand from the cached basis columns; :meth:`perform_lca`
+        does not need it and so does not pay for it per Monte Carlo sample.
+        '''
+        cache = Life_Cycle_Assessment_Plugin._cache
+        correction = np.asarray(cache['basis_component'] @ self.delta).reshape(-1)
+        return cache['base_scaling_vector'] - correction * self.factor
