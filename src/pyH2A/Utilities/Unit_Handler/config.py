@@ -224,7 +224,9 @@ DIMENSIONS = {
             "ppm": 1e-6,
             "ppb": 1e-9,
             "item": 1.0,
-            "Item": 1.0
+            "Item": 1.0,
+            "Items": 1.0,
+            "items": 1.0
         }
     }
 }

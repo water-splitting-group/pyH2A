@@ -9,11 +9,13 @@ import scipy.sparse
 import scipy.sparse.linalg
 from pathlib import Path
 
+# Try to import pypardiso (Windows and Linux)
 try:
     pypardiso = importlib.import_module('pypardiso')
 except ImportError:
     pypardiso = None
 
+# Try to import scikit-umfpack (macOS)
 try:
     scikit_umfpack = importlib.import_module('scikits.umfpack')
 except ImportError:
@@ -22,6 +24,9 @@ except ImportError:
 # Source files of an openLCA export that the cached artifacts are derived from.
 SOURCE_FILES = ('A', 'B', 'C', 'index_A.csv', 'index_C.csv')
 
+#### ----------------------------------------------------------------- ####
+#### Functions for reading in OpenLCA matrix exports and their indices ####
+#### ----------------------------------------------------------------- ####
 
 def _csv_rows(path: str) -> List[List[str]]:
     '''Read all data rows from a CSV file, skipping the header.
@@ -39,8 +44,8 @@ def _csv_rows(path: str) -> List[List[str]]:
     with open(path, 'r', encoding='utf-8') as stream:
         reader = csv.reader(stream)
         next(reader)
-        return list(reader)
 
+        return list(reader)
 
 def _load_tech_index(folder: str) -> dict:
     '''Load technosphere index from ``index_A.csv`` as ``{process_id: (row_index, flow_unit)}``.
@@ -65,15 +70,52 @@ def _load_tech_index(folder: str) -> dict:
         drop technosphere columns.
     '''
     path = os.path.join(folder, 'index_A.csv')
+
+    # If the index file is absent, return an empty dict. 
     if not os.path.exists(path):
         return {}
+    
     rows = _csv_rows(path)
     index = {row[1]: (int(row[0]), row[8]) for row in rows}
+
+    # If the number of unique provider IDs is less than the number of rows, there are duplicates.
     if len(index) != len(rows):
         raise ValueError(f"{path} contains duplicate provider IDs; "
                          "multi-output processes are not supported.")
+    
     return index
 
+def tech_process_indices(matrix_folder: str, matrix_a) -> numpy.ndarray:
+    '''Extract technosphere indices, UUIDs, and flow units for nonzero entries in ``A[:, 0]``.
+
+    Parameters
+    ----------
+    matrix_folder : str
+        Path to the openLCA matrix export directory, used to load ``index_A.csv``.
+    matrix_a : ndarray or scipy.sparse.spmatrix
+        Technosphere matrix.
+
+    Returns
+    -------
+    numpy.ndarray
+        Four-column object array with ``[index, uuid, value, flow_unit]`` per
+        row for nonzero components of the first technosphere column, ordered by
+        index so that the first row is always the reference flow.
+    '''
+
+    column_0 = matrix_a[:, 0]
+    a_column_0 = numpy.asarray(column_0.toarray() if scipy.sparse.issparse(matrix_a) else column_0).reshape(-1)
+    nonzero = set(numpy.flatnonzero(a_column_0).tolist())
+
+    rows = [
+        (idx, uuid, a_column_0[idx], flow_unit)
+        for uuid, (idx, flow_unit) in _load_tech_index(matrix_folder).items()
+        if idx in nonzero
+    ]
+
+    rows.sort(key=lambda row: row[0])
+
+    return numpy.array(rows, dtype=object)
 
 def _load_impact_index(folder: str) -> List[dict]:
     '''Load impact category index from ``index_C.csv``.
@@ -91,11 +133,14 @@ def _load_impact_index(folder: str) -> List[dict]:
         does not exist.
     '''
     path = os.path.join(folder, 'index_C.csv')
+
+    # If the index file is absent, return an empty list.
     if not os.path.exists(path):
         return []
+
+    # Read all rows and convert to a list of dicts with the desired keys.
     return [{'index': int(row[0]), 'impact_name': row[2].strip(), 'impact_unit': row[3].strip()}
             for row in _csv_rows(path)]
-
 
 def find_matrix_path(folder: str, name: str):
     '''Return the path of a matrix file in a folder, or ``None`` if absent.
@@ -115,32 +160,12 @@ def find_matrix_path(folder: str, name: str):
     '''
     for suffix in ('.npz', '.npy', ''):
         p = os.path.join(folder, name + suffix)
+
+        # If the file exists, return its path. Otherwise, continue to the next suffix.
         if os.path.exists(p):
             return p
+        
     return None
-
-
-def export_fingerprint(matrix_folder: str) -> str:
-    '''Identity of the openLCA export; changes whenever any source file does.
-
-    Used to invalidate cached artifacts when the export is replaced. Files that
-    cannot be resolved are skipped, so a missing matrix still surfaces as the
-    explicit error from :func:`load_matrices_from_folder`.
-
-    Parameters
-    ----------
-    matrix_folder : str
-        Path to the openLCA matrix export folder.
-
-    Returns
-    -------
-    str
-        Name, size and modification time of every source file of the export.
-    '''
-    paths = [find_matrix_path(matrix_folder, name) for name in SOURCE_FILES]
-    return str([(name, os.path.getsize(p), os.path.getmtime(p))
-                for name, p in zip(SOURCE_FILES, paths) if p])
-
 
 def matrix_of(file_path: str):
     '''Load a matrix from a file.
@@ -157,90 +182,34 @@ def matrix_of(file_path: str):
     scipy.sparse.spmatrix or numpy.ndarray
         The loaded matrix.
     '''
+
+    # If the file has a .npz extension, load it as a sparse matrix using scipy.sparse.load_npz.
     if file_path.endswith('.npz'):
         return scipy.sparse.load_npz(file_path)
-    return numpy.load(file_path)
 
+    # Otherwise, load it as a dense array using numpy.load.
+    else:
+        return numpy.load(file_path)
 
-def atomic_savez(path: Path, **kwargs):
-    '''Save arrays to a ``.npz`` file atomically using a temporary file.
-
-    Parameters
-    ----------
-    path : Path
-        Destination ``.npz`` file path.
-    **kwargs
-        Named arrays passed directly to :func:`numpy.savez`.
-    '''
-    tmp = Path(str(path) + f".{os.getpid()}.tmp.npz")
-    numpy.savez(tmp, **kwargs)
-    os.replace(tmp, path)
-
-
-def factorize(matrix):
-    '''Factorize a matrix and return a callable for repeated solves.
-
-    Performs the (potentially expensive) factorization once and returns a
-    callable ``solver(rhs)`` that reuses the stored factors. The backend is
-    selected in priority order: pypardiso → scikit-umfpack → scipy splu
-    (sparse), or scipy dense LU (dense).
-
-    Parameters
-    ----------
-    matrix : ndarray or scipy.sparse matrix
-        The coefficient matrix to factorize.
-
-    Returns
-    -------
-    callable
-        A function ``solver(rhs)`` that solves ``matrix @ x = rhs`` for ``x``.
-
-    Notes
-    -----
-    Stores sparse LU factors (L and U), not the dense inverse. The explicit
-    inverse of a sparse matrix is generally dense and should never be formed.
-    '''
-    if scipy.sparse.issparse(matrix):
-        if pypardiso is not None:
-            return lambda rhs: pypardiso.spsolve(matrix, numpy.asarray(rhs))
-        csc = matrix.tocsc() if not scipy.sparse.isspmatrix_csc(matrix) else matrix
-        if scikit_umfpack is not None:
-            lu = scikit_umfpack.UmfpackLU(csc)
-            return lambda rhs: lu.solve(numpy.asarray(rhs))
-        lu = scipy.sparse.linalg.splu(csc)
-        return lambda rhs: lu.solve(numpy.asarray(rhs))
-    lu, piv = scipy.linalg.lu_factor(matrix)
-    return lambda rhs: scipy.linalg.lu_solve((lu, piv), numpy.asarray(rhs))
-
-
-def tech_process_indices(matrix_folder: str, matrix_a) -> numpy.ndarray:
-    '''Extract technosphere indices, UUIDs, and flow units for nonzero entries in ``A[:, 0]``.
+def _load(matrix_folder: str, name: str) -> numpy.ndarray | scipy.sparse.spmatrix | None:
+    '''Load a matrix from a folder, returning None if the file is absent.
 
     Parameters
     ----------
     matrix_folder : str
-        Path to the openLCA matrix export directory, used to load ``index_A.csv``.
-    matrix_a : ndarray or scipy.sparse.spmatrix
-        Technosphere matrix.
+        Path to the openLCA matrix export folder.
+    name : str
+        Base matrix name (e.g. ``'A'``, ``'B'`, or ``'C'``).
 
     Returns
     -------
-    numpy.ndarray
-        Four-column object array with ``[index, uuid, value, flow_unit]`` per
-        row for nonzero components of the first technosphere column, ordered by
-        index so that the first row is always the reference flow.
+    numpy.ndarray or scipy.sparse.spmatrix or None
+        The loaded matrix, or ``None`` if the file does not exist.
     '''
-    col0 = matrix_a[:, 0]
-    a_col0 = numpy.asarray(col0.toarray() if scipy.sparse.issparse(matrix_a) else col0).reshape(-1)
-    nonzero = set(numpy.flatnonzero(a_col0).tolist())
-    rows = [
-        (idx, uuid, a_col0[idx], flow_unit)
-        for uuid, (idx, flow_unit) in _load_tech_index(matrix_folder).items()
-        if idx in nonzero
-    ]
-    rows.sort(key=lambda row: row[0])
-    return numpy.array(rows, dtype=object)
 
+    path = find_matrix_path(matrix_folder, name)
+
+    return matrix_of(path) if path is not None else None
 
 def load_matrices_from_folder(matrix_folder: str):
     '''Load openLCA folder metadata and matrices.
@@ -275,22 +244,43 @@ def load_matrices_from_folder(matrix_folder: str):
     The exported demand vector ``f`` is not read: the demand is always one unit
     of the reference flow, which is built directly by the caller.
     '''
-    def _load(name):
-        path = find_matrix_path(matrix_folder, name)
-        return matrix_of(path) if path is not None else None
+    A = _load(matrix_folder, 'A')
+    B = _load(matrix_folder, 'B')
+    C = _load(matrix_folder, 'C')
 
-    A = _load('A')
     techno_index_uuid = tech_process_indices(matrix_folder, A) if A is not None else None
-    B = _load('B')
-    C = _load('C')
     impact_index = _load_impact_index(matrix_folder)
+
     missing = [name for name, m in zip(('A', 'B', 'C', 'index_A.csv'),
                                        (A, B, C, techno_index_uuid))
                if m is None]
+
+    # If any required matrix or index file could not be loaded, raise a ValueError with the missing files listed.
     if missing:
         raise ValueError(f"{', '.join(missing)} could not be loaded from the specified folder.")
+    
     return impact_index, techno_index_uuid, A, B, C
 
+#### ----------------------------------------------------------------- ####
+#### Functions for saving artefacts and retrieving them from cache     ####
+#### ----------------------------------------------------------------- ####
+
+def atomic_savez(path: Path, **kwargs):
+    '''Save arrays to a ``.npz`` file atomically using a temporary file.
+
+    Parameters
+    ----------
+    path : Path
+        Destination ``.npz`` file path.
+    **kwargs
+        Named arrays passed directly to :func:`numpy.savez`.
+    '''
+    # Create a temporary file with a unique name based on the process ID to avoid conflicts in parallel runs.
+    tmp = Path(str(path) + f".{os.getpid()}.tmp.npz")
+    # Save the arrays to the temporary file using numpy.savez
+    numpy.savez(tmp, **kwargs)
+    # Then replace the target file with the temporary file atomically.
+    os.replace(tmp, path)
 
 def get_cache_paths(matrix_folder: str) -> dict:
     '''Create the ``Initial_Artifacts`` cache directory and return its file paths.
@@ -305,13 +295,14 @@ def get_cache_paths(matrix_folder: str) -> dict:
     Returns
     -------
     dict
-        Mapping from each ``Life_Cycle_Assessment_Plugin._cache`` key to its
+        Mapping from each ``LCA_Plugin._cache`` key to its
         ``.npz`` file path inside the ``Initial_Artifacts`` subdirectory, plus
         ``'fingerprint'`` for the export identity written by
         :func:`export_fingerprint`.
     '''
     cache_dir = Path(matrix_folder) / 'Initial_Artifacts'
-    cache_dir.mkdir(parents=True, exist_ok=True)
+    cache_dir.mkdir(parents = True, exist_ok = True)
+
     return {
         'base_scaling_vector': cache_dir / 'base_scaling_vector.npz',
         'A0_column':           cache_dir / 'A0_column.npz',
@@ -321,3 +312,75 @@ def get_cache_paths(matrix_folder: str) -> dict:
         'impact_index':        cache_dir / 'impact_index.npz',
         'fingerprint':         cache_dir / 'fingerprint.txt',
     }
+
+def export_fingerprint(matrix_folder: str) -> str:
+    '''Identity of the openLCA export; changes whenever any source file does.
+
+    Used to invalidate cached artifacts when the export is replaced. Files that
+    cannot be resolved are skipped, so a missing matrix still surfaces as the
+    explicit error from :func:`load_matrices_from_folder`.
+
+    Parameters
+    ----------
+    matrix_folder : str
+        Path to the openLCA matrix export folder.
+
+    Returns
+    -------
+    str
+        Name, size and modification time of every source file of the export.
+    '''
+    paths = [find_matrix_path(matrix_folder, name) for name in SOURCE_FILES]
+
+    # Return a string representation of the list of tuples (name, size, mtime) for each source file that exists.
+    return str([(name, os.path.getsize(p), os.path.getmtime(p))
+                for name, p in zip(SOURCE_FILES, paths) if p])
+
+#### ----------------------------------------------------------------- ####
+#### Utility function for factorizing matrices                         ####
+#### ----------------------------------------------------------------- ####
+
+def factorize(matrix):
+    '''Factorize a matrix and return a callable for repeated solves.
+
+    Performs the (potentially expensive) factorization once and returns a
+    callable ``solver(rhs)`` that reuses the stored factors. The backend is
+    selected in priority order: pypardiso → scikit-umfpack → scipy splu
+    (sparse), or scipy dense LU (dense).
+
+    Parameters
+    ----------
+    matrix : ndarray or scipy.sparse matrix
+        The coefficient matrix to factorize.
+
+    Returns
+    -------
+    callable
+        A function ``solver(rhs)`` that solves ``matrix @ x = rhs`` for ``x``.
+
+    Notes
+    -----
+    Stores sparse LU factors (L and U), not the dense inverse. The explicit
+    inverse of a sparse matrix is generally dense and should never be formed.
+    '''
+    if scipy.sparse.issparse(matrix):
+        # If matrix is sparse and pypardiso is available, use it for fast solving
+        if pypardiso is not None:
+            return lambda rhs: pypardiso.spsolve(matrix, numpy.asarray(rhs))
+
+        # Cconvert to CSC format for splu or scikit-umfpack, which require it
+        csc = matrix.tocsc() if not scipy.sparse.isspmatrix_csc(matrix) else matrix
+
+        # If scikit-umfpack is available, use it for solving
+        if scikit_umfpack is not None:
+            lu = scikit_umfpack.UmfpackLU(csc)
+            return lambda rhs: lu.solve(numpy.asarray(rhs))
+
+        # Convert to CSC format to LU and solve with scipy.sparse.linalg.splu
+        lu = scipy.sparse.linalg.splu(csc)
+        return lambda rhs: lu.solve(numpy.asarray(rhs))
+
+    # If matrix is dense, use scipy.linalg.lu_factor and lu_solve
+    else:
+        lu, piv = scipy.linalg.lu_factor(matrix)
+        return lambda rhs: scipy.linalg.lu_solve((lu, piv), numpy.asarray(rhs))
