@@ -1,4 +1,4 @@
-"""Combined ground-truth end-to-end tests for pyH2A.Plugins.Life_Cycle_Assessment_Plugin across the
+"""Combined ground-truth end-to-end tests for pyH2A.Plugins.LCA_Plugin across the
 Smartphone_1Layer, Smartphone_2Layer, and Smartphone_3Layer toy models.
 
 Each scenario is run through ``pyH2A.run_pyH2A.pyH2A`` (the same entry point
@@ -29,7 +29,7 @@ breakdown of the same underlying bill of materials and elementary flows.
 
 Caching note
 ------------
-Life_Cycle_Assessment_Plugin._cache is a single process-wide class attribute
+LCA_Plugin._cache is a single process-wide class attribute
 shared by every LCA instance for the lifetime of the pytest process, but it is
 keyed by (matrix folder, export fingerprint), so switching matrix folder
 between groups invalidates it on its own. The tests below clear caches only to
@@ -51,8 +51,8 @@ import shutil
 from pathlib import Path
 
 import pytest
-from pyH2A.Plugins.Life_Cycle_Assessment_Plugin import Life_Cycle_Assessment_Plugin
-from pyH2A.Plugins.Life_Cycle_Assessment_Plugin.config import CONFIG
+from pyH2A.Plugins.LCA_Plugin import LCA_Plugin
+from pyH2A.Config.OpenLCA_config import OPEN_LCA_CONFIG
 from pyH2A.run_pyH2A import pyH2A
 from pyH2A.Utilities.input_modification import convert_input_to_dictionary
 
@@ -67,7 +67,7 @@ _INPUT_FILES_DIR = _HERE / 'data' / 'input_files'
 
 def _clear_ram_only():
     """Force the next run onto the disk-cache path without touching disk."""
-    Life_Cycle_Assessment_Plugin._cache_key = None
+    LCA_Plugin._cache_key = None
 
 
 def _clear_disk(matrix_folder):
@@ -183,8 +183,8 @@ def test_scenarios(group, scenario_index):
     diff_pct = (quantity.supplied_value - expected_value) / expected_value * 100
     print(f'\n  pyH2A={quantity.supplied_value:.6f}  reference={expected_value:.6f}  diff={diff_pct:+.4f}%')
     assert quantity.supplied_value == pytest.approx(expected_value, rel=1e-8)
-    expected = CONFIG[expected_unit]
-    functional_unit_unit = str(Life_Cycle_Assessment_Plugin._cache['A0_column'][2][0])
+    expected = OPEN_LCA_CONFIG[expected_unit]
+    functional_unit_unit = str(LCA_Plugin._cache['A0_column'][2][0])
     assert quantity.supplied_unit == f"{expected['unit']} / {functional_unit_unit}"
 
 
