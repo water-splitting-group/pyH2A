@@ -17,7 +17,7 @@ LCA_Plugin | 1000 | Performs life-cycle assessment to determine environmental im
 
 Name | Unit | Comment
 --- | --- | ---
-Functional Unit | kg | kg[H2] is functional unit
+Functional Unit | kg[H2] | kg[H2] is functional unit
 
 # Financial Input Values
 

@@ -15,11 +15,19 @@ run. The LCA module reads a technosphere matrix exported from openLCA, updates i
 scenario-specific exchange amounts resolved from the plugin outputs, and returns impact
 characterisation results (e.g. GWP100) alongside the levelised H2 cost.
 
-LCA is an optional feature: adding a ``# Life Cycle Assessment`` section to the input file
-activates it. If the section is absent, pyH2A runs as a pure techno-economic model. However,
-once activated, the folder containing the openLCA matrix export must be present and correctly
-specified in the input file. In addition, every foreground process in the technosphere matrix
-must be listed in one or more ``# LCA - ...`` tables in the input file. The section name must
+LCA is an optional feature, run by
+:class:`~pyH2A.Plugins.LCA_Plugin.LCA_Plugin` as an ordinary Workflow plugin. Which
+defaults file the input file merges in decides whether it runs at all:
+
+- ``pyH2A.Config~Defaults_TEA.md`` — techno-economic analysis only, no LCA.
+- ``pyH2A.Config~Defaults_LCA.md`` — LCA only (``Time_Plugin``, ``Production_Plugin``,
+  ``LCA_Plugin``), without the discounted cash flow.
+- ``pyH2A.Config~Defaults_TEA_LCA.md`` — the full TEA workflow with LCA appended.
+
+Once LCA runs, the folder containing the openLCA matrix export must be present and correctly
+specified in the input file. Every foreground process in the technosphere matrix must be
+accounted for: the product itself through ``UUID of product``, and every other process
+through a row of one or more ``# LCA - ...`` tables in the input file. The section name must
 contain ``LCA`` (case-sensitive) anywhere in the name, not necessarily at the start.
 
 Similar to the TEA workflow, LCA is fully compatible with Monte Carlo sampling: the plugin
@@ -61,7 +69,10 @@ The export folder must contain (the python files are not used by pyH2A and can b
 ``n`` is the total number of processes, ``m`` the number of elementary flows, and ``p`` the
 number of impact categories. For ecoinvent-based systems, ``n`` is typically in the tens of thousands.
 
-The ``index_B.csv`` file is bundled with the export but is not read by pyH2A.
+The ``f.npy`` and ``index_B.csv`` files are bundled with the export but are not read by pyH2A.
+The demand is always exactly one unit of the reference flow, built by pyH2A itself, so that
+results are inherently expressed per unit of product regardless of the magnitude openLCA
+happened to calculate the product system for.
 
 Configure the input file for LCA
 =================================
@@ -69,24 +80,55 @@ Configure the input file for LCA
 Life Cycle Assessment section
 ------------------------------
 
-Add a ``# Life Cycle Assessment`` section to the input file with the path to the export folder, , as illustrated in the example below:
+Add a ``# Life Cycle Assessment`` section to the input file with the path to the export folder
+and the UUID of the product, as illustrated in the example below:
 
 .. code-block:: markdown
 
-   # Life Cycle Assessment 
-   
+   # Life Cycle Assessment
+
    Name | Value
    --- | ---
    Matrix Folder | examples/LCA_example/LCA_Test_PVE_EF
+   UUID of product | 50e1c844-e481-4c14-a3ca-1948f1d2fe37
 
 The path is relative to the working directory from which pyH2A is invoked.
+
+``UUID of product`` identifies the reference flow of the product system — the first nonzero
+entry of the technosphere matrix's first column, i.e. the process's own product output. Its
+amount is not declared here: it is
+``Technical Operating Parameters and Specifications > Total output at gate``, the cumulated
+output at the gate over the plant lifetime computed by
+:class:`~pyH2A.Plugins.Production_Plugin.Production_Plugin`, so that cost and impact results
+are driven by the same production figure. Its unit is the declared Functional Unit, converted
+into the flow unit the export records for that UUID — which is what cross-checks the two
+against each other. A Functional Unit whose dimension the reference flow cannot be expressed
+in (an energy unit for a mass flow, say) raises a ``ValueError``.
+
+Functional Unit
+---------------
+
+The Functional Unit has to name the product it refers to, as a bracketed reference:
+
+.. code-block:: markdown
+
+	# Functional Unit
+
+	Name | Unit | Comment
+	--- | --- | ---
+	Functional Unit | kg[H2] | kg[H2] is functional unit
+
+LCA results are reported per unit of that product (e.g. ``kg[$CO_{2}$-Eq] / kg[H2]``), so a
+Functional Unit declared as a bare ``kg`` raises a ``ValueError``. The reference is purely
+descriptive and plays no part in unit conversion, but it is what keeps an impact per kg of
+hydrogen distinguishable from an impact per kg of anything else.
 
 LCA component table
 -------------------
 
-One or more ``# LCA - ...`` sections list the foreground processes whose exchange amounts will
-be updated for each scenario. Below is an example of a complete LCA input file for the foreground
-process of PV + Electrolysis (PVE).
+One or more ``# LCA - ...`` sections list the remaining foreground processes — everything
+except the product itself — whose exchange amounts will be updated for each scenario. Below is
+an example of a complete LCA input file for the foreground process of PV + Electrolysis (PVE).
 
 .. code-block:: markdown
 
@@ -94,7 +136,6 @@ process of PV + Electrolysis (PVE).
 
     Name | Value | Unit | UUID
     --- | --- | --- | ---
-    Total H2 Production | {Technical Operating Parameters and Specifications > Total output at gate > Value, kg} | kg | 50e1c844-e481-4c14-a3ca-1948f1d2fe37
     PV Area | {Non-Depreciable Capital Costs > Solar collection area > Value, m2} | m2 | 0c88e490-56a5-3099-807c-06645527c90e
     Electrolyzer unit number | {Electrolyzer > Number of electrolyzers required > Value, -} | - | 98f950b2-39b0-4374-a400-05984b438be9
     Battery weight | {Battery > Mass > Value, kg} | kg | c341bfcb-5959-3a70-839e-913e8250b237
@@ -115,11 +156,13 @@ Column meanings:
 - **UUID** — the openLCA process UUID. Must match a nonzero entry in column 0 of the technosphere matrix.
 
 Every UUID that appears in the nonzero entries of the technosphere matrix first column must be
-listed. Omitting one raises a ``ValueError``.
+accounted for exactly once, either as ``UUID of product`` or as a component row. Omitting one,
+or listing one that the technosphere column does not contain, raises a ``ValueError``.
 
 Users always supply positive magnitudes. pyH2A inherits the sign from the original matrix: the
-functional unit process (typically H2 production) is positive; all consumed inputs are stored
-as negative values internally.
+product process (typically H2 production) is positive; all consumed inputs are stored
+as negative values internally. A negative value in the input file is therefore rejected with a
+``ValueError`` rather than silently flipping a flow's direction.
 
 Multiple ``# LCA - ...`` tables are supported and their rows are merged, which allows grouping
 components by subsystem for readability.
@@ -136,8 +179,9 @@ Plugin LCA outputs — PVE example
    principle — plugins run first, their outputs are referenced by path in the LCA table —
    applies to any model.
 
-In a full PVE model, all five LCA component values are computed by plugins and referenced via
-path expressions in the ``# LCA - ...`` table. The plugins run before LCA is triggered, so
+In a full PVE model, every LCA component value is computed by a plugin. The product's amount is
+read from ``Production_Plugin``'s output directly; the four remaining components are referenced
+via path expressions in the ``# LCA - ...`` table. The plugins run before LCA is triggered, so
 their outputs are already available in ``dcf.inp`` when the LCA table is processed.
 
 Production_Plugin
@@ -146,7 +190,7 @@ Production_Plugin
 Computes annual H2 output at the plant gate.
 
 - **LCA input required:** none (outputs are always computed)
-- **Output used by LCA:** ``Technical Operating Parameters and Specifications > Total output at gate > Value`` — cumulative H2 production at gate over the plant lifetime, in kg, used to scale the H2 Production foreground process.
+- **Output used by LCA:** ``Technical Operating Parameters and Specifications > Total output at gate > Value`` — cumulative H2 production at gate over the plant lifetime, in the Functional Unit, read directly by ``LCA_Plugin`` as the amount of the process named by ``UUID of product``. It is not a row of the ``# LCA - ...`` table.
 
 Photovoltaic_Plugin
 --------------------
@@ -228,9 +272,10 @@ The run command is identical to a standard TEA run and no additional flags are r
 Base case scenario
 ------------------
 
-LCA workflow for the base case is automatically triggered at the end of the financial workflow
-provided that the ``# Life Cycle Assessment`` section and all the required components of the foreground
-process in the ``# LCA - ...`` section are present.
+``LCA_Plugin`` runs for the base case in its Workflow position — last, after the financial
+workflow in ``Defaults_TEA_LCA.md`` — provided that the ``# Life Cycle Assessment`` section
+and all the required components of the foreground process in the ``# LCA - ...`` section are
+present.
 
 Monte Carlo analysis with LCA
 ------------------------------
@@ -275,29 +320,31 @@ Access LCA results
 ==================
 
 When running from a Python script, LCA results are accessible on the DCF object's ``inp``,
-the same way any other plugin's declared output is read:
+the same way any other plugin's declared output is read. Every impact category becomes its own
+row of the ``Dependent Variables`` table — the same table the levelised cost is written to —
+keyed by the verbatim impact category name from ``index_C.csv``:
 
 .. code-block:: Python
 
 	from pyH2A.run_pyH2A import pyH2A
 
 	result = pyH2A('input.md', '.')
-	lca_results = result.base_case.inp['Life Cycle Assessment']['Results']['Value']
+	dependent_variables = result.base_case.inp['Dependent Variables']
 
-``lca_results`` is a dictionary keyed by the verbatim impact category name from
-``index_C.csv``, with each value a :class:`~pyH2A.Utilities.Unit_Handler.quantity.Quantity`:
+Each row's ``Value`` is a :class:`~pyH2A.Utilities.Unit_Handler.quantity.Quantity` expressed as
+``<impact unit> / <functional unit>``:
 
 .. code-block:: Python
 
-	for name, entry in lca_results.items():
-	    print(f"{name}: {entry.supplied_value:.6f} {entry.supplied_unit}")
+	for name, entry in dependent_variables.items():
+	    print(f"{name}: {entry['Value'].supplied_value:.6f} {entry['Value'].supplied_unit_reference}")
 
 Example output for an IPCC 2013 no LT export:
 
 .. code-block:: text
 
-	Climate change no LT - Global warming potential (GWP100) no LT: 0.454132 kg CO2-Eq
-	Climate change no LT - Global warming potential (GWP20) no LT: 1.234567 kg CO2-Eq
+	Climate change no LT - Global warming potential (GWP100) no LT: 0.454132 kg[$CO_{2}$-Eq] / kg[H2]
+	Climate change no LT - Global warming potential (GWP20) no LT: 1.234567 kg[$CO_{2}$-Eq] / kg[H2]
 	...
 
 To retrieve a single result by impact name:
@@ -305,7 +352,14 @@ To retrieve a single result by impact name:
 .. code-block:: Python
 
 	gwp100_key = 'Climate change no LT - Global warming potential (GWP100) no LT'
-	gwp100 = result.base_case.inp['Life Cycle Assessment']['Results']['Value'][gwp100_key].supplied_value
+	gwp100 = result.base_case.inp['Dependent Variables'][gwp100_key]['Value'].supplied_value
+
+The same results are also available as a single dictionary on the plugin instance, keyed by
+impact name:
+
+.. code-block:: Python
+
+	lca_results = result.base_case.plugs['LCA_Plugin'].lca_results
 
 The output CSV file from a Monte Carlo run contains the same impact category names as column 
 headers, and the values are in the same units as reported in the base case. The CSV file also
@@ -340,7 +394,7 @@ matrices changes that fingerprint, so pyH2A recomputes the artifacts by itself �
 need to delete the ``Initial_Artifacts`` folder by hand.
 
 Within a Python process, the artifacts are also held in a process-local RAM cache
-(``LCA._cache``). Multiprocessing workers each build their own RAM cache from disk on first
+(``LCA_Plugin._cache``). Multiprocessing workers each build their own RAM cache from disk on first
 use, which adds a short startup overhead per worker but avoids recomputing the artifacts within each
 process worker.
 
@@ -363,39 +417,45 @@ tens of seconds for a full factorisation.
 For a system with four foreground components, ``basis_component`` has shape ``(n, 4)`` where
 ``n`` is the total number of processes. The ``(n, 4)`` multiply replaces an ``(n³)`` factorisation.
 
-See :class:`~pyH2A.Plugins.Life_Cycle_Assessment_Plugin.Life_Cycle_Assessment_Plugin` for the
+See :class:`~pyH2A.Plugins.LCA_Plugin.LCA_Plugin` for the
 complete API reference and full mathematical derivation.
 
 Troubleshooting
 ===============
 
-``ValueError: No LCA component tables found in input``
---------------------------------------------------------
+``KeyError: Row 'UUID of product' in table 'Life Cycle Assessment' is required but not found in dcf.inp``
+----------------------------------------------------------------------------------------------------------
 
-No section whose name contains ``LCA`` (case-sensitive) was found in the input file. Check that the
-``# LCA - ...`` section header is spelled correctly and that the file was loaded without
-parsing errors.
+The ``# Life Cycle Assessment`` section declares a ``Matrix Folder`` but no ``UUID of product``.
+Add the openLCA UUID of the product flow — the process whose own product output is the first
+nonzero entry of the technosphere matrix's first column.
 
-``ValueError: UUID '...' ... is missing from the input LCA component tables``
------------------------------------------------------------------------------
+``ValueError: Mismatch between A0 column UUIDs and input LCA component UUIDs``
+------------------------------------------------------------------------------
 
-A UUID in the nonzero entries of the technosphere matrix first column has no matching entry in
-any ``# LCA - ...`` table. Every foreground component must be listed. Find the missing UUID in
-``index_A.csv`` to identify the process.
+The set of UUIDs collected from ``UUID of product`` and the ``# LCA - ...`` tables is not
+exactly the set of nonzero entries of the technosphere matrix's first column. Either a
+foreground component is missing from the input file, or a row lists a UUID the technosphere
+column does not contain. Compare the ``# LCA - ...`` rows against the nonzero entries of
+column 0 in ``index_A.csv``, and check that the correct matrix export folder is specified.
 
-``ValueError: Expected N LCA components ... but got M``
----------------------------------------------------------
+``ValueError: Negative value for LCA component '...'``
+-------------------------------------------------------
 
-More rows were found across all ``# LCA - ...`` tables than there are nonzero entries in
-column 0 of the technosphere matrix. Remove the extra rows or check that the correct matrix
-export folder is specified.
+An exchange amount resolved to a negative number. Declare magnitudes only: pyH2A takes each
+flow's direction from the sign the original technosphere matrix records for it.
 
-``ZeroDivisionError: Sherman-Morrison denominator is too small``
---------------------------------------------------------------------
+``ValueError: Functional Unit '...' carries no reference``
+-----------------------------------------------------------
 
-The scenario values caused the functional unit production amount to approach zero, making the
-rank-1 update numerically singular. Verify that the exchange amount for the H2 production
-foreground process is non-zero.
+The ``# Functional Unit`` table declares a bare unit such as ``kg``. Name the product it refers
+to in brackets (``kg[H2]``), so that results read as an impact per unit of a named product.
+
+``ZeroDivisionError: Sherman-Morrison denominator is singular to working precision``
+------------------------------------------------------------------------------------
+
+The scenario values caused the product's production amount to approach zero, making the
+rank-1 update numerically singular. Verify that ``Total output at gate`` is non-zero.
 
 ``KeyError: 'Unit'``
 -----------------------
@@ -407,7 +467,15 @@ not merely informational. Add a ``Unit`` entry for the affected row.
 ``ValueError: Dimension mismatch: original dimension '...', but requested dimension '...'``
 ---------------------------------------------------------------------------------------------
 
-The ``Unit`` declared for an LCA component does not share a physical dimension with the flow's
-unit in ``index_A.csv`` (e.g. supplying a mass unit for a flow whose unit is energy). Check the
-``Unit`` column against the ``flow unit`` recorded for that UUID in ``index_A.csv`` and correct
-the mismatch.
+Either the ``Unit`` declared for an LCA component does not share a physical dimension with the
+flow's unit in ``index_A.csv`` (e.g. supplying a mass unit for a flow whose unit is energy), or
+the declared Functional Unit does not share one with the export's reference flow. Check the
+``Unit`` column, and the ``# Functional Unit`` table, against the ``flow unit`` recorded for
+that UUID in ``index_A.csv`` and correct the mismatch.
+
+``ValueError: Unknown unit encountered during parsing: '...'``
+---------------------------------------------------------------
+
+An impact unit in ``index_C.csv`` is neither a unit pyH2A already knows nor one mapped in
+``Config/OpenLCA_config.py``. Add an entry for the openLCA spelling to ``OPEN_LCA_CONFIG``,
+giving the pyH2A unit and the reference label to report it with.

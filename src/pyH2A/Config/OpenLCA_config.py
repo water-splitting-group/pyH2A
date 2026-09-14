@@ -106,42 +106,56 @@ OPEN_LCA_CONFIG = {
                 },
         }
 
-def openLCA_to_pyH2A_unit(unit: str, return_reference: bool = False) -> str:
-    '''
+def openLCA_to_pyH2A_unit(unit: str, return_reference: bool = False):
+    '''Translate an openLCA unit string into its pyH2A equivalent.
+
+    ``OPEN_LCA_CONFIG`` only lists the openLCA-specific spellings that pyH2A
+    cannot parse as they stand (e.g. ``'Item(s)'`` or ``'kg CO2-Eq'``). Units
+    that are already valid pyH2A units (e.g. ``'kg'``, ``'MJ'``, ``'kWh'``)
+    are therefore absent from it and are passed through unchanged.
 
     Parameters
     ----------
     unit : str
-        The unit string (from OpenLCA) to process.
+        The unit string (from openLCA) to process.
+    return_reference : bool, optional
+        If ``True``, return the bare unit and its reference label separately,
+        instead of the single string with the label in brackets. Used when the
+        unit is one token of a composite unit, since
+        :class:`~pyH2A.Utilities.Unit_Handler.quantity.Quantity` takes the
+        labels of a composite unit as a separate ``reference`` list.
 
     Returns
     -------
-    str
-        The unit string in pyH2A format
+    str or tuple of (str, str or None)
+        The unit string in pyH2A format, with its reference label attached in
+        brackets (e.g. ``'kg[$CO_{2}$-Eq]'``) when the unit has one. If
+        ``return_reference`` is ``True``, a ``(unit, reference)`` tuple is
+        returned instead, with ``reference`` set to ``None`` for units that
+        carry no label. The tuple shape does not depend on whether the unit is
+        listed in ``OPEN_LCA_CONFIG``, so callers can always unpack it.
     '''
-    # Ensure unit is a string and remove leading/trailing whitespace and convert to lowercase
-    unit = str(unit).strip() #.lower()  
+    # Ensure unit is a string and remove leading/trailing whitespace
+    unit = str(unit).strip()
 
-    # If the unit is not in the OpenLCA config, return it unchanged
-    if unit not in OPEN_LCA_CONFIG:
-        return unit
+    # If the unit is not in the OpenLCA config, use it unchanged: it is either
+    # already a valid pyH2A unit, or it fails later in the unit parser, which
+    # names the offending token.
+    unit_dict = OPEN_LCA_CONFIG.get(unit, {'unit': unit, 'reference': None})
 
-    unit_dict = OPEN_LCA_CONFIG[unit]
+    # Unit and reference returned separately, for use as one token of a composite unit
+    if return_reference:
+        return unit_dict['unit'], unit_dict['reference']
 
-    # If the unit has no reference, return the pyH2A unit
+    # If the unit has no reference, return the pyH2A unit on its own
     if unit_dict['reference'] is None:
         return unit_dict['unit']
 
     # If the unit has a reference, return the pyH2A unit with reference in brackets
-    elif return_reference:
-        return unit_dict["unit"], unit_dict["reference"]
-
-    else:
-        return f'{unit_dict["unit"]}[{unit_dict["reference"]}]'
-
+    return f'{unit_dict["unit"]}[{unit_dict["reference"]}]'
 
 
 if __name__ == "__main__":
     openlca_unit = "kg CO2-Eq"
 
-    print(openLCA_to_pyH2A_unit(openlca_unit))  # Expected output: "kg[CO2-Eq]"
+    print(openLCA_to_pyH2A_unit(openlca_unit))  # Expected output: "kg[$CO_{2}$-Eq]"

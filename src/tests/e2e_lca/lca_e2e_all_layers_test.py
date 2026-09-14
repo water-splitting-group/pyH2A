@@ -8,9 +8,15 @@ and Battery respectively). For 2-layer and 3-layer models, these three plugins
 compute the Circuit Board / Display / Battery quantities
 (base quantity * scenario factor) and insert them into dedicated output tables; the
 ``LCA - Smartphone GT Components`` table then references those outputs via
-path syntax (e.g. ``{GT Display Output > Display > Value, kg}``). The Smartphone row 
-itself (the functional-unit reference flow) stays a literal ``1.0``, and the 1-layer
-model -- which has no sub-components -- carries no GT plugins at all.
+path syntax (e.g. ``{GT Display Output > Display > Value, kg}``). The Smartphone
+itself (the reference flow) is no longer a row of that table: it is identified by
+``Life Cycle Assessment > UUID of product`` and its amount comes from
+``Technical Operating Parameters and Specifications > Total output at gate``, which
+``Production_Plugin`` computes. Every scenario declares a plant design capacity of
+0.05 kg/year over a 20-year plant life at a capacity factor of 100% and no gate
+losses, so that total is exactly 1 kg -- the reference flow amount the ground-truth
+impacts below are stated per. The 1-layer model -- which has no sub-components --
+carries no GT plugins and no component table at all.
 
 Model summary
 -------------
@@ -52,7 +58,6 @@ from pathlib import Path
 
 import pytest
 from pyH2A.Plugins.LCA_Plugin import LCA_Plugin
-from pyH2A.Config.OpenLCA_config import OPEN_LCA_CONFIG
 from pyH2A.run_pyH2A import pyH2A
 from pyH2A.Utilities.input_modification import convert_input_to_dictionary
 
@@ -88,20 +93,27 @@ def _load_scenario(input_file_stem):
 # Each group is (input_file_stem, impact_name, expected_value, expected_unit)
 # in base, S2, S3, S4, S5 order. 1-layer and 2-layer groups only have a base
 # scenario; 3-layer groups have all five.
+#
+# ``expected_unit`` is the full composite unit of the result Quantity: the impact
+# unit of ``index_C.csv`` as translated by ``Config/OpenLCA_config.py`` (so
+# 'kg CO2-eq' becomes 'kg[$CO_{2}$-Eq]', while 'kWh' is already a pyH2A unit and
+# passes through unlabelled), over the declared Functional Unit.
+
+_FUNCTIONAL_UNIT = 'kg[smartphones]'
 
 _SCENARIOS_BY_GROUP = {
-    '1L-gwp': [('smartphone_1layer_gwp_base', 'Global warming potential', 10.0, 'kg CO2-eq')],
+    '1L-gwp': [('smartphone_1layer_gwp_base', 'Global warming potential', 10.0, 'kg[$CO_{2}$-Eq]')],
     '1L-ced': [('smartphone_1layer_ced_base', 'Cumulative energy demand', 50.0, 'kWh')],
-    '1L-acid': [('smartphone_1layer_acid_base', 'Acidification', 4.0, 'kg SO2-eq')],
-    '2L-gwp': [('smartphone_2layer_gwp_base', 'Global warming potential', 10.0, 'kg CO2-eq')],
+    '1L-acid': [('smartphone_1layer_acid_base', 'Acidification', 4.0, 'kg[SO2-eq]')],
+    '2L-gwp': [('smartphone_2layer_gwp_base', 'Global warming potential', 10.0, 'kg[$CO_{2}$-Eq]')],
     '2L-ced': [('smartphone_2layer_ced_base', 'Cumulative energy demand', 50.0, 'kWh')],
-    '2L-acid': [('smartphone_2layer_acid_base', 'Acidification', 4.0, 'kg SO2-eq')],
+    '2L-acid': [('smartphone_2layer_acid_base', 'Acidification', 4.0, 'kg[SO2-eq]')],
     '3L-gwp': [
-        ('smartphone_3layer_gwp_base', 'Global warming potential', 10.0, 'kg CO2-eq'),
-        ('smartphone_3layer_gwp_s2', 'Global warming potential', 8.0, 'kg CO2-eq'),
-        ('smartphone_3layer_gwp_s3', 'Global warming potential', 12.0, 'kg CO2-eq'),
-        ('smartphone_3layer_gwp_s4', 'Global warming potential', 11.2, 'kg CO2-eq'),
-        ('smartphone_3layer_gwp_s5', 'Global warming potential', 9.2, 'kg CO2-eq'),
+        ('smartphone_3layer_gwp_base', 'Global warming potential', 10.0, 'kg[$CO_{2}$-Eq]'),
+        ('smartphone_3layer_gwp_s2', 'Global warming potential', 8.0, 'kg[$CO_{2}$-Eq]'),
+        ('smartphone_3layer_gwp_s3', 'Global warming potential', 12.0, 'kg[$CO_{2}$-Eq]'),
+        ('smartphone_3layer_gwp_s4', 'Global warming potential', 11.2, 'kg[$CO_{2}$-Eq]'),
+        ('smartphone_3layer_gwp_s5', 'Global warming potential', 9.2, 'kg[$CO_{2}$-Eq]'),
     ],
     '3L-ced': [
         ('smartphone_3layer_ced_base', 'Cumulative energy demand', 50.0, 'kWh'),
@@ -111,11 +123,11 @@ _SCENARIOS_BY_GROUP = {
         ('smartphone_3layer_ced_s5', 'Cumulative energy demand', 47.4, 'kWh'),
     ],
     '3L-acid': [
-        ('smartphone_3layer_acid_base', 'Acidification', 4.0, 'kg SO2-eq'),
-        ('smartphone_3layer_acid_s2', 'Acidification', 3.2, 'kg SO2-eq'),
-        ('smartphone_3layer_acid_s3', 'Acidification', 4.8, 'kg SO2-eq'),
-        ('smartphone_3layer_acid_s4', 'Acidification', 4.66, 'kg SO2-eq'),
-        ('smartphone_3layer_acid_s5', 'Acidification', 3.46, 'kg SO2-eq'),
+        ('smartphone_3layer_acid_base', 'Acidification', 4.0, 'kg[SO2-eq]'),
+        ('smartphone_3layer_acid_s2', 'Acidification', 3.2, 'kg[SO2-eq]'),
+        ('smartphone_3layer_acid_s3', 'Acidification', 4.8, 'kg[SO2-eq]'),
+        ('smartphone_3layer_acid_s4', 'Acidification', 4.66, 'kg[SO2-eq]'),
+        ('smartphone_3layer_acid_s5', 'Acidification', 3.46, 'kg[SO2-eq]'),
     ],
 }
 
@@ -173,19 +185,15 @@ def test_scenarios(group, scenario_index):
         _clear_ram_only()
 
     input_file_stem, impact_name, expected_value, expected_unit = scenarios[scenario_index]
-    # ``expected_unit`` is the raw openLCA unit string (e.g. 'kg CO2-eq'), used
-    # as a CONFIG lookup key to check the resolved unit stored on the result
-    # Quantity, expressed as ``<impact unit> / <functional unit>``.
     input_file = _INPUT_FILES_DIR / f'{input_file_stem}.md'
     result = pyH2A(str(input_file), str(_INPUT_FILES_DIR))
-    lca_results = result.base_case.inp['Life Cycle Assessment']['Results']['Value']
-    quantity = lca_results[impact_name]
+    # Every impact category is inserted as its own row of the 'Dependent Variables'
+    # table, keyed by the verbatim impact name from index_C.csv.
+    quantity = result.base_case.inp['Dependent Variables'][impact_name]['Value']
     diff_pct = (quantity.supplied_value - expected_value) / expected_value * 100
     print(f'\n  pyH2A={quantity.supplied_value:.6f}  reference={expected_value:.6f}  diff={diff_pct:+.4f}%')
     assert quantity.supplied_value == pytest.approx(expected_value, rel=1e-8)
-    expected = OPEN_LCA_CONFIG[expected_unit]
-    functional_unit_unit = str(LCA_Plugin._cache['A0_column'][2][0])
-    assert quantity.supplied_unit == f"{expected['unit']} / {functional_unit_unit}"
+    assert quantity.supplied_unit_reference == f'{expected_unit} / {_FUNCTIONAL_UNIT}'
 
 
 # ── Cleanup: runs once after every test above has finished ─────────────────

@@ -64,6 +64,6 @@ capital perc 1st | % of capital spent in 1st year of construction | 100% | -
 
 Name | Value | Unit | Comment
 --- | --- | --- | ---
-Plant design capacity | 0.00013699 | kg[smartphones]/day | Reference production for GT LCA tests
+Plant design capacity | 0.05 | kg[smartphones]/year | Reference production for GT LCA tests
 Operating capacity factor | 100% | - | Capacity factor
 Fraction of output that reaches gate | 100% | - | No gate losses assumed for minimal LCA test
