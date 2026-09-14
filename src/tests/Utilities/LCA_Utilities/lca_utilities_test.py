@@ -3,8 +3,8 @@ import numpy as np
 import pytest
 import scipy.sparse
 
-from pyH2A.Utilities import lca_utils
-from pyH2A.Utilities.lca_utils import (
+from pyH2A.Utilities import lca_utilities
+from pyH2A.Utilities.lca_utilities import (
     _csv_rows,
     _load_impact_index,
     _load_tech_index,
@@ -192,7 +192,7 @@ class TestFactorize:
         Each parametrisation disables one more of them, so the scipy splu
         fallback is exercised even when the [performance] extra is installed."""
         for name in disabled:
-            monkeypatch.setattr(lca_utils, name, None)
+            monkeypatch.setattr(lca_utilities, name, None)
         A_dense = np.array([[1000., 0., 0.], [-20., 1., 0.], [-5.2, 0., 1.]])
         f = np.array([1000., 0., 0.])
         solver = factorize(scipy.sparse.csc_matrix(A_dense))
