@@ -198,3 +198,14 @@ def _cleanup_disk_caches_after_module():  # noqa: F841
     for scenarios in _SCENARIOS_BY_GROUP.values():
         _, matrix_folder = _load_scenario(scenarios[0][0])
         _clear_disk(matrix_folder)
+
+
+if __name__ == '__main__':
+
+    result = pyH2A('src/tests/e2e_lca/data/input_files/smartphone_3layer_gwp_base.md', 'src/tests/e2e_lca/')
+    print(result.base_case.inp['Dependent Variables'])
+
+    import pprint as pp
+
+    #pp.pprint(result.base_case.inp['LCA - Smartphone GT Components'])
+    pp.pprint(result.base_case.plugs['LCA_Plugin'].scaling_vector)

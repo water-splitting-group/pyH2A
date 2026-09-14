@@ -32,13 +32,20 @@ uv add pyH2A
 uv pip install .
 ```
 
+To use scikit-umfpack for faster matrix operations (relevant for LCA, after installation of SuitSparse and Swig using Homebrew):
+
+```bash
+export PKG_CONFIG_PATH="$(brew --prefix suite-sparse)/lib/pkgconfig:$PKG_CONFIG_PATH"
+uv sync --extra performance
+```
+
 # Documentation
 
 Documentation for pyH2A is available at: https://pyh2a.readthedocs.io
 
 # Dependencies
 
-pyH2A uses Python >=3.7 with the following libraries: `NumPy`, `SciPy`, `Pandas`, `Matplotlib` and `Click`
+pyH2A uses Python >=3.9 with the following libraries: `NumPy`, `SciPy`, `Pandas`, `Matplotlib` and `Click`
 
 # Use
 

@@ -14,11 +14,14 @@ import textwrap
 import numpy as np
 
 from pyH2A.Utilities.input_modification import identify_bottom_keys
-from pyH2A.Utilities.constants import (WILDCARD_MARKER, SPECIAL_MIDDLE_KEYS,
-                                       OPTIONAL_KEY, TYPE_KEY, OPTIONS_KEY)
-from pyH2A.Utilities.IO.output_inserter import special_top_level_keys, special_keys as OUTPUT_SPECIAL_KEYS
-
-DESCRIPTION_KEY = 'description'
+from pyH2A.Utilities.constants import (WILDCARD_MARKER, 
+									   SPECIAL_MIDDLE_KEYS,
+                                       OPTIONAL_KEY, 
+									   TYPE_KEY, 
+									   OPTIONS_KEY,
+									   SPECIAL_TOP_LEVEL_KEYS,
+									   SPECIAL_KEYS_OUTPUT_INSERTER,
+									   DESCRIPTION_KEY)
 
 _TYPE_ORDER = [int, float, str, bool, dict, list, tuple, np.ndarray]
 _TYPE_PROSE = {int: 'int', float: 'float', str: 'str', bool: 'bool',
@@ -98,7 +101,7 @@ def _walk_output_row(top_key, middle_key, row_dict):
 	description = row_dict.get(DESCRIPTION_KEY, '')
 
 	for bottom_key, value_spec in row_dict.items():
-		if bottom_key in OUTPUT_SPECIAL_KEYS:
+		if bottom_key in SPECIAL_KEYS_OUTPUT_INSERTER:
 			continue
 
 		type_prose = _type_set_to_prose(value_spec[TYPE_KEY])
@@ -117,7 +120,7 @@ def _walk_output_dict(output_dict):
 	entries = []
 
 	for top_key, table_dict in output_dict.items():
-		if top_key in special_top_level_keys:
+		if top_key in SPECIAL_TOP_LEVEL_KEYS:
 			for group_key, group_dict in table_dict.get('sum_all_tables', {}).items():
 				for row_key, row_dict in group_dict.items():
 					entries.extend(_walk_output_row(group_key, row_key, row_dict))
