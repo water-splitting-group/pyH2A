@@ -198,9 +198,9 @@ class Wind_Plugin:
 		wind_energy_generation_yearly_array = []
 
 		# The nominal power of a wind turbine is calculated at its rated wind speed for an air density of 1.225 kg/m3
+		# These are the density and velocity of reference, from which the hourly production will be obtained based on hourly density and velocity
 		reference_density_kg_m3 = 1.225
 		rated_wind_speed_m_s = np.max(self.curtailed_hourly_wind_speed.unit['m/s'])
-
 
 		for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']:
 			year = round(year)
