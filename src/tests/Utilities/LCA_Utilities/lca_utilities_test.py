@@ -1,4 +1,4 @@
-"""Unit tests for pyH2A.Utilities.lca_utils."""
+"""Unit tests for pyH2A.Utilities.lca_utilities."""
 import numpy as np
 import pytest
 import scipy.sparse
@@ -9,9 +9,11 @@ from pyH2A.Utilities.lca_utilities import (
     _load_impact_index,
     _load_tech_index,
     atomic_savez,
+    export_fingerprint,
     factorize,
     find_matrix_path,
     get_cache_paths,
+    load_matrices_from_folder,
     tech_process_indices,
 )
 
@@ -71,6 +73,13 @@ class TestLoadTechIndex:
     def test_empty_csv_returns_empty_dict(self, tmp_path):
         self._write_csv(tmp_path, [])
         assert _load_tech_index(str(tmp_path)) == {}
+
+    def test_duplicate_provider_id_raises(self, tmp_path):
+        """A provider on two rows is a multi-output process: keying by provider
+        would silently drop one of its technosphere columns."""
+        self._write_csv(tmp_path, ['0,uid,,,,,,,kg,product\n', '1,uid,,,,,,,kg,product\n'])
+        with pytest.raises(ValueError, match='duplicate provider IDs'):
+            _load_tech_index(str(tmp_path))
 
 
 # ── _load_impact_index ─────────────────────────────────────────────────────
@@ -230,6 +239,73 @@ class TestTechProcessIndices:
         self._make_folder(tmp_path, {'uid': 0}, flow_unit='MJ')
         result = tech_process_indices(str(tmp_path), np.array([[7.5]]))
         assert result[0, 3] == 'MJ'
+
+    def test_rows_are_ordered_by_index(self, tmp_path):
+        """Row order follows the matrix, not index_A.csv, so that the reference
+        flow is always first and component values align with A[:, 0]."""
+        self._make_folder(tmp_path, {'uid-2': 2, 'uid-0': 0, 'uid-1': 1})
+        result = tech_process_indices(str(tmp_path), np.array([[4.0], [-1.0], [-2.0]]))
+        assert result[:, 0].tolist() == [0, 1, 2]
+        assert result[:, 1].tolist() == ['uid-0', 'uid-1', 'uid-2']
+
+
+# ── load_matrices_from_folder ──────────────────────────────────────────────
+
+class TestLoadMatricesFromFolder:
+    def _write_export(self, tmp_path, matrices=('A', 'B', 'C')):
+        (tmp_path / 'index_A.csv').write_text(_TECH_HEADER + '0,uid,,,,,,,kg,product\n',
+                                              encoding='utf-8')
+        (tmp_path / 'index_C.csv').write_text(_IMPACT_HEADER + '0,id,Global Warming,kg CO2 eq\n',
+                                              encoding='utf-8')
+        for name in matrices:
+            np.save(str(tmp_path / f'{name}.npy'), np.array([[1.0]]))
+
+    def test_demand_vector_is_not_required(self, tmp_path):
+        """The demand is always one unit of the reference flow, built by the
+        caller, so an export without f.npy still loads."""
+        self._write_export(tmp_path)
+        impact_index, techno_index, A, B, C = load_matrices_from_folder(str(tmp_path))
+        assert impact_index[0]['impact_name'] == 'Global Warming'
+        assert techno_index[0, 1] == 'uid'
+        assert A.shape == (1, 1)
+
+    def test_missing_matrix_is_named(self, tmp_path):
+        self._write_export(tmp_path, matrices=('A', 'B'))
+        with pytest.raises(ValueError, match='C could not be loaded'):
+            load_matrices_from_folder(str(tmp_path))
+
+
+# ── export_fingerprint ─────────────────────────────────────────────────────
+
+class TestExportFingerprint:
+    def _write_export(self, tmp_path):
+        (tmp_path / 'index_A.csv').write_text(_TECH_HEADER, encoding='utf-8')
+        (tmp_path / 'index_C.csv').write_text(_IMPACT_HEADER, encoding='utf-8')
+        for name in ('A', 'B', 'C'):
+            np.save(str(tmp_path / f'{name}.npy'), np.array([[1.0]]))
+
+    def test_stable_for_an_unchanged_export(self, tmp_path):
+        self._write_export(tmp_path)
+        assert export_fingerprint(str(tmp_path)) == export_fingerprint(str(tmp_path))
+
+    def test_changes_when_a_source_file_changes(self, tmp_path):
+        self._write_export(tmp_path)
+        before = export_fingerprint(str(tmp_path))
+        np.save(str(tmp_path / 'A.npy'), np.array([[1.0, 2.0], [3.0, 4.0]]))
+        assert export_fingerprint(str(tmp_path)) != before
+
+    def test_ignores_files_that_are_not_sources(self, tmp_path):
+        """f.npy is bundled with an openLCA export but never read, so re-exporting
+        it alone must not invalidate the cached artifacts."""
+        self._write_export(tmp_path)
+        before = export_fingerprint(str(tmp_path))
+        np.save(str(tmp_path / 'f.npy'), np.array([1.0]))
+        assert export_fingerprint(str(tmp_path)) == before
+
+    def test_missing_source_files_are_skipped(self, tmp_path):
+        """A missing matrix still surfaces as the explicit error from
+        load_matrices_from_folder, not as a failure to fingerprint."""
+        assert export_fingerprint(str(tmp_path)) == '[]'
 
 
 # ── get_cache_paths ────────────────────────────────────────────────────────
