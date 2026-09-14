@@ -193,12 +193,14 @@ class Wind_Plugin:
 		and the power at any other moment is obtained through a proportionality to (density * velocity**3)
 		'''
 
-		# The turbine nominal power is reached when density * curtailed_speed ** 3 is maximum
-		reference_production = np.max(self.hourly_density.unit['kg/m3'] * self.curtailed_hourly_wind_speed.unit['m/s']**3) 
-
 		self.wind_electric_energy_generation_yearly_data = {}
 		self.total_electric_energy_generation_yearly_data = {}
 		wind_energy_generation_yearly_array = []
+
+		# The nominal power of a wind turbine is calculated at its rated wind speed for an air density of 1.225 kg/m3
+		reference_density_kg_m3 = 1.225
+		rated_wind_speed_m_s = np.max(self.curtailed_hourly_wind_speed.unit['m/s'])
+
 
 		for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']:
 			year = round(year)
@@ -208,9 +210,9 @@ class Wind_Plugin:
 																		*
 																		self.input_dict_resolved['Wind Turbine']['Installed wind capacity']['Value'].unit['W']
 																		*
-																		self.hourly_density.unit['kg/m3'] * self.curtailed_hourly_wind_speed.unit['m/s']**3
-																		/
-																		reference_production
+																		(self.hourly_density.unit['kg/m3'] / reference_density_kg_m3) 
+																		* 
+																		(self.curtailed_hourly_wind_speed.unit['m/s'] / rated_wind_speed_m_s)**3
 																		, 
 																		'Wh'
 																	)

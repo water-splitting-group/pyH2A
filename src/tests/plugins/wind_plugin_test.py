@@ -56,8 +56,8 @@ class DummyDCF:
             },
             "expected": {
                 "number_turbines": Quantity(5,"-"),
-                "wind_energy_generation_yearly_array": Quantity(np.array([32954593371912.406, 32625047438193.28]),'J'),
-                "total_energy_generation_yearly_array": Quantity(np.array([171066505371912.4, 170736959438193.28]),'J'),
+                "wind_energy_generation_yearly_array": Quantity(np.array([32041211782785.008, 31720799664957.156]),'J'),
+                "total_energy_generation_yearly_array": Quantity(np.array([170153123782785, 169832711664957.16]),'J'),
                 "last_half_day_available_energy":Quantity(np.array([
                         31492800000.0,  31496400000, 31500000000,  31503600000, 
                         31507200000,  31510800000,31514400000, 31518000000, 
@@ -68,10 +68,10 @@ class DummyDCF:
                         0, 0, 0, 0, 
                         0, 0, 0, 0, 
                         0, 0, 0, 0, 
-                        3006888977.5945992 ,  3422031955.855719,  3906197542.9547396, 5915441564.042187, 
-                        6972642911.208555, 8566416338.770905,  10790912763.99429, 11276236627.601461,                         
+                        2923548940.5415 ,  3327185663.849936,  3797931940.0700607, 5751487017.397403, 
+                        6779386584.517369, 8328986403.577035,  10491827870.508307, 10963700320.020325,                         
                     ]), 'J'),
-                "wind_to_total_production_fraction": Quantity(0.1918635928589533,'-')
+                "wind_to_total_production_fraction": Quantity(0.1875431409187127,'-')
             },
         },
     ],
