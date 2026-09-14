@@ -3,10 +3,10 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-from pyH2A.Plugins.Life_Cycle_Assessment_Plugin import Life_Cycle_Assessment_Plugin
-from pyH2A.Plugins.Life_Cycle_Assessment_Plugin.config import CONFIG
+from pyH2A.Plugins.LCA_Plugin import LCA_Plugin
+from pyH2A.Config.OpenLCA_config import OPEN_LCA_CONFIG
 from pyH2A.Utilities.functional_unit import resolve_functional_unit
-from pyH2A.Utilities.lca_utils import find_matrix_path, matrix_of
+from pyH2A.Utilities.lca_utilities import find_matrix_path, matrix_of
 
 
 # ── Paths ──────────────────────────────────────────────────────────────────
@@ -104,7 +104,7 @@ def test_lca(case):
     dcf = DummyDCF(**case["input"])
 
     # Run LCA
-    lca = Life_Cycle_Assessment_Plugin(dcf, print_info=False)
+    lca = LCA_Plugin(dcf, print_info=False)
     quantity = lca.lca_results[_GWP100_KEY]
     expected = case["expected"]
 
@@ -113,8 +113,8 @@ def test_lca(case):
 
     assert quantity.supplied_value == pytest.approx(expected["gwp100_value"], rel=1e-8)
 
-    expected_unit = CONFIG[expected["gwp100_unit"]]
-    functional_unit_unit = str(Life_Cycle_Assessment_Plugin._cache['A0_column'][2][0])
+    expected_unit = OPEN_LCA_CONFIG[expected["gwp100_unit"]]
+    functional_unit_unit = str(LCA_Plugin._cache['A0_column'][2][0])
     assert quantity.supplied_unit == f"{expected_unit['unit']} / {functional_unit_unit}"
 
 
@@ -142,7 +142,7 @@ class SmartphoneDCF:
 
 
 def _impacts(matrix_folder):
-    results = Life_Cycle_Assessment_Plugin(SmartphoneDCF(matrix_folder), print_info=False).lca_results
+    results = LCA_Plugin(SmartphoneDCF(matrix_folder), print_info=False).lca_results
     return {name: (quantity.supplied_value, quantity.supplied_unit) for name, quantity in results.items()}
 
 
@@ -167,7 +167,7 @@ def test_scaling_vector_solves_the_scenario_technosphere_system():
 
     dcf = DummyDCF(h2_production=1.0, pv_electricity=198.0,
                    electrolyzer=1e-6, reverse_osmosis=9.0)
-    lca = Life_Cycle_Assessment_Plugin(dcf, print_info=False)
+    lca = LCA_Plugin(dcf, print_info=False)
 
     matrix_a = matrix_of(find_matrix_path(_MATRIX_FOLDER, 'A'))
     # Rebuild the scenario's first technosphere column from the resolved component values.
@@ -225,21 +225,21 @@ def test_negative_component_value_is_rejected(tmp_path):
     dcf = SmartphoneDCF(_toy_export(tmp_path))
     dcf.inp['LCA - Smartphone']['Smartphone']['Value'] = -1.0
     with pytest.raises(ValueError, match='Negative value for LCA component'):
-        Life_Cycle_Assessment_Plugin(dcf, print_info=False)
+        LCA_Plugin(dcf, print_info=False)
 
 
 def test_functional_unit_must_match_the_exports_reference_flow_unit(tmp_path):
     dcf = SmartphoneDCF(_toy_export(tmp_path))
     dcf.functional_unit = resolve_functional_unit('ton')   # export's reference flow is in kg
     with pytest.raises(ValueError, match='Functional Unit mismatch'):
-        Life_Cycle_Assessment_Plugin(dcf, print_info=False)
+        LCA_Plugin(dcf, print_info=False)
 
 
 def test_impact_unit_absent_from_config_is_named(tmp_path):
     work = _toy_export(tmp_path)
     _rewrite_csv(work / 'index_C.csv', lambda rows: rows[0].__setitem__(3, 'kg 1,4-DCB'))
     with pytest.raises(KeyError, match=r"kg 1,4-DCB"):
-        Life_Cycle_Assessment_Plugin(SmartphoneDCF(work), print_info=False)
+        LCA_Plugin(SmartphoneDCF(work), print_info=False)
 
 
 def test_duplicate_provider_id_is_rejected(tmp_path):
@@ -247,4 +247,31 @@ def test_duplicate_provider_id_is_rejected(tmp_path):
     _rewrite_csv(work / 'index_A.csv',
                  lambda rows: rows.append(['1', rows[0][1], '', '', '', '', '', '', 'kg', 'product']))
     with pytest.raises(ValueError, match='duplicate provider IDs'):
-        Life_Cycle_Assessment_Plugin(SmartphoneDCF(work), print_info=False)
+        LCA_Plugin(SmartphoneDCF(work), print_info=False)
+
+
+if __name__ == '__main__':
+
+    from timeit import default_timer as timer
+
+    inputs = {
+                "h2_production": 1.0,
+                "pv_electricity": 198.0,
+                "electrolyzer": 1e-6,
+                "reverse_osmosis": 9.0,
+    }
+
+    dcf = DummyDCF(**inputs)
+
+    # Run LCA
+
+    start = timer()
+
+    for _ in range(100000):
+        lca = LCA_Plugin(dcf, print_info=False)
+        quantity = lca.lca_results[_GWP100_KEY]
+
+    end = timer()
+
+    print("Time passed:", end - start)
+
