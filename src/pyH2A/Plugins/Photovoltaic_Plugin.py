@@ -130,6 +130,15 @@ class Photovoltaic_Plugin:
 					"description": "Yearly power generation of PV array (array).",
 					"optional": False,
 				},
+				"Total yearly power generation": {
+					"Value": {
+						"inserted_value": "electric_energy_generation_yearly_array",
+						"type": {np.ndarray,},
+						"dimension": "energy",
+					},
+					"description": "Yearly power generation of PV array (array).",
+					"optional": False,
+				},				
 				"Available energy (hourly)": {
 					"Value": {
 						"inserted_value": "electric_energy_generation_yearly_data",
@@ -195,6 +204,7 @@ class Photovoltaic_Plugin:
 		yearly_energy_generation = []
 
 		for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']:
+			year = round(year)
 			data_loss_corrected = self.calculate_photovoltaic_loss_correction(data, year)
 
 			# Multiplying irradiance data (J/m2) by nominal power in kW 
