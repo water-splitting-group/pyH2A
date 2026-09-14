@@ -14,10 +14,18 @@ dependencies = [
     "click>=8.1.8",
     "furo>=2025.9.25",
     "matplotlib>=3.9.4",
+    "numba>=0.60.0",
     "numpy>=2.0.2",
     "numpydoc>=1.9.0",
     "pandas>=2.3.3",
     "pint>=0.24.4",
     "pytest>=8.4.2",
+    "pytest-cov>=7.1.0",
     "scipy>=1.13.1",
+]
+
+[project.optional-dependencies]
+performance = [
+    "pypardiso>=0.4.7; sys_platform == 'win32' or sys_platform == 'linux'",
+    "scikit-umfpack>=0.3.3; sys_platform == 'darwin'",
 ]
