@@ -11,7 +11,6 @@ from pyH2A.Utilities.lca_utilities import (
 )
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
-import pprint as pp
 
 class LCA_Plugin:
     '''Performs life-cycle assessment to determine environmental impacts, from an
@@ -24,14 +23,22 @@ class LCA_Plugin:
 
     Parameters
     ----------
+    Technical Operating Parameters and Specifications > Total output at gate > Value : float or int
+        Cumulated output of product at the gate over the plant lifetime, in the
+        functional unit of the product. Computed by
+        :class:`~pyH2A.Plugins.Production_Plugin.Production_Plugin`, and used as
+        the amount of the reference flow in the technosphere column.
     Life Cycle Assessment > Matrix Folder > Value : str
         Path to the openLCA matrix export folder containing the technosphere
-        (A), intervention (B), characterization (C), and demand (f) matrices.
+        (A), intervention (B) and characterization (C) matrices.
+    Life Cycle Assessment > UUID of product > Value : str
+        openLCA technosphere UUID of the product flow, i.e. the entry of the
+        technosphere column that ``Total output at gate`` supplies the value of.
     <...> LCA <...> >> Value : float, int, or ndarray
         Value of an individual LCA technosphere component entry, in a
         component-specific unit. Every table in ``dcf.inp`` whose name
         contains ``"LCA"`` is matched (``sum_all_tables()``-style wildcard
-        table group, and every row within each matched table is resolved 
+        table group, and every row within each matched table is resolved
         regardless of its name.
     <...> LCA <...> >> UUID : str
         openLCA technosphere UUID identifying which technosphere column entry
@@ -39,15 +46,16 @@ class LCA_Plugin:
 
     Returns
     -------
-    Life Cycle Assessment > Results > Value : dict
-        LCIA results keyed by impact name. Each value is a
+    Dependent Variables > <impact name> > Value : Quantity
+        One row per impact category of the export, keyed by the verbatim impact
+        name of ``index_C.csv``. Each value is a
         :class:`~pyH2A.Utilities.Unit_Handler.quantity.Quantity` instance,
         inherently expressed per 1 unit of the reference flow (the demand is
         always exactly one unit of it, regardless of the magnitude reported by
         openLCA), as a composite unit of
-        ``<impact unit> / <reference flow unit>``. Computed by :meth:`perform_lca`.
+        ``<impact unit> / <functional unit>``. Computed by :meth:`perform_lca`.
     ['LCA_Plugin'].lca_results : dict
-        Identical to the value inserted into ``dcf.inp`` above, accessible
+        The same results as a single dictionary keyed by impact name, accessible
         directly off the plugin instance via
         ``dcf.plugs['LCA_Plugin']``.
     self.matrix_folder : str
@@ -62,14 +70,13 @@ class LCA_Plugin:
     Raises
     ------
     ValueError
-        Raised when no LCA input tables are found in ``dcf.inp``, when a UUID
-        present in the technosphere matrix is absent from the LCA input tables,
-        when a resolved component value is negative, or when the export's
-        reference flow unit differs from the declared Functional Unit (see
-        :meth:`apply_component_updates`).
-    KeyError
-        Raised when an impact unit of the export has no entry in
-        ``Config/OpenLCA_Config.py``.
+        Raised when the UUIDs of the LCA input tables and of the product do not
+        match the nonzero entries of the technosphere column exactly, when a
+        resolved component value is negative, when a declared Unit cannot be
+        converted into the flow unit the export records for that entry, when the
+        declared Functional Unit carries no reference, or when an impact unit of
+        the export is neither a pyH2A unit nor mapped in
+        ``Config/OpenLCA_config.py``.
     ZeroDivisionError
         Raised when the Sherman-Morrison denominator is singular to working
         precision.
@@ -105,6 +112,17 @@ class LCA_Plugin:
     def _set_up(self, dcf):
 
         self.functional_unit = dcf.functional_unit
+
+        # The reference labels the product the impacts are reported per, which is what
+        # distinguishes 'kg[$CO_{2}$-Eq] / kg[H2]' from a bare 'kg / kg'. It also supplies
+        # the denominator's entry in the reference list every result Quantity is built with
+        # in perform_lca. Checked here, before an export of any size is loaded.
+        if not self.functional_unit.reference:
+            raise ValueError(
+                f"Functional Unit '{self.functional_unit.unit}' carries no reference. Declare the "
+                "product it refers to in brackets (e.g. 'kg[H2]' rather than 'kg') in the "
+                "'# Functional Unit' table, so that LCA results name the product they are "
+                "expressed per.")
 
         self.input_dict = {
             "Technical Operating Parameters and Specifications": {
@@ -202,11 +220,11 @@ class LCA_Plugin:
         ``basis_component`` (precomputed ``A^{-1} e_i`` basis vectors),
         ``h_base`` and ``h_basis`` (the precomputed LCIA operator), and
         ``impact_index``. Disk paths are resolved by
-        :func:`~pyH2A.Utilities.lca_utils.get_cache_paths`, which also creates the
+        :func:`~pyH2A.Utilities.lca_utilities.get_cache_paths`, which also creates the
         ``Initial_Artifacts`` subdirectory.
 
         Every artifact is written through
-        :func:`~pyH2A.Utilities.lca_utils.atomic_savez` and the fingerprint is
+        :func:`~pyH2A.Utilities.lca_utilities.atomic_savez` and the fingerprint is
         written last, so an interrupted write simply leaves no fingerprint and
         the next run recomputes.
         '''
@@ -259,7 +277,7 @@ class LCA_Plugin:
     def compute_all_artifacts_from_scratch(self):
         '''Compute all LCA artifacts from source matrices and populate the RAM cache.
 
-        Loads matrices via :func:`~pyH2A.Utilities.lca_utils.load_matrices_from_folder`,
+        Loads matrices via :func:`~pyH2A.Utilities.lca_utilities.load_matrices_from_folder`,
         factorizes the technosphere matrix, solves for the base scaling vector,
         precomputes Sherman-Morrison basis columns and the LCIA operator, and
         populates ``_cache``.
@@ -341,35 +359,30 @@ class LCA_Plugin:
                      impact_index=np.array(LCA_Plugin._cache['impact_index'], dtype=object))
 
     def apply_component_updates(self):
-        '''Store resolved LCA input values aligned to the technosphere column,
-        then cross-check the declared Functional Unit.
+        '''Store resolved LCA input values aligned to the technosphere column.
 
-        Reads every ``<...>LCA<...>`` wildcard table already resolved into
+        The product entry is taken from ``Total output at gate`` under the UUID
+        declared as ``UUID of product``; every other entry comes from a
+        ``<...>LCA<...>`` wildcard table already resolved into
         ``self.input_dict_resolved`` (path-based references such as
         ``"A > B > Value"`` are resolved by :func:`input_resolver_function`
-        itself), then matches each component to its position in the cached
+        itself). Each component is then matched to its position in the cached
         first technosphere column by UUID. The sign of each value is
         preserved from the original column. The result is stored on
-        ``self.component_values`` for use in :meth:`build_scaling_vector`.
-
-        Parameters
-        ----------
-        dcf : pyH2A.Discounted_Cash_Flow
-            Discounted cash flow object whose input dictionary contains at
-            least one table whose name contains ``"LCA"``, and whose resolved
-            ``functional_unit`` is cross-checked against the flow unit the
-            export records for the reference flow (see
-            :func:`~pyH2A.Utilities.functional_unit.resolve_functional_unit`).
+        ``self.component_values`` for use in :meth:`perform_lca`.
 
         Raises
         ------
         ValueError
-            Raised when no LCA tables are found in ``dcf.inp``, when a UUID
-            present in the cached technosphere column is absent from the
-            input tables, when a resolved component value is negative, or when
-            the export's reference flow unit differs from
-            ``dcf.functional_unit.unit``.
+            Raised when the set of UUIDs collected here does not match the set
+            of nonzero entries of the cached technosphere column exactly (in
+            either direction), when a resolved component value is negative, or
+            when a declared ``Unit`` cannot be converted into the flow unit the
+            export records for that entry - which is also what cross-checks the
+            declared Functional Unit, since the product's value is supplied in it.
 
+        Notes
+        -----
         Array-like ``Value`` entries are reduced to a scalar by summation.
         The ordering of ``self.component_values`` follows ``A0_column``, not
         the order of rows in the input tables. Each component's declared
@@ -437,6 +450,10 @@ class LCA_Plugin:
             Raised when ``1 + correction[0]`` is lost to cancellation relative
             to ``correction[0]``, i.e. when the scenario's technosphere matrix
             is numerically singular. No direct-solve fallback is applied.
+        ValueError
+            Raised when an impact unit of the export is neither a pyH2A unit nor
+            mapped in ``Config/OpenLCA_config.py``, in which case the unit parser
+            names the offending token.
 
         Notes
         -----
@@ -451,10 +468,11 @@ class LCA_Plugin:
         never formed here; :attr:`scaling_vector` builds it on demand.
 
         Stores results on ``self.lca_results`` as a dictionary mapping impact
-        names to ``Quantity`` instances, each expressed as a composite unit of
-        ``<impact unit> / <reference flow unit>`` (e.g. ``'kg / kg'``). No
-        normalization is performed: the demand is one unit of the reference
-        flow by construction.
+        names to ``Quantity`` instances. Impacts are computed in the export's own
+        reference flow unit and then restated per declared Functional Unit, as a
+        composite unit of ``<impact unit> / <functional unit>``
+        (e.g. ``'kg[$CO_{2}$-Eq] / kg[H2]'``). No normalization is performed: the
+        demand is one unit of the reference flow by construction.
         '''
         cache = LCA_Plugin._cache
 
