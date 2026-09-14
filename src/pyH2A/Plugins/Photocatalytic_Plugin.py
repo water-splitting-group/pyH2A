@@ -1,5 +1,7 @@
 import numpy as np
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
+from pyH2A.Utilities.input_modification import hourly_to_daily_power
+from pyH2A.Utilities.Physical_Properties.Physical_properties import Physical_properties as PP
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
 class Photocatalytic_Plugin:
@@ -86,7 +88,7 @@ class Photocatalytic_Plugin:
 
 		self.functional_unit = dcf.functional_unit
 
-		self.input_dict = {
+		self.input_dict = { 			
 			"Technical Operating Parameters and Specifications": {
 				"Plant design capacity": {
 					"Value": {
@@ -99,6 +101,17 @@ class Photocatalytic_Plugin:
 					"optional": False,
 					"description": "Plant design capacity, in mass of hydrogen/time."
 				},
+				"Design output by year": {
+					"Value": {
+						"type": {np.ndarray},
+						"bounds": (0, None),
+					},
+					"Unit": {
+						"dimension": "mass",
+					},
+					"optional": False,
+					"description": "Yearly output, ignoring the capacity factor."
+				},				
 			},
 			"Reactor Baggies": {
 				"Cost material top": {
@@ -414,6 +427,62 @@ class Photocatalytic_Plugin:
 					"description": "Total water volume"
 				},
 			},
+		"Main Stream": {
+			"Temperature": {
+				"Value": {
+					"inserted_value": "outlet_temperature",
+					"type": {float,},
+					"dimension": "absolute_temperature",
+				},
+				"optional": False,
+				"description": "Mixture outlet temperature."
+			},
+			"Pressure": {
+				"Value": {
+					"inserted_value": "outlet_pressure",
+					"type": {float,},
+					"dimension": "pressure",
+				},
+				"optional": False,
+				"description": "Mixture outlet pressure."
+			},
+			"Specific enthalpy": {
+				"Value": {
+					"inserted_value": "outlet_enthalpy",
+					"type": {float,},
+					"dimension": "energy/mass",
+				},
+				"optional": False,
+				"description": "Mixture outlet specific enthalpy."
+			},  
+			"Mass fraction": {
+				"Value": {
+					"inserted_value": "outlet_mass_fraction",
+					"type": {dict,},
+					"dimension": "dimensionless",
+				},
+				"optional": False,
+				"description": "Mixture outlet mass fraction."
+			},   
+			"Design mass by year": {
+				"Value": {
+					"inserted_value": "yearly_mass_flow",
+					"type": {np.ndarray,},
+					"dimension": "mass",
+				},
+				"optional": False,
+				"description": "Mixture outlet mass per year, excluding operating capacity factor (array of years)."
+			},  
+			"Peak mass flowrate": {
+				"Value": {
+					"inserted_value": "peak_mass_flowrate",
+					"type": {float,},
+					"dimension": "mass/time",
+				},
+				"optional": False,
+				"description": "Mixture outlet mass flowrate on peak production day."
+			},   			 					                
+		},			
 		}
 
 	def _run(self, dcf):
@@ -430,6 +499,8 @@ class Photocatalytic_Plugin:
 		self.catalyst_cost()
 		self.land_area()
 		self.catalyst_activity()
+		self.outlet_flow_properties()
+
 		
 		output_inserter_function(self.output_dict, self, dcf, 'Photocatalytic_Plugin') 
 
@@ -578,4 +649,52 @@ class Photocatalytic_Plugin:
 										(1. + self.input_dict_resolved['Reactor Baggies']['Additional land area']['Value'].unit['-']), 
 										'm2')
 
+	def outlet_flow_properties(self):
+		'''Establishes the thermophysical characteristics of the fluid leaving the reactor, for downstream process sizing'''
 
+		self.outlet_temperature = Quantity(60., 'degC') # hardcoded for the moment, could become an input later
+		self.outlet_pressure = Quantity(1.01315e5, 'Pa') # hardcoded for the moment, could become an input later
+
+		# Assuming water vapour is saturated in the baggie, determination of the water vapour pressure
+		psat = PP.Water_saturation_pressure(self.outlet_temperature)
+
+		mol_fraction = {} # molar fraction of the gas mixture, assuming ideal gas, expressed in mol of species for a total amount of 1 mol 
+		mol_fraction['H2O'] = Quantity(
+								psat.unit['Pa']/self.outlet_pressure.unit['Pa'], 
+								 '-') 
+		# The pressure that is not due to water is due for 2/3 to H2, and for 1/3 to O2 (stoichiometry)
+		mol_fraction['H2'] = Quantity(
+								(2/3)*(1-mol_fraction['H2O'].unit['-']), 
+								'-')
+		mol_fraction['O2'] = Quantity(
+								1 - mol_fraction['H2'].unit['-'] - mol_fraction['H2O'].unit['-'], 
+								'-')
+
+		_, self.outlet_mass_fraction = PP.Substance_to_mass(mol_fraction)
+
+
+		self.yearly_mass_flow = Quantity(self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output by year']['Value'].unit['kg']
+									   / 
+									   self.outlet_mass_fraction['H2'].unit['-']
+									   ,
+									   'kg')
+		
+		Daily_irradiation_J_per_m2 = hourly_to_daily_power(self.input_dict_resolved['Solar Input']['Hourly']['Value'].unit['J/m2'])
+		Max_daily_irradiation_J_per_m2 = np.max(Daily_irradiation_J_per_m2)
+
+		time_for_peak = Quantity(1., 's')
+		self.peak_mass_flowrate = Quantity(self.yearly_mass_flow.unit['kg'][0] * time_for_peak.unit['year'] 
+									 		*
+											Max_daily_irradiation_J_per_m2
+											/
+											self.input_dict_resolved['Solar Input']['Mean solar input']['Value'].unit['W/m2'],
+											'kg/day')
+
+		# specific enthalpy at the outlet of the baggie
+		h = PP.Enthalpy(T = self.outlet_temperature,
+						P = self.outlet_pressure, 
+						amount = self.outlet_mass_fraction,
+						phase = 'V', 
+						composition_basis = 'mass'
+						)
+		self.outlet_enthalpy = Quantity(h.unit['J'], 'J/kg')
