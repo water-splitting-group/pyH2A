@@ -1,80 +1,12 @@
 import numpy as np
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
+from pyH2A.Utilities.input_modification import smoothened_production
+from pyH2A.Utilities.Physical_Properties.Physical_properties import Physical_properties as PP
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
 class Photocatalytic_Plugin:
 	'''Simulating H2 production using photocatalytic water splitting in plastic baggie reactors.
 
-	Parameters
-	----------
-	Technical Operating Parameters and Specifications > Plant design capacity > Value : float
-		Plant design capacity, in mass of hydrogen/time.
-	Reactor Baggies > Cost material top > Value : float
-		Cost of baggie top material.
-	Reactor Baggies > Cost Material Bottom > Value : float
-		Cost of baggie bottom material.
-	Reactor Baggies > Number of ports per baggie > Value : int
-		Number of ports per baggie.
-	Reactor Baggies > Cost of port > Value : float
-		Cost of a port.		
-	Reactor Baggies > Other Costs > Value : float
-		Other costs per baggie.
-	Reactor Baggies > Markup factor > Value : float
-		Markup factor for baggies, typically > 1.
-	Reactor Baggies > Length > Value : float
-		Length of single baggie in m.
-	Reactor Baggies > Width > Value : float
-		Width of single baggie in m.
-	Reactor Baggies > Filling height > Value : float
-		Height of reactor baggie in m. In this simulation this value determines the height
-		of the water level and hence is an important parameter ultimately determining the
-		level of light absorption and total catalyst amount.
-	Reactor Baggies > Additional land area > Value : float
-		Additional land area required, percentage or value > 0. 
-		Calculated as: (1 + addtional land area) * baggie area.
-	Reactor Baggies > Lifetime > Value : float
-		Lifetime of reactor baggies in years before replacement is required.
-	Catalyst > Cost per unit of mass > Value : float
-		Cost per mass of catalyst.
-	Catalyst > Concentration > Value : float
-		Concentration of catalyst.
-	Catalyst > Lifetime > Value : float
-		Lifetime of catalysts before replacement is required.
-	Catalyst > Molar Weight > Value : float, optional
-		If the molar weight of the catalyst is specified, homogeneous catalyst
-		properties (TON, TOF etc. are calculated).
-	Catalyst > Molar Attenuation Coefficient > Value : float, optional
-		If the molar attenuation coefficient is specified (along with the molar weight),
-		absorbance and the fraction of absorbed light are also calculated.
-	Solar-to-Hydrogen Efficiency > STH > Value : float
-		Solar-to-hydrogen efficiency in percentage or as a value between 0 and 1.
-	Solar Input > Mean solar input > Value : float
-		Mean solar input power per area.
-	Solar Input > Hourly > Value : ndarray
-		Hourly irradiation data.
-
-	Returns
-	-------
-	Non-Depreciable Capital Costs > Land required > Value : float
-		Total land area required in acres.
-	Non-Depreciable Capital Costs > Solar collection area > Value : float
-		Solar colelction area in m2.
-	Planned Replacement > Planned replacement catalyst > Cost : float
-		Total cost of completely replacing the catalyst once.
-	Planned Replacement > Planned replacement catalyst > Frequency : float
-		Replacement frequency of catalyst in years, identical to catalyst lifetime.
-	Planned Replacement > Planned replacement baggie > Cost : float
-		Total cost of replacing all  baggies.
-	Planned Replacement > Planned replacement baggie > Frequency : float
-		Replacement frequency of baggies in year, identical to baggie lifetime.
-	Direct Capital Costs - Reactor Baggies > Baggie cost > Value : float
-		Total baggie cost.
-	Direct Capital Costs - Photocatalyst > Catalyst cost > Value : float
-		Total catalyst cost.
-	Reactor Baggies > Number > Value : int
-		Number of individual baggies required for design H2 production capacity.
-	Water Volume > Volume > Value : float
-		Total water volume.
 	'''
 
 	def __init__(self, dcf, print_info, run = True):
@@ -86,19 +18,32 @@ class Photocatalytic_Plugin:
 
 		self.functional_unit = dcf.functional_unit
 
-		self.input_dict = {
+		self.input_dict = { 	
+            "Time": {
+                "Years": {
+                    "Value": {
+                        "type": {dict,},
+                        "bounds": (None, None),
+                    },
+                    "Unit": {
+                        "dimension": "dimensionless",
+                    },
+                    "optional": False,
+                    "description": "Dictionary containing all time-related quantities."
+                }, 
+            },    					
 			"Technical Operating Parameters and Specifications": {
-				"Plant design capacity": {
+				"Design output by year": {
 					"Value": {
-						"type": {int,float},
+						"type": {np.ndarray},
 						"bounds": (0, None),
 					},
 					"Unit": {
-						"dimension": "mass/time",
+						"dimension": "mass",
 					},
 					"optional": False,
-					"description": "Plant design capacity, in mass of hydrogen/time."
-				},
+					"description": "Yearly output, ignoring the capacity factor."
+				},				
 			},
 			"Reactor Baggies": {
 				"Cost material top": {
@@ -294,17 +239,6 @@ class Photocatalytic_Plugin:
 				},
 			},
 		 	"Solar Input": {
-				"Mean solar input": {
-					"Value": {
-						"type": {int, float,},
-						"bounds": (0, None),
-					},
-					"Unit": {
-						"dimension": "power / area", 
-					},
-					"optional": False,
-					"description": "Mean solar input."
-				},
 				"Hourly": {
 					"Value": {
 						"type": {np.ndarray,},
@@ -414,6 +348,71 @@ class Photocatalytic_Plugin:
 					"description": "Total water volume"
 				},
 			},
+			"Main Stream": {
+				"Temperature": {
+					"Value": {
+						"inserted_value": "outlet_temperature",
+						"type": {float,},
+						"dimension": "absolute_temperature",
+					},
+					"optional": False,
+					"description": "Mixture outlet temperature."
+				},
+				"Pressure": {
+					"Value": {
+						"inserted_value": "outlet_pressure",
+						"type": {float,},
+						"dimension": "pressure",
+					},
+					"optional": False,
+					"description": "Mixture outlet pressure."
+				},
+				"Specific enthalpy": {
+					"Value": {
+						"inserted_value": "outlet_enthalpy",
+						"type": {float,},
+						"dimension": "energy/mass",
+					},
+					"optional": False,
+					"description": "Mixture outlet specific enthalpy."
+				},  
+				"Mass fraction": {
+					"Value": {
+						"inserted_value": "outlet_mass_fraction",
+						"type": {dict,},
+						"dimension": "dimensionless",
+					},
+					"optional": False,
+					"description": "Mixture outlet mass fraction."
+				},   
+				"Mass flow (hourly)": {
+					"Value": {
+						"inserted_value": "hourly_mass_flow",
+						"type": {dict,},
+						"dimension": "mass",
+					},
+					"optional": False,
+					"description": "Mixture outlet mass flow, dictionary of years whose items are hourly arrays."
+				},  			
+				"Design mass flow by year": {
+					"Value": {
+						"inserted_value": "yearly_mass_flow",
+						"type": {np.ndarray,},
+						"dimension": "mass",
+					},
+					"optional": False,
+					"description": "Mixture outlet mass per year, excluding downtime (array of years)."
+				},  
+				"Peak mass flowrate": {
+					"Value": {
+						"inserted_value": "peak_mass_flowrate",
+						"type": {float,},
+						"dimension": "mass/time",
+					},
+					"optional": False,
+					"description": "Mixture outlet mass flowrate on peak production day."
+				},   			 					                
+			},			
 		}
 
 	def _run(self, dcf):
@@ -430,23 +429,34 @@ class Photocatalytic_Plugin:
 		self.catalyst_cost()
 		self.land_area()
 		self.catalyst_activity()
+		self.outlet_flow_properties()
+
 		
 		output_inserter_function(self.output_dict, self, dcf, 'Photocatalytic_Plugin') 
 
 	def hydrogen_production(self):
-		'''Calculation of hydrogen produced per day per baggie (in kg).
+		'''Calculation of hydrogen produced per hour and per year, per baggie (in kg).
 		'''
+		hourly_mol_H2_per_m2 = (self.input_dict_resolved['Solar Input']['Hourly']['Value'].unit['Wh/m2']
+								* self.input_dict_resolved['Solar-to-Hydrogen Efficiency']['STH']['Value'].unit['-'] 
+								/ self.H2_molecule_energy.unit['Wh/mol'])
+
+		self.hourly_H2_mass_production_per_surface = Quantity(hourly_mol_H2_per_m2 * self.H2_molecular_weight.unit['kg/mol'], 'kg/m2')
+
+		self.mean_mol_rate_H2_per_surface = Quantity(np.sum(hourly_mol_H2_per_m2), 'mol/year/m2')		
+		self.mean_H2_mass_production_rate_per_surface = Quantity(self.mean_mol_rate_H2_per_surface.unit['mol/year/m2'] * self.H2_molecular_weight.unit['kg/mol'], 'kg/year/m2')
 
 		baggie = self.input_dict_resolved['Reactor Baggies']
 
 		self.baggie_area = Quantity(baggie['Length']['Value'].unit['m'] * baggie['Width']['Value'].unit['m'], 'm2')
-		baggie_insolation = (self.baggie_area.unit['m2'] 
-							 * self.input_dict_resolved['Solar Input']['Mean solar input']['Value'].unit['W/m2'])
-		mol_H2_per_baggie_per_second = (baggie_insolation 
-										* self.input_dict_resolved['Solar-to-Hydrogen Efficiency']['STH']['Value'].unit['-'] 
-										/ self.H2_molecule_energy.unit['J/mol'])
 
-		self.mass_rate_H2_per_baggie = Quantity(mol_H2_per_baggie_per_second*self.H2_molecular_weight.unit['kg/mol'], 'kg/s')
+		self.yearly_averaged_mass_rate_H2_per_baggie = Quantity(self.mean_H2_mass_production_rate_per_surface.unit['kg/year/m2']
+														  *
+														  self.baggie_area.unit['m2'], 
+														  'kg/year')
+
+		self.peak_mol_rate_H2_per_surface = Quantity(np.amax(hourly_mol_H2_per_m2), 'mol/h/m2')
+
 
 	def catalyst_activity(self):
 		'''Calculation of detailed catalyst properties based on provided parameters. If "Molar Weight (g/mol)"
@@ -457,25 +467,13 @@ class Photocatalytic_Plugin:
 
 		catalyst_properties = {}
 
-		peak_hourly_irradiation_per_m2 = np.amax(self.input_dict_resolved['Solar Input']['Hourly']['Value'].unit['J/m2'])
-		
-		peak_hourly_mol_H2_per_m2 = (peak_hourly_irradiation_per_m2
-									 * self.input_dict_resolved['Solar-to-Hydrogen Efficiency']['STH']['Value'].unit['-']
-									 / self.H2_molecule_energy.unit['J/mol'])
-
-		mean_mol_rate_H2_per_surface = (self.input_dict_resolved['Solar Input']['Mean solar input']['Value'].unit['W/m2'] 
-										* self.input_dict_resolved['Solar-to-Hydrogen Efficiency']['STH']['Value'].unit['-']
-										/ self.H2_molecule_energy.unit['J/mol'])
-		
-		self.mean_mol_rate_H2_per_surface = Quantity(mean_mol_rate_H2_per_surface, 'mol/s/m2')
-
 		kg_catalyst_per_m2 = (self.input_dict_resolved['Reactor Baggies']['Filling height']['Value'].unit['m']
 							  * self.input_dict_resolved['Catalyst']['Concentration']['Value'].unit['kg/m3'])
 
-		self.activity_H2_rate_per_catalyst_mass = Quantity(peak_hourly_mol_H2_per_m2 / kg_catalyst_per_m2, 'mol/h/kg')
+		self.activity_H2_rate_per_catalyst_mass = Quantity(self.peak_mol_rate_H2_per_surface.unit['mol/h/m2'] / kg_catalyst_per_m2, 'mol/h/kg')
 
 		catalyst_properties['Peak activity'] = self.activity_H2_rate_per_catalyst_mass
-		catalyst_properties['Peak H2 production'] = Quantity(peak_hourly_mol_H2_per_m2, 'mol/m2/h')
+		catalyst_properties['Peak H2 production'] = self.peak_mol_rate_H2_per_surface
 		catalyst_properties['Catalyst Concentration (mass / area)'] = Quantity(kg_catalyst_per_m2, 'kg/m2')
 		catalyst_properties['Catalyst Concentration (mass / volume)'] = self.input_dict_resolved['Catalyst']['Concentration']['Value']
 	
@@ -488,7 +486,7 @@ class Photocatalytic_Plugin:
 
 			mol_catalyst_per_m2 = liter_per_m2 * catalyst_mol_per_L
 
-			peak_TOF_hourly = peak_hourly_mol_H2_per_m2 / mol_catalyst_per_m2
+			peak_TOF_hourly = self.peak_mol_rate_H2_per_surface['mol/h/m2'] / mol_catalyst_per_m2
 			average_TOF_daily = self.mean_mol_rate_H2_per_surface.unit['mol/day/m2'] / mol_catalyst_per_m2
 			TON = average_TOF_daily * self.input_dict_resolved['Catalyst']['Lifetime']['Value'].unit['day']
 
@@ -511,7 +509,7 @@ class Photocatalytic_Plugin:
 											 / self.input_dict_resolved['Catalyst']['Molar weight']['Value'].unit['kg/mol'] 
 											 * average_TOF_daily * self.H2_molecular_weight.unit['kg/mol'])
 			
-			kg_H2_per_day_baggie_calculation = self.mass_rate_H2_per_baggie.unit['kg/day'] * self.baggie_number
+			kg_H2_per_day_baggie_calculation = self.yearly_averaged_mass_rate_H2_per_baggie.unit['kg/day'] * self.baggie_number
 
 			assert abs(kg_H2_per_day_TOF_calculation - kg_H2_per_day_baggie_calculation) < 1e-6, 'Difference between baggie and TOF calculation for daily H2 production: TOF: {0}, Baggie: {0}.'.format(kg_H2_per_day_TOF_calculation, kg_H2_per_day_baggie_calculation)
 
@@ -533,8 +531,8 @@ class Photocatalytic_Plugin:
 		cost_per_baggie = (baggie['Markup factor']['Value'].unit['-'] 
 						   * (material_cost + port_cost + baggie['Other costs per baggie']['Value'].unit['USD']))
 
-		baggie_number = (self.input_dict_resolved['Technical Operating Parameters and Specifications']['Plant design capacity']['Value'].unit['kg/day'] 
-						 / self.mass_rate_H2_per_baggie.unit['kg/day'])
+		baggie_number = (self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output by year']['Value'].unit['kg'][0]  
+						 / self.yearly_averaged_mass_rate_H2_per_baggie.unit['kg/year'])
 		baggie_number_rounded_up = np.ceil(baggie_number).astype(int)
 		
 		self.baggie_number = Quantity(baggie_number_rounded_up, '-')
@@ -578,4 +576,62 @@ class Photocatalytic_Plugin:
 										(1. + self.input_dict_resolved['Reactor Baggies']['Additional land area']['Value'].unit['-']), 
 										'm2')
 
+	def outlet_flow_properties(self):
+		'''Establishes the thermophysical characteristics of the fluid leaving the reactor, for downstream process sizing'''
 
+		self.outlet_temperature = Quantity(60., 'degC') # hardcoded for the moment, could become an input or even an hourly array (from energy balance) later
+		self.outlet_pressure = Quantity(1.01315e5, 'Pa') # hardcoded for the moment, could become an input later
+
+		# Assuming water vapour is saturated in the baggie, determination of the water vapour pressure
+		psat = PP.Water_saturation_pressure(self.outlet_temperature)
+
+		mol_fraction = {} # molar fraction of the gas mixture, assuming ideal gas, expressed in mol of species for a total amount of 1 mol 
+		mol_fraction['H2O'] = Quantity(
+								psat.unit['Pa']/self.outlet_pressure.unit['Pa'], 
+								 '-') 
+		# The pressure that is not due to water is due for 2/3 to H2, and for 1/3 to O2 (stoichiometry)
+		mol_fraction['H2'] = Quantity(
+								(2/3)*(1-mol_fraction['H2O'].unit['-']), 
+								'-')
+		mol_fraction['O2'] = Quantity(
+								1 - mol_fraction['H2'].unit['-'] - mol_fraction['H2O'].unit['-'], 
+								'-')
+
+		_, self.outlet_mass_fraction = PP.Substance_to_mass(mol_fraction)
+
+
+		smoothening_period = Quantity(1, 'day')
+		self.hourly_mass_flow = {}
+
+		# hourly_unsmoothened_output_kg should normally be a yearly dict of hourly arrays,
+		# but we assume a production that is independent of the year, so there's no need to run the same calculation multiple times: a single year (year 0) is sufficient, and is the used identical to itself when generating the hourly_mass_flow dict
+		hourly_unsmoothened_output_kg = (self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output by year']['Value'].unit['kg'][0] 
+										*
+										self.hourly_H2_mass_production_per_surface.unit['kg/m2']
+										/
+										self.mean_H2_mass_production_rate_per_surface.unit['kg/year/m2']
+										/ 
+										self.outlet_mass_fraction['H2'].unit['-']
+										)
+		for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']:			
+			year = round(year)
+			self.hourly_mass_flow[year] = Quantity(smoothened_production(hourly_unsmoothened_output_kg, round(smoothening_period.unit['h'])), 
+														'kg')
+
+
+		self.yearly_mass_flow = Quantity(self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output by year']['Value'].unit['kg']
+									   / 
+									   self.outlet_mass_fraction['H2'].unit['-']
+									   ,
+									   'kg')
+
+		self.peak_mass_flowrate = Quantity(np.max(self.hourly_mass_flow[0].unit['kg']), 'kg/h')
+
+		# specific enthalpy at the outlet of the baggie
+		h = PP.Enthalpy(T = self.outlet_temperature,
+						P = self.outlet_pressure, 
+						amount = self.outlet_mass_fraction,
+						phase = 'V', 
+						composition_basis = 'mass'
+						)
+		self.outlet_enthalpy = Quantity(h.unit['J'], 'J/kg')

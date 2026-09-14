@@ -1075,3 +1075,21 @@ def daily_to_yearly_power_quantity(dictionary):
 	base_unit = dictionary[list(dictionary.keys())[0]].base_unit
 
 	return Quantity(yearly_power, base_unit)
+
+
+def smoothened_production(a, s):
+	'''
+	Returns an array of length equal to that of input a, 
+	and whose values are constant by pieces of length s and equal to the average of the corresponding s values of the original array.
+	'''
+	
+	return np.repeat(np.add.reduceat(a, np.arange(0, len(a), s)) /
+					np.minimum(s, len(a) - np.arange(0, len(a), s)), 
+					np.diff(np.r_[np.arange(0, len(a), s), len(a)]))
+
+def moving_average(array, period):
+	''' Calculates the moving average, that is: result[i] = sum(array[i-period+1:i+1])/period '''
+	cumsum = np.cumsum(np.insert(array, 0, 0))
+	n = np.arange(1, len(array) + 1)
+	starts = np.maximum(n - period, 0)
+	return (cumsum[n] - cumsum[starts]) / np.minimum(n, period)

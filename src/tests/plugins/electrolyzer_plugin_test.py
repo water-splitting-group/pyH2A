@@ -3,6 +3,7 @@ import numpy as np
 from pyH2A.Plugins.Electrolyzer_Plugin import Electrolyzer_Plugin
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 from pyH2A.Utilities.functional_unit import resolve_functional_unit
+from tests.Utilities.check_dicts_for_testing import check_dicts
 
 class DummyDCF:
     """Minimal DCF object for Electrolyzer_Plugin with configurable inputs."""
@@ -13,6 +14,7 @@ class DummyDCF:
         nominal_power,
         power_increase,
         min_capacity,
+        min_coeff,
         efficiency,
         replacement_time,
         available_power_hourly,
@@ -40,6 +42,10 @@ class DummyDCF:
                     "Value": min_capacity, 
                     "Unit": "-"
                 },
+                "Minimum operating power coefficient": {
+                    "Value": min_coeff, 
+                    "Unit": "-"
+                },                
                 "Hydrogen yield per unit energy": {
                     "Value": efficiency,
                     "Unit": "kg/kWh"
@@ -63,107 +69,171 @@ class DummyDCF:
         {
             "input": {
                 "operation_years_relative": {
-                    # in the plugin logic, years are relative to startup year, not calendar year
                     'Operation years relative': np.arange(0, 2) 
                 },       
                 "nominal_power": 5500.0,
                 "power_increase": 0.003,
                 "min_capacity": 0.10,
+                "min_coeff": 0.4,
                 "efficiency": 0.0185,
                 "replacement_time": 80000.0,
                 "available_power_hourly": {
                     0: np.array(
                         [
-                            200000000.2,
-                            200500000.2,
-                            201200000.2,
-                            201200000.2,
+                            8000,
+                            7500,
+                            7000,
+                            6500,
                             0.0,
-                            200500000.2,
-                            201200000.2,
-                            201200000.2,
-                            201000000.2,
-                            200500000.2,
-                            201200000.2,
-                            201200000.2,
-                            201000000.2,
+                            6000,
+                            6500,
+                            7000,
+                            7500,
+                            8000,
+                            7000,
+                            6000,
+                            5000,
                             0.0,
-                            201200000.2,
-                            201200000.2,
-                            201000000.2,
+                            7500,
+                            7000,
+                            6500,
                             0.0,
-                            201200000.2,
-                            201200000.2,
-                            201000000.2,
+                            7500,
+                            7000,
+                            6500,
                             0.0,
-                            201200000.2,
-                            201200000.2,
+                            7500,
+                            7000,
                         ]
                     ),
                     1: np.array(
                         [
                             0.0,
-                            200500000.2,
-                            201200000.2,
-                            201200000.2,
-                            201000000.2,
+                            8000,
+                            7500,
+                            7000,
+                            6500,
                             0.0,
-                            201200000.2,
-                            201200000.2,
-                            201000000.2,
-                            200500000.2,
-                            201200000.2,
+                            6000,
+                            6500,
+                            7000,
+                            7500,
+                            8000,
                             0.0,
-                            201000000.2,
-                            206500000.2,
-                            201200000.2,
-                            201200000.2,
-                            201000000.2,
-                            207500000.2,
-                            201200000.2,
+                            6500,
+                            7000,
+                            7500,
+                            8000,
+                            7000,
+                            6000,
+                            5000,
                             0.0,
-                            201000000.2,
-                            208500000.2,
-                            201200000.2,
-                            201200000.2,
+                            6000,
+                            6500,
+                            7000,
+                            7500,
                         ]
                     ),
                 },
             },
             "expected": {
-                "h2_production": Quantity(np.array([2035.0, 2035.0]), 'kg'),
+                "h2_production": Quantity(np.array([2066.635, 2066.17333001]), 'kg'),
                 "replacement_frequency": Quantity(2.0, 'year'),
                 "yearly_data_year": Quantity(np.array([0.0, 1.0]),'-'),
-                "yearly_data_production": Quantity(np.array([2035.0, 2035.0]),'kg'),
-                "yearly_data_duration": Quantity(np.array([20.0, 20.0]),'h'),                                
+                "yearly_data_production": Quantity(np.array([2066.635, 2066.17333001]),'kg'),
+                "yearly_data_missing_energy": {
+                    0: Quantity(
+                            np.array(
+                                [
+                                    0 ,
+                                    0 ,
+                                    0 ,
+                                    0, 
+                                    560,
+                                    0,
+                                    0,
+                                    0,
+                                    0,
+                                    0,
+                                    0,
+                                    0 ,
+                                    0,
+                                    550,
+                                    0 ,
+                                    0 ,
+                                    0,
+                                    550,
+                                    0 ,
+                                    0 ,
+                                    0 ,
+                                    550,
+                                    0 ,
+                                    0 ,
+                                ]
+                            ),
+                            "kWh"
+                    ),
+                    1: Quantity(
+                            np.array(
+                                [
+                                    551.65,
+                                    0 ,
+                                    0 ,
+                                    0 ,
+                                    0 ,
+                                    551.65,
+                                    0 ,
+                                    0 ,
+                                    0 ,
+                                    0 ,
+                                    0,
+                                    551.65,
+                                    0,
+                                    0 ,
+                                    0,
+                                    0 ,
+                                    0 ,
+                                    0 ,
+                                    0 ,
+                                    551.65,
+                                    0 ,
+                                    0 ,
+                                    0 ,
+                                    0 ,
+                                ]
+                        ),
+                        'kWh'
+                    ),    
+                },
+                "yearly_data_duration": Quantity(np.array([73119.27272727274, 73102.93845735521]),'s'),                                
                 "yearly_data_unused_energy": {
                     0: Quantity(
                             np.array(
                                 [
-                                    199994500.2 ,
-                                    200494500.2 ,
-                                    201194500.2 ,
-                                    201194500.2 ,
+                                    2500 ,
+                                    2000 ,
+                                    1500 ,
+                                    1000, 
                                     0.0,
-                                    200494500.2,
-                                    201194500.2,
-                                    201194500.2,
-                                    200994500.2,
-                                    200494500.2 ,
-                                    201194500.2 ,
-                                    201194500.2 ,
-                                    200994500.2 ,
+                                    500,
+                                    1000,
+                                    1500,
+                                    2000,
+                                    2500,
+                                    1500,
+                                    500 ,
+                                    0,
+                                    0,
+                                    2000 ,
+                                    1500 ,
+                                    1000,
                                     0.0,
-                                    201194500.2 ,
-                                    201194500.2 ,
-                                    200994500.2 ,
+                                    2000 ,
+                                    1500 ,
+                                    1000 ,
                                     0.0,
-                                    201194500.2 ,
-                                    201194500.2 ,
-                                    200994500.2 ,
-                                    0.0,
-                                    201194500.2 ,
-                                    201194500.2 ,
+                                    2000 ,
+                                    1500 ,
                                 ]
                             ),
                             "kWh"
@@ -172,38 +242,108 @@ class DummyDCF:
                             np.array(
                                 [
                                     0.0,
-                                    200494483.7 ,
-                                    201194483.7 ,
-                                    201194483.7 ,
-                                    200994483.7 ,
+                                    2483.5 ,
+                                    1983.5 ,
+                                    1483.50 ,
+                                    983.50 ,
                                     0.0,
-                                    201194483.7 ,
-                                    201194483.7 ,
-                                    200994483.7 ,
-                                    200494483.7 ,
-                                    201194483.7 ,
+                                    483.5 ,
+                                    983.5 ,
+                                    1483.50 ,
+                                    1983.5 ,
+                                    2483.5,
                                     0.0,
-                                    200994483.7,
-                                    206494483.7 ,
-                                    201194483.7,
-                                    201194483.7 ,
-                                    200994483.7 ,
-                                    207494483.7 ,
-                                    201194483.7 ,
-                                    0.0,
-                                    200994483.7 ,
-                                    208494483.7 ,
-                                    201194483.7 ,
-                                    201194483.7 ,
+                                    983.50,
+                                    1483.5 ,
+                                    1983.5,
+                                    2483.5 ,
+                                    1483.5 ,
+                                    483.5 ,
+                                    0 ,
+                                    0,
+                                    483.5 ,
+                                    983.5 ,
+                                    1483.5 ,
+                                    1983.5 ,
                                 ]
                         ),
                         'kWh'
                     ),    
                 },
                 "yearly_data_unused_energy_daily": {
-                    0: Quantity(np.array([4019790003.9999995]), 'kWh'),
-                    1: Quantity(np.array([4040389673.9999995]), 'kWh'),
+                    0: Quantity(np.array([29000.0]), 'kWh'),
+                    1: Quantity(np.array([28186.5]), 'kWh'),
                 },
+                "outlet_enthalpy": Quantity(-2120556.428686637, 'J/kg'),   
+                "outlet_mass_fraction":{'H2': Quantity(0.7899035612816574, '-'),
+                                        'H2O': Quantity(1-0.7899035612816574, '-'),
+                                         },
+                "yearly_mass_flow":Quantity(np.array([2616.3130555415933, 2615.728591801133]), 'kg'), 
+                "peak_mass_flowrate": Quantity(3091.516635319044, 'kg/day'), 
+                "hourly_mass_flow": {
+                    0: Quantity(
+                            np.array(
+                                [
+                                    128.81319313829349, 
+                                    128.81319313829349, 
+                                    128.81319313829349, 
+                                    128.81319313829349, 
+                                    13.115525119535336, 
+                                    128.81319313829349, 
+                                    128.81319313829349, 
+                                    128.81319313829349, 
+                                    128.81319313829349, 
+                                    128.81319313829349, 
+                                    128.81319313829349, 
+                                    128.81319313829349, 
+                                    117.10290285299409, 
+                                    12.88131931382935, 
+                                    128.81319313829349, 
+                                    128.81319313829349, 
+                                    128.81319313829349, 
+                                    12.88131931382935, 
+                                    128.81319313829349, 
+                                    128.81319313829349, 
+                                    128.81319313829349, 
+                                    12.88131931382935, 
+                                    128.81319313829349, 
+                                    128.81319313829349,                                                                                                                                                                                     
+                                ]
+                            ),
+                            "kg"
+                    ),
+                    1: Quantity(
+                            np.array(
+                                [
+                                    12.88131931382935, 
+                                    128.81319313829349, 
+                                    128.81319313829349, 
+                                    128.81319313829349, 
+                                    128.81319313829349, 
+                                    12.88131931382935, 
+                                    128.81319313829349, 
+                                    128.81319313829349, 
+                                    128.81319313829349, 
+                                    128.81319313829349, 
+                                    128.81319313829349, 
+                                    12.88131931382935, 
+                                    128.81319313829349, 
+                                    128.81319313829349, 
+                                    128.81319313829349, 
+                                    128.81319313829349, 
+                                    128.81319313829349, 
+                                    128.81319313829349, 
+                                    116.75264491823938, 
+                                    12.88131931382935, 
+                                    128.81319313829349, 
+                                    128.81319313829349, 
+                                    128.81319313829349, 
+                                    128.81319313829349,                                                                                                                                                                                     
+                                ]
+                        ),
+                        'kg'
+                    ),    
+                },                
             },
         },
     ],
@@ -245,6 +385,9 @@ def test_electrolyzer_plugin(case):
         rtol=tolerance,
         atol=tolerance,
     )
+
+    check_dicts(plugin.yearly_data_missing_energy, case["expected"]["yearly_data_missing_energy"])
+
     np.testing.assert_allclose(
         plugin.yearly_data_duration.unit['s'],
         expected["yearly_data_duration"].unit['s'],
@@ -252,17 +395,23 @@ def test_electrolyzer_plugin(case):
         atol=tolerance,
     )
 
-    for year in plugin.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']:
-        np.testing.assert_allclose(
-            plugin.yearly_data_unused_energy[year].unit['J'],
-            expected["yearly_data_unused_energy"][year].unit['J'],
-            rtol=tolerance,
-            atol=tolerance,
-        )
+    check_dicts(plugin.yearly_data_unused_energy, case["expected"]["yearly_data_unused_energy"])
 
-        np.testing.assert_allclose(
-            plugin.yearly_data_unused_energy_daily[year].unit['J'],
-            expected["yearly_data_unused_energy_daily"][year].unit['J'],
-            rtol=tolerance,
-            atol=tolerance,
-        )
+
+    check_dicts(plugin.yearly_data_unused_energy_daily, case["expected"]["yearly_data_unused_energy_daily"])
+
+    assert plugin.outlet_enthalpy.unit["J/kg"] == pytest.approx(
+        expected["outlet_enthalpy"].unit["J/kg"], 
+        abs=tolerance
+    )
+
+    check_dicts(plugin.outlet_mass_fraction, case["expected"]["outlet_mass_fraction"])
+
+    np.testing.assert_allclose(plugin.yearly_mass_flow.unit["kg"],case["expected"]["yearly_mass_flow"].unit["kg"],rtol=tolerance,atol=tolerance,)        
+
+    assert plugin.peak_mass_flowrate.unit["kg/day"] == pytest.approx(
+        expected["peak_mass_flowrate"].unit["kg/day"], 
+        abs=tolerance
+    )        
+
+    check_dicts(plugin.hourly_mass_flow, case["expected"]["hourly_mass_flow"])         
