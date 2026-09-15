@@ -6,44 +6,6 @@ from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
 class PEC_Plugin:
 	'''Simulating H2 production using photoelectrochemical water splitting.
-
-	Parameters
-	----------
-	Technical Operating Parameters and Specifications > Plant design capacity > Value : float
-		Plant design capacity (mass of hydrogen/time).
-	PEC Cells > Cell cost > Value : float
-		Cost of PEC cells in $/m2.
-	PEC Cells > Lifetime > Value : float
-		Lifetime of PEC cells in years before replacement is required.
-	PEC Cells > Length > Value : float
-		Length of single PEC cell.
-	PEC Cells > Width > Value : float
-		Width of single PEC cell.
-	Land Area Requirement > Cell angle > Value : float
-		Angle of PEC cells from the ground.
-	Land Area Requirement > South spacing > Value : float
-		South spacing of PEC cells.
-	Land Area Requirement > East/West spacing > Value : float
-		East/West Spacing of PEC cells.
-	Solar-to-Hydrogen Efficiency > STH > Value : float
-		Solar-to-hydrogen efficiency in percentage or as a value between 0 and 1.
-	Solar Input > Mean solar input > Value : float
-		Mean solar power per surface.
-
-	Returns
-	-------
-	Non-Depreciable Capital Costs > Land required > Value : float
-		Total land area required.
-	Non-Depreciable Capital Costs > Solar collection area > Value : float
-		Solar collection area.
-	Planned Replacement > Planned replacement PEC Cells > Cost_Value : float
-		Total cost of replacing all PEC cells once.
-	Planned Replacement > Planned replacement PEC Cells > Frequency_Value : float
-		Replacement frequency of PEC cells in years, identical to PEC cell lifetime.
-	Direct Capital Costs - PEC Cells > PEC cell cost > Value : float
-		Total cost of all PEC cells.
-	PEC Cells > Number > Value : float
-		Number of individual PEC cells required for design H2 output capacity.
 	'''
 
 	def __init__(self, dcf, print_info, run = True):
@@ -70,17 +32,6 @@ class PEC_Plugin:
                 }, 
             }, 
 			"Technical Operating Parameters and Specifications": {
-				"Plant design capacity": {
-					"Value": {
-						"type": {float,int,},
-						"bounds": (0, None),
-					},
-					"Unit": {
-						"dimension": "mass / time",
-					},
-					"optional": False,
-					"description": "Plant design capacity, in mass of hydrogen/time."
-				},
 				"Design output by year": {
 					"Value": {
 						"type": {np.ndarray},
@@ -374,8 +325,8 @@ class PEC_Plugin:
 						 * self.input_dict_resolved['PEC Cells']['Cell cost']['Value'].unit['USD/m2'])
 
 		self.cell_number = Quantity(np.ceil(
-			   							self.input_dict_resolved['Technical Operating Parameters and Specifications']['Plant design capacity']['Value'].unit['kg/day'] 
-										/ self.mean_mass_rate_H2_per_cell.unit['kg/day']
+			   							self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output by year']['Value'].unit['kg'][0] 
+										/ self.mean_mass_rate_H2_per_cell.unit['kg/year']
 										), 
 							'-')
 		

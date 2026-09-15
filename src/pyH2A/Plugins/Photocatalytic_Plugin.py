@@ -33,17 +33,6 @@ class Photocatalytic_Plugin:
                 }, 
             },    					
 			"Technical Operating Parameters and Specifications": {
-				"Plant design capacity": {
-					"Value": {
-						"type": {int,float},
-						"bounds": (0, None),
-					},
-					"Unit": {
-						"dimension": "mass/time",
-					},
-					"optional": False,
-					"description": "Plant design capacity, in mass of hydrogen/time."
-				},
 				"Design output by year": {
 					"Value": {
 						"type": {np.ndarray},
@@ -542,8 +531,8 @@ class Photocatalytic_Plugin:
 		cost_per_baggie = (baggie['Markup factor']['Value'].unit['-'] 
 						   * (material_cost + port_cost + baggie['Other costs per baggie']['Value'].unit['USD']))
 
-		baggie_number = (self.input_dict_resolved['Technical Operating Parameters and Specifications']['Plant design capacity']['Value'].unit['kg/day'] 
-						 / self.yearly_averaged_mass_rate_H2_per_baggie.unit['kg/day'])
+		baggie_number = (self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output by year']['Value'].unit['kg'][0]  
+						 / self.yearly_averaged_mass_rate_H2_per_baggie.unit['kg/year'])
 		baggie_number_rounded_up = np.ceil(baggie_number).astype(int)
 		
 		self.baggie_number = Quantity(baggie_number_rounded_up, '-')

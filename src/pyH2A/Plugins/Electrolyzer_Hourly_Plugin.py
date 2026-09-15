@@ -309,7 +309,9 @@ class Electrolyzer_Hourly_Plugin:
             # The energy effectively consumed by the electrolyzer is the generated energy, 
             # saturated on the lower bound by the minimum_hourly_energy_J (the missing energy would come from the battery)
             # and on the upper bound by the electrolyzer demand (the extra energy is available for the rest of the power chain).
-            electrolyzer_energy_consumption = np.clip(energy_generation_J, minimum_hourly_energy_J, electrolyzer_energy_demand_J)
+            electrolyzer_energy_consumption = np.clip(energy_generation_J, minimum_hourly_energy_J, electrolyzer_energy_demand_J)                  
+
+            hours_equivalent_full_Production = np.sum(electrolyzer_energy_consumption)/electrolyzer_energy_demand_J[0] # Number of full-production hours that would be needed to obtain the actual (fluctuating) production over the year
 
             h2_produced = calculate_hydrogen_production(
                                 electrolyzer_energy_consumption,
@@ -319,7 +321,7 @@ class Electrolyzer_Hourly_Plugin:
 
             yearly_data_year.append(year)
             yearly_data_production.append(np.sum(h2_produced))
-            yearly_data_duration.append(8760)
+            yearly_data_duration.append(hours_equivalent_full_Production)
 
         #plt.plot(minimum_hourly_energy_J)
         #plt.show()
