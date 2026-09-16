@@ -44,8 +44,12 @@ Time
      - optional
      - description
    * - ``Years``
-     - | type: dict
-       | bounds: (None, None)
+     - .. list-table::
+          :widths: 100
+          :class: value-divider
+       
+          * - type: dict
+          * - bounds: (None, None)
      - | dimension: dimensionless
      - False
      - Dictionary containing all time-related quantities.
@@ -63,8 +67,12 @@ Power Generation
      - optional
      - description
    * - ``Available energy (daily)``
-     - | type: dict
-       | bounds: (0, None)
+     - .. list-table::
+          :widths: 100
+          :class: value-divider
+       
+          * - type: dict
+          * - bounds: (0, None)
      - | dimension: energy
      - False
      -  Available energy, daily basis, dictionary of years.
@@ -82,26 +90,42 @@ Battery
      - optional
      - description
    * - ``Design capacity``
-     - | type: int or float
-       | bounds: (0, None)
+     - .. list-table::
+          :widths: 100
+          :class: value-divider
+       
+          * - type: int or float
+          * - bounds: (0, None)
      - | dimension: energy
      - False
      - Full design capacity of battery.
    * - ``Lowest discharge level``
-     - | type: int or float
-       | bounds: (0, 1)
+     - .. list-table::
+          :widths: 100
+          :class: value-divider
+       
+          * - type: int or float
+          * - bounds: (0, 1)
      - | dimension: dimensionless
      - False
      - Lowest level to which battery can be discharged.
    * - ``Capacity loss per year``
-     - | type: int or float
-       | bounds: (0, 1)
+     - .. list-table::
+          :widths: 100
+          :class: value-divider
+       
+          * - type: int or float
+          * - bounds: (0, 1)
      - | dimension: dimensionless
      - False
      - Loss of capacity per year.
    * - ``Round trip efficiency``
-     - | type: int or float
-       | bounds: (0, 1)
+     - .. list-table::
+          :widths: 100
+          :class: value-divider
+       
+          * - type: int or float
+          * - bounds: (0, 1)
      - | dimension: dimensionless
      - False
      - Round trip efficiency of battery.
@@ -121,23 +145,34 @@ Power Generation
      - description
      - optional
    * - ``Stored energy (daily)``
-     - | inserted_value: yearly_recovered_energy
-       | type: dict
-       | dimension: energy
+     - .. list-table::
+          :widths: 100
+          :class: value-divider
+       
+          * - inserted_value: yearly_recovered_energy
+          * - type: dict
+          * - dimension: energy
      - Energy stored in battery daily (dictionary of years)
      - False
    * - ``Available energy (daily)``
-     - | inserted_value: yearly_unstored_energy
-       | type: dict
-       | dimension: energy
+     - .. list-table::
+          :widths: 100
+          :class: value-divider
+       
+          * - inserted_value: yearly_unstored_energy
+          * - type: dict
+          * - dimension: energy
      - Available energy, daily basis, dictionary of years - energy which has not been stored in battery
      - False
    * - ``Available energy (hourly)``
-     - | inserted_value: Quantity(0, 'J')
-       | type: float
-       | dimension: energy
+     - .. list-table::
+          :widths: 100
+          :class: value-divider
+       
+          * - inserted_value: Quantity(0, 'J')
+          * - type: float
+          * - dimension: energy
      - Available energy is set to zero, since available energy is now only in daily format.
      - False
 """
-
     assert auto_gen_doc == correct_doc
