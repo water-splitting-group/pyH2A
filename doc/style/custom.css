@@ -16,3 +16,24 @@ dl.py.class > dd > section > h2,
 dl.py.class > dd > section > h3 {
     font-size: 1.1rem !important;
 }
+
+/* Strip the outer box from nested Value-column dividers,
+   leaving only the border between rows -- no color changes,
+   it keeps whatever border color the theme already uses. */
+.value-divider,
+.value-divider table {
+    border: none !important;
+}
+
+.value-divider td {
+    border-left: none !important;
+    border-right: none !important;
+}
+
+.value-divider tr:first-child td {
+    border-top: none !important;
+}
+
+.value-divider tr:last-child td {
+    border-bottom: none !important;
+}
