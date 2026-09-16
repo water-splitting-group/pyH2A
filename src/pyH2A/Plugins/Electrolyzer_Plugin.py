@@ -2,51 +2,9 @@ from pyH2A.Utilities.input_modification import hourly_to_daily_power
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import numpy as np
+from pyH2A.Utilities.docstring_generation import generate_docstring
 
 class Electrolyzer_Plugin:
-    '''Simulation of hydrogen production using electrolysis.
-
-    Parameters
-    ----------
-    Time > Years > Value : dict
-        Dictionary containing plant life time-related quantities
-    Electrolyzer > Nominal power > Value : float
-        Nominal power of electrolyzer.
-    Electrolyzer > Power requirement increase per year > Value : float
-        Electrolyzer power requirement increase per year due to stack degradation. 
-        Dimensioless value > 0. Increase calculated as: (1 + increase per year) ^ year.
-    Electrolyzer > Minimum capacity > Value : float
-        Minimum capacity required for electrolyzer operation. Dimensionless value between 0 and 1.
-    Electrolyzer > Hydrogen yield per unit energy > Value : float
-        Electrical conversion efficiency of electrolyzer in (mass H2)/energy.
-    Electrolyzer > Replacement time > Value : float
-        Operating time before stack replacement of electrolyzer is required.
-    Power Generation > Available energy (hourly) > Value : dict
-        Available energy, hourly basis, dictionary of years.
-
-    Returns
-    -------
-    Technical Operating Parameters and Specifications > Design output by year > Value : nd.array
-        Design output by year calculated from installed 
-        electrolysis power capacity and hourly power generation data.
-    Technical Operating Parameters and Specifications >	Operating capacity factor > Value : float
-        Operating capacity factor is set to 1.
-    Electrolyzer > Actual stack replacement time > Value : float
-        Actual stack replacement time, calculated from replacement time and operation data.
-    Electrolyzer > Yearly operation data > Year_Value : nd.array
-        Yearly operation data of electrolyzer : year.
-    Electrolyzer > Yearly operation data > Production_Value : nd.array
-        Yearly operation data of electrolyzer : H2 produced during the year.
-    Electrolyzer > Yearly operation data > Duration_Value : nd.array
-        Yearly operation data of electrolyzer : duration of operation during the year.                
-    Electrolyzer > H2 production (yearly) > Value : nd.array
-        Yearly hydrogen production.
-    Power Generation > Available energy (hourly) > Value : dict
-        Available energy (hourly) after subtracting power consumed by electrolyzer. 
-        (dictionary of years).
-    Power Generation > Available energy (daily) > Value : dict
-        Available power (daily) after subtracting power consumed by electrolyzer.
-    '''
 
     def __init__(self, dcf, print_info, run = True):
         self._set_up(dcf)
@@ -205,6 +163,9 @@ class Electrolyzer_Plugin:
                 },
             },
         }
+        
+        self.__doc__ = generate_docstring("Simulation of hydrogen production using electrolysis.",
+                                          self.input_dict,self.output_dict)
 
     def _run(self, dcf):
         self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Electrolyzer_Plugin')
