@@ -63,13 +63,20 @@ def _format_cell(key, value):
 
     Scalar values are converted directly to strings. Type sets are converted
     to canonical type prose. Nested dictionaries are expanded into separate
-    lines within the same table cell.
+    lines within the same table cell. For the ``Value`` column specifically,
+    multiple lines are rendered as a nested one-column ``list-table`` instead
+    of a plain line block, so the line between entries is a real table-row
+    border — inheriting the surrounding table's own border color and style
+    automatically, rather than a manually styled divider.
 
     Parameters
     ----------
     key : str
         Specification key associated with ``value``. Special handling is
-        applied to ``TYPE_KEY``, ``OPTIONS_KEY``, and ``BOUNDS_KEY``.
+        applied to ``TYPE_KEY``, ``OPTIONS_KEY``, and ``BOUNDS_KEY``. When
+        ``key`` is ``'Value'`` and ``value`` is a dict with more than one
+        entry, the lines are rendered as a nested table instead of a line
+        block, giving a native row-border divider between them.
     value : object
         Specification value to format.
 
@@ -80,17 +87,11 @@ def _format_cell(key, value):
 
     Examples
     --------
-    >>> _format_cell('type', {int, float})
-    'int or float'
-
-    >>> _format_cell('optional', False)
-    'False'
-
-    >>> _format_cell(
-    ...     'Value',
-    ...     {'type': {int, float}, 'bounds': (0, None)}
-    ... )
+    >>> _format_cell('Unit', {'type': {int, float}, 'bounds': (0, None)})
     '| type: int or float\\n| bounds: (0, None)'
+
+    >>> _format_cell('Value', {'type': {int, float}, 'bounds': (0, None)})
+    '.. list-table::\\n   :widths: 100\\n\\n   * - type: int or float\\n   * - bounds: (0, None)'
     """
 
     if value is None:
@@ -118,11 +119,26 @@ def _format_cell(key, value):
 
             parts.append(f'{subkey}: {subvalue}')
 
+        # Only the Value column gets split by a real divider line. Using a
+        # nested list-table (rather than a manually drawn <hr>) means the
+        # line between rows is the table's own border -- same color and
+        # style as the rest of the table, with nothing hardcoded here.
+        if key == 'Value' and len(parts) > 1:
+
+            inner_lines = [
+                '.. list-table::',
+                '   :widths: 100',
+                '   :class: value-divider',
+                '',
+            ]
+            inner_lines += [f'   * - {part}' for part in parts]
+
+            return '\n'.join(inner_lines)
+
         # Use a line block so Sphinx creates real line breaks.
         return '\n'.join(f'| {part}' for part in parts)
 
     return str(value)
-
 
 def _render_table(title, rows):
     """Render one top-level specification as an RST list-table.
