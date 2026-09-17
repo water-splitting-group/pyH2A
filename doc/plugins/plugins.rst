@@ -21,6 +21,7 @@ Plugins allow for modelling of different hydrogen production pathways. They proc
    Photovoltaic_Plugin
    Power_Management_Plugin
    Production_Plugin
+   PSA_Plugin
    Replacement_Plugin
    Reverse_Osmosis_Plugin
    Solar_Concentrator_Plugin
