@@ -1,10 +1,13 @@
-name: CI/CD Pipeline
+name: CI
 
 on:
   push:
-    branches: [master, feat/plugin_refactor]
+    branches: [master]
   pull_request:
-    branches: [master, feat/plugin_refactor]
+    branches: [master]
+
+permissions:
+  contents: read
 
 jobs:
   test:
@@ -12,22 +15,21 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up latest Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3"
+        uses: actions/checkout@v7
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v10
         with:
           enable-cache: true
 
       - name: Install dependencies
-        run: |
-          uv pip install --system -e ".[performance]"
+        run: uv sync --extra dev --extra performance
 
       - name: Run tests
-        run: |
-          uv run pytest
+        run: uv run pytest --cov=pyH2A --cov-report=xml --cov-report=term-missing
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v7
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage.xml
