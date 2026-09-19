@@ -16,7 +16,7 @@ class DummyDCF:
         loss_of_capacity,
         round_trip_efficiency,
     ):
-        self.functional_unit = resolve_functional_unit('kg')
+        self.functional_unit = resolve_functional_unit('kg[H2]')
         self.inp = {
             "Time": {
                 "Years": {

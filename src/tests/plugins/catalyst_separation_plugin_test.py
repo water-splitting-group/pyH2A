@@ -10,7 +10,7 @@ class DummyDCF:
     def __init__(
         self, water_volume_liters, filtration_cost_per_m3, catalyst_lifetime_years
     ):
-        self.functional_unit = resolve_functional_unit('kg')
+        self.functional_unit = resolve_functional_unit('kg[H2]')
         self.inp = {
             "Water Volume": {
                 "Volume": {
