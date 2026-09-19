@@ -33,9 +33,16 @@ class DummyDCF:
     have computed in a full workflow run.
     """
 
-    def __init__(self, total_output, pv_electricity, electrolyzer, reverse_osmosis,
-                 functional_unit = 'kg[H2]', total_output_unit = 'kg[H2]'):
+    def __init__(self, 
+                 total_output, 
+                 pv_electricity, 
+                 electrolyzer, 
+                 reverse_osmosis,
+                 functional_unit = 'kg[H2]', 
+                 total_output_unit = 'kg[H2]'):
+        
         self.functional_unit = resolve_functional_unit(functional_unit)
+
         self.inp = {
             'Technical Operating Parameters and Specifications': {
                 'Total output at gate': {
@@ -107,6 +114,7 @@ def _reset_lca_caches():
         "Base case - PVE LCA",
     ],
 )
+
 def test_lca(case):
     """Check LCA computes a GWP100 result expected value and the correct composite unit."""
 
@@ -163,16 +171,6 @@ def test_functional_unit_of_another_dimension_is_rejected():
         LCA_Plugin(DummyDCF(total_output=1.0, pv_electricity=198.0, electrolyzer=1e-6,
                             reverse_osmosis=9.0, functional_unit='kWh[H2]',
                             total_output_unit='kWh[H2]'), print_info=False)
-
-
-def test_functional_unit_without_a_reference_is_rejected():
-    """Results are reported per unit of a named product, so the label is required."""
-
-    dcf = DummyDCF(total_output=1.0, pv_electricity=198.0, electrolyzer=1e-6,
-                   reverse_osmosis=9.0, functional_unit='kg', total_output_unit='kg')
-    with pytest.raises(ValueError, match='carries no reference'):
-        LCA_Plugin(dcf, print_info=False)
-
 
 # ── Cache invalidation ─────────────────────────────────────────────────────
 #
@@ -247,6 +245,7 @@ def test_scaling_vector_solves_the_scenario_technosphere_system(scale):
 
     demand = np.zeros(matrix_a.shape[0])
     demand[0] = 1.0
+
     np.testing.assert_allclose(scenario_a.tocsc() @ lca.scaling_vector, demand, atol=1e-10)
 
 

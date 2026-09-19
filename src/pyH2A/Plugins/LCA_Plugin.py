@@ -122,17 +122,6 @@ class LCA_Plugin:
 
         self.functional_unit = dcf.functional_unit
 
-        # The reference labels the product the impacts are reported per, which is what
-        # distinguishes 'kg[$CO_{2}$-Eq] / kg[H2]' from a bare 'kg / kg'. It also supplies
-        # the denominator's entry in the reference list every result Quantity is built with
-        # in perform_lca. Checked here, before an export of any size is loaded.
-        if not self.functional_unit.reference:
-            raise ValueError(
-                f"Functional Unit '{self.functional_unit.unit}' carries no reference. Declare the "
-                "product it refers to in brackets (e.g. 'kg[H2]' rather than 'kg') in the "
-                "'# Functional Unit' table, so that LCA results name the product they are "
-                "expressed per.")
-
         self.input_dict = {
             "Technical Operating Parameters and Specifications": {
                 "Total output at gate": {
@@ -260,7 +249,8 @@ class LCA_Plugin:
                 and all(path.exists() for path in paths.values())):
             self.load_all_from_disk_to_ram(paths)
 
-        # If the fingerprint file is missing or does not match, compute all artifacts from scratch and save them to disk.
+        # If the fingerprint file is missing or does not match (or files are missing), 
+        # compute all artifacts from scratch and save them to disk.
         else:
             self.compute_all_artifacts_from_scratch()
             self.save_all_to_disk(paths)
@@ -332,16 +322,6 @@ class LCA_Plugin:
         # matrix-vector product instead of a pass over B and C. See ``perform_lca``.
         characterization = C @ B
 
-        # Cache all artifacts in RAM for this matrix folder and fingerprint
-        LCA_Plugin._cache['base_scaling_vector'] = solver(f_vector)
-        LCA_Plugin._cache['A0_column'] = (np.asarray(techno_index_uuid_values[:,1], dtype=str),
-                                          np.asarray(techno_index_uuid_values[:,2], dtype=float),
-                                          np.asarray(techno_index_uuid_values[:,3], dtype=str),)
-        LCA_Plugin._cache['basis_component'] = basis_component
-        LCA_Plugin._cache['impact_index'] = impact_index
-        LCA_Plugin._cache['h_base'] = np.asarray(characterization @ LCA_Plugin._cache['base_scaling_vector']).reshape(-1)
-        h_basis = np.asarray(characterization @ basis_component)
-
         # Restatement of the foreground process's own elementary flows, folded into the same
         # operator. Column 0 of B is declared for the reference amount ``alpha`` the export was
         # written at, so a scenario reference amount of ``alpha + delta[0]`` restates it by
@@ -351,8 +331,17 @@ class LCA_Plugin:
         # already forms. Subtracting it here therefore leaves the per-sample cost untouched.
         # Column 0 is the reference flow because ``tech_process_indices`` orders by row index
         # and requires row 0 to be the product.
+        h_basis = np.asarray(characterization @ basis_component)
         h_basis[:, 0] -= dense_column(characterization, 0) / float(techno_index_uuid_values[0][2])
 
+        # Cache all artifacts in RAM for this matrix folder and fingerprint
+        LCA_Plugin._cache['base_scaling_vector'] = solver(f_vector)
+        LCA_Plugin._cache['A0_column'] = (np.asarray(techno_index_uuid_values[:,1], dtype=str),
+                                          np.asarray(techno_index_uuid_values[:,2], dtype=float),
+                                          np.asarray(techno_index_uuid_values[:,3], dtype=str),)
+        LCA_Plugin._cache['basis_component'] = basis_component
+        LCA_Plugin._cache['impact_index'] = impact_index
+        LCA_Plugin._cache['h_base'] = np.asarray(characterization @ LCA_Plugin._cache['base_scaling_vector']).reshape(-1)
         LCA_Plugin._cache['h_basis'] = h_basis
 
     def save_all_to_disk(self, paths: dict):
