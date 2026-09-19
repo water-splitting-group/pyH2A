@@ -12,4 +12,4 @@ sphinx:
 python:
   install:
     - method: uv
-      command: sync --extra docs
+      command: sync
