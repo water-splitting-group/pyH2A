@@ -1,5 +1,7 @@
-<img align="right" src="https://github.com/water-splitting-group/pyH2A/blob/chore/logo_update/src/pyH2A/Other/pyH2A.svg?raw=true"/>
+<img align="right" src="https://raw.githubusercontent.com/water-splitting-group/pyH2A/master/src/pyH2A/Other/pyH2A.svg"/>
 
+[![CI](https://github.com/water-splitting-group/pyH2A/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/water-splitting-group/pyH2A/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/water-splitting-group/pyH2A/branch/master/graph/badge.svg)](https://codecov.io/gh/water-splitting-group/pyH2A)
 [![Documentation Status](https://readthedocs.org/projects/pyh2a/badge/?version=latest)](https://pyh2a.readthedocs.io/en/latest/?badge=latest)
 [![DOI](https://zenodo.org/badge/332826132.svg)](https://zenodo.org/badge/latestdoi/332826132)
 

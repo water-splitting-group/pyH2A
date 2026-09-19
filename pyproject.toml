@@ -1,26 +1,37 @@
 [build-system]
-requires = ["setuptools>=45", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["uv_build>=0.12,<0.13"]
+build-backend = "uv_build"
 
 [project]
 name = "pyH2A"
-description = "pyH2A is an extensible Python framework for the analysis of hydrogen production cost. Its discounted cash flow module is based on the H2A Hydrogen Analysis model developed by the U.S. Department of Energy"
-version = "v0.0a8"
+version = "0.0a8"
+description = "Extensible Python framework for the analysis of hydrogen production cost, based on the H2A Hydrogen Analysis model developed by the U.S. Department of Energy."
+keywords = ["hydrogen", "techno-economic-analysis", "life-cycle-assessment", "discounted-cash-flow", "water-splitting"]
+authors = [
+    {name = "Jacob Schneidewind", email = "pyH2A.pypi@gmail.com"},
+]
+license = "MIT"
+license-files = ["LICENSE"]
 readme = "README.md"
-requires-python = ">= 3.9"
+requires-python = ">=3.9"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Scientific/Engineering :: Chemistry",
+]
 dependencies = [
-    "autodocsumm>=0.2.14",
-    "autopep8>=2.3.2",
     "click>=8.1.8",
-    "furo>=2025.9.25",
     "matplotlib>=3.9.4",
-    "numba>=0.60.0",
     "numpy>=2.0.2",
-    "numpydoc>=1.9.0",
     "pandas>=2.3.3",
-    "pint>=0.24.4",
-    "pytest>=8.4.2",
-    "pytest-cov>=7.1.0",
     "scipy>=1.13.1",
 ]
 
@@ -29,3 +40,29 @@ performance = [
     "pypardiso>=0.4.7; sys_platform == 'win32' or sys_platform == 'linux'",
     "scikit-umfpack>=0.3.3; sys_platform == 'darwin'",
 ]
+docs = [
+    "sphinx>=7.2",
+    "furo>=2025.9.25",
+    "autodocsumm>=0.2.14",
+    "numpydoc>=1.9.0",
+]
+dev = [
+    "pyH2A[docs]",
+    "pytest>=8.4.2",
+    "pytest-cov>=7.1.0",
+]
+
+[project.scripts]
+pyH2A = "pyH2A.cli_pyH2A:cli"
+
+[project.urls]
+Homepage = "https://github.com/water-splitting-group/pyH2A"
+Documentation = "https://pyh2a.readthedocs.io"
+Source = "https://github.com/water-splitting-group/pyH2A"
+"Bug Tracker" = "https://github.com/water-splitting-group/pyH2A/issues"
+
+[tool.uv.build-backend]
+module-name = "pyH2A"
+
+[tool.pytest.ini_options]
+testpaths = ["src/tests"]
