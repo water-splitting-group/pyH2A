@@ -1,33 +1,65 @@
-name: CI/CD Pipeline
+name: CI
 
 on:
   push:
-    branches: [master, feat/plugin_refactor]
+    branches: [master]
   pull_request:
-    branches: [master, feat/plugin_refactor]
+    branches: [master]
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up latest Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3"
+        uses: actions/checkout@v7
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v10.1.0
         with:
           enable-cache: true
 
       - name: Install dependencies
-        run: |
-          uv pip install --system -e ".[performance]"
+        run: uv sync --extra performance
 
       - name: Run tests
+        run: uv run pytest --cov=pyH2A --cov-report=xml --cov-report=term-missing
+
+      - name: Update coverage badge
+        if: github.event_name == 'push'
+        env:
+          BADGE_BRANCH: badges
         run: |
-          uv run pytest
+          uv run genbadge coverage --local -i coverage.xml -o "$RUNNER_TEMP/coverage_badge.svg"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # The badge lives on its own orphan branch, not on master: master is
+          # protected, and this keeps one commit per coverage change out of the
+          # main history. Assembled with plumbing so the checkout's working tree
+          # and branch are never touched and a missing branch needs no special
+          # case -- commit-tree with no -p simply produces a root commit.
+          tree=$(
+            printf '100644 blob %s\tcoverage_badge.svg\n' \
+              "$(git hash-object -w "$RUNNER_TEMP/coverage_badge.svg")" | git mktree
+          )
+
+          if git ls-remote --exit-code --heads origin "$BADGE_BRANCH" >/dev/null; then
+            git fetch --depth 1 origin "$BADGE_BRANCH"
+
+            if [ "$(git rev-parse 'FETCH_HEAD^{tree}')" = "$tree" ]; then
+              echo "Coverage badge unchanged"
+              exit 0
+            fi
+
+            commit=$(git commit-tree "$tree" -p FETCH_HEAD \
+              -m "chore: update coverage badge [skip ci]")
+          else
+            commit=$(git commit-tree "$tree" \
+              -m "chore: create coverage badge [skip ci]")
+          fi
+
+          git push origin "$commit:refs/heads/$BADGE_BRANCH"
