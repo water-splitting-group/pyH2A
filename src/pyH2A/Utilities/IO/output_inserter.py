@@ -13,23 +13,6 @@ from pyH2A.Utilities.constants import (WILDCARD_MARKER,
                                        DIMENSION_KEY
                                        )
 
-# # Properties of rows (middle level)
-# OPTIONAL_KEY = 'optional'
-# ADD_PROCESSED_KEY = 'add_processed'
-# INSERT_PATH_KEY = 'insert_path'
-# PATH_KEY_OUTPUT = 'path_key'
-
-# key for special insertions (which are not inserted by processing the output dictionary)
-#special_top_level_keys = ['special_insertions']
-
-# Special keys (not considered while iterating through middle level of output dictionary
-# special_keys = ['description', OPTIONAL_KEY, ADD_PROCESSED_KEY, INSERT_PATH_KEY, PATH_KEY_OUTPUT]
-
-# Properties of values (bottom level)
-# INSERTED_VALUE_KEY = 'inserted_value'
-# TYPE_KEY = 'type'
-# DIMENSION_KEY = 'dimension'
-
 def _retrieve_value_to_be_inserted(inserted_value,
                                    plugin_class,
                                    plugin_name,
