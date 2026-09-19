@@ -21,7 +21,7 @@ class DummyDCF:
         utilities,
         other_variable_costs
     ):
-        self.functional_unit = resolve_functional_unit('kg')
+        self.functional_unit = resolve_functional_unit('kg[H2]')
         self.inp = {
             "Time": {
                 "Years": {
@@ -58,7 +58,7 @@ class DummyDCF:
             "Technical Operating Parameters and Specifications": {
                 "Design output by year": {
                     "Value": plant_output_per_year, 
-                    "Unit": "kg",
+                    "Unit": "kg[H2]",
                     "Processed": "Yes",
                     },
                 "Operating capacity factor": {
@@ -71,7 +71,7 @@ class DummyDCF:
                     "Cost_Value": value["Cost"], 
                     "Cost_Unit": "USD", 
                     "Usage_Value": value["Usage"], 
-                    "Usage_Unit": "1/kg", 
+                    "Usage_Unit": "1/kg[H2]", 
                     "Price_Conversion_Factor_Value": value.get("Conversion", 1.0),
                     "Price_Conversion_Factor_Unit": "-",
                 } 

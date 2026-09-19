@@ -18,7 +18,7 @@ class DummyDCF:
         available_power_hourly,
     ):
 
-        self.functional_unit = resolve_functional_unit('kg')
+        self.functional_unit = resolve_functional_unit('kg[H2]')
         self.inp = {
             "Time": {
                 "Years": {

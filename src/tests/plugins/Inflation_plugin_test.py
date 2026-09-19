@@ -15,7 +15,7 @@ class DummyDCF:
         ref_year,
         time_dict,
     ):
-        self.functional_unit = resolve_functional_unit('kg')
+        self.functional_unit = resolve_functional_unit('kg[H2]')
         self.inp = {
             "Financial Input Values": {
                 "Inflation rate": {
