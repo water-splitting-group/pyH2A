@@ -50,7 +50,7 @@ Data | {Hourly Irradiation > Horizontal single axis tracking > Value, kWh/m2} | 
 
 Name | Value | Unit | Comment 
 --- | --- | --- | --- 
-Design output by year | {Electrolyzer > H2 production (yearly) > Value, kg} | kg | Hydrogen production by electrolyzer (direct and via stored power) is considered as design output by year
+Design output by year | {Electrolyzer > H2 production (yearly) > Value, kg} | kg[H2] | Hydrogen production by electrolyzer (direct and via stored power) is considered as design output by year
 Operating capacity factor | 100% | - | Set to 100%, operating capacity factor is considered during modelling of electrolyzer operation
 Fraction of output that reaches gate | 100% | -
 Plant modules | 10 | - | Modelling of 10 modules for calculation of staff cost to facilitate comparison with PEC and photocatalytic model
@@ -158,7 +158,7 @@ PV OPEX (fraction of CAPEX) | 2% | {Direct Capital Costs - PV > PV CAPEX > Value
 
 Name | Usage_Value | Usage_Path | Usage_Unit | Cost_Value | Cost_Path | Cost_Unit | Price_Conversion_Factor_Value | Price_Conversion_Factor_Unit | Comment
 --- | --- | --- | --- | --- | --- | --- | --- | --- | ---
-Process Water | 10. | None | 1/kg | 0.0006 | None | USD | 1. | - | Seawater reverse osmosis cost ca. 0.6 USD/m3 (equal to 0.0006 USD/L), based on Kibria 2021 and Driess 2021
+Process Water | 10. | None | 1/kg[H2] | 0.0006 | None | USD | 1. | - | Seawater reverse osmosis cost ca. 0.6 USD/m3 (equal to 0.0006 USD/L), based on Kibria 2021 and Driess 2021
 
 # Grid Electricity
 

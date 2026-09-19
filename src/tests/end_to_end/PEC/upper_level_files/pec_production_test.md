@@ -10,5 +10,5 @@ Default TEA | pyH2A.Config~Defaults_TEA.md
 Name | Value | Path | Unit | Comment
 --- | --- | --- | --- | --- 
 Operating capacity factor | 49% | None | - | (0.54× the reference value.)
-Plant design capacity | 3,200 | None | kg/day | (3.20× the reference value.)
+Plant design capacity | 3,200 | None | kg[H2]/day | (3.20× the reference value.)
 

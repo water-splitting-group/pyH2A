@@ -73,6 +73,18 @@ The thus generated file ``input_full.md`` can be used to enter the model informa
 Enter model information
 =======================
 
+The ``# Functional Unit`` table declares the unit every result is reported per. Its unit has to name the product it refers to, as a bracketed reference, since a bare unit such as ``kg`` raises a ``ValueError``:
+
+.. code-block:: markdown
+
+	# Functional Unit
+
+	Name | Unit | Comment
+	--- | --- | ---
+	Functional Unit | kg[H2] | kg[H2] is functional unit
+
+The reference is purely descriptive and plays no part in unit conversion, but it is what keeps a cost per kg of hydrogen distinguishable from a cost per kg of anything else. Input values which are expressed in the functional unit (e.g. ``Technical Operating Parameters and Specifications > Plant design capacity``) have to carry the same reference, for example ``kg[H2]/day``.
+
 The input file template specifies which model information has to be entered for the selected technology configuration. For example, ``Hourly_Irradiation_Plugin`` requests a file containg hourly irradiation data:
 
 .. code-block:: markdown

@@ -40,11 +40,11 @@ def resolve_functional_unit(unit):
     reference = functional_quantity.reference
     unit_SI = functional_quantity.base_unit_reference
 
-    # if not any(reference):
-    #     raise ValueError(
-    #         f"Functional Unit '{functional_quantity.supplied_unit}' carries no reference. Declare the "
-    #         "product it refers to in brackets (e.g. 'kg[H2]' rather than 'kg') in the "
-    #         "'# Functional Unit' table.")
+    if not any(reference):
+        raise ValueError(
+            f"Functional Unit '{functional_quantity.supplied_unit}' carries no reference. Declare the "
+            "product it refers to in brackets (e.g. 'kg[H2]' rather than 'kg') in the "
+            "'# Functional Unit' table.")
 
     if functional_quantity.dimension == 'energy':
         dimension_per_time = 'power'
@@ -66,7 +66,7 @@ def resolve_functional_unit(unit):
 
 if __name__ == "__main__":
 
-    unit = 'kWh'
+    unit = 'kWh[electricity]'
 
     functional_unit = resolve_functional_unit(unit)
 

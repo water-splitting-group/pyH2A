@@ -16,7 +16,7 @@ Discounted_Cash_Flow_Plugin | 900 | Performs discounted cash flow analysis to de
 
 Name | Unit | Comment
 --- | --- | ---
-Functional Unit | kg | kg[H2] is functional unit
+Functional Unit | kg[H2] | kg[H2] is functional unit
 
 # Financial Input Values
 
