@@ -1,23 +1,17 @@
 from pyH2A.Utilities.input_modification import insert
 from pyH2A.Utilities.check_functions import check_type, check_dimension
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
-
-# Properties of rows (middle level)
-OPTIONAL_KEY = 'optional'
-ADD_PROCESSED_KEY = 'add_processed'
-INSERT_PATH_KEY = 'insert_path'
-PATH_KEY = 'path_key'
-
-# key for special insertions (which are not inserted by processing the output dictionary)
-special_top_level_keys = ['special_insertions']
-
-# Special keys (not considered while iterating through middle level of output dictionary
-special_keys = ['description', OPTIONAL_KEY, ADD_PROCESSED_KEY, INSERT_PATH_KEY, PATH_KEY]
-
-# Properties of values (bottom level)
-INSERTED_VALUE_KEY = 'inserted_value'
-TYPE_KEY = 'type'
-DIMENSION_KEY = 'dimension'
+from pyH2A.Utilities.constants import (WILDCARD_MARKER,
+                                       OPTIONAL_KEY,
+                                       ADD_PROCESSED_KEY,
+                                       INSERT_PATH_KEY,
+                                       PATH_KEY_OUTPUT,
+                                       SPECIAL_TOP_LEVEL_KEYS,
+                                       SPECIAL_KEYS_OUTPUT_INSERTER,
+                                       INSERTED_VALUE_KEY,
+                                       TYPE_KEY,
+                                       DIMENSION_KEY
+                                       )
 
 def _retrieve_value_to_be_inserted(inserted_value,
                                    plugin_class,
@@ -172,6 +166,63 @@ def _perform_checks_on_value_to_be_inserted(value_to_be_inserted,
                         f"is of unsupported type '{type(value_to_be_inserted)}' for checks." 
                         f"Expected type is either 'str', 'dict' or 'Quantity'.")
 
+
+def insert_flexible_middle_key_values(value_dict: dict,
+                                        dcf_class,
+                                        top_key: str,
+                                        bottom_key: str,
+                                        value_to_be_inserted: dict,
+                                        plugin_name: str,
+                                        add_processed: bool,
+                                        insert_path: str,
+                                        path_key: str):
+    '''
+    Insert multiple values into `dcf_class.inp` when the middle_key is a wildcard.
+    Assumes that `value_to_be_inserted` is a dictionary with middle_key values as keys.
+
+    Parameters
+    ----------
+    value_dict : dict
+        Bottom-level output specification
+    dcf_class : object 
+        DCF-like object that provides `inp` and receives inserted values.
+    top_key : str
+        Table name output dictionary
+    bottom_key : str
+        Column key output dictionary
+    value_to_be_inserted : dict
+        Dictionary of values to insert, with middle_key values as keys.
+    plugin_name : str
+        Name of the plugin used in error messages.
+    add_processed : bool
+        Whether to add the processed value to the DCF input.
+    insert_path : str
+        Whether to insert the path of the value into the DCF input.
+    path_key : str
+        Key to use for the path in the DCF input.
+    '''
+
+    # Iterate through the dictionary of values to be inserted, 
+    # using each key as the middle_key and the 
+    # corresponding value as the value to be inserted
+    for middle_key, value in value_to_be_inserted.items():
+        _perform_checks_on_value_to_be_inserted(value,
+                                            value_dict,
+                                            top_key,
+                                            middle_key,
+                                            bottom_key)
+
+        insert(dcf_class,
+                top_key,
+                middle_key,
+                bottom_key,
+                value,
+                plugin_name,
+                add_processed = add_processed,
+                insert_path = insert_path,
+                path_key = path_key,
+                print_info = False,)
+
 def insert_value(top_key : str, 
                  middle_key : str, 
                  bottom_key : str,
@@ -216,7 +267,7 @@ def insert_value(top_key : str,
     optional = row_dict.get(OPTIONAL_KEY, False)
     add_processed = row_dict.get(ADD_PROCESSED_KEY, True)
     insert_path = row_dict.get(INSERT_PATH_KEY, True)
-    path_key = row_dict.get(PATH_KEY, 'Path')
+    path_key = row_dict.get(PATH_KEY_OUTPUT, 'Path')
 
     inserted_value = value_dict[INSERTED_VALUE_KEY]
 
@@ -229,6 +280,21 @@ def insert_value(top_key : str,
                                                           optional)
 
     if value_to_be_inserted is None:
+        return
+
+    # Detecting if the middle_key is a wildcard marker, 
+    # in which case we need to insert multiple values for different middle_keys
+    # This pathway assumes that value_to_be_inserted is a dictionary with middle_key values as keys
+    if middle_key == WILDCARD_MARKER:
+        insert_flexible_middle_key_values(value_dict,
+                                          dcf_class,
+                                          top_key,
+                                          bottom_key,
+                                          value_to_be_inserted,
+                                          plugin_name,
+                                          add_processed = add_processed,
+                                          insert_path = insert_path,
+                                          path_key = path_key,)
         return
 
     _perform_checks_on_value_to_be_inserted(value_to_be_inserted,
@@ -246,8 +312,7 @@ def insert_value(top_key : str,
            add_processed = add_processed,
            insert_path = insert_path,
            path_key = path_key,
-           print_info = False,
-            )
+           print_info = False,)
 
 ## Top level inserter function
 def output_inserter_function(output_dict, 
@@ -283,7 +348,7 @@ def output_inserter_function(output_dict,
         for top_key, table_dict in output_dict.items():
 
             # Skipping over special insertions (which are not inserted by processing the output dictionary)
-            if top_key in special_top_level_keys:
+            if top_key in SPECIAL_TOP_LEVEL_KEYS:
                 continue
 
             # Iterating through the middle level of the output dictionary
@@ -293,7 +358,7 @@ def output_inserter_function(output_dict,
                 for bottom_key, value_dict in row_dict.items():
 
                     # Skipping over special keys
-                    if bottom_key in special_keys:
+                    if bottom_key in SPECIAL_KEYS_OUTPUT_INSERTER:
                         continue
 
                     insert_value(top_key,
