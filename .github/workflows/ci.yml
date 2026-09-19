@@ -6,12 +6,11 @@ on:
   pull_request:
     branches: [master]
 
-permissions:
-  contents: read
-
 jobs:
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout code
@@ -28,8 +27,19 @@ jobs:
       - name: Run tests
         run: uv run pytest --cov=pyH2A --cov-report=xml --cov-report=term-missing
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v7
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: coverage.xml
+      - name: Update coverage badge
+        if: github.event_name == 'push'
+        run: |
+          uv run genbadge coverage --local -i coverage.xml -o badges/coverage_badge.svg
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add badges/coverage_badge.svg
+
+          if git diff --cached --quiet; then
+            echo "Coverage badge unchanged"
+            exit 0
+          fi
+
+          git commit -m "chore: update coverage badge [skip ci]"
+          git push origin HEAD:${{ github.ref_name }}
