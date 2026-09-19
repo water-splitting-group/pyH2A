@@ -11,7 +11,7 @@ class DummyDCF:
     def __init__(
         self, plant_modules, solar_area_per_module, area_per_staff, shifts, supervisors
     ):
-        self.functional_unit = resolve_functional_unit('kg')
+        self.functional_unit = resolve_functional_unit('kg[H2]')
         self.inp = {
             "Technical Operating Parameters and Specifications": {
                 "Plant modules": {

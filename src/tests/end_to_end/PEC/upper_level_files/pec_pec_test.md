@@ -9,7 +9,7 @@ Default TEA | pyH2A.Config~Defaults_TEA.md
 
 Name | Value | Path | Unit | Comment
 --- | --- | --- | --- | --- 
-Plant design capacity | 2,500 | None | kg/day | (2.50× the reference value.)
+Plant design capacity | 2,500 | None | kg[H2]/day | (2.50× the reference value.)
 
 # Solar-to-Hydrogen Efficiency
 

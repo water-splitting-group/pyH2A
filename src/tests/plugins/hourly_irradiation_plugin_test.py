@@ -21,7 +21,7 @@ class DummyDCF:
         dirt_derating,
         temp_coeff,
     ):
-        self.functional_unit = resolve_functional_unit('kg')
+        self.functional_unit = resolve_functional_unit('kg[H2]')
         self.inp = {
             "Hourly Irradiation": {"File": {"Value": hourly_file}},
             "Irradiance Area Parameters": {
