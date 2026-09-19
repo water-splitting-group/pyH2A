@@ -3,6 +3,7 @@ import numpy as np
 from pyH2A.Config.OpenLCA_config import openLCA_to_pyH2A_unit
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.lca_utilities import (
+    dense_column,
     load_matrices_from_folder,
     atomic_savez,
     export_fingerprint,
@@ -11,7 +12,6 @@ from pyH2A.Utilities.lca_utilities import (
 )
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
-import pprint as pp
 
 class LCA_Plugin:
     '''Performs life-cycle assessment to determine environmental impacts, from an
@@ -24,14 +24,22 @@ class LCA_Plugin:
 
     Parameters
     ----------
+    Technical Operating Parameters and Specifications > Total output at gate > Value : float or int
+        Cumulated output of product at the gate over the plant lifetime, in the
+        functional unit of the product. Computed by
+        :class:`~pyH2A.Plugins.Production_Plugin.Production_Plugin`, and used as
+        the amount of the reference flow in the technosphere column.
     Life Cycle Assessment > Matrix Folder > Value : str
         Path to the openLCA matrix export folder containing the technosphere
-        (A), intervention (B), characterization (C), and demand (f) matrices.
+        (A), intervention (B) and characterization (C) matrices.
+    Life Cycle Assessment > UUID of product > Value : str
+        openLCA technosphere UUID of the product flow, i.e. the entry of the
+        technosphere column that ``Total output at gate`` supplies the value of.
     <...> LCA <...> >> Value : float, int, or ndarray
         Value of an individual LCA technosphere component entry, in a
         component-specific unit. Every table in ``dcf.inp`` whose name
         contains ``"LCA"`` is matched (``sum_all_tables()``-style wildcard
-        table group, and every row within each matched table is resolved 
+        table group, and every row within each matched table is resolved
         regardless of its name.
     <...> LCA <...> >> UUID : str
         openLCA technosphere UUID identifying which technosphere column entry
@@ -39,15 +47,16 @@ class LCA_Plugin:
 
     Returns
     -------
-    Life Cycle Assessment > Results > Value : dict
-        LCIA results keyed by impact name. Each value is a
+    Dependent Variables > <impact name> > Value : Quantity
+        One row per impact category of the export, keyed by the verbatim impact
+        name of ``index_C.csv``. Each value is a
         :class:`~pyH2A.Utilities.Unit_Handler.quantity.Quantity` instance,
         inherently expressed per 1 unit of the reference flow (the demand is
         always exactly one unit of it, regardless of the magnitude reported by
         openLCA), as a composite unit of
-        ``<impact unit> / <reference flow unit>``. Computed by :meth:`perform_lca`.
+        ``<impact unit> / <functional unit>``. Computed by :meth:`perform_lca`.
     ['LCA_Plugin'].lca_results : dict
-        Identical to the value inserted into ``dcf.inp`` above, accessible
+        The same results as a single dictionary keyed by impact name, accessible
         directly off the plugin instance via
         ``dcf.plugs['LCA_Plugin']``.
     self.matrix_folder : str
@@ -62,20 +71,27 @@ class LCA_Plugin:
     Raises
     ------
     ValueError
-        Raised when no LCA input tables are found in ``dcf.inp``, when a UUID
-        present in the technosphere matrix is absent from the LCA input tables,
-        when a resolved component value is negative, or when the export's
-        reference flow unit differs from the declared Functional Unit (see
-        :meth:`apply_component_updates`).
-    KeyError
-        Raised when an impact unit of the export has no entry in
-        ``Config/OpenLCA_Config.py``.
+        Raised when the UUIDs of the LCA input tables and of the product do not
+        match the nonzero entries of the technosphere column exactly, when a UUID
+        is declared more than once, when ``UUID of product`` is not the export's
+        reference flow, when a resolved component value is negative, when a
+        declared Unit cannot be converted into the flow unit the export records
+        for that entry, when the declared Functional Unit carries no reference, or
+        when an impact unit of the export is neither a pyH2A unit nor mapped in
+        ``Config/OpenLCA_config.py``.
     ZeroDivisionError
         Raised when the Sherman-Morrison denominator is singular to working
         precision.
 
     Notes
     -----
+    Every amount in the technosphere column is a plant-lifetime total, because
+    ``Total output at gate`` is; a component supplied per year, or an installed
+    stock supplied as a per-year array (which is summed), is out by the number of
+    operating years. Only entries that are already nonzero in the export's first
+    technosphere column can be given a scenario value, so a process a scenario may
+    need has to be present in the export, with a placeholder amount if necessary.
+
     All caches are class-level and process-local. Disk artifacts are stored
     inside an ``Initial_Artifacts`` subdirectory of the matrix export folder,
     managed by :func:`pyH2A.Utilities.lca_utilities.get_cache_paths`. Both the RAM
@@ -200,13 +216,17 @@ class LCA_Plugin:
         Populates ``_cache`` with keys ``base_scaling_vector``, ``A0_column``
         (nonzero first-column entries as UUIDs, values, and flow units),
         ``basis_component`` (precomputed ``A^{-1} e_i`` basis vectors),
-        ``h_base`` and ``h_basis`` (the precomputed LCIA operator), and
-        ``impact_index``. Disk paths are resolved by
-        :func:`~pyH2A.Utilities.lca_utils.get_cache_paths`, which also creates the
+        ``h_base`` and ``h_basis`` (the precomputed LCIA operator, whose column 0
+        also carries the restatement of the foreground process's own elementary
+        flows), and ``impact_index``. A cache directory is only reused when the
+        fingerprint matches *and* every artifact file is present, so an incomplete
+        one - from an older pyH2A, or partially deleted - is rebuilt rather than
+        loaded from. Disk paths are resolved by
+        :func:`~pyH2A.Utilities.lca_utilities.get_cache_paths`, which also creates the
         ``Initial_Artifacts`` subdirectory.
 
         Every artifact is written through
-        :func:`~pyH2A.Utilities.lca_utils.atomic_savez` and the fingerprint is
+        :func:`~pyH2A.Utilities.lca_utilities.atomic_savez` and the fingerprint is
         written last, so an interrupted write simply leaves no fingerprint and
         the next run recomputes.
         '''
@@ -222,11 +242,15 @@ class LCA_Plugin:
         # Get the disk paths for all artifacts, creating the Initial_Artifacts subdirectory if needed.
         paths = get_cache_paths(self.matrix_folder)
 
-        # If the fingerprint file exists and matches the current fingerprint, load all artifacts from disk into RAM.
-        if paths['fingerprint'].exists() and paths['fingerprint'].read_text() == fingerprint:
+        # If the fingerprint file matches and every artifact is present, load them into RAM.
+        # The completeness check also covers a cache directory written by an older pyH2A that
+        # did not yet produce every artifact, and one a user has partially deleted.
+        if (paths['fingerprint'].exists() and paths['fingerprint'].read_text() == fingerprint
+                and all(path.exists() for path in paths.values())):
             self.load_all_from_disk_to_ram(paths)
 
-        # If the fingerprint file is missing or does not match, compute all artifacts from scratch and save them to disk.
+        # If the fingerprint file is missing or does not match (or files are missing), 
+        # compute all artifacts from scratch and save them to disk.
         else:
             self.compute_all_artifacts_from_scratch()
             self.save_all_to_disk(paths)
@@ -259,7 +283,7 @@ class LCA_Plugin:
     def compute_all_artifacts_from_scratch(self):
         '''Compute all LCA artifacts from source matrices and populate the RAM cache.
 
-        Loads matrices via :func:`~pyH2A.Utilities.lca_utils.load_matrices_from_folder`,
+        Loads matrices via :func:`~pyH2A.Utilities.lca_utilities.load_matrices_from_folder`,
         factorizes the technosphere matrix, solves for the base scaling vector,
         precomputes Sherman-Morrison basis columns and the LCIA operator, and
         populates ``_cache``.
@@ -298,6 +322,18 @@ class LCA_Plugin:
         # matrix-vector product instead of a pass over B and C. See ``perform_lca``.
         characterization = C @ B
 
+        # Restatement of the foreground process's own elementary flows, folded into the same
+        # operator. Column 0 of B is declared for the reference amount ``alpha`` the export was
+        # written at, so a scenario reference amount of ``alpha + delta[0]`` restates it by
+        # ``r = 1 + delta[0] / alpha``, and the characterized correction
+        # ``h_direct * (r - 1) * factor`` is ``(h_direct / alpha) * delta[0] * factor`` - a
+        # column-0 term of the very ``(h_basis @ delta) * factor`` product ``perform_lca``
+        # already forms. Subtracting it here therefore leaves the per-sample cost untouched.
+        # Column 0 is the reference flow because ``tech_process_indices`` orders by row index
+        # and requires row 0 to be the product.
+        h_basis = np.asarray(characterization @ basis_component)
+        h_basis[:, 0] -= dense_column(characterization, 0) / float(techno_index_uuid_values[0][2])
+
         # Cache all artifacts in RAM for this matrix folder and fingerprint
         LCA_Plugin._cache['base_scaling_vector'] = solver(f_vector)
         LCA_Plugin._cache['A0_column'] = (np.asarray(techno_index_uuid_values[:,1], dtype=str),
@@ -306,7 +342,7 @@ class LCA_Plugin:
         LCA_Plugin._cache['basis_component'] = basis_component
         LCA_Plugin._cache['impact_index'] = impact_index
         LCA_Plugin._cache['h_base'] = np.asarray(characterization @ LCA_Plugin._cache['base_scaling_vector']).reshape(-1)
-        LCA_Plugin._cache['h_basis'] = np.asarray(characterization @ basis_component)
+        LCA_Plugin._cache['h_basis'] = h_basis
 
     def save_all_to_disk(self, paths: dict):
         '''Save all artifacts from RAM to disk cache.
@@ -341,35 +377,32 @@ class LCA_Plugin:
                      impact_index=np.array(LCA_Plugin._cache['impact_index'], dtype=object))
 
     def apply_component_updates(self):
-        '''Store resolved LCA input values aligned to the technosphere column,
-        then cross-check the declared Functional Unit.
+        '''Store resolved LCA input values aligned to the technosphere column.
 
-        Reads every ``<...>LCA<...>`` wildcard table already resolved into
+        The product entry is taken from ``Total output at gate`` under the UUID
+        declared as ``UUID of product``; every other entry comes from a
+        ``<...>LCA<...>`` wildcard table already resolved into
         ``self.input_dict_resolved`` (path-based references such as
         ``"A > B > Value"`` are resolved by :func:`input_resolver_function`
-        itself), then matches each component to its position in the cached
+        itself). Each component is then matched to its position in the cached
         first technosphere column by UUID. The sign of each value is
         preserved from the original column. The result is stored on
-        ``self.component_values`` for use in :meth:`build_scaling_vector`.
-
-        Parameters
-        ----------
-        dcf : pyH2A.Discounted_Cash_Flow
-            Discounted cash flow object whose input dictionary contains at
-            least one table whose name contains ``"LCA"``, and whose resolved
-            ``functional_unit`` is cross-checked against the flow unit the
-            export records for the reference flow (see
-            :func:`~pyH2A.Utilities.functional_unit.resolve_functional_unit`).
+        ``self.component_values`` for use in :meth:`perform_lca`.
 
         Raises
         ------
         ValueError
-            Raised when no LCA tables are found in ``dcf.inp``, when a UUID
-            present in the cached technosphere column is absent from the
-            input tables, when a resolved component value is negative, or when
-            the export's reference flow unit differs from
-            ``dcf.functional_unit.unit``.
+            Raised when ``UUID of product`` is not the export's reference flow
+            (row 0 of the technosphere column), when a UUID is declared by more
+            than one row, when the set of UUIDs collected here does not match the
+            set of nonzero entries of the cached technosphere column exactly (in
+            either direction), when a resolved component value is negative, or
+            when a declared ``Unit`` cannot be converted into the flow unit the
+            export records for that entry - which is also what cross-checks the
+            declared Functional Unit, since the product's value is supplied in it.
 
+        Notes
+        -----
         Array-like ``Value`` entries are reduced to a scalar by summation.
         The ordering of ``self.component_values`` follows ``A0_column``, not
         the order of rows in the input tables. Each component's declared
@@ -384,6 +417,16 @@ class LCA_Plugin:
         self.total_output = self.input_dict_resolved['Technical Operating Parameters and Specifications']['Total output at gate']['Value']
         uuid_of_product = self.input_dict_resolved['Life Cycle Assessment']['UUID of product']['Value']
 
+        # The demand vector, the rank-1 update and the product flow unit all address the
+        # reference flow by position (row 0), so the declared product has to be that row and
+        # not merely one of the column's entries. Without this, a product swapped with a
+        # component of the same dimension passes every remaining check - the UUID sets still
+        # match, the units still convert - and silently answers a different question.
+        if str(A0_uuids[0]) != uuid_of_product:
+            raise ValueError(
+                f"'UUID of product' ({uuid_of_product}) is not the reference flow of the export: "
+                f"row 0 of the technosphere column is '{A0_uuids[0]}'.")
+
         # Initialize uuid_to_quantity with the product's UUID and total output at gate
         uuid_to_quantity = {uuid_of_product: self.total_output}
 
@@ -395,7 +438,16 @@ class LCA_Plugin:
                 value_quantity = component_data['Value']
                 scalar_quantity = Quantity(float(np.sum(value_quantity.base_value)), value_quantity.base_unit)
 
-                # Map the component's UUID to its resolved scalar quantity
+                # Map the component's UUID to its resolved scalar quantity. Every technosphere
+                # entry is declared exactly once, so a repeat is rejected rather than allowed to
+                # overwrite the earlier row - the set comparison below cannot see it, because a
+                # duplicate paired with a missing component leaves both sets the same size.
+                if component_data['UUID'] in uuid_to_quantity:
+                    raise ValueError(
+                        f"LCA component UUID '{component_data['UUID']}' is declared more than "
+                        "once. Declare each technosphere entry exactly once, with its total "
+                        "amount, rather than spread over several rows.")
+
                 uuid_to_quantity[component_data['UUID']] = scalar_quantity
 
         # Check that every UUID in the cached A0 column has a corresponding entry in the input tables
@@ -437,6 +489,10 @@ class LCA_Plugin:
             Raised when ``1 + correction[0]`` is lost to cancellation relative
             to ``correction[0]``, i.e. when the scenario's technosphere matrix
             is numerically singular. No direct-solve fallback is applied.
+        ValueError
+            Raised when an impact unit of the export is neither a pyH2A unit nor
+            mapped in ``Config/OpenLCA_config.py``, in which case the unit parser
+            names the offending token.
 
         Notes
         -----
@@ -450,11 +506,34 @@ class LCA_Plugin:
         ``P[0] @ delta`` is ``(P @ delta)[0]``, so the full correction vector is
         never formed here; :attr:`scaling_vector` builds it on demand.
 
+        The foreground process's own elementary flows are restated for the
+        scenario's reference amount as part of the same product. Column 0 of ``B``
+        is declared for the amount ``alpha`` the export was written at, so with
+        ``r = 1 + delta[0] / alpha`` the scenario intervention matrix is
+        ``B + (r - 1) B[:, 0] e0^T``; ``e0^T x`` is ``x[0]``, which the rank-1
+        update makes exactly ``y[0] / (1 + correction[0])``, i.e. ``factor``. The
+        added term ``h_direct * (r - 1) * factor`` is therefore
+        ``(h_direct / alpha) * delta[0] * factor``, a column-0 term of
+        ``(h_basis @ delta) * factor``, and
+        :meth:`compute_all_artifacts_from_scratch` subtracts ``h_direct / alpha``
+        from column 0 of ``h_basis`` once per export rather than adding a term per
+        sample. This is what makes the result independent of the size the openLCA
+        product system happened to be defined at: without it, direct foreground
+        emissions keep the amount they had at the export's own size while being
+        attributed to ``r`` times as much product.
+
         Stores results on ``self.lca_results`` as a dictionary mapping impact
-        names to ``Quantity`` instances, each expressed as a composite unit of
-        ``<impact unit> / <reference flow unit>`` (e.g. ``'kg / kg'``). No
-        normalization is performed: the demand is one unit of the reference
-        flow by construction.
+        names to ``Quantity`` instances. Impacts are computed in the export's own
+        reference flow unit and then restated per declared Functional Unit, as a
+        composite unit of ``<impact unit> / <functional unit>``
+        (e.g. ``'kg[$CO_{2}$-Eq] / kg[H2]'``). No normalization is performed: the
+        demand is one unit of the reference flow by construction.
+
+        Because the reference amount is ``Total output at gate``, every other
+        amount in the rewritten column has to be stated on that same basis, as a
+        plant-lifetime total. Array values are reduced by summation, which is what
+        an operating flow reported year by year needs and what an installed stock
+        repeated year by year does not.
         '''
         cache = LCA_Plugin._cache
 
@@ -473,6 +552,10 @@ class LCA_Plugin:
                 "fallback direct solve is disabled.")
         
         self.factor = cache['base_scaling_vector'][0] / denominator
+
+        # ``h_basis`` already carries the restatement of the foreground process's own elementary
+        # flows in its column 0, folded in when the artifacts were built, so this single product
+        # covers both the technosphere and the direct exchanges. See the Notes below.
         h = cache['h_base'] - (cache['h_basis'] @ self.delta) * self.factor
 
         # Retrieving unit of product flow in OpenLCA matrix
@@ -514,5 +597,13 @@ class LCA_Plugin:
         '''
         cache = LCA_Plugin._cache
         correction = np.asarray(cache['basis_component'] @ self.delta).reshape(-1)
+        scaling_vector = cache['base_scaling_vector'] - correction * self.factor
 
-        return cache['base_scaling_vector'] - correction * self.factor
+        # For the reference entry that subtraction is ``y[0] - correction[0] * factor``, which
+        # is algebraically ``y[0] / (1 + correction[0])``, i.e. ``self.factor`` itself. Evaluated
+        # as written it cancels about log10(alpha_scenario / alpha_export) digits - at plant
+        # scale it is the difference of two numbers agreeing to within 1e-8 - and the error is
+        # then amplified by the large entries of the rewritten column. Take the closed form.
+        scaling_vector[0] = self.factor
+
+        return scaling_vector

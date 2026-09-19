@@ -4,17 +4,18 @@ Name | Value
 --- | ---
 Defaults | pyH2A.Config~Defaults_LCA.md
 
+# Functional Unit
+
+Name | Unit | Comment
+--- | --- | ---
+Functional Unit | kg[smartphones] | Smartphones are the functional unit
+
 # Life Cycle Assessment
 
 Name | Value
 --- | ---
 Matrix Folder | src/tests/e2e_lca/data/matrix_folders/smartphone_1layer_acid_base
-
-# LCA - Smartphone GT Components
-
-Name | Value | Unit | UUID
---- | --- | --- | ---
-Smartphone | 1.0 | kg | 72d897ed-5c61-44d0-9ee0-f057dc981e58
+UUID of product | 72d897ed-5c61-44d0-9ee0-f057dc981e58
 
 # Construction
 
@@ -26,6 +27,6 @@ capital perc 1st | % of capital spent in 1st year of construction | 100% | -
 
 Name | Value | Unit | Comment
 --- | --- | --- | ---
-Plant design capacity | 1.0 | kg/day | Reference production for GT LCA tests
-Operating capacity factor | 90% | - | Capacity factor
+Plant design capacity | 0.05 | kg[smartphones]/year | Reference production for GT LCA tests
+Operating capacity factor | 100% | - | Capacity factor
 Fraction of output that reaches gate | 100% | - | No gate losses assumed for minimal LCA test
