@@ -174,24 +174,28 @@ def test_scenarios(group, scenario_index):
     it finishes, and clearing here is what guarantees a scenario 0 run reads
     artifacts produced by the current code rather than stale ones left over
     from a previous session or from before a refactor."""
+
     scenarios = _SCENARIOS_BY_GROUP[group]
+
     if scenario_index == 0:
         # Clear the disk cache as explained in the docstring note above, so that the LCA run
         # recomputes all artifacts from scratch. The RAM cache invalidates itself: it is keyed
         # by (matrix folder, export fingerprint), which differs between groups.
         _, matrix_folder = _load_scenario(scenarios[0][0])
         _clear_disk(matrix_folder)
+
     elif scenario_index == 1:
         _clear_ram_only()
 
     input_file_stem, impact_name, expected_value, expected_unit = scenarios[scenario_index]
     input_file = _INPUT_FILES_DIR / f'{input_file_stem}.md'
+
     result = pyH2A(str(input_file), str(_INPUT_FILES_DIR))
+
     # Every impact category is inserted as its own row of the 'Dependent Variables'
     # table, keyed by the verbatim impact name from index_C.csv.
     quantity = result.base_case.inp['Dependent Variables'][impact_name]['Value']
-    diff_pct = (quantity.supplied_value - expected_value) / expected_value * 100
-    print(f'\n  pyH2A={quantity.supplied_value:.6f}  reference={expected_value:.6f}  diff={diff_pct:+.4f}%')
+
     assert quantity.supplied_value == pytest.approx(expected_value, rel=1e-8)
     assert quantity.supplied_unit_reference == f'{expected_unit} / {_FUNCTIONAL_UNIT}'
 
@@ -202,7 +206,9 @@ def test_scenarios(group, scenario_index):
 def _cleanup_disk_caches_after_module():  # noqa: F841
     """Remove every group's on-disk Initial_Artifacts cache once all tests
     in this module have finished, so no leftover cache directories remain."""
+
     yield
+
     for scenarios in _SCENARIOS_BY_GROUP.values():
         _, matrix_folder = _load_scenario(scenarios[0][0])
         _clear_disk(matrix_folder)
@@ -213,7 +219,15 @@ if __name__ == '__main__':
     result = pyH2A('src/tests/e2e_lca/data/input_files/smartphone_3layer_gwp_base.md', 'src/tests/e2e_lca/')
     print(result.base_case.inp['Dependent Variables'])
 
-    import pprint as pp
+    from timeit import default_timer as timer
+
+    start = timer()
+    for _ in range(10000):
+        result = pyH2A('src/tests/e2e_lca/data/input_files/smartphone_3layer_gwp_base.md', 'src/tests/e2e_lca/')
+    end = timer()
+    print(f'{end - start:.2f} seconds') # Running in 6.5 s (2026-09-19)
+
+    #import pprint as pp
 
     #pp.pprint(result.base_case.inp['LCA - Smartphone GT Components'])
-    pp.pprint(result.base_case.plugs['LCA_Plugin'].scaling_vector)
+    #pp.pprint(result.base_case.plugs['LCA_Plugin'].scaling_vector)

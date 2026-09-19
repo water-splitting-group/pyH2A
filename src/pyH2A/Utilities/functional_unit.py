@@ -1,8 +1,12 @@
 from dataclasses import dataclass
-from pyH2A.Utilities.Unit_Handler import config, Quantity
+from pyH2A.Utilities.Unit_Handler import Quantity
 
 @dataclass(frozen=True)
 class FunctionalUnit:
+    '''
+    Dataclass to hold functional-unit-derived quantities (dimension, SI unit, etc.).
+    '''
+
     unit: str
     unit_no_reference: str
     reference: tuple
@@ -17,6 +21,16 @@ def resolve_functional_unit(unit):
     Compute functional-unit-derived quantities (dimension, SI unit, etc.) for the
     given unit string. Pure function — no global state; call fresh wherever the
     functional unit is needed (e.g. once per Discounted_Cash_Flow_Plugin instance).
+
+    Parameters
+    ----------
+    unit : str
+        Functional unit string (e.g. 'kg[H2]').
+
+    Returns
+    -------
+    FunctionalUnit
+        Dataclass containing the functional-unit-derived quantities.
     '''
 
     functional_quantity = Quantity(1, unit)
@@ -25,6 +39,12 @@ def resolve_functional_unit(unit):
     dimension = functional_quantity.dimension
     reference = functional_quantity.reference
     unit_SI = functional_quantity.base_unit_reference
+
+    # if not any(reference):
+    #     raise ValueError(
+    #         f"Functional Unit '{functional_quantity.supplied_unit}' carries no reference. Declare the "
+    #         "product it refers to in brackets (e.g. 'kg[H2]' rather than 'kg') in the "
+    #         "'# Functional Unit' table.")
 
     if functional_quantity.dimension == 'energy':
         dimension_per_time = 'power'
@@ -46,7 +66,7 @@ def resolve_functional_unit(unit):
 
 if __name__ == "__main__":
 
-    unit = 'kWh[delivered]'
+    unit = 'kWh'
 
     functional_unit = resolve_functional_unit(unit)
 
