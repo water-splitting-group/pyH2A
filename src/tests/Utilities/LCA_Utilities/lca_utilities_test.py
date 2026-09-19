@@ -9,6 +9,7 @@ from pyH2A.Utilities.lca_utilities import (
     _load_impact_index,
     _load_tech_index,
     atomic_savez,
+    dense_column,
     export_fingerprint,
     factorize,
     find_matrix_path,
@@ -248,6 +249,45 @@ class TestTechProcessIndices:
         assert result[:, 0].tolist() == [0, 1, 2]
         assert result[:, 1].tolist() == ['uid-0', 'uid-1', 'uid-2']
 
+    # The demand vector, the rank-1 update and the product flow unit all address the
+    # reference flow by position, so "row 0 is the product" is load-bearing rather than
+    # a convention: an export that breaks it has to be refused here, where it is visible.
+
+    def test_column_without_row_zero_is_rejected(self, tmp_path):
+        """A first column that does not produce flow 0 would be solved for a
+        different product, with A0_column[0] silently becoming another process."""
+        self._make_folder(tmp_path, {'uid-0': 0, 'uid-1': 1})
+        with pytest.raises(ValueError, match='does not produce'):
+            tech_process_indices(str(tmp_path), np.array([[0.0], [-1.0]]))
+
+    def test_negative_reference_flow_is_rejected(self, tmp_path):
+        """Row 0 has to be an output; a negative entry there is an input, so the
+        column produces nothing the demand vector can ask for."""
+        self._make_folder(tmp_path, {'uid-0': 0, 'uid-1': 1})
+        with pytest.raises(ValueError, match='does not produce'):
+            tech_process_indices(str(tmp_path), np.array([[-1.0], [2.0]]))
+
+    def test_empty_column_is_rejected(self, tmp_path):
+        self._make_folder(tmp_path, {'uid-0': 0})
+        with pytest.raises(ValueError, match='does not produce'):
+            tech_process_indices(str(tmp_path), np.array([[0.0]]))
+
+
+# ── dense_column ───────────────────────────────────────────────────────────
+
+class TestDenseColumn:
+    _MATRIX = np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])
+
+    def test_dense_input(self):
+        np.testing.assert_array_equal(dense_column(self._MATRIX, 1), [2.0, 4.0, 6.0])
+
+    def test_sparse_input_matches_dense(self):
+        sparse = scipy.sparse.csc_matrix(self._MATRIX)
+        np.testing.assert_array_equal(dense_column(sparse, 0), dense_column(self._MATRIX, 0))
+
+    def test_result_is_one_dimensional(self):
+        assert dense_column(scipy.sparse.csc_matrix(self._MATRIX), 0).ndim == 1
+
 
 # ── load_matrices_from_folder ──────────────────────────────────────────────
 
@@ -323,3 +363,11 @@ class TestGetCachePaths:
         r1 = get_cache_paths(str(tmp_path))
         r2 = get_cache_paths(str(tmp_path))
         assert r1 == r2
+
+    def test_covers_every_cached_artifact(self, tmp_path):
+        """LCA_Plugin only reuses a cache directory in which every path here exists,
+        so a cache key without a path could never be written and would force a
+        rebuild on every run."""
+        from pyH2A.Plugins.LCA_Plugin import LCA_Plugin
+
+        assert set(LCA_Plugin._cache) | {'fingerprint'} == set(get_cache_paths(str(tmp_path)))

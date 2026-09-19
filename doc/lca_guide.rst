@@ -15,6 +15,11 @@ run. The LCA module reads a technosphere matrix exported from openLCA, updates i
 scenario-specific exchange amounts resolved from the plugin outputs, and returns impact
 characterisation results (e.g. GWP100) alongside the levelised H2 cost.
 
+Because pyH2A supplies both the demand (one unit of the reference flow) and every amount in the
+foreground column, the size the openLCA product system happened to be drawn at — 1 kg of product,
+or 1000 — cancels out: the same physical plant described at any reference amount gives the same
+impact per functional unit.
+
 LCA is an optional feature, run by
 :class:`~pyH2A.Plugins.LCA_Plugin.LCA_Plugin` as an ordinary Workflow plugin. Which
 defaults file the input file merges in decides whether it runs at all:
@@ -165,100 +170,128 @@ as negative values internally. A negative value in the input file is therefore r
 ``ValueError`` rather than silently flipping a flow's direction.
 
 Multiple ``# LCA - ...`` tables are supported and their rows are merged, which allows grouping
-components by subsystem for readability.
+components by subsystem for readability. Each UUID is declared exactly once across all of them;
+a UUID on two rows raises a ``ValueError`` rather than the second row overwriting the first.
 
-Plugin LCA outputs — PVE example
-=================================
+What the amounts have to be
+---------------------------
+
+.. important::
+
+   **Every amount in the technosphere column is a plant-lifetime total.** The product's amount
+   is ``Total output at gate``, the cumulated output over the plant life, so each component's
+   amount is the total consumed or installed over that same life — not a per-year figure. A
+   component supplied per year is out by the number of operating years, in a way no check can
+   catch.
+
+   Array ``Value`` entries are reduced by **summation**. That is what an operating flow reported
+   year by year needs (annual electricity summed to the lifetime total), and the opposite of what
+   an installed stock repeated year by year needs (a 20-element array of "400 MW installed"
+   becomes 8 000 MW). Supply stocks as scalars.
+
+   Where the model replaces equipment over the plant life, the LCA amount is the total number of
+   units manufactured, including replacements — the TEA's replacement costs and the LCA's
+   manufacturing burden have to describe the same equipment.
 
 .. note::
 
-   The plugin descriptions below are specific to the **PV + Electrolysis (PVE)** reference
-   model bundled with pyH2A (``examples/LCA_example/PVE.md``). PVE is one example of a complete
-   TEA–LCA coupling; other H2 production pathways (e.g. PEC, photocatalytic) define a
-   different set of ``# LCA - ...`` rows and rely on different plugin outputs. The general
-   principle — plugins run first, their outputs are referenced by path in the LCA table —
-   applies to any model.
+   Only entries that are **already nonzero** in the export's first technosphere column can be
+   given a scenario value; pyH2A rewrites that column, it does not extend it. A process any
+   scenario may need must therefore be present in the openLCA product system, with a placeholder
+   amount if the base case does not use it. The placeholder's magnitude does not affect the
+   result — it is replaced outright — so an arbitrarily small value such as ``1e-6`` is fine.
 
-In a full PVE model, every LCA component value is computed by a plugin. The product's amount is
-read from ``Production_Plugin``'s output directly; the four remaining components are referenced
-via path expressions in the ``# LCA - ...`` table. The plugins run before LCA is triggered, so
-their outputs are already available in ``dcf.inp`` when the LCA table is processed.
+Direct emissions of the foreground process
+-------------------------------------------
 
-Production_Plugin
--------------------
+The foreground process may also carry elementary flows of its own (on-site combustion, fugitive
+product, direct land occupation) rather than only technosphere inputs. Those are declared in
+openLCA per the reference amount the product system was exported at, and pyH2A restates them by
+the ratio of ``Total output at gate`` to that exported amount, exactly as it restates the
+technosphere exchanges. Their contribution per functional unit is therefore whatever openLCA
+records, independent of the size the product system happened to be drawn at.
 
-Computes annual H2 output at the plant gate.
+They are **not** declared in the ``# LCA - ...`` tables and cannot be varied per scenario: only
+the technosphere column is parameterised. A direct flow that has to change between scenarios
+belongs in a sub-process of its own, listed as a component.
 
-- **LCA input required:** none (outputs are always computed)
-- **Output used by LCA:** ``Technical Operating Parameters and Specifications > Total output at gate > Value`` — cumulative H2 production at gate over the plant lifetime, in the Functional Unit, read directly by ``LCA_Plugin`` as the amount of the process named by ``UUID of product``. It is not a row of the ``# LCA - ...`` table.
+Where the component amounts come from
+=====================================
 
-Photovoltaic_Plugin
---------------------
+In a coupled TEA–LCA model the component amounts are not literals: they are path references to
+outputs the technology plugins have already computed by the time ``LCA_Plugin`` runs. The
+product's amount is read directly from ``Production_Plugin``; every other row resolves a
+``{Table > Row > Value, unit}`` reference.
 
-Simulates PV electricity production and calculates the array area.
+The outputs currently available to reference, by plugin:
 
-- **LCA input required:** none (outputs are always computed)
-- **Output used by LCA:** ``Non-Depreciable Capital Costs > Solar collection area > Value`` — total PV area in m², used to scale the PV module manufacturing foreground process.
+.. list-table::
+   :header-rows: 1
+   :widths: 28 44 28
 
-Electrolyzer_Plugin
---------------------
+   * - Plugin
+     - Output path
+     - Typical LCA use
+   * - ``Production_Plugin``
+     - ``Technical Operating Parameters and Specifications > Total output at gate``
+     - the product itself (read automatically, not a table row)
+   * - ``Photovoltaic_Plugin``
+     - ``Non-Depreciable Capital Costs > Solar collection area``
+     - scales PV module manufacturing
+   * - ``Photovoltaic_Plugin``
+     - ``Non-Depreciable Capital Costs > Land required``
+     - scales land transformation / occupation
+   * - ``Photovoltaic_Plugin``
+     - ``Power Generation > PV yearly power generation``
+     - scales an electricity generation process (summed over the plant life)
+   * - ``Electrolyzer_Plugin``
+     - ``Electrolyzer > H2 production (yearly)``
+     - operating flows proportional to production
+   * - ``Reverse_Osmosis_Plugin``
+     - ``Power Consumption > Reverse osmosis consumption (yearly)``
+     - scales the electricity a water treatment process draws
+   * - ``Reverse_Osmosis_Plugin``
+     - ``Reverse Osmosis > Capacity``
+     - scales water treatment equipment
 
-Models electrolyzer operation and calculates the required number of units.
+.. warning::
 
-- **LCA input required:** ``Electrolyzer > Unit nominal power > Value`` must be present in the input file. This is the rated power of one electrolyzer unit.
-- **Output used by LCA:** ``Electrolyzer > Number of electrolyzers required > Value`` — total nominal power divided by unit nominal power, used to scale the electrolyzer manufacturing foreground process.
+   Equipment **counts** — number of electrolyzer units, number of reverse osmosis devices,
+   battery mass — are the natural way to scale a manufacturing process, but no plugin computes
+   them today. ``Electrolyzer_Plugin`` exposes ``Actual stack replacement time`` rather than a
+   unit count, ``Battery_Plugin`` exposes stored and available energy rather than a mass, and
+   ``Reverse_Osmosis_Plugin`` exposes a capacity rather than a device count. Until those outputs
+   exist, such amounts have to be given as literals in the ``# LCA - ...`` table, or derived from
+   an output that does exist. Earlier revisions of this guide referenced
+   ``Electrolyzer > Number of electrolyzers required``, ``Battery > Mass`` and
+   ``Reverse Osmosis > Number of devices required``; none of them are implemented.
 
-To enable this output, add ``Unit nominal power`` to the ``# Electrolyzer`` table:
+A worked example, mixing a plugin output with literals:
 
 .. code-block:: markdown
 
-	# Electrolyzer
+	# LCA - PVE Components
 
-	Name | Value | Unit | Comment
+	Name | Value | Unit | UUID
 	--- | --- | --- | ---
-	Nominal power | 5,500.0 | kW | Total plant electrolyzer power
-	...
-	Unit nominal power | 1,100.0 | kW | Rated power of one electrolyzer unit (gives 5 units)
+	PV Area | {Non-Depreciable Capital Costs > Solar collection area > Value, m2} | m2 | 0c88e490-56a5-3099-807c-06645527c90e
+	Electrolyzer units | 20 | - | 98f950b2-39b0-4374-a400-05984b438be9
+	Battery mass | 150000 | kg | c341bfcb-5959-3a70-839e-913e8250b237
 
-Battery_Plugin
----------------
+.. note::
 
-Models battery storage and calculates installed battery mass.
+   ``LCA_Plugin`` sits last in both ``Defaults_LCA.md`` and ``Defaults_TEA_LCA.md``, so every
+   plugin output is already in ``dcf.inp`` when the ``# LCA - ...`` tables are resolved.
 
-- **LCA input required:** ``Battery > Energy density > Value`` must be present (optional input; if absent, the mass is not computed and the path reference in the LCA table will fail to resolve).
-- **Output used by LCA:** ``Battery > Mass > Value`` — design capacity divided by energy density, used to scale the battery manufacturing foreground process.
+Reading cost and impact together
+--------------------------------
 
-Add the energy density to the ``# Battery`` table:
-
-.. code-block:: markdown
-
-	# Battery
-
-	Name | Value | Unit | Comment
-	--- | --- | --- | ---
-	Design capacity | 800000 | kWh | Full design capacity of battery.
-	...
-	Energy density | 0.2 | kWh/kg | Battery specific energy for mass calculation
-
-Reverse_Osmosis_Plugin
------------------------
-
-Models the reverse osmosis water treatment system and calculates the number of devices.
-
-- **LCA input required:** ``Reverse Osmosis > Device throughput > Value`` must be present (throughput of one device unit).
-- **Output used by LCA:** ``Reverse Osmosis > Number of devices required > Value`` — total annual sea-water demand divided by device throughput, used to scale the reverse osmosis manufacturing foreground process.
-
-Add the device throughput to the ``# Reverse Osmosis`` table:
-
-.. code-block:: markdown
-
-	# Reverse Osmosis
-
-	Name | Value | unit |Comment
-	--- | --- | ---
-	Power Demand | 2.71 | kWh/m3
-	...
-	Device throughput | 6.23e10 | L/year | Throughput of one RO device per year
+Both the levelised cost and the impacts land in the ``Dependent Variables`` table and are both
+"per kg of H2", but they are not divided by the same kilograms. The levelised cost divides by the
+**NPV-discounted** output (with start-up years scaled by ``Fraction of revenues during start-up``),
+as a levelised cost must; the LCA divides by the **undiscounted** lifetime total, as physical
+flows must. The two denominators differ by roughly the discount factor over the plant life, which
+is worth keeping in mind when plotting one against the other.
 
 Run pyH2A with LCA
 ==================
@@ -384,14 +417,16 @@ and re-loading the original openLCA export.
 	        A0_column.npz             — UUIDs, values and units of nonzero column-0 entries
 	        basis_component.npz       — A⁻¹ eᵢ columns for each foreground component
 	        h_base.npz                — C·B·A⁻¹f, the impacts of the base scaling vector
-	        h_basis.npz               — C·B·A⁻¹ eᵢ, the impacts of each basis column
+	        h_basis.npz               — C·B·A⁻¹ eᵢ, the impact sensitivity to each component
 	        impact_index.npz          — impact category names and units
 	        fingerprint.txt           — identity of the export these artifacts came from
 
 The artifacts carry a fingerprint of the openLCA export they were built from (the size and
 modification time of ``A``, ``B``, ``C``, ``index_A.csv`` and ``index_C.csv``). Re-exporting the
 matrices changes that fingerprint, so pyH2A recomputes the artifacts by itself — there is no
-need to delete the ``Initial_Artifacts`` folder by hand.
+need to delete the ``Initial_Artifacts`` folder by hand. A folder is only reused when the
+fingerprint matches *and* every artifact listed above is present, so one written by an older
+pyH2A, or partially deleted, is rebuilt rather than loaded from.
 
 Within a Python process, the artifacts are also held in a process-local RAM cache
 (``LCA_Plugin._cache``). Multiprocessing workers each build their own RAM cache from disk on first
@@ -413,6 +448,26 @@ where ``correction = basis_component @ delta``, ``delta`` is the element-wise ch
 foreground column values, and ``basis_component`` holds the pre-computed ``A⁻¹ eᵢ`` columns.
 The update is a single dense matrix-vector multiply — typically microseconds — compared to
 tens of seconds for a full factorisation.
+
+The foreground process's own elementary flows are restated for the scenario's reference amount
+by that same product. Column 0 of ``B`` is declared for the amount α the export was written at,
+so with ``r = 1 + delta[0]/α`` the scenario intervention matrix is ``B + (r − 1)·B[:,0]·e₀ᵀ``.
+Since ``e₀ᵀx`` is the foreground activity level ``x[0]``, which the rank-1 update makes exactly
+``x₀[0] / (1 + correction[0])`` — the ``factor`` above — the characterised correction is
+
+.. code-block:: text
+
+	h_direct × (r − 1) × factor   =   (h_direct / α) × delta[0] × factor
+
+which is a column-0 term of the ``h_basis · delta`` product that is formed anyway. pyH2A
+therefore subtracts ``h_direct / α`` from column 0 of ``h_basis`` once per export, when the
+artifacts are built, and the per-sample calculation is unchanged — the restatement costs nothing
+in the Monte Carlo loop.
+
+This is what makes the result independent of the size the openLCA product system was defined at.
+Without it a direct foreground emission keeps the amount it had at the export's own size while
+being attributed to ``r`` times as much product, so it is divided by ``r`` and — at plant scale,
+where ``r`` is of order 10⁷ — effectively deleted.
 
 For a system with four foreground components, ``basis_component`` has shape ``(n, 4)`` where
 ``n`` is the total number of processes. The ``(n, 4)`` multiply replaces an ``(n³)`` factorisation.
@@ -438,6 +493,27 @@ exactly the set of nonzero entries of the technosphere matrix's first column. Ei
 foreground component is missing from the input file, or a row lists a UUID the technosphere
 column does not contain. Compare the ``# LCA - ...`` rows against the nonzero entries of
 column 0 in ``index_A.csv``, and check that the correct matrix export folder is specified.
+
+``ValueError: 'UUID of product' (...) is not the reference flow of the export``
+--------------------------------------------------------------------------------
+
+The UUID declared as the product is in the technosphere column, but is not row 0 of it. The
+demand vector, the rank-1 update and the product flow unit all address the reference flow by
+position, so the product has to be the process the column produces, not one of its inputs. Row 0
+of ``index_A.csv`` names it.
+
+``ValueError: LCA component UUID '...' is declared more than once``
+---------------------------------------------------------------------
+
+Two rows — possibly in different ``# LCA - ...`` tables — carry the same UUID. Declare each
+technosphere entry once, with its total amount, rather than split over several rows.
+
+``ValueError: The first technosphere column of the export in '...' does not produce its own reference flow``
+---------------------------------------------------------------------------------------------------------------
+
+Row 0 of ``A[:, 0]`` is zero or negative, so the column produces nothing the demand vector can
+ask for. Re-export the product system from openLCA with the intended process as its quantitative
+reference.
 
 ``ValueError: Negative value for LCA component '...'``
 -------------------------------------------------------
