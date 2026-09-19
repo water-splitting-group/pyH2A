@@ -11,6 +11,8 @@ pyH2A
    :caption: Contents
 
    guide
+   Overview   
+   dictionary_structure   
    pyH2A/pyH2A
    utilities/utilities
    plugins/plugins
