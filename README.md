@@ -3,7 +3,7 @@
 [![CI](https://github.com/water-splitting-group/pyH2A/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/water-splitting-group/pyH2A/actions/workflows/ci.yml)
 [![Coverage](https://raw.githubusercontent.com/water-splitting-group/pyH2A/master/badges/coverage_badge.svg)](https://github.com/water-splitting-group/pyH2A/actions/workflows/ci.yml)
 [![Documentation Status](https://readthedocs.org/projects/pyh2a/badge/?version=latest)](https://pyh2a.readthedocs.io/en/latest/?badge=latest)
-[![DOI](https://zenodo.org/badge/332826132.svg)](https://zenodo.org/badge/latestdoi/332826132)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6365957.svg)](https://doi.org/10.5281/zenodo.6365957)
 
 # pyH2A
 
