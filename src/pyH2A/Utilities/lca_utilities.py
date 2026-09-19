@@ -85,6 +85,25 @@ def _load_tech_index(folder: str) -> dict:
     
     return index
 
+def dense_column(matrix, index: int) -> numpy.ndarray:
+    '''Return one column of a dense or sparse matrix as a 1-D dense array.
+
+    Parameters
+    ----------
+    matrix : ndarray or scipy.sparse.spmatrix
+        Matrix to take the column from.
+    index : int
+        Column index.
+
+    Returns
+    -------
+    numpy.ndarray
+        The column, flattened to one dimension.
+    '''
+    column = matrix[:, [index]]
+
+    return numpy.asarray(column.todense() if scipy.sparse.issparse(column) else column).reshape(-1)
+
 def tech_process_indices(matrix_folder: str, matrix_a) -> numpy.ndarray:
     '''Extract technosphere indices, UUIDs, and flow units for nonzero entries in ``A[:, 0]``.
 
@@ -101,10 +120,15 @@ def tech_process_indices(matrix_folder: str, matrix_a) -> numpy.ndarray:
         Four-column object array with ``[index, uuid, value, flow_unit]`` per
         row for nonzero components of the first technosphere column, ordered by
         index so that the first row is always the reference flow.
+
+    Raises
+    ------
+    ValueError
+        If the first technosphere column has no positive entry in row 0, i.e. if
+        it does not produce the reference flow the demand vector asks for.
     '''
 
-    column_0 = matrix_a[:, 0]
-    a_column_0 = numpy.asarray(column_0.toarray() if scipy.sparse.issparse(matrix_a) else column_0).reshape(-1)
+    a_column_0 = dense_column(matrix_a, 0)
     nonzero = set(numpy.flatnonzero(a_column_0).tolist())
 
     rows = [
@@ -114,6 +138,15 @@ def tech_process_indices(matrix_folder: str, matrix_a) -> numpy.ndarray:
     ]
 
     rows.sort(key=lambda row: row[0])
+
+    # Row 0 is the reference flow of the product system. The demand vector, the rank-1
+    # update and the product flow unit all address it by position, so an export whose first
+    # technosphere column does not produce flow 0 would be solved for a different product
+    # without anything downstream noticing.
+    if not rows or rows[0][0] != 0 or rows[0][2] <= 0:
+        raise ValueError(
+            f"The first technosphere column of the export in '{matrix_folder}' does not produce "
+            "its own reference flow: row 0 of A[:, 0] must be a positive (output) entry.")
 
     return numpy.array(rows, dtype=object)
 
