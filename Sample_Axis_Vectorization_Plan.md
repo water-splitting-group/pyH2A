@@ -663,6 +663,217 @@ Stage 4: ≈8.7 ms/sample, 100,000 samples in ~15 min on one core, ~4 min on fou
 
 ---
 
+## 13. Compatibility with `Optimization_Analysis` and the other analyses
+
+Short answer: **yes, and optimization benefits more than Monte Carlo does — but only if
+the checkpoint scheme is built in its general form.** A prefix checkpoint, which is enough
+for Monte Carlo, collapses to 1.05× on a realistic optimization parameter set. The
+generalized version measured **8.4×**, and a full `differential_evolution` run
+**21.08 s → 2.23 s (8.7×) with an identical optimum**.
+
+There is also a blocker that has to be cleared first, and it is not a performance issue.
+
+### 13.1 Blocker: the analysis entry points do not currently run
+
+`dcf.h2_cost` is **read in five places and assigned nowhere**:
+
+```
+Analysis/Waterfall_Analysis.py:52    results['Base Case'] = {'Value': self.base_case.h2_cost}
+Analysis/Waterfall_Analysis.py:102   output[variable]['Value'] = dcf.h2_cost
+Analysis/Sensitivity_Analysis.py:93  sensitivity_results[name]['Values'][shown_value] = dcf.h2_cost
+Analysis/Sensitivity_Analysis.py:172 base_case = self.base_case.h2_cost
+Analysis/Monte_Carlo_Analysis.py:317 h2_cost.append(dcf.h2_cost)
+```
+
+plus `attribute = 'h2_cost'` as the default in both `discounted_cash_flow_function` and
+`discounted_cash_flow_function_1D`, which is what `Optimization_Analysis` calls.
+Verified against a working input file:
+
+```
+>>> discounted_cash_flow_function_1D([1000.], params, inp)
+AttributeError: 'Discounted_Cash_Flow' object has no attribute 'h2_cost'
+```
+
+The value exists — `Discounted_Cash_Flow_Plugin` writes it to
+`inp['Dependent Variables']['Levelized cost']['Value']` as a `Quantity` — the attribute
+was simply never reconnected. No test covers any analysis module, which is why the suite
+is green. (The older `Example/*.md` inputs are also stale: they predate the
+`Functional Unit` table and raise `KeyError: 'Functional Unit'` before reaching any of
+this.)
+
+**This matters for the plan, not just as a bug.** Whatever restores `h2_cost` defines the
+seam every accelerated path returns through, so it should be designed for both modes at
+once:
+
+```python
+@property
+def h2_cost(self):                      # scalar today, (S,) under a sample axis
+    return self.inp['Dependent Variables']['Levelized cost']['Value'].unit[
+        f'USD/{self.functional_unit.unit}']
+```
+
+Fix this in Stage 0, with a test per analysis module, before anything else.
+
+### 13.2 Why optimization fits the design well
+
+`Optimization_Analysis.perform_optimization` uses
+`scipy.optimize.differential_evolution` — a **population-based** optimizer. Within a
+generation every candidate is independent; only generations are sequential. That is the
+same structure as a Monte Carlo batch, just narrower.
+
+Measured on PV_E (SciPy 1.17):
+
+| parameters | evaluations | generations | batchable share | max batch width |
+|---|---|---|---|---|
+| 2 (both CAPEX) | 429 | 13 | **94 %** | 30 |
+| 3 (CAPEX ×2 + after-tax IRR) | 988 | 19 | **93 %** | 45 |
+
+SciPy's `vectorized=True` hands the objective an `(n_params, S)` array and expects
+`(S,)` back — **exactly the batched-callable interface Stage 3 produces**. I ran it with a
+batched wrapper and it returns the same optimum as the serial path.
+
+Two consequences:
+
+* The batch width is `popsize × n_params` (default `popsize=15`), i.e. **30–45, not
+  100,000**. Memory and chunking (§9) are therefore non-issues for optimization; but the
+  vectorization payoff is the ~5–7× end of the §6.2 curve, not 41×.
+* The remaining 6–7 % of evaluations are the final `polish=True` L-BFGS-B step, which is
+  strictly sequential and single-point. Its numerical gradients (`n_params + 1`
+  evaluations each) could be batched by supplying a batched `jac`, but that is a separate,
+  optional refinement.
+
+### 13.3 The finding that changes the design: prefix checkpoints are not enough
+
+Stage 2 as described in §3 snapshots the state **before the earliest tainted plugin** and
+replays the whole tail. For Monte Carlo over cost parameters that is fine — the earliest
+tainted plugin sits at workflow position 10 of 17.
+
+Optimization parameter sets are usually not that tidy. Adding
+`Financial Input Values > After-tax real IRR` — an ordinary thing to optimize — taints
+`Time_Plugin` and `Inflation_Plugin`, which are at **position 0**. The tail becomes the
+entire workflow and the checkpoint buys nothing:
+
+| optimized parameters | earliest tainted plugin | tail | per evaluation | speedup |
+|---|---|---|---|---|
+| 2 × CAPEX | position 10 / 17 | 7 steps | 18.80 → 2.22 ms | **8.47×** |
+| + after-tax IRR | **position 0 / 17** | 17 steps | 22.14 → 18.15 ms | **1.22×** |
+
+The two tainted plugins at the front cost 0.18 ms each; the ten expensive static ones
+behind them (Hourly_Irradiation, Photovoltaic, Electrolyzer, Battery, …) are still
+untainted. A prefix checkpoint simply cannot express "re-run these two, skip those ten,
+then re-run the rest".
+
+**The fix is to skip static plugins individually rather than taking one prefix
+checkpoint.** In the base run, record which leaves of `inp` each plugin writes (a diff of
+the structural snapshot before and after it). On replay, execute the tainted plugins and,
+for each static plugin, splice its recorded writes back in and reuse its recorded plugin
+object:
+
+```python
+for key in workflow_tail:
+    if key in tainted:
+        execute_plugin(key, shim.plugs, print_info=False, dcf=shim)
+    else:
+        for path, value in writes[key].items():   # recorded in the base run
+            splice(shim.inp, path, value)
+        shim.plugs[key] = base_plugs[key]
+```
+
+Prototyped and measured on the three-parameter case above (302 leaf writes spliced per
+evaluation, all shared references, no copying):
+
+| | ms/evaluation | speedup | LCOH |
+|---|---|---|---|
+| full DCF | 18.04 | 1.00× | reference |
+| prefix checkpoint only | 17.18 | 1.05× | bit-identical |
+| **+ splicing static plugins** | **2.16** | **8.37×** | **bit-identical** |
+
+**Recommendation: build the splice form in Stage 2, not the prefix form.** It subsumes the
+prefix checkpoint, it is barely more code once the per-plugin write sets are recorded, and
+it removes the "one early parameter ruins it" failure mode from Monte Carlo too.
+
+### 13.4 End-to-end on a real optimization run
+
+`differential_evolution` over three parameters, `seed=0`, `tol=0.01`, `polish=True`:
+
+| configuration | evaluations | wall | ms/eval | optimum |
+|---|---|---|---|---|
+| serial, full DCF (today's path, once `h2_cost` is restored) | 988 | 21.08 s | 21.33 | f* = 2.607913778845 |
+| + splice-replay | 988 | 2.41 s | 2.44 | identical |
+| + electrolyzer kernel fix | 988 | 2.30 s | 2.33 | identical |
+| + lazy `Quantity` | 988 | **2.23 s** | **2.26** | identical |
+
+**8.7×**, with the same number of evaluations and the same optimum to every printed digit.
+The evaluation count being unchanged is the important part: because the objective stays
+bit-identical, the optimizer follows exactly the same search trajectory, so the result is
+reproducible against the old path rather than merely "as good".
+
+### 13.5 What is different about optimization, and what to watch
+
+1. **The optimizer visits the corners of the bounds.** Monte Carlo samples a
+   distribution; `differential_evolution` deliberately probes the extremes and the
+   mutation step can push candidates to the bound edges. Regimes that never occur in an
+   MC run — zero denominators, negative costs, out-of-bounds intermediate quantities —
+   *will* be visited. The per-sample validity mask of §5.1 is therefore **mandatory**, not
+   optional, and invalid candidates must return a **large finite value or `np.inf`, never
+   `NaN`**: NaN comparisons are always false, so a NaN in the initial population is never
+   displaced and quietly poisons the run.
+
+2. **Numerical reassociation can change the search path.** §11 risk 2 said batched
+   rewrites differ in the last ulp. For Monte Carlo that shifts a histogram
+   imperceptibly. For an optimizer it can flip an accept/reject at a near-tie and send the
+   search down a different branch — same quality of optimum, different numbers, different
+   evaluation count. Everything measured above is bit-identical and so reproduces exactly;
+   once Stage 3 lands, optimization results must be reported with the mode and seed, and
+   comparisons against old runs made on quality, not on equality.
+
+3. **Tier B/C parameters are worse here than in Monte Carlo.** Optimizing a lifetime
+   (`PEC Cells > Lifetime`, `Catalyst > Lifetime`) or `Plant life` runs through
+   `int(np.ceil(...))`, so the objective is **piecewise constant** in that parameter — it
+   already is today, which is presumably why a derivative-free global optimizer was
+   chosen. Under batching, a Tier-C parameter additionally gives different array shapes to
+   different population members, so a generation must be **grouped by shape** before being
+   batched. With `popsize × n_params` ≈ 30–45 candidates and a handful of distinct integer
+   values, that is cheap; but it has to be written.
+
+4. **`workers` and `vectorized` are mutually exclusive in SciPy.** `workers=-1` is
+   available today and needs nothing from this plan. Everything is picklable (solved input
+   dict 3.76 MB, plugin objects 7.08 MB, `Quantity` fine), but shipping ~11 MB per task is
+   wasteful — use a pool **initializer that builds the checkpoint once per worker** from
+   the raw input instead. For small populations on few cores, `workers=-1` and
+   `vectorized=True` are comparable; do not try to combine them.
+
+5. **The taint set is *more* stable than in Monte Carlo.** The optimized parameters are
+   declared once in `Parameters - Optimization_Analysis` and never change during the run,
+   so the dependency analysis and the write-set recording are amortized over hundreds to
+   thousands of evaluations instead of being recomputed. Optimization is the best case for
+   Stage 2.
+
+### 13.6 The other analysis modules
+
+| module | how it drives the model | compatible? |
+|---|---|---|
+| `Sensitivity_Analysis` | `deepcopy(inp)` + `set_by_path` + full DCF, a few values per parameter | Yes — same pattern as MC. One taint set per swept parameter; each sweep is a natural batch. Also blocked on `h2_cost`. |
+| `Waterfall_Analysis` | cumulative: each step modifies a *growing* set of keys, then a full DCF | Yes, with care — the taint set grows along the waterfall, so record it per step (or take the union). Only ~n_parameters runs, so this is about correctness, not speed. Blocked on `h2_cost`. |
+| `Comparative_MC_Analysis` | instantiates `Monte_Carlo_Analysis` per model | Yes — inherits whatever MC does; the models are independent and are themselves a natural outer parallel axis. |
+| `Cost_Contributions_Analysis` | one base-case DCF | Unaffected. |
+| `Development_Distance_Time_Analysis` | curve-fits *already-computed* MC results; never calls the DCF | Unaffected. |
+| `Monte_Carlo_Analysis.target_price_2D_region` | evaluates a `grid_points²` grid through `perform_monte_carlo_multiprocessing` | Yes — a regular grid is the easiest possible batch. |
+
+### 13.7 Revised guidance
+
+* Move the `h2_cost` fix and one smoke test per analysis module into **Stage 0**. Nothing
+  downstream can be validated until the analyses run at all.
+* Build **Stage 2 in its splice form** (§13.3). The prefix form is a special case of it
+  and fails on ordinary optimization parameter sets.
+* Treat the per-sample validity mask (§5.1) as a **Stage 2 requirement** rather than a
+  Stage 3 one, because optimization reaches invalid regions long before batching does.
+* Expect optimization to gain **~8–9× from Stages 1–2** (measured) and a further ~5× from
+  Stage 3 at a batch width of 30–45 — not the 41× that a 10,000-wide Monte Carlo batch
+  reaches.
+
+---
+
 ## Appendix A — scripts backing every number
 
 In this session's scratchpad (`/tmp/claude-0/.../scratchpad/`), outside the repository:
@@ -679,6 +890,9 @@ In this session's scratchpad (`/tmp/claude-0/.../scratchpad/`), outside the repo
 | `combo.py` | all measures stacked | 0 |
 | `minimal_diff.py`, `electro_final.py` | attributing the electrolyzer speedup to individual lines | 6.1 |
 | `axis_scan.py` | static scan for axis-fragile constructs | 4.1 |
+| `opt_probe.py`, `opt_probe2.py` | differential evolution: evaluation counts, batch widths, early-taint case | 13.2–13.3 |
+| `splice_proto.py` | per-plugin splice replay — 8.37× where a prefix checkpoint gives 1.05× | 13.3 |
+| `opt_stack.py` | full differential evolution run under each configuration | 13.4 |
 
 Environment: 4-core Intel Xeon @ 2.80 GHz container, Python 3.14.0rc2, NumPy 2.4.1.
 Absolute millisecond figures move by up to ~50 % between measurement regimes on this
