@@ -13,6 +13,67 @@ def numpy_npv(rate, values):
 	values = np.asarray(values)
 	return (values / (1+rate)**np.arange(0, len(values))).sum(axis=0)
 
+def discount_cash_flow(rate, values):
+	'''Discounting of each entry of `values` to the beginning of the analysis period.
+
+	Parameters
+	----------
+	rate : float
+		Discount rate.
+	values : ndarray
+		Cash flow of each year of the analysis period, the first entry corresponding
+		to the first year of construction.
+
+	Returns
+	-------
+	discounted : ndarray
+		Discounted cash flow of each year. Summing the returned array is equivalent to
+		``numpy_npv(rate, values)``.
+	'''
+
+	values = np.asarray(values)
+
+	return values / (1 + rate)**np.arange(0, len(values))
+
+def payback_time(years, cumulative_cash_flow):
+	'''Determination of the point in time at which the cumulative cash flow turns positive.
+
+	Parameters
+	----------
+	years : ndarray
+		Time axis belonging to `cumulative_cash_flow`.
+	cumulative_cash_flow : ndarray
+		Cumulative cash flow for each entry of `years`.
+
+	Returns
+	-------
+	payback : float
+		Position on the `years` axis at which `cumulative_cash_flow` changes sign from
+		negative to positive, obtained by linear interpolation between the last negative
+		and the first non-negative entry. ``np.nan`` is returned if the cumulative cash
+		flow never turns positive.
+	'''
+
+	years = np.asarray(years, dtype = float)
+	cumulative_cash_flow = np.asarray(cumulative_cash_flow, dtype = float)
+
+	non_negative = np.nonzero(cumulative_cash_flow >= 0)[0]
+
+	if len(non_negative) == 0:
+		return np.nan
+
+	idx = non_negative[0]
+
+	if idx == 0:
+		return float(years[0])
+
+	previous = cumulative_cash_flow[idx - 1]
+	current = cumulative_cash_flow[idx]
+
+	fraction = -previous / (current - previous)
+
+	return float(years[idx - 1] + fraction * (years[idx] - years[idx - 1]))
+
 @lru_cache(maxsize = 1024)
 def get_idx(diagonal_number, axis0, axis1):
 	'''Calculation of index for MACRS calculation.
@@ -166,6 +227,18 @@ class Discounted_Cash_Flow_Plugin:
         Levelized cost of product (nominal levelized cost, corrected for inflation).
     Total Cost of Product > Contributions > Value : dict
         Cost contributions (per functional unit of product) of each component of the discounted cash flow
+    Cash Flow > Annual pre-tax > Value : ndarray
+        Pre-tax cash flow for each year of the analysis period.
+    Cash Flow > Annual > Value : ndarray
+        Net (after-tax, post-depreciation) cash flow for each year of the analysis period.
+    Cash Flow > Cumulative > Value : ndarray
+        Cumulative net cash flow for each year of the analysis period.
+    Cash Flow > Annual discounted > Value : ndarray
+        Net cash flow of each year, discounted to the beginning of the analysis period.
+    Cash Flow > Cumulative discounted > Value : ndarray
+        Cumulative discounted net cash flow for each year of the analysis period.
+    Cash Flow > Payback time > Value : float
+        Time from the first year of construction until the cumulative net cash flow turns positive.
     ['Discounted_Cash_Flow_Plugin'].product_cost : float
         Levelized cost of product (identical to the value inserted into `dcf.inp`).
     ['Discounted_Cash_Flow_Plugin'].contributions : dict
@@ -173,6 +246,23 @@ class Discounted_Cash_Flow_Plugin:
         analysis to the levelized cost of product.
     ['Discounted_Cash_Flow_Plugin'].npv_dict : dict
         Net present value of each component of the discounted cash flow analysis.
+    ['Discounted_Cash_Flow_Plugin'].annual_cash_flow : Quantity
+        Net (after-tax, post-depreciation) cash flow for each year of the analysis period.
+    ['Discounted_Cash_Flow_Plugin'].cumulative_cash_flow : Quantity
+        Cumulative net cash flow for each year of the analysis period.
+    ['Discounted_Cash_Flow_Plugin'].annual_discounted_cash_flow : Quantity
+        Net cash flow of each year, discounted to the beginning of the analysis period.
+    ['Discounted_Cash_Flow_Plugin'].cumulative_discounted_cash_flow : Quantity
+        Cumulative discounted net cash flow for each year of the analysis period.
+    ['Discounted_Cash_Flow_Plugin'].payback_time : Quantity
+        Time from the first year of construction until the cumulative net cash flow turns positive.
+
+    Notes
+    -----
+    The cash flow arrays cover the full analysis period, starting with the construction years
+    and followed by the operation years. They therefore share their time axis with
+    `Time > Years > Value > Plant years relative`, which can be used directly as the x axis
+    when plotting the net cash flow over time.
     '''
 
     def __init__(self, dcf, print_info, run = True):
@@ -491,6 +581,70 @@ class Discounted_Cash_Flow_Plugin:
                             
                         }
                     },
+                    "Cash Flow": {
+                        "Annual pre-tax": {
+                            "Value": {
+                                "inserted_value": "pre_tax_cash_flow",
+                                "type": {np.ndarray,},
+                                "dimension": "currency",
+                            },
+                            "optional": False,
+                            "description": "Pre-tax cash flow for each year of the analysis period "
+                                           "(construction years followed by operation years)."
+                        },
+                        "Annual": {
+                            "Value": {
+                                "inserted_value": "annual_cash_flow",
+                                "type": {np.ndarray,},
+                                "dimension": "currency",
+                            },
+                            "optional": False,
+                            "description": "Net (after-tax, post-depreciation) cash flow for each year of the "
+                                           "analysis period (construction years followed by operation years)."
+                        },
+                        "Cumulative": {
+                            "Value": {
+                                "inserted_value": "cumulative_cash_flow",
+                                "type": {np.ndarray,},
+                                "dimension": "currency",
+                            },
+                            "optional": False,
+                            "description": "Cumulative net cash flow for each year of the analysis period. Turns "
+                                           "positive at the payback time."
+                        },
+                        "Annual discounted": {
+                            "Value": {
+                                "inserted_value": "annual_discounted_cash_flow",
+                                "type": {np.ndarray,},
+                                "dimension": "currency",
+                            },
+                            "optional": False,
+                            "description": "Net cash flow of each year of the analysis period, discounted to the "
+                                           "beginning of the analysis period using the after-tax nominal IRR."
+                        },
+                        "Cumulative discounted": {
+                            "Value": {
+                                "inserted_value": "cumulative_discounted_cash_flow",
+                                "type": {np.ndarray,},
+                                "dimension": "currency",
+                            },
+                            "optional": False,
+                            "description": "Cumulative discounted net cash flow for each year of the analysis "
+                                           "period. Returns to zero at the end of the plant life, since the "
+                                           "levelized cost of product is defined by this condition."
+                        },
+                        "Payback time": {
+                            "Value": {
+                                "inserted_value": "payback_time",
+                                "type": {int, float},
+                                "dimension": "time",
+                            },
+                            "optional": False,
+                            "description": "Time from the first year of construction until the cumulative net cash "
+                                           "flow turns positive, obtained by linear interpolation. `nan` if the "
+                                           "cumulative net cash flow never turns positive."
+                        },
+                    },
                 }
 
     def _run(self, dcf):
@@ -742,6 +896,23 @@ class Discounted_Cash_Flow_Plugin:
 
     def calculate_cash_flow(self):
         '''Calculate cash flow.
+
+        Notes
+        -----
+        The yearly cash flow of the plant is stored, both in its net (undiscounted) and
+        in its discounted form, together with the corresponding cumulative cash flows,
+        making the evolution of the cash flow over the analysis period accessible for
+        further analysis (e.g. determination of the payback time).
+
+        All cash flow arrays cover the full analysis period (construction years followed
+        by operation years), so that they can be plotted against
+        `Time > Years > Value > Plant years relative`.
+
+        The net present value of the after-tax, post-depreciation cash flow is zero by
+        construction, since the levelized cost of product is defined as the product price
+        at which this condition is met. Consequently, the cumulative *discounted* cash
+        flow returns to zero at the end of the plant life, while the cumulative *net*
+        cash flow turns positive at the payback time.
         '''
 
         pre_tax_cash_flow = (-self.annual_initial_depreciable_capital
@@ -759,6 +930,21 @@ class Discounted_Cash_Flow_Plugin:
             print('Warning: NPV of After tax post-depreciation cash flow is not 0, possible error. NPV: {0}'.format(npv_after_tax_post_depreciation))
 
         cummulative_cash_flow = np.cumsum(after_tax_post_depreciation_cash_flow)
+
+        discounted_cash_flow = discount_cash_flow(self.after_tax_nominal_irr,
+                                                  after_tax_post_depreciation_cash_flow)
+
+        self.pre_tax_cash_flow = Quantity(pre_tax_cash_flow, 'USD')
+        self.annual_cash_flow = Quantity(after_tax_post_depreciation_cash_flow, 'USD')
+        self.cumulative_cash_flow = Quantity(cummulative_cash_flow, 'USD')
+        self.annual_discounted_cash_flow = Quantity(discounted_cash_flow, 'USD')
+        self.cumulative_discounted_cash_flow = Quantity(np.cumsum(discounted_cash_flow), 'USD')
+
+        # Payback time is counted from the first year of construction, which is the first
+        # entry of the cash flow arrays.
+        self.payback_time = Quantity(payback_time(np.arange(len(cummulative_cash_flow)),
+                                                  cummulative_cash_flow),
+                                     'year')
 
         return numpy_npv(self.after_tax_nominal_irr, cummulative_cash_flow)
 
