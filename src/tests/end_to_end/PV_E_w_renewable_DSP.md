@@ -118,6 +118,7 @@ Highest charge level | 80% | - |
 Power | 20 | MW | 
 Charging threshold | 20% | -
 Storage capacity per battery module | 150 | MWh
+Areal energy capacity | 32 | kWh/m2
 
 # Battery Cell Stack
 
