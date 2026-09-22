@@ -134,6 +134,12 @@ def test_photovoltaic_plugin(case):
         abs=tolerance
     )
 
+    # Module area (for LCA linkage) is inserted into the Photovoltaic table
+    assert dcf.inp['Photovoltaic']['Module area']['Value'].unit['m2'] == pytest.approx(
+        expected["area"].unit['m2'],
+        abs=tolerance
+    )
+
     for year in plugin.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']:
         np.testing.assert_allclose(
             plugin.electric_energy_generation_yearly_data[year].unit['J'],
