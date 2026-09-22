@@ -21,6 +21,9 @@ class Electrolyzer_Plugin:
         Electrical conversion efficiency of electrolyzer in (mass H2)/energy.
     Electrolyzer > Replacement time > Value : float
         Operating time before stack replacement of electrolyzer is required.
+    Electrolyzer > Unit nominal power > Value : float, optional
+        Nominal power of one electrolyzer unit. Required to calculate the
+        number of electrolyzers and stacks, e.g. for Life Cycle Assessment.
     Power Generation > Available energy (hourly) > Value : dict
         Available energy, hourly basis, dictionary of years.
 
@@ -41,11 +44,27 @@ class Electrolyzer_Plugin:
         Yearly operation data of electrolyzer : duration of operation during the year.                
     Electrolyzer > H2 production (yearly) > Value : nd.array
         Yearly hydrogen production.
+    Electrolyzer > Electricity consumption (yearly) > Value : nd.array
+        Yearly electricity consumed by electrolyzer. Summed over the plant 
+        life, it is the electricity input of hydrogen production for Life Cycle Assessment.
+    Electrolyzer > Number of electrolyzers required > Value : float
+        Number of electrolyzer units, calculated as nominal power divided by
+        unit nominal power. Only inserted when unit nominal power is provided.
+    Electrolyzer > Number of stacks over plant life > Value : float
+        Number of electrolyzer stacks installed over the plant life (initial stacks
+        and their replacements), assuming one stack per electrolyzer unit. Only 
+        inserted when unit nominal power is provided.
     Power Generation > Available energy (hourly) > Value : dict
         Available energy (hourly) after subtracting power consumed by electrolyzer. 
         (dictionary of years).
     Power Generation > Available energy (daily) > Value : dict
         Available power (daily) after subtracting power consumed by electrolyzer.
+
+    Notes
+    -----
+    Electricity consumption and number of stacks only cover direct electrolysis. Electrolysis 
+    using stored power (Stored_Power_Electrolysis_Plugin) consumes additional electricity and 
+    adds operating hours, which are not included.
     '''
 
     def __init__(self, dcf, print_info, run = True):
@@ -128,6 +147,17 @@ class Electrolyzer_Plugin:
                     "optional": False,
                     "description": "Operating time before stack replacement of electrolyzer is required."
                 },
+                "Unit nominal power": {
+                    "Value": {
+                        "type": {int,float,},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "power",
+                    },
+                    "optional": True,
+                    "description": "Nominal power of one electrolyzer unit, used to calculate the number of electrolyzers and stacks."
+                },
             },
             "Power Generation": {
                 "Available energy (hourly)": {
@@ -174,6 +204,33 @@ class Electrolyzer_Plugin:
                     "optional": False,
                     "description": "Yearly hydrogen production."
                 },
+                "Electricity consumption (yearly)": {
+                    "Value": {
+                        "inserted_value": "electricity_consumption",
+                        "type": {np.ndarray,},
+                        "dimension": "energy",
+                    },
+                    "optional": False,
+                    "description": "Yearly electricity consumed by electrolyzer."
+                },
+                "Number of electrolyzers required": {
+                    "Value": {
+                        "inserted_value": "number_of_electrolyzers_required",
+                        "type": {int,float,},
+                        "dimension": "dimensionless",
+                    },
+                    "optional": True,
+                    "description": "Number of electrolyzer units, calculated as nominal power divided by unit nominal power."
+                },
+                "Number of stacks over plant life": {
+                    "Value": {
+                        "inserted_value": "number_of_stacks_over_plant_life",
+                        "type": {int,float,},
+                        "dimension": "dimensionless",
+                    },
+                    "optional": True,
+                    "description": "Number of electrolyzer stacks installed over the plant life (initial stacks and replacements), assuming one stack per electrolyzer unit."
+                },
                 "Actual stack replacement time": {
                     "Value": {
                         "inserted_value": "replacement_frequency",
@@ -213,6 +270,9 @@ class Electrolyzer_Plugin:
         self.replacement_frequency = calculate_stack_replacement(self.yearly_data_duration, 
                                     self.input_dict_resolved['Electrolyzer']['Replacement time']['Value'].unit['h'])
 
+        if 'Unit nominal power' in self.input_dict_resolved['Electrolyzer']:
+            self.calculate_number_of_electrolyzers_and_stacks()
+
         output_inserter_function(self.output_dict, self, dcf, 'Electrolyzer_Plugin') 
 
     def calculate_H2_production(self):
@@ -225,6 +285,7 @@ class Electrolyzer_Plugin:
         yearly_data_year = []
         yearly_data_production = []
         yearly_data_duration = []
+        yearly_data_energy_consumption = []
         yearly_data_unused_energy = {}
         yearly_data_unused_energy_daily = {}
 
@@ -238,8 +299,7 @@ class Electrolyzer_Plugin:
                               year) # returns: power (Watt), dimensionless
 
             electrolyzer_energy_demand = 3600*electrolyzer_power_demand # integrate the power over 1 hour, since we ultimately think in terms of energy involved in each 1-hour slot
-            electrolyzer_energy_demand *= np.ones(len(energy_generation))
-            electrolyzer_energy_consumption = np.amin(np.c_[energy_generation, electrolyzer_energy_demand], axis = 1)
+            electrolyzer_energy_consumption = np.minimum(energy_generation, electrolyzer_energy_demand)
 
             threshold = self.input_dict_resolved['Electrolyzer']['Minimum capacity']['Value'].unit['-']
             electrolyzer_capacity = electrolyzer_energy_consumption / electrolyzer_energy_demand
@@ -256,6 +316,7 @@ class Electrolyzer_Plugin:
             yearly_data_year.append(year)
             yearly_data_production.append(np.sum(h2_produced))
             yearly_data_duration.append(np.sum(electrolyzer_capacity))
+            yearly_data_energy_consumption.append(np.sum(electrolyzer_energy_consumption))
 
 
             # Calculation of unused energy
@@ -266,11 +327,34 @@ class Electrolyzer_Plugin:
         self.yearly_data_year = Quantity(np.asarray(yearly_data_year), '-')
         self.yearly_data_production = Quantity(np.asarray(yearly_data_production), 'kg')
         self.yearly_data_duration = Quantity(np.asarray(yearly_data_duration), 'h')
+        self.electricity_consumption = Quantity(np.asarray(yearly_data_energy_consumption), 'J')
 
         self.h2_production = self.yearly_data_production
         
         self.yearly_data_unused_energy = yearly_data_unused_energy
         self.yearly_data_unused_energy_daily = yearly_data_unused_energy_daily
+
+    def calculate_number_of_electrolyzers_and_stacks(self):
+        '''Calculation of the number of electrolyzer units from their unit nominal power,
+        and of the number of stacks installed over the plant life.
+
+        Each electrolyzer unit is assumed to comprise one stack, which is replaced
+        whenever its operating time reaches the replacement time (same replacements
+        as used for ``Actual stack replacement time``).
+        '''
+
+        electrolyzer = self.input_dict_resolved['Electrolyzer']
+        unit_power = electrolyzer['Unit nominal power']['Value'].unit['W']
+
+        if unit_power == 0:
+            raise ValueError("Electrolyzer unit nominal power must be greater than zero.")
+
+        number_of_electrolyzers = electrolyzer['Nominal power']['Value'].unit['W'] / unit_power
+        number_of_replacements = calculate_number_of_stack_replacements(self.yearly_data_duration,
+                                                                        electrolyzer['Replacement time']['Value'].unit['h'])
+
+        self.number_of_electrolyzers_required = Quantity(number_of_electrolyzers, '-')
+        self.number_of_stacks_over_plant_life = Quantity(number_of_electrolyzers * (number_of_replacements + 1.), '-')
 
 def calculate_electrolyzer_power_demand(power_requirement_increase, nominal_power, year):
     '''Calculation of yearly increase in electrolyzer power demand.
@@ -290,15 +374,21 @@ def calculate_hydrogen_production(energy_consumption, conversion_efficiency, pow
 
     return h2_production
 
-def calculate_stack_replacement(operation_hours, replacement_time):
-    '''Calculation of stack replacement frequency for electrolyzer.
+def calculate_number_of_stack_replacements(operation_hours, replacement_time):
+    '''Calculation of the number of stack replacements over the plant life.
     '''
 
     cumulative_running_time = np.cumsum(operation_hours.unit['h']) # operation_hours is a Quantity
     stack_usage = cumulative_running_time / replacement_time
 
-    number_of_replacements = np.floor_divide(stack_usage[-1], 1)
-    replacement_frequency = len(stack_usage) / (number_of_replacements + 1.)
+    return np.floor_divide(stack_usage[-1], 1)
+
+def calculate_stack_replacement(operation_hours, replacement_time):
+    '''Calculation of stack replacement frequency for electrolyzer.
+    '''
+
+    number_of_replacements = calculate_number_of_stack_replacements(operation_hours, replacement_time)
+    replacement_frequency = len(operation_hours.unit['h']) / (number_of_replacements + 1.)
 
     return Quantity(replacement_frequency, 'year') # the inputs being : (hours of operation in the year, hours of operation before replacement), 
                                                    # the result corresponds to the number of years between replacements

@@ -34,6 +34,8 @@ class Photovoltaic_Plugin:
 		Total land required.
 	Non-Depreciable Capital Costs > Solar collection area > Value : float
 		Solar collection area.
+	Photovoltaic > Module area > Value : float
+		Total area of PV modules, e.g. for Life Cycle Assessment.
 	'''
 
 
@@ -167,6 +169,17 @@ class Photovoltaic_Plugin:
 					},
 					"description": "Solar collection area.",
 					"optional": False,	
+				},
+			},
+			"Photovoltaic": {
+				"Module area": {
+					"Value": {
+						"inserted_value": "area",
+						"type": {float,},
+						"dimension": "area",
+					},
+					"description": "Total area of PV modules.",
+					"optional": False,
 				},
 			},
 		}

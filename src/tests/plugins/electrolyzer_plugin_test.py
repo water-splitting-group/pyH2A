@@ -16,6 +16,7 @@ class DummyDCF:
         efficiency,
         replacement_time,
         available_power_hourly,
+        unit_power=None,
     ):
 
         self.functional_unit = resolve_functional_unit('kg[H2]')
@@ -56,6 +57,14 @@ class DummyDCF:
                 }
             },
         }
+
+        # "Unit nominal power" is optional, so it is only added when provided,
+        # in the same way as an input file would omit it.
+        if unit_power is not None:
+            self.inp["Electrolyzer"]["Unit nominal power"] = {
+                "Value": unit_power,
+                "Unit": "kW",
+            }
 
 @pytest.mark.parametrize(
     "case",
@@ -204,6 +213,8 @@ class DummyDCF:
                     0: Quantity(np.array([4019790003.9999995]), 'kWh'),
                     1: Quantity(np.array([4040389673.9999995]), 'kWh'),
                 },
+                # Power demand is limiting in every operating hour: 20 h * 5500 kW * 1.003^year
+                "electricity_consumption": Quantity(np.array([110000.0, 110330.0]), 'kWh'),
             },
         },
     ],
@@ -266,3 +277,87 @@ def test_electrolyzer_plugin(case):
             rtol=tolerance,
             atol=tolerance,
         )
+
+    np.testing.assert_allclose(
+        plugin.electricity_consumption.unit['kWh'],
+        expected["electricity_consumption"].unit['kWh'],
+        rtol=tolerance,
+    )
+
+    # Without unit nominal power, no unit or stack counts are calculated (or inserted).
+    assert not hasattr(plugin, "number_of_electrolyzers_required")
+    assert not hasattr(plugin, "number_of_stacks_over_plant_life")
+    assert "Number of electrolyzers required" not in dcf.inp["Electrolyzer"]
+    assert "Number of stacks over plant life" not in dcf.inp["Electrolyzer"]
+
+
+def test_electrolyzer_plugin_number_of_electrolyzers_and_stacks():
+    """Check electricity consumption, number of electrolyzers and number of stacks over
+    plant life, using inputs different from the realistic case and values derived by hand.
+
+    Per year, the 1000 kW electrolyzer demands 1000 * 1.01^year kWh per hour. Of the hours
+    with available energy (2000, 500 and 50 kWh, followed by 21 hours without energy), the
+    first two exceed the minimum capacity of 10 %, while 50 kWh is below 10 % of the demand,
+    so it is not used:
+
+    - consumption: 1000 + 500, 1010 + 500 and 1020.1 + 500 kWh in years 0, 1 and 2,
+    - H2 production: consumption * 0.02 kg/kWh / 1.01^year,
+    - operating time: 2 h per year, 6 h in total, so a replacement time of 2.5 h
+      leads to floor(6 / 2.5) = 2 replacements, i.e. one stack every 3 / (2 + 1) = 1 year,
+    - 1000 kW / 250 kW = 4 electrolyzers, each with 1 initial and 2 replacement stacks.
+    """
+
+    available_energy = np.concatenate([[2000.0, 500.0, 50.0], np.zeros(21)])
+
+    dcf = DummyDCF(
+        operation_years_relative={"Operation years relative": np.arange(0, 3)},
+        nominal_power=1000.0,
+        power_increase=0.01,
+        min_capacity=0.10,
+        efficiency=0.02,
+        replacement_time=2.5,
+        available_power_hourly={year: available_energy for year in range(3)},
+        unit_power=250.0,
+    )
+
+    plugin = Electrolyzer_Plugin(dcf, print_info=False)
+
+    tolerance = 1e-12
+
+    np.testing.assert_allclose(plugin.electricity_consumption.unit['kWh'],
+                               [1500.0, 1510.0, 1520.1],
+                               rtol=tolerance)
+    np.testing.assert_allclose(plugin.h2_production.unit['kg'],
+                               [1500.0 * 0.02, 1510.0 * 0.02 / 1.01, 1520.1 * 0.02 / 1.0201],
+                               rtol=tolerance)
+    np.testing.assert_allclose(plugin.yearly_data_unused_energy[2].unit['kWh'],
+                               np.concatenate([[2000.0 - 1020.1, 0.0, 50.0], np.zeros(21)]),
+                               rtol=tolerance)
+    assert plugin.replacement_frequency.unit['year'] == pytest.approx(1.0, rel=tolerance)
+    assert plugin.number_of_electrolyzers_required.unit['-'] == pytest.approx(4.0, rel=tolerance)
+    assert plugin.number_of_stacks_over_plant_life.unit['-'] == pytest.approx(12.0, rel=tolerance)
+
+    # Both counts are inserted into the Electrolyzer table for use by other plugins (e.g. LCA).
+    assert dcf.inp["Electrolyzer"]["Number of electrolyzers required"]["Value"].unit['-'] == pytest.approx(4.0)
+    assert dcf.inp["Electrolyzer"]["Number of stacks over plant life"]["Value"].unit['-'] == pytest.approx(12.0)
+    np.testing.assert_allclose(dcf.inp["Electrolyzer"]["Electricity consumption (yearly)"]["Value"].unit['MJ'],
+                               np.array([1500.0, 1510.0, 1520.1]) * 3.6,
+                               rtol=tolerance)
+
+
+def test_electrolyzer_plugin_zero_unit_power_raises():
+    """A unit nominal power of zero would divide by zero, so it is rejected."""
+
+    dcf = DummyDCF(
+        operation_years_relative={"Operation years relative": np.arange(0, 1)},
+        nominal_power=1000.0,
+        power_increase=0.01,
+        min_capacity=0.10,
+        efficiency=0.02,
+        replacement_time=2.5,
+        available_power_hourly={0: np.concatenate([[2000.0, 500.0, 50.0], np.zeros(21)])},
+        unit_power=0.0,
+    )
+
+    with pytest.raises(ValueError, match="unit nominal power must be greater than zero"):
+        Electrolyzer_Plugin(dcf, print_info=False)

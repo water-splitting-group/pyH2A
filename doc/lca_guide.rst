@@ -133,18 +133,20 @@ LCA component table
 
 One or more ``# LCA - ...`` sections list the remaining foreground processes — everything
 except the product itself — whose exchange amounts will be updated for each scenario. Below is
-an example of a complete LCA input file for the foreground process of PV + Electrolysis (PVE).
+the component table of the PV + Electrolysis (PVE) end-to-end test
+(``src/tests/e2e_lca/data/input_files/pv_e_base.md``, run against the export in
+``src/tests/plugins/lca_data/matrix_folders/pve_unit_test``), whose ``H2 Production`` process
+consumes PV electricity, electrolyzer stacks and purified water.
 
 .. code-block:: markdown
 
-	# LCA - PVE Components
+	# LCA - PV-E Components
 
-    Name | Value | Unit | UUID
-    --- | --- | --- | ---
-    PV Area | {Non-Depreciable Capital Costs > Solar collection area > Value, m2} | m2 | 0c88e490-56a5-3099-807c-06645527c90e
-    Electrolyzer unit number | {Electrolyzer > Number of electrolyzers required > Value, -} | - | 98f950b2-39b0-4374-a400-05984b438be9
-    Battery weight | {Battery > Mass > Value, kg} | kg | c341bfcb-5959-3a70-839e-913e8250b237
-    Reverse Osmosis Units | {Reverse Osmosis > Number of devices required > Value, -} | - | 056a11ab-0a7a-38dd-a1d3-4058c2a8662d
+	Name | Value | Unit | UUID
+	--- | --- | --- | ---
+	PV Electricity Generation | {Electrolyzer > Electricity consumption (yearly) > Value, MJ} | MJ | bc18dc79-2b51-455d-9fec-decf6b2693de
+	Electrolyzer Manufacturing | {Electrolyzer > Number of stacks over plant life > Value, item} | item | 4397d5db-7fea-4916-af17-b72fa72fc02a
+	Reverse Osmosis | {Reverse Osmosis > Purified water production (yearly) > Value, kg} | kg | 1659c3a5-5c6b-4f29-b746-e12119144b7b
 
 Column meanings:
 
@@ -236,7 +238,8 @@ The outputs currently available to reference, by plugin:
      - ``Technical Operating Parameters and Specifications > Total output at gate``
      - the product itself (read automatically, not a table row)
    * - ``Photovoltaic_Plugin``
-     - ``Non-Depreciable Capital Costs > Solar collection area``
+     - ``Photovoltaic > Module area`` (same value as
+       ``Non-Depreciable Capital Costs > Solar collection area``)
      - scales PV module manufacturing
    * - ``Photovoltaic_Plugin``
      - ``Non-Depreciable Capital Costs > Land required``
@@ -247,26 +250,46 @@ The outputs currently available to reference, by plugin:
    * - ``Electrolyzer_Plugin``
      - ``Electrolyzer > H2 production (yearly)``
      - operating flows proportional to production
+   * - ``Electrolyzer_Plugin``
+     - ``Electrolyzer > Electricity consumption (yearly)``
+     - scales the electricity input of electrolysis (summed over the plant life)
+   * - ``Electrolyzer_Plugin``
+     - ``Electrolyzer > Number of electrolyzers required``
+       (requires ``Electrolyzer > Unit nominal power``)
+     - installed electrolyzer units
+   * - ``Electrolyzer_Plugin``
+     - ``Electrolyzer > Number of stacks over plant life``
+       (requires ``Electrolyzer > Unit nominal power``)
+     - scales electrolyzer (stack) manufacturing, including replacements
    * - ``Reverse_Osmosis_Plugin``
      - ``Power Consumption > Reverse osmosis consumption (yearly)``
      - scales the electricity a water treatment process draws
    * - ``Reverse_Osmosis_Plugin``
+     - ``Reverse Osmosis > Purified water production (yearly)``
+     - scales a water treatment process per mass of water (summed over the plant life)
+   * - ``Reverse_Osmosis_Plugin``
      - ``Reverse Osmosis > Capacity``
      - scales water treatment equipment
+   * - ``Reverse_Osmosis_Plugin``
+     - ``Reverse Osmosis > Number of devices required``
+       (requires ``Reverse Osmosis > Device throughput``)
+     - scales reverse osmosis device manufacturing
 
 .. warning::
 
-   Equipment **counts** — number of electrolyzer units, number of reverse osmosis devices,
-   battery mass — are the natural way to scale a manufacturing process, but no plugin computes
-   them today. ``Electrolyzer_Plugin`` exposes ``Actual stack replacement time`` rather than a
-   unit count, ``Battery_Plugin`` exposes stored and available energy rather than a mass, and
-   ``Reverse_Osmosis_Plugin`` exposes a capacity rather than a device count. Until those outputs
-   exist, such amounts have to be given as literals in the ``# LCA - ...`` table, or derived from
-   an output that does exist. Earlier revisions of this guide referenced
-   ``Electrolyzer > Number of electrolyzers required``, ``Battery > Mass`` and
-   ``Reverse Osmosis > Number of devices required``; none of them are implemented.
+   The equipment counts are only computed when the size of one unit is given: the optional
+   inputs ``Electrolyzer > Unit nominal power`` and ``Reverse Osmosis > Device throughput``.
+   ``Number of electrolyzers required`` is the installed count, while
+   ``Number of stacks over plant life`` is the lifetime total (one stack per unit, plus one
+   more per unit at every stack replacement), which is what a manufacturing process in the
+   technosphere column needs. Stacks and electricity consumption only cover direct
+   electrolysis, not electrolysis using stored power (``Stored_Power_Electrolysis_Plugin``).
 
-A worked example, mixing a plugin output with literals:
+   ``Battery_Plugin`` exposes stored and available energy rather than a mass, so a battery
+   mass still has to be given as a literal in the ``# LCA - ...`` table.
+
+A worked example, for an export whose foreground process consumes PV modules, electrolyzer
+stacks, reverse osmosis devices and batteries directly, mixing plugin outputs with a literal:
 
 .. code-block:: markdown
 
@@ -274,8 +297,9 @@ A worked example, mixing a plugin output with literals:
 
 	Name | Value | Unit | UUID
 	--- | --- | --- | ---
-	PV Area | {Non-Depreciable Capital Costs > Solar collection area > Value, m2} | m2 | 0c88e490-56a5-3099-807c-06645527c90e
-	Electrolyzer units | 20 | - | 98f950b2-39b0-4374-a400-05984b438be9
+	PV Area | {Photovoltaic > Module area > Value, m2} | m2 | 0c88e490-56a5-3099-807c-06645527c90e
+	Electrolyzer stacks | {Electrolyzer > Number of stacks over plant life > Value, item} | item | 98f950b2-39b0-4374-a400-05984b438be9
+	Reverse Osmosis Units | {Reverse Osmosis > Number of devices required > Value, item} | item | 056a11ab-0a7a-38dd-a1d3-4058c2a8662d
 	Battery mass | 150000 | kg | c341bfcb-5959-3a70-839e-913e8250b237
 
 .. note::
