@@ -13,6 +13,7 @@ class DummyDCF:
         operation_years_ones,
         Battery_power,
         Storage_capacity, 
+        areal_energy_capacity,
         Power_per_cell_stack, 
         lifetime,
         Energy_density, 
@@ -50,6 +51,7 @@ class DummyDCF:
             "Battery": {
                 "Power": {"Value": Battery_power, "Unit" : "MW"},
                 "Gross capacity": {"Value": Storage_capacity, "Unit" : "MWh"},   
+                "Areal energy capacity": {"Value": areal_energy_capacity, "Unit" : "kWh/m2"},
             },
             "Battery Cell Stack":{                             
                 "Power per cell stack": {"Value": Power_per_cell_stack, "Unit" : "kW"},
@@ -93,6 +95,7 @@ class DummyDCF:
                 "operation_years_ones": {'Operation years ones': np.array([1,1, 1, 1])},       
                 "Battery_power": 5,
                 "Storage_capacity": 200,
+                "areal_energy_capacity": 32, 
                 "Power_per_cell_stack": 10,
                 "lifetime": 2,
                 "Energy_density": 40,
@@ -141,7 +144,8 @@ class DummyDCF:
                 "total_battery_gwp": Quantity(235605.62714285713, 'ton'),                    
                 "total_battery_energy": Quantity(327.230037698, 'kWh'),                    
                 "total_battery_toxicity": Quantity(141363376.28571427, '-'),                    
-                "total_battery_resource_use": Quantity(176704.22035714285, 'ton'),                                                                    
+                "total_battery_resource_use": Quantity(176704.22035714285, 'ton'),   
+                "total_battery_land_use": Quantity(6250, 'm2'),                       
             },
         },
     ],
@@ -277,4 +281,9 @@ def test_RFB_plugin(case):
     assert plugin.total_battery_resource_use.unit["ton"] == pytest.approx(
         expected["total_battery_resource_use"].unit["ton"],
         abs=tolerance
-    )           
+    )  
+
+    assert plugin.total_battery_land_use.unit["m2"] == pytest.approx(
+        expected["total_battery_land_use"].unit["m2"],
+        abs=tolerance
+    )               

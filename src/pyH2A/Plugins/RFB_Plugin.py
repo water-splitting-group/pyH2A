@@ -47,7 +47,17 @@ class RFB_Plugin:
 						"dimension": "energy",
 					},
 					"description": "Capacity of the battery if full charge and discharge of the electrolyte were allowed."
-				},						
+				},		
+				"Areal energy capacity": {
+					"Value": {
+						"type": {float, int,},
+						"bounds": (0, None),
+					},
+					"Unit": {
+						"dimension": "energy/area",
+					},
+					"description": "Storage capacity per land area."
+				},									
 			},
 			"Battery Cell Stack": {		
 				"Power per cell stack": {
@@ -403,7 +413,12 @@ class RFB_Plugin:
 						"inserted_value": "total_battery_resource_use",
 						"type": {float,},
 						"dimension": "mass",
-					},													
+					},	
+					"Land_use_Value": {
+						"inserted_value": "total_battery_land_use",
+						"type": {float,},
+						"dimension": "area",
+					},																		
 					"description": "Impact of the battery for its entire lifetime.",
 				},												
 			},			
@@ -511,3 +526,9 @@ class RFB_Plugin:
 				setattr(self, f"total_{subsystem_name.lower()}_{impact_name.lower()}", Quantity(total_impact, impact_unit))
 				grand_total += total_impact
 			setattr(self, f"total_battery_{impact_name.lower()}", Quantity(grand_total, impact_unit))
+
+		# Land area is a special case as it belongs to the battery as a whole
+		self.total_battery_land_use = Quantity( self.input_dict_resolved['Battery']['Gross capacity']['Value'].unit['J']
+												/
+												self.input_dict_resolved['Battery']['Areal energy capacity']['Value'].unit['J/m2'], 
+												'm2')
