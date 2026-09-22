@@ -188,6 +188,26 @@ class Hourly_Irradiation_Plugin:
 					"description": "Mean solar input with two axis tracking per area."
 				},
 			},
+			"Meteorological Conditions": {
+				"Temperature": {
+					"Value": {
+						"inserted_value": "hourly_temperature",
+						"type": {np.ndarray,},
+						"dimension": "absolute_temperature",
+					},
+					"optional": False,
+					"description": "Hourly air temperature."
+				},
+				"Wind speed": {
+					"Value": {
+						"inserted_value": "hourly_wind",
+						"type": {np.ndarray,},
+						"dimension": "length / time",
+					},
+					"optional": False,
+					"description": "Hourly wind speed."
+				},
+			},			
 		}
 
 	def _run(self, dcf):
@@ -212,7 +232,9 @@ class Hourly_Irradiation_Plugin:
 		 self.hourly_energy_dat, 
 		 self.yearly_averaged_power, 
 		 self.yearly_averaged_power_sat, 
-		 self.yearly_averaged_power_dat) = calculate_PV_power_ratio(
+		 self.yearly_averaged_power_dat, 
+		 self.hourly_temperature, 
+		 self.hourly_wind) = calculate_PV_power_ratio(
 												self.input_dict_resolved['Hourly Irradiation']['File']['Value'],
 												tilt, 
 												pv['Array azimuth']['Value'],
@@ -284,6 +306,7 @@ def import_hourly_data(file_name):
 
 	data_dict = {'Time': Quantity(data[:,0], '-'), 
 				 'Temperature': Quantity(data[:,1], 'degC'), 
+				 "Wind speed": Quantity(data[:,7]/10**0.14, 'm/s'), # wind speed is measured at 10 m elevation, we take it at 1 m
 				 'Global Horizontal Irradiance':  Quantity(data[:,3], 'W/m2'),
 				 'Direct Normal Irradiance': Quantity(data[:,4], 'W/m2'), 
 				 'Diffuse Horizontal Irradiance': Quantity(data[:,5], 'W/m2')}
@@ -411,10 +434,15 @@ def calculate_PV_power_ratio(file_name,
 	yearly_averaged_power_dat = Quantity(np.sum(hourly_energy_dat.unit['J/m2']) / time_for_averaging.unit['s'], 
 								'W/m2')
 
+	hourly_temperature = data['Temperature']
+	hourly_wind = data['Wind speed']
+
 	return (hourly_energy, 
 			hourly_energy_sat, 
 			hourly_energy_dat, 
 			yearly_averaged_power, 
 			yearly_averaged_power_sat, 
-			yearly_averaged_power_dat)
+			yearly_averaged_power_dat, 
+			hourly_temperature, 
+			hourly_wind)
 
