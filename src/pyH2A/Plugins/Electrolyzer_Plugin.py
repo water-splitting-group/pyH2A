@@ -238,8 +238,7 @@ class Electrolyzer_Plugin:
                               year) # returns: power (Watt), dimensionless
 
             electrolyzer_energy_demand = 3600*electrolyzer_power_demand # integrate the power over 1 hour, since we ultimately think in terms of energy involved in each 1-hour slot
-            electrolyzer_energy_demand *= np.ones(len(energy_generation))
-            electrolyzer_energy_consumption = np.amin(np.c_[energy_generation, electrolyzer_energy_demand], axis = 1)
+            electrolyzer_energy_consumption = np.minimum(energy_generation, electrolyzer_energy_demand)
 
             threshold = self.input_dict_resolved['Electrolyzer']['Minimum capacity']['Value'].unit['-']
             electrolyzer_capacity = electrolyzer_energy_consumption / electrolyzer_energy_demand
