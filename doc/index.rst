@@ -15,8 +15,9 @@ pyH2A
    utilities/utilities
    plugins/plugins
    analysis/analysis
-
-pyH2A is a Python framework for the analysis of hydrogen production cost.
+   lca_guide
+   
+pyH2A is a Python framework for techno-economic and life-cycle assessment.
 
 Indices and tables
 ==================

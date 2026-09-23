@@ -2,117 +2,6 @@ from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import numpy as np
 
-input_dict = {    
-    "Time": {
-        "Years": {
-            "Value": {
-                "type": {dict,},
-                "bounds": (None, None),
-            },
-            "Unit": {
-                "dimension": "dimensionless",
-            },
-            "optional": False,
-            "description": "Dictionary containing all time-related quantities."
-        }, 
-    },        
-    "Power Generation": {
-        "Available energy (daily)": {
-            "Value": {
-                "type": {dict,},
-                "bounds": (0, None),
-            },
-            "Unit": {
-                "dimension": "energy",
-            },                    
-            "optional": False,
-            "description": " Available energy, daily basis, dictionary of years."
-        },                      
-    },
-    
-    "Battery": {
-        "Design capacity": { 
-            "Value": {
-                "type": {int, float,},
-                "bounds": (0, None),
-            },
-            "Unit": {
-                "dimension": "energy",
-            },                    
-            "optional": False,
-            "description": "Full design capacity of battery."
-        },
-        
-        "Lowest discharge level": {
-            "Value": {
-                "type": {int, float,},
-                "bounds": (0, 1),
-            },
-            "Unit": {
-                "dimension": "dimensionless",
-            },                    
-            "optional": False,
-            "description": "Lowest level to which battery can be discharged."
-        },
-        
-        "Capacity loss per year": {
-            "Value": {
-                "type": {int, float,},
-                "bounds": (0, 1),
-            },
-            "Unit": {
-                "dimension": "dimensionless",
-            },                    
-            "optional": False,
-            "description": "Loss of capacity per year."
-        },
-        
-        "Round trip efficiency": {
-            "Value": {
-                "type": {int, float,},
-                "bounds": (0, 1),
-            },
-            "Unit": {
-                "dimension": "dimensionless",
-            },                    
-            "optional": False,
-            "description": "Round trip efficiency of battery."
-        },  
-    } 
-}
-
-output_dict = {
-    "Power Generation": {
-        "Stored energy (daily)": {
-            "Value": {
-                "inserted_value": "yearly_recovered_energy",
-                "type": {dict,},
-                "dimension": "energy",
-            },
-            "description": "Energy stored in battery daily (dictionary of years)",
-            "optional": False,
-        },
-        "Available energy (daily)": {
-            "Value": {
-                "inserted_value": "yearly_unstored_energy",
-                "type": {dict,},
-                "dimension": "energy",
-            },
-            "description": "Available energy, daily basis, dictionary of years - energy which has not been stored in battery",
-            "optional": False,
-        },
-        "Available energy (hourly)": {
-            "Value": {
-                "inserted_value": Quantity(0, 'J'),
-                 "type": {float,},
-                 "dimension": "energy",
-            },
-            "description": "Available energy is set to zero, since available energy is now only in daily format.",
-            "optional": False,
-        }
-    }
-}
-
 class Battery_Plugin:
     '''Simulation of electricity storage using a battery.
     Simulation assumes that battery is charged and completely discharged every day.
@@ -145,12 +34,132 @@ class Battery_Plugin:
         only in daily format. 
     '''
 
-    def __init__(self, dcf, print_info):
-        self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Battery_Plugin')
+    def __init__(self, dcf, print_info, run = True):
+        self._set_up(dcf)
+        if run:
+            self._run(dcf)
+
+    def _set_up(self, dcf):
+
+        self.functional_unit = dcf.functional_unit
+
+        self.input_dict = {
+            "Time": {
+                "Years": {
+                    "Value": {
+                        "type": {dict,},
+                        "bounds": (None, None),
+                    },
+                    "Unit": {
+                        "dimension": "dimensionless",
+                    },
+                    "optional": False,
+                    "description": "Dictionary containing all time-related quantities."
+                }, 
+            },        
+            "Power Generation": {
+                "Available energy (daily)": {
+                    "Value": {
+                        "type": {dict,},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "energy",
+                    },                    
+                    "optional": False,
+                    "description": " Available energy, daily basis, dictionary of years."
+                },                      
+            },
+
+            "Battery": {
+                "Design capacity": { 
+                    "Value": {
+                        "type": {int, float,},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "energy",
+                    },                    
+                    "optional": False,
+                    "description": "Full design capacity of battery."
+                },
+
+                "Lowest discharge level": {
+                    "Value": {
+                        "type": {int, float,},
+                        "bounds": (0, 1),
+                    },
+                    "Unit": {
+                        "dimension": "dimensionless",
+                    },                    
+                    "optional": False,
+                    "description": "Lowest level to which battery can be discharged."
+                },
+
+                "Capacity loss per year": {
+                    "Value": {
+                        "type": {int, float,},
+                        "bounds": (0, 1),
+                    },
+                    "Unit": {
+                        "dimension": "dimensionless",
+                    },                    
+                    "optional": False,
+                    "description": "Loss of capacity per year."
+                },
+
+                "Round trip efficiency": {
+                    "Value": {
+                        "type": {int, float,},
+                        "bounds": (0, 1),
+                    },
+                    "Unit": {
+                        "dimension": "dimensionless",
+                    },                    
+                    "optional": False,
+                    "description": "Round trip efficiency of battery."
+                },  
+            } 
+        }
+
+        self.output_dict = {
+            "Power Generation": {
+                "Stored energy (daily)": {
+                    "Value": {
+                        "inserted_value": "yearly_recovered_energy",
+                        "type": {dict,},
+                        "dimension": "energy",
+                    },
+                    "description": "Energy stored in battery daily (dictionary of years)",
+                    "optional": False,
+                },
+                "Available energy (daily)": {
+                    "Value": {
+                        "inserted_value": "yearly_unstored_energy",
+                        "type": {dict,},
+                        "dimension": "energy",
+                    },
+                    "description": "Available energy, daily basis, dictionary of years - energy which has not been stored in battery",
+                    "optional": False,
+                },
+                "Available energy (hourly)": {
+                    "Value": {
+                        "inserted_value": Quantity(0, 'J'),
+                         "type": {float,},
+                         "dimension": "energy",
+                    },
+                    "description": "Available energy is set to zero, since available energy is now only in daily format.",
+                    "optional": False,
+                }
+            }
+        }
+
+    def _run(self, dcf):
+        self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Battery_Plugin')
 
         self.calculate_electricity_storage()
         
-        output_inserter_function(output_dict, self, dcf, 'Battery_Plugin')            
+        output_inserter_function(self.output_dict, self, dcf, 'Battery_Plugin')            
 
     def calculate_electricity_storage(self):
         '''Using hourly energy generation data and electrolyzer parameters,
@@ -175,7 +184,6 @@ class Battery_Plugin:
             self.yearly_recovered_energy[year] = Quantity(daily_recovered_energy, 'J')
             self.yearly_unstored_energy[year] = Quantity(unstored_energy, 'J')
  
-    
     def calculate_battery_capacity(self, year):
 
         capacity_decrease = (1. - self.input_dict_resolved['Battery']['Capacity loss per year']['Value'].unit['-'] ) ** year

@@ -22,8 +22,6 @@ from pyH2A.Utilities.constants import (WILDCARD_MARKER,
                                        OPTIONS_KEY,
                                        PATH_KEY)
 
-from tests.Utilities.Input_Resolver.input_resolver_test_data import DummyDCF, input_dict, input_dict_resolved
-
 def _get_specification_and_retrieved_value(top_key, 
                                            middle_key, 
                                            bottom_key, 
@@ -697,22 +695,5 @@ def input_resolver_function(input_dict, dcf_class, plugin_name):
     except Exception as error:
         error_message = error.args[0] if getattr(error, 'args', None) else str(error)
         raise type(error)(f"[Plugin: {plugin_name}] {error_message}") from error
-
-
-if __name__ == "__main__":
-    DummyDCF_instance = DummyDCF()
-
-    from timeit import default_timer as timer
-
-    start_time = timer()
-
-    input_dict_resolved = input_resolver_function(input_dict, DummyDCF_instance, 'TestPlugin')
-
-    end_time = timer()
-
-    pp.pprint(input_dict_resolved)
-
-    print('--------------------------------')
-    print(end_time - start_time, 's passed')
 
 

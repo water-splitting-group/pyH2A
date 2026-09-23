@@ -154,7 +154,7 @@ def file_import(file_name, mode = 'rb', return_path = False):
 	else:
 		return output
 
-@lru_cache(maxsize = None)
+@lru_cache(maxsize = 1024)
 def read_textfile(file_name, delimiter, mode = 'rb', **kwargs):
 	'''Wrapper for genfromtxt with lru_cache for repeated reads of the same file.
 

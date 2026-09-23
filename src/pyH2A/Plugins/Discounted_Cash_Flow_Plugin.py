@@ -13,7 +13,7 @@ def numpy_npv(rate, values):
 	values = np.asarray(values)
 	return (values / (1+rate)**np.arange(0, len(values))).sum(axis=0)
 
-@lru_cache(maxsize = None)
+@lru_cache(maxsize = 1024)
 def get_idx(diagonal_number, axis0, axis1):
 	'''Calculation of index for MACRS calculation.
 	Uses ``lru_cache`` for repeated calculations.
@@ -327,7 +327,7 @@ class Discounted_Cash_Flow_Plugin:
                         "Fraction of revenues during start-up": {
                             "Value": {
                                 "type": {int, float},
-                                "bounds": (0, None),
+                                "bounds": (0, 1),
                             },
                             "Unit": {
                                 "dimension": "dimensionless",
@@ -349,7 +349,7 @@ class Discounted_Cash_Flow_Plugin:
                         "Salvage value (fraction of total capital investment)": {
                             "Value": {
                                 "type": {int, float},
-                                "bounds": (0, None),
+                                "bounds": (0, 1),
                             },
                             "Unit": {
                                 "dimension": "dimensionless",
