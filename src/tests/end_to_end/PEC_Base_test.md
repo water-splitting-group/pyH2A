@@ -8,10 +8,10 @@ Default TEA | pyH2A.Config~Defaults_TEA.md
 
 Name | Description | Position 
 --- | --- | --- 
-Hourly_Irradiation_Plugin | Plugin to calculate solar irradiation from typical meteorological year data | 201 |
-PEC_Plugin | Plugin to model photoelectrochemical water splitting | 301 |
-Solar_Concentrator_Plugin | Plugin to model solar concentration | 302 |
-Multiple_Modules_Plugin | Modelling of module plant modules, adjustment of labor requirement | 401 |
+Energy.Hourly_Irradiation_Plugin | Plugin to calculate solar irradiation from typical meteorological year data | 201 |
+Hydrogen.PEC_Plugin | Plugin to model photoelectrochemical water splitting | 301 |
+Energy.Solar_Concentrator_Plugin | Plugin to model solar concentration | 302 |
+Finance.Multiple_Modules_Plugin | Modelling of module plant modules, adjustment of labor requirement | 401 |
 
 # Display Parameters
 

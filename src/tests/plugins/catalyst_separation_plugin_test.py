@@ -1,5 +1,5 @@
 import pytest
-from pyH2A.Plugins.Catalyst_Separation_Plugin import Catalyst_Separation_Plugin
+from pyH2A.Plugins.Process_Units.Catalyst_Separation_Plugin import Catalyst_Separation_Plugin
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 from pyH2A.Utilities.functional_unit import resolve_functional_unit
 

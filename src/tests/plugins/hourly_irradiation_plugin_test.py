@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
-from pyH2A.Plugins.Hourly_Irradiation_Plugin import (
+from pyH2A.Plugins.Energy.Hourly_Irradiation_Plugin import (
     Hourly_Irradiation_Plugin,
     import_hourly_data,
 )

@@ -320,8 +320,8 @@ def test_plugin_IO():
     check_dicts(result.base_case.inp['Plugin B - Value/Unit pairs'], expected_plugin_b_value_unit_pairs_dcf)
 
     # Checking processed input dicts passed into plugins A and B
-    check_dicts(result.base_case.plugs['Test_Plugin_A'].inp, expected_plugin_a_processed_input)
-    check_dicts(result.base_case.plugs['Test_Plugin_B'].inp, expected_plugin_b_processed_input)
+    check_dicts(result.base_case.plugs['Testing.Test_Plugin_A'].inp, expected_plugin_a_processed_input)
+    check_dicts(result.base_case.plugs['Testing.Test_Plugin_B'].inp, expected_plugin_b_processed_input)
 
     # Checking outputs from plugins A and B
     check_dicts(result.base_case.inp['Plugin A Output'], expected_plugin_a_output)

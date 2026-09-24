@@ -2,9 +2,9 @@
 
 Name | Position | Description
 --- | --- | ---
-Time_Plugin | 100 | Computes time-related arrays and values
-Production_Plugin | 200 | Computes plant output
-LCA_Plugin | 300 | Performs life-cycle assessment to determine environmental impacts
+Core.Time_Plugin | 100 | Computes time-related arrays and values
+Core.Production_Plugin | 200 | Computes plant output
+Assessment.LCA_Plugin | 300 | Performs life-cycle assessment to determine environmental impacts
 
 # Functional Unit
 

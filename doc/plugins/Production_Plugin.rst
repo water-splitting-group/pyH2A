@@ -1,5 +1,5 @@
 Production_Plugin
 =========================
 
-.. automodule:: pyH2A.Plugins.Production_Plugin
+.. automodule:: pyH2A.Plugins.Core.Production_Plugin
     :members:
