@@ -451,12 +451,12 @@ class Photocatalytic_Plugin:
 		self.catalyst_lifetime = self.input_dict_resolved['Catalyst']['Lifetime']['Value']
 		self.baggie_lifetime = self.input_dict_resolved['Reactor Baggies']['Lifetime']['Value']
 
-		reactor_hourly_temperature_K, ground_HX = energy_balance(
+		reactor_hourly_temperature_K = energy_balance(
 											rho_kg_m3 = 1000, # water density
 											thickness_m = self.input_dict_resolved['Reactor Baggies']['Filling height']['Value'].unit['m'], # only the slurry is assumed to have thermal inertia
 											Cp_J_kg_K = 4.2e3, # slurry Cp. Could later come from water + catalyst mixture actual properties. 
 											Irrad_in_W_m2 = self.input_dict_resolved['Solar Input']['Hourly']['Value'].unit['Wh/m2'],											
-											eta_irrad = 0.4, # assumed: 40% of incident irradiation is absorbed and heats up the slurry (basically: IR radiation)
+											eta_irrad = 0.6, # assumed: 60% of incident irradiation is absorbed and heats up the slurry
 											lambda_soil_W_m_K = 1, # assumed
 											Cp_soil_J_kg_K = 1200, # assumed
 											rho_soil_kg_m3 = 1700, # assumed											
@@ -467,8 +467,6 @@ class Photocatalytic_Plugin:
 											)
 	
 		self.reactor_hourly_temperature = Quantity(reactor_hourly_temperature_K, 'K')
-		plt.plot(ground_HX)
-		plt.show()
 		plt.plot(self.reactor_hourly_temperature.unit['degC'] - self.input_dict_resolved['Meteorological Conditions']['Temperature']['Value'].unit['degC'])
 		plt.show()					
 		print('max temperature °C ', np.max(self.reactor_hourly_temperature.unit['degC']))
@@ -712,12 +710,13 @@ def energy_balance(
 	That is: closed form based on the values at instant h serve to predict hour h+1, and the later serves in turn to assess the closed form that calculates h+2
 	'''
 	# Constant coefficients for Prony approximation
-	prony_c = np.array([0.01583021,	0.00036996,	0.00087007, 0.00423281, 0.00202002, 0.00825162])
-	prony_gamma = np.array([4.06733606E-04,	2.15434843E-08,	4.30490266E-07,	2.06793926E-05,	3.52502509E-06, 9.81637988E-05])
+	prony_c = np.array([0.01587683, 0.00238143, 0.00042124,	0.00097731,	0.00583964,	0.00025026])
+	prony_gamma = np.array([2.08E-04, 5.58E-06, 1.49E-07, 9.32E-07, 3.34E-05, 1.13E-08])
 
 	Capacity_J_K = Cp_J_kg_K * rho_kg_m3 * thickness_m # Heat capacity of the slurry (per m2)
-	h_wind_W_m2_K = 5.7 + 3.8*wind_speed_m_s # Heat exchange coefficient between reactor and air, based on Choi et al (2026), DOI 10.1016/j.enconman.2026.121998
-
+	h_wind_W_m2_K =  5.7 + 3.8*wind_speed_m_s # Heat exchange coefficient between reactor and air, based on Choi et al (2026), DOI 10.1016/j.enconman.2026.121998, probably relaying McAdams (1954), which is only true for vertical walls!
+	#h_wind_W_m2_K = 7.4 + 4*wind_speed_m_s # Palyvos (2008)
+	#h_wind_W_m2_K = 2.8 + 3*wind_speed_m_s # Watmuff (1977)
 	effusivity_soil = (lambda_soil_W_m_K * rho_soil_kg_m3 * Cp_soil_J_kg_K)**0.5
 	
 	# initial conditions are not known. 
@@ -741,18 +740,25 @@ def energy_balance(
 					) 
 	phi_prony = np.zeros(6)
 	phi_soil_W_m2 = 0
-	ground_HX = np.zeros_like(Irrad_in_W_m2)
+	#ground_HX = np.zeros_like(Irrad_in_W_m2)
 
 	for i in range(1, spin_up_time_h):
 		idx = i-spin_up_time_h
-		# Baggie system
+		# Predictor
 		linear = -(h_wind_W_m2_K[idx] + 4*epsilon*sigma_W_m2_K4*T_spin_up**3) / Capacity_J_K
 		offset = (eta_irrad * Irrad_in_W_m2[idx] + phi_soil_W_m2 + h_wind_W_m2_K[idx] * T_air_K[idx] + epsilon*sigma_W_m2_K4 * (3*T_spin_up**4 + T_air_K[idx]**4) ) / Capacity_J_K
 		T_equilibrium = -offset/linear
-		T_updated = T_equilibrium + (T_spin_up - T_equilibrium)*math.exp(linear * 3600) 
+		T_predicted = T_equilibrium + (T_spin_up - T_equilibrium)*math.exp(linear * 3600) 
 		# Calculate flux from the ground using Prony approximation
-		phi_prony = phi_prony * np.exp(-prony_gamma * 3600) + ((T_updated - T_spin_up)/3600) * (1 - np.exp(-prony_gamma * 3600)) / prony_gamma
-		phi_soil_W_m2 = - effusivity_soil * np.sum(prony_c * phi_prony) / np.pi**0.5		
+		phi_prony_predicted = phi_prony * np.exp(-prony_gamma * 3600) + ((T_predicted - T_spin_up)/3600) * (1 - np.exp(-prony_gamma * 3600)) / prony_gamma
+		phi_soil_W_m2_predicted = - effusivity_soil * np.sum(prony_c * phi_prony_predicted) / np.pi**0.5
+		phi_soil_W_m2 = phi_soil_W_m2_predicted	
+		# Corrector
+		offset = (eta_irrad * Irrad_in_W_m2[idx] + phi_soil_W_m2 + h_wind_W_m2_K[idx] * T_air_K[idx] + epsilon*sigma_W_m2_K4 * (3*T_spin_up**4 + T_air_K[idx]**4) ) / Capacity_J_K
+		T_equilibrium = -offset/linear
+		T_updated = T_equilibrium + (T_spin_up - T_equilibrium)*math.exp(linear * 3600) 
+		phi_prony = phi_prony * np.exp(-prony_gamma * 3600) + ((T_updated - T_spin_up)/3600) * (1 - np.exp(-prony_gamma * 3600)) / prony_gamma		
+		phi_soil_W_m2	= - effusivity_soil * np.sum(prony_c * phi_prony) / np.pi**0.5
 		# update of T_spin_up, i.e.: estimate the spin up temperature at instant i from the beginning of the spin up period (= instant i-spin_up_time_h from the start of the "real" period of integration)
 		T_spin_up = T_updated
 	# at this stage, we have T_spin_up = value at the beginning of the first time_interval_initial_temperature_K
@@ -763,14 +769,23 @@ def energy_balance(
 	print('initial T ', T_spin_up)
 	# Loop for the actual temperature over the integration period of 1 year
 	for i in range(0, len(reactor_hourly_temperature_K)):
+		# Predictor
 		linear = -(h_wind_W_m2_K[i] + 4*epsilon*sigma_W_m2_K4*time_interval_initial_temperature_K**3) / Capacity_J_K
 		offset = (eta_irrad * Irrad_in_W_m2[i] + phi_soil_W_m2 + h_wind_W_m2_K[i] * T_air_K[i] + epsilon*sigma_W_m2_K4 * (3*time_interval_initial_temperature_K**4 + T_air_K[i]**4) ) / Capacity_J_K
 		T_equilibrium = -offset/linear
-		time_interval_end_temperature = T_equilibrium + (time_interval_initial_temperature_K - T_equilibrium)*math.exp(linear * 3600)	
+		time_interval_end_temperature_predicted = T_equilibrium + (time_interval_initial_temperature_K - T_equilibrium)*math.exp(linear * 3600)	
 		# Calculate flux from the ground using Prony approximation
+		phi_prony_predicted = phi_prony * np.exp(-prony_gamma * 3600) + ((time_interval_end_temperature_predicted - time_interval_initial_temperature_K)/3600) * (1 - np.exp(-prony_gamma * 3600)) / prony_gamma
+		phi_soil_W_m2_predicted = - effusivity_soil * np.sum(prony_c * phi_prony_predicted) / np.pi**0.5	
+		phi_soil_W_m2 = phi_soil_W_m2_predicted
+		#ground_HX[i] = phi_soil_W_m2		
+		# Corrector
+		offset = (eta_irrad * Irrad_in_W_m2[i] + phi_soil_W_m2 + h_wind_W_m2_K[i] * T_air_K[i] + epsilon*sigma_W_m2_K4 * (3*time_interval_initial_temperature_K**4 + T_air_K[i]**4) ) / Capacity_J_K
+		T_equilibrium = -offset/linear
+		time_interval_end_temperature = T_equilibrium + (time_interval_initial_temperature_K - T_equilibrium)*math.exp(linear * 3600)	
 		phi_prony = phi_prony * np.exp(-prony_gamma * 3600) + ((time_interval_end_temperature - time_interval_initial_temperature_K)/3600) * (1 - np.exp(-prony_gamma * 3600)) / prony_gamma
 		phi_soil_W_m2 = - effusivity_soil * np.sum(prony_c * phi_prony) / np.pi**0.5	
-		ground_HX[i] = phi_soil_W_m2
+
 		# average temperature during the interval
 		reactor_hourly_temperature_K[i] = (T_equilibrium 
 											+ 
@@ -784,5 +799,5 @@ def energy_balance(
 										 )
 		# for the next time step, the end of the current interval becomes the beginning of the next interval
 		time_interval_initial_temperature_K = time_interval_end_temperature		
-
-	return reactor_hourly_temperature_K, ground_HX
+		#ground_HX[i] = h_wind_W_m2_K[i] * (T_air_K[i]-reactor_hourly_temperature_K[i])
+	return reactor_hourly_temperature_K#, ground_HX
