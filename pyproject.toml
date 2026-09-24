@@ -70,4 +70,5 @@ Source = "https://github.com/water-splitting-group/pyH2A"
 module-name = "pyH2A"
 
 [tool.pytest.ini_options]
-testpaths = ["src/tests"]
+pythonpath = [".", "src"]
+testpaths = ["tests"]
