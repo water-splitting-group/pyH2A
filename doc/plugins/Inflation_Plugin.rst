@@ -1,5 +1,5 @@
 Inflation_Plugin
-===================
+================
 
-.. automodule:: pyH2A.Plugins.Inflation_Plugin
+.. autoclass:: pyH2A.Plugins.Inflation_Plugin.Inflation_Plugin
     :members:

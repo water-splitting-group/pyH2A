@@ -1,35 +1,9 @@
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import numpy as np
+from pyH2A.Utilities.docstring_generation import generate_docstring
 
 class Production_Plugin:
-	'''Calculation of plant output.
-
-	Parameters
-	----------
-    Time > Years > Value : dict
-        Dictionary containing plant life time-related quantities	
-	Technical Operating Parameters and Specifications > Plant design capacity > Value : float or int
-		Plant design capacity in mass per time.
-	Technical Operating Parameters and Specifications > Design output by year > Value : np.ndarray
-		Yearly production of hydrogen, ignoring the capacity factor.
-	Technical Operating Parameters and Specifications > Operating capacity factor > Value : float
-		Operating capacity factor value between 0 and 1.
-	Technical Operating Parameters and Specifications > Fraction of output that reaches gate > Value : float
-		Ratio between the gate production and the raw production.
-		
-	Returns
-	-------
-	Technical Operating Parameters and Specifications > Design output by year > Value : np.ndarray
-		Yearly production of hydrogen, ignoring the capacity factor.
-	Technical Operating Parameters and Specifications > Total design output > Value : float, int
-		Cumulated output during plant lifetime, ignoring the capacity factor
-	Technical Operating Parameters and Specifications > Output at gate by year > Value : np.ndarray
-		Actual yearly output at gate.
-	Technical Operating Parameters and Specifications > Total output at gate > Value : float
-		Cumulated output at gate during plant lifetime.
-
-	'''
 
 	def __init__(self, dcf, print_info, run = True):
 		self._set_up(dcf)
@@ -142,6 +116,9 @@ class Production_Plugin:
 				},			
 			},
 		}
+  
+		self.__doc__ = generate_docstring("Calculation of plant output.", 
+                                    self.input_dict, self.output_dict)
 
 	def _run(self, dcf):
 		self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Production_Plugin')

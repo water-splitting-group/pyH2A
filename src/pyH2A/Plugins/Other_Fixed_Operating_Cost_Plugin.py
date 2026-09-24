@@ -1,43 +1,10 @@
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import numpy as np
+from pyH2A.Utilities.docstring_generation import generate_docstring
 
 class Other_Fixed_Operating_Cost_Plugin:
-	'''Calculation of yearly fixed operating costs.
 
-	Parameters
-	----------
-	Time > Years > Value : dict
-		Dictionary containing all time-related quantities.
-	Inflation > Combined inflator > Value: float
-		sum of CEPCI and CI inflation factors
-	Inflation > Inflation correction > Value : float
-		Inflation correction accounting for startup year offset.
-	Inflation > Inflation factor full > Value : ndarray
-		Inflation factor of each year.
-	Financial Input Values > Start-up time > Value : int or float
-		Start-up time in years.
-	Financial Input Values > Fraction of fixed operating costs during start-up > Value : float
-		Fraction of fixed operating costs incurred during start-up.
-	Fixed Operating Costs > Labor Cost - inflated > Value : float, int
-		Yearly total labor cost after applying labor inflator.
-	<...> Other Fixed Operating Cost <...> >> Value : float
-		Yearly other fixed operating costs, ``sum_all_tables()`` is used.
-
-	Returns
-	-------
-	<...> Other Fixed Operating Cost <...> > Summed total > Value : float
-		Summed total for each individual table in "Other Fixed Operating Cost" group.
-	Other Fixed Operating Cost > Summed group total > Value : float
-		Summed total for all the tables in "Other Fixed Operating Cost" group.
-	Fixed Operating Costs > Total > Value : float
-		Sum of total yearly labor costs and yearly other fixed operating costs.
-	Fixed Operating Costs > Annual > Value : ndarray
-		Total fixed operating cost for each year of the analysis, corrected for inflation,
-		reduced by the applicable fraction during the start-up years, and set to zero before
-		the start of operation (i.e. during construction). Used by the discounted cash flow
-		analysis.
-	'''
 	def __init__(self, dcf, print_info, run = True):
 		self._set_up(dcf)
 		if run:
@@ -218,6 +185,9 @@ class Other_Fixed_Operating_Cost_Plugin:
 				},
 			},
 		}
+
+		self.__doc__ = generate_docstring("Calculation of yearly fixed operating costs.",
+                                    self.input_dict, self.output_dict)
 
 	def _run(self, dcf):
 		self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Other_Fixed_Operating_Cost_Plugin')
