@@ -19,16 +19,14 @@ specifications, so all of these tools skip the same special keys and pair
 
 from pyH2A.Utilities.constants import (SPECIAL_MIDDLE_KEYS, OPTIONAL_KEY,
                                        VALUE_KEY, UNIT_KEY, PATH_KEY_INPUT,
-                                       VALUE_SUFFIX, UNIT_SUFFIX, PATH_SUFFIX)
+                                       VALUE_SUFFIX, UNIT_SUFFIX, PATH_SUFFIX,
+                                       DESCRIPTION_KEY, SPECIAL_TOP_LEVEL_KEYS,
+                                       SPECIAL_KEYS_OUTPUT_INSERTER)
 from pyH2A.Utilities.functional_unit import FunctionalUnit
 from pyH2A.Utilities.input_modification import identify_bottom_keys, import_plugin
-from pyH2A.Utilities.IO.output_inserter import (special_top_level_keys,
-                                                special_keys as OUTPUT_SPECIAL_KEYS)
 
-DESCRIPTION_KEY = 'description'
 
 # Placeholder used wherever a plugin inserts the functional unit into its
-# specification (e.g. "currency / functional unit").
 DOCUMENTATION_FUNCTIONAL_UNIT = FunctionalUnit(
     unit='functional unit',
     dimension='functional unit',
@@ -36,6 +34,8 @@ DOCUMENTATION_FUNCTIONAL_UNIT = FunctionalUnit(
     dimension_per_time='functional unit / time',
     unit_SI_per_s='functional unit / s',
     unit_per_year='functional unit / year',
+    unit_no_reference='functional unit',
+    reference='functional unit',
 )
 
 
@@ -144,7 +144,7 @@ def iter_spec_rows(spec_dict, name='specification'):
         location = f'{name} > {top_key}'
         _check_is_dict(table_dict, location)
 
-        if top_key in special_top_level_keys:
+        if top_key in SPECIAL_TOP_LEVEL_KEYS:
             # e.g. special_insertions > sum_all_tables > <table> > <row>
             for wrapper_key, wrapped_tables in table_dict.items():
                 yield from iter_spec_rows(wrapped_tables,
@@ -236,7 +236,7 @@ def iter_bottom_entries(row_dict, location='row'):
     row_optional = bool(row_dict.get(OPTIONAL_KEY, False))
 
     for bottom_key in identify_bottom_keys(row_dict):
-        if bottom_key in OUTPUT_SPECIAL_KEYS or _is_companion_key(bottom_key):
+        if bottom_key in SPECIAL_KEYS_OUTPUT_INSERTER or _is_companion_key(bottom_key):
             continue
 
         value_spec = row_dict[bottom_key]
