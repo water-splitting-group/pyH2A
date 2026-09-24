@@ -9,11 +9,27 @@
     },
     {
         "plugin": "Capital_Cost",
+        "top": "<...> Direct Capital Cost <...>",
+        "medium": "Summed total",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Capital_Cost",
         "top": "<...> Indirect Capital Cost <...>",
         "medium": "<...>",
         "bottom": "Value",
         "direction": "Input",
         "optional": true
+    },
+    {
+        "plugin": "Capital_Cost",
+        "top": "<...> Indirect Capital Cost <...>",
+        "medium": "Summed total",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
     },
     {
         "plugin": "Other_Fixed_Operating_Cost",
@@ -24,12 +40,28 @@
         "optional": true
     },
     {
+        "plugin": "Other_Fixed_Operating_Cost",
+        "top": "<...> Other Fixed Operating Cost <...>",
+        "medium": "Summed total",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
         "plugin": "Capital_Cost",
         "top": "<...> Other Non-Depreciable Capital Cost <...>",
         "medium": "<...>",
         "bottom": "Value",
         "direction": "Input",
         "optional": true
+    },
+    {
+        "plugin": "Capital_Cost",
+        "top": "<...> Other Non-Depreciable Capital Cost <...>",
+        "medium": "Summed total",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
     },
     {
         "plugin": "Variable_Operating_Cost",
@@ -40,12 +72,28 @@
         "optional": true
     },
     {
+        "plugin": "Variable_Operating_Cost",
+        "top": "<...> Other Variable Operating Cost <...>",
+        "medium": "Summed total",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
         "plugin": "Replacement",
         "top": "<...> Unplanned Replacement <...>",
         "medium": "<...>",
         "bottom": "Value",
         "direction": "Input",
         "optional": true
+    },
+    {
+        "plugin": "Replacement",
+        "top": "<...> Unplanned Replacement <...>",
+        "medium": "Summed total",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
     },
     {
         "plugin": "Battery",
@@ -227,6 +275,30 @@
         "plugin": "Capital_Cost",
         "top": "Depreciable Capital Costs",
         "medium": "Total",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Capital_Cost",
+        "top": "Direct Capital Cost",
+        "medium": "Contributions",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Capital_Cost",
+        "top": "Direct Capital Cost",
+        "medium": "Summed group total",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Capital_Cost",
+        "top": "Direct Capital Cost",
+        "medium": "Summed total",
         "bottom": "Value",
         "direction": "Output",
         "optional": false
@@ -801,6 +873,30 @@
     },
     {
         "plugin": "Capital_Cost",
+        "top": "Indirect Capital Cost",
+        "medium": "Contributions",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Capital_Cost",
+        "top": "Indirect Capital Cost",
+        "medium": "Summed group total",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Capital_Cost",
+        "top": "Indirect Capital Cost",
+        "medium": "Summed total",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Capital_Cost",
         "top": "Indirect Capital Costs",
         "medium": "Inflated",
         "bottom": "Value",
@@ -1235,6 +1331,78 @@
         "plugin": "Capital_Cost",
         "top": "Non-Depreciable Capital Costs",
         "medium": "Total",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Other_Fixed_Operating_Cost",
+        "top": "Other Fixed Operating Cost",
+        "medium": "Contributions",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Other_Fixed_Operating_Cost",
+        "top": "Other Fixed Operating Cost",
+        "medium": "Summed group total",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Other_Fixed_Operating_Cost",
+        "top": "Other Fixed Operating Cost",
+        "medium": "Summed total",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Capital_Cost",
+        "top": "Other Non-Depreciable Capital Cost",
+        "medium": "Contributions",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Capital_Cost",
+        "top": "Other Non-Depreciable Capital Cost",
+        "medium": "Summed group total",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Capital_Cost",
+        "top": "Other Non-Depreciable Capital Cost",
+        "medium": "Summed total",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Variable_Operating_Cost",
+        "top": "Other Variable Operating Cost",
+        "medium": "Contributions",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Variable_Operating_Cost",
+        "top": "Other Variable Operating Cost",
+        "medium": "Summed group total",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Variable_Operating_Cost",
+        "top": "Other Variable Operating Cost",
+        "medium": "Summed total",
         "bottom": "Value",
         "direction": "Output",
         "optional": false
@@ -2024,6 +2192,30 @@
         "optional": false
     },
     {
+        "plugin": "Replacement",
+        "top": "Unplanned Replacement",
+        "medium": "Contributions",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Replacement",
+        "top": "Unplanned Replacement",
+        "medium": "Summed group total",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
+        "plugin": "Replacement",
+        "top": "Unplanned Replacement",
+        "medium": "Summed total",
+        "bottom": "Value",
+        "direction": "Output",
+        "optional": false
+    },
+    {
         "plugin": "Variable_Operating_Cost",
         "top": "Utilities",
         "medium": "<...>",
@@ -2100,38 +2292,6 @@
         "top": "Water Volume",
         "medium": "Volume",
         "bottom": "Value",
-        "direction": "Output",
-        "optional": false
-    },
-    {
-        "plugin": "Capital_Cost",
-        "top": "special_insertions",
-        "medium": "sum_all_tables",
-        "bottom": "",
-        "direction": "Output",
-        "optional": false
-    },
-    {
-        "plugin": "Other_Fixed_Operating_Cost",
-        "top": "special_insertions",
-        "medium": "sum_all_tables",
-        "bottom": "",
-        "direction": "Output",
-        "optional": false
-    },
-    {
-        "plugin": "Replacement",
-        "top": "special_insertions",
-        "medium": "sum_all_tables",
-        "bottom": "",
-        "direction": "Output",
-        "optional": false
-    },
-    {
-        "plugin": "Variable_Operating_Cost",
-        "top": "special_insertions",
-        "medium": "sum_all_tables",
-        "bottom": "",
         "direction": "Output",
         "optional": false
     }

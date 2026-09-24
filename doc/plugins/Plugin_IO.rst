@@ -16,22 +16,45 @@ Interactive overview of the inputs and outputs of all pyH2A plugins.
                aria-label="Search variables"
            />
 
-           <select
-               id="io-plugin"
-               aria-label="Filter by plugin"
-           >
-               <option value="">All plugins</option>
-           </select>
+           <div class="io-multiselect" id="io-plugin">
+               <button
+                   type="button"
+                   class="io-multiselect-button"
+                   aria-haspopup="listbox"
+                   aria-expanded="false"
+               >
+                   <span class="io-multiselect-label">All plugins</span>
+                   <span class="io-multiselect-arrow" aria-hidden="true">&#9662;</span>
+               </button>
 
-           <select
-               id="io-direction"
-               aria-label="Filter by direction"
-           >
-               <option value="">All directions</option>
-               <option value="Input">Input</option>
-               <option value="Output">Output</option>
-               <option value="Input/Output">Input/Output</option>
-           </select>
+               <div class="io-multiselect-panel" hidden>
+                   <div class="io-multiselect-actions">
+                       <button type="button" class="io-multiselect-select-all">Select all</button>
+                       <button type="button" class="io-multiselect-clear">Clear</button>
+                   </div>
+                   <div class="io-multiselect-options"></div>
+               </div>
+           </div>
+
+           <div class="io-multiselect" id="io-direction">
+               <button
+                   type="button"
+                   class="io-multiselect-button"
+                   aria-haspopup="listbox"
+                   aria-expanded="false"
+               >
+                   <span class="io-multiselect-label">All directions</span>
+                   <span class="io-multiselect-arrow" aria-hidden="true">&#9662;</span>
+               </button>
+
+               <div class="io-multiselect-panel" hidden>
+                   <div class="io-multiselect-actions">
+                       <button type="button" class="io-multiselect-select-all">Select all</button>
+                       <button type="button" class="io-multiselect-clear">Clear</button>
+                   </div>
+                   <div class="io-multiselect-options"></div>
+               </div>
+           </div>
 
            <label>
                <input

@@ -6,6 +6,7 @@ import pyH2A.Plugins as plugins
 from pyH2A.Utilities.input_modification import import_plugin
 
 
+
 METADATA_KEYS = {
     "type",
     "bounds",
@@ -15,6 +16,15 @@ METADATA_KEYS = {
     "inserted_value",
     "Unit",
     "_Unit",
+}
+
+# Wrapper keys whose contents describe real tables/variables one level
+# down (see output_inserter.special_top_level_keys for 'special_insertions').
+# They are skipped when building the top/medium/bottom path so that the
+# variables inside them show up the same way as regular outputs.
+STRUCTURAL_KEYS = {
+    "special_insertions",
+    "sum_all_tables",
 }
 
 
@@ -80,9 +90,23 @@ def _walk_dict(
         if "_unit" in str(key).lower():
             continue
 
+        if not isinstance(value, dict):
+            continue
+
+        if key in STRUCTURAL_KEYS:
+            rows.extend(
+                _walk_dict(
+                    value,
+                    path,
+                    optional,
+                )
+            )
+            continue
+
         current_path = path + [str(key)]
 
-        if key == "sum_all_tables":
+        if _is_variable(value):
+
             rows.append(
                 {
                     "top": (
@@ -95,37 +119,8 @@ def _walk_dict(
                         if len(current_path) > 1
                         else ""
                     ),
-                    "bottom": (
-                        current_path[2]
-                        if len(current_path) > 2
-                        else ""
-                    ),
-                    "optional": optional,
-                }
-            )
-            continue
-
-        if not isinstance(value, dict):
-            continue
-
-        if _is_variable(value):
-
-            variable_path = current_path
-
-            rows.append(
-                {
-                    "top": (
-                        variable_path[0]
-                        if len(variable_path) > 0
-                        else ""
-                    ),
-                    "medium": (
-                        variable_path[1]
-                        if len(variable_path) > 1
-                        else ""
-                    ),
                     "bottom": _clean_bottom(
-                        variable_path[-1]
+                        current_path[-1]
                     ),
                     "optional": value.get(
                         "optional",
