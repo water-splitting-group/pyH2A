@@ -1,315 +1,140 @@
+'''Generate the data for the Plugin I/O page of the documentation.
+
+Used as a Sphinx extension, every plugin is set up without running a model and
+its ``input_dict``/``output_dict`` is written as rows (one per plugin and
+variable) to ``_static/plugin_io_data.js`` of the HTML build. Any error fails
+the build.
+'''
+
 import json
-import pkgutil
 from pathlib import Path
 
 import pyH2A.Plugins as plugins
-from pyH2A.Utilities.input_modification import import_plugin
+from pyH2A.Utilities.plugin_specification import (instantiate_plugin_for_docs, iter_spec_rows,
+                                                  iter_bottom_entries, bottom_display_name)
 
 
+def _iter_variables(spec_dict, name):
+    '''Yield every variable of a specification.
 
-METADATA_KEYS = {
-    "type",
-    "bounds",
-    "dimension",
-    "optional",
-    "description",
-    "inserted_value",
-    "Unit",
-    "_Unit",
-}
+    Parameters
+    ----------
+    spec_dict : dict
+        ``input_dict`` or ``output_dict`` of a plugin.
+    name : str
+        Name used in error messages.
 
-# Wrapper keys whose contents describe real tables/variables one level
-# down (see output_inserter.special_top_level_keys for 'special_insertions').
-# They are skipped when building the top/medium/bottom path so that the
-# variables inside them show up the same way as regular outputs.
-STRUCTURAL_KEYS = {
-    "special_insertions",
-    "sum_all_tables",
-}
+    Yields
+    ------
+    key : tuple of str
+        ``(top, medium, bottom)`` of the variable.
+    optional : bool
+        Whether the variable is optional.
+    description : str
+        Description of the row.
+    '''
 
-
-class DummyDCF:
-    class functional_unit:
-        dimension = "dimensionless"
-        unit = None
+    for top, middle, row in iter_spec_rows(spec_dict, name):
+        for bottom, _, optional in iter_bottom_entries(row):
+            yield (top, middle, bottom_display_name(bottom)), optional, row.get('description', '')
 
 
-def _is_variable(data):
-    """Return True if a dictionary describes a variable."""
+def _make_row(plugin_name, key, variable):
+    '''Build one output row from a collected variable.
 
-    if not isinstance(data, dict):
-        return False
+    Parameters
+    ----------
+    plugin_name : str
+        Name of the plugin.
+    key : tuple of str
+        ``(top, medium, bottom)`` of the variable.
+    variable : dict
+        ``optional`` (per direction) and ``description`` of the variable.
 
-    return any(
-        key in data
-        for key in (
-            "type",
-            "dimension",
-            "bounds",
-            "inserted_value",
-        )
-    )
+    Returns
+    -------
+    dict
+        Row with ``plugin``, ``top``, ``medium``, ``bottom``, ``direction``,
+        ``optional`` and ``description``.
+    '''
 
+    top, medium, bottom = key
+    direction = '/'.join(variable['optional'])  # 'Input', 'Output' or 'Input/Output'
 
-def _clean_bottom(key):
-    """Remove the _Value suffix from a variable name."""
-
-    key = str(key)
-
-    if key.lower().endswith("_value"):
-        return key[:-6]
-
-    return key
+    return {'plugin': plugin_name, 'top': top, 'medium': medium, 'bottom': bottom,
+            'direction': direction, **variable}
 
 
-def _walk_dict(
-    data,
-    path=None,
-    inherited_optional=False,
-):
-    """Recursively collect variables as top, medium, and bottom."""
+def collect_plugin_rows(input_dict, output_dict, plugin_name):
+    '''Collect the I/O rows of one plugin.
 
-    rows = []
+    Parameters
+    ----------
+    input_dict : dict
+        Input specification of the plugin.
+    output_dict : dict
+        Output specification of the plugin.
+    plugin_name : str
+        Name stored in the ``plugin`` field of every row.
 
-    if not isinstance(data, dict):
-        return rows
+    Returns
+    -------
+    list of dict
+        One row per variable, see :func:`_make_row`. A variable that is both
+        read and written gets the direction ``'Input/Output'``.
+    '''
 
-    if path is None:
-        path = []
+    variables = {}
 
-    optional = data.get(
-        "optional",
-        inherited_optional,
-    )
+    for direction, spec_dict in (('Input', input_dict), ('Output', output_dict)):
+        for key, optional, description in _iter_variables(spec_dict, f'{plugin_name} {direction}'):
+            variable = variables.setdefault(key, {'optional': {}, 'description': description})
+            variable['optional'][direction] = optional
 
-    for key, value in data.items():
-
-        if key in METADATA_KEYS:
-            continue
-
-        if "_unit" in str(key).lower():
-            continue
-
-        if not isinstance(value, dict):
-            continue
-
-        if key in STRUCTURAL_KEYS:
-            rows.extend(
-                _walk_dict(
-                    value,
-                    path,
-                    optional,
-                )
-            )
-            continue
-
-        current_path = path + [str(key)]
-
-        if _is_variable(value):
-
-            rows.append(
-                {
-                    "top": (
-                        current_path[0]
-                        if len(current_path) > 0
-                        else ""
-                    ),
-                    "medium": (
-                        current_path[1]
-                        if len(current_path) > 1
-                        else ""
-                    ),
-                    "bottom": _clean_bottom(
-                        current_path[-1]
-                    ),
-                    "optional": value.get(
-                        "optional",
-                        optional,
-                    ),
-                }
-            )
-
-            continue
-
-        rows.extend(
-            _walk_dict(
-                value,
-                current_path,
-                optional,
-            )
-        )
-
-    return rows
+    return [_make_row(plugin_name, key, variable) for key, variable in variables.items()]
 
 
-def _get_plugins():
-    """Discover all pyH2A plugins."""
+def collect_rows():
+    '''Collect the sorted I/O rows of all plugins in ``pyH2A.Plugins``.
 
-    plugin_modules = []
-
-    for module in pkgutil.iter_modules(
-        plugins.__path__
-    ):
-        if module.name.endswith("_Plugin"):
-            plugin_modules.append(module.name)
-
-    return sorted(plugin_modules)
-
-
-def _load_plugin(plugin_module_name):
-    """Load a plugin without running a model."""
-
-    plugin_class = import_plugin(
-        plugin_module_name,
-        plugin_module=True,
-    )
-
-    return plugin_class(
-        DummyDCF,
-        print_info=False,
-        run=False,
-    )
-
-
-def _collect_plugin_data(plugin_module_name):
-    """Collect input and output information for one plugin."""
-
-    plugin = _load_plugin(
-        plugin_module_name
-    )
-
-    plugin_name = plugin_module_name.removesuffix(
-        "_Plugin"
-    )
+    Returns
+    -------
+    list of dict
+        Rows as returned by :func:`collect_plugin_rows`.
+    '''
 
     rows = []
 
-    for row in _walk_dict(
-        plugin.input_dict
-    ):
-        rows.append(
-            {
-                "plugin": plugin_name,
-                "top": row["top"],
-                "medium": row["medium"],
-                "bottom": row["bottom"],
-                "direction": "Input",
-                "optional": row["optional"],
-            }
-        )
+    for path in sorted(Path(plugins.__file__).parent.glob('*_Plugin.py')):
+        plugin = instantiate_plugin_for_docs(path.stem)
+        rows += collect_plugin_rows(plugin.input_dict, plugin.output_dict,
+                                    path.stem.removesuffix('_Plugin'))
 
-    for row in _walk_dict(
-        plugin.output_dict
-    ):
-        rows.append(
-            {
-                "plugin": plugin_name,
-                "top": row["top"],
-                "medium": row["medium"],
-                "bottom": row["bottom"],
-                "direction": "Output",
-                "optional": row["optional"],
-            }
-        )
-
-    return rows
+    return sorted(rows, key=lambda row: (row['top'], row['medium'], row['bottom'], row['plugin']))
 
 
-def _combine_input_output(rows):
-    """Combine identical input and output variables."""
+def _add_files(app, pagename, templatename, context, doctree):
+    '''Add the Plugin I/O files only to the page containing the browser.'''
 
-    combined = {}
-
-    for row in rows:
-
-        key = (
-            row["plugin"],
-            row["top"],
-            row["medium"],
-            row["bottom"],
-        )
-
-        if key not in combined:
-            combined[key] = row.copy()
-            continue
-
-        combined[key]["direction"] = "Input/Output"
-
-        combined[key]["optional"] = (
-            combined[key]["optional"]
-            or row["optional"]
-        )
-
-    return list(combined.values())
+    if 'id="io-browser"' in context.get('body', ''):
+        app.add_css_file('plugin_io.css')
+        app.add_js_file('plugin_io_data.js')
+        app.add_js_file('plugin_io.js')
 
 
-def _write_json(rows, output_path):
-    """Write rows to a JSON file."""
+def _write_data(app, exception):
+    '''Write the rows to ``_static/plugin_io_data.js`` after an HTML build.'''
 
-    output_path.parent.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
-
-    with output_path.open(
-        "w",
-        encoding="utf-8",
-    ) as file:
-        json.dump(
-            rows,
-            file,
-            indent=4,
-        )
+    if exception is None and app.builder.format == 'html':
+        data = json.dumps(collect_rows())
+        (Path(app.outdir) / '_static' / 'plugin_io_data.js').write_text(
+            f'window.PYH2A_PLUGIN_IO_DATA = {data};\n', encoding='utf-8')
 
 
-def generate():
-    """Generate Plugin I/O data for the documentation."""
+def setup(app):
+    '''Register the generator as a Sphinx extension (see ``doc/conf.py``).'''
 
-    repository_root = (
-        Path(__file__).resolve().parents[3]
-    )
+    app.connect('html-page-context', _add_files)
+    app.connect('build-finished', _write_data)
 
-    data_path = (
-        repository_root
-        / "doc"
-        / "data"
-        / "io_data.json"
-    )
-
-    rows = []
-
-    for plugin_module_name in _get_plugins():
-        rows.extend(
-            _collect_plugin_data(
-                plugin_module_name
-            )
-        )
-
-    rows = _combine_input_output(
-        rows
-    )
-
-    rows.sort(
-        key=lambda row: (
-            row["top"],
-            row["medium"],
-            row["bottom"],
-            row["plugin"],
-        )
-    )
-
-    _write_json(
-        rows,
-        data_path,
-    )
-
-    print(
-        f"Generated Plugin I/O data: "
-        f"{data_path}"
-    )
-
-    return data_path
-
-
-if __name__ == "__main__":
-    generate()
+    return {'parallel_read_safe': True, 'parallel_write_safe': True}
