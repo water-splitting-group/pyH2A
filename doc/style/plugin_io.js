@@ -120,6 +120,12 @@ document.addEventListener("keydown", event => {
 });
 
 document.addEventListener("DOMContentLoaded", () => {
+    // The script is only added to the Plugin I/O page, but guard anyway so
+    // that it never fails on pages without the browser.
+    if (!document.getElementById("io-browser")) {
+        return;
+    }
+
     const searchInput = document.getElementById("io-search");
     const optionalCheckbox = document.getElementById("io-optional");
 
@@ -205,6 +211,16 @@ document.addEventListener("DOMContentLoaded", () => {
         );
     }
 
+    function isOptional(row) {
+        return Object.values(row.optional || {}).some(Boolean);
+    }
+
+    function getSearchText(row) {
+        return [getVariableName(row), row.plugin, row.description || ""]
+            .join(" ")
+            .toLowerCase();
+    }
+
     function getFilteredRows() {
         const searchTerm = searchInput.value.trim().toLowerCase();
         const selectedPlugins = pluginSelect.getSelected();
@@ -212,10 +228,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const optionalOnly = optionalCheckbox.checked;
 
         return allRows.filter(row => {
-            if (
-                searchTerm &&
-                !getVariableName(row).toLowerCase().includes(searchTerm)
-            ) {
+            if (searchTerm && !getSearchText(row).includes(searchTerm)) {
                 return false;
             }
 
@@ -227,7 +240,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 return false;
             }
 
-            if (optionalOnly && !row.optional) {
+            if (optionalOnly && !isOptional(row)) {
                 return false;
             }
 
@@ -236,17 +249,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function getVisiblePlugins(rows) {
-        const selectedPlugins = pluginSelect.getSelected();
-
-        if (
-            selectedPlugins.size > 0 &&
-            selectedPlugins.size < allPluginNames.length
-        ) {
-            return allPluginNames.filter(plugin =>
-                selectedPlugins.has(plugin)
-            );
-        }
-
+        // Rows are already filtered by the plugin selection, so this shows
+        // the selected plugins that have at least one matching variable.
         return getPlugins(rows);
     }
 
@@ -263,38 +267,16 @@ document.addEventListener("DOMContentLoaded", () => {
                     top: row.top || "",
                     medium: row.medium || "",
                     bottom: row.bottom || "",
-                    optional: Boolean(row.optional),
                     plugins: {},
                 });
             }
 
-            const variable = grouped.get(key);
-
-            if (row.optional) {
-                variable.optional = true;
-            }
-
-            if (!variable.plugins[row.plugin]) {
-                variable.plugins[row.plugin] = [];
-            }
-
-            variable.plugins[row.plugin].push(row.direction);
+            // The generator emits one row per plugin and variable, with the
+            // input/output direction already combined.
+            grouped.get(key).plugins[row.plugin] = row;
         });
 
         return [...grouped.values()];
-    }
-
-    function getDirectionText(directions) {
-        const unique = new Set(directions);
-
-        if (
-            unique.has("Input/Output") ||
-            (unique.has("Input") && unique.has("Output"))
-        ) {
-            return "Input/Output";
-        }
-
-        return [...unique].join(", ");
     }
 
     function renderHeader(plugins) {
@@ -336,33 +318,40 @@ document.addEventListener("DOMContentLoaded", () => {
             const bottomCell = document.createElement("td");
             bottomCell.textContent = variable.bottom;
             bottomCell.className = "io-cell-key";
-
-            if (variable.optional) {
-                const optionalLabel = document.createElement("span");
-                optionalLabel.className = "io-optional-label";
-                optionalLabel.textContent = "optional";
-                bottomCell.appendChild(optionalLabel);
-            }
-
             tableRow.appendChild(bottomCell);
 
             plugins.forEach(plugin => {
                 const pluginCell = document.createElement("td");
-                const directions = variable.plugins[plugin];
+                const pluginRow = variable.plugins[plugin];
 
                 pluginCell.style.setProperty(
                     "--io-plugin-hue",
                     pluginHues.get(plugin)
                 );
 
-                if (directions) {
-                    const directionText = getDirectionText(directions);
+                if (pluginRow) {
+                    const direction = pluginRow.direction;
+                    const optional = isOptional(pluginRow);
+                    const titleParts = [`${plugin}: ${direction}`];
+
+                    if (optional) {
+                        titleParts.push("optional");
+                    }
+
+                    if (pluginRow.description) {
+                        titleParts.push(pluginRow.description);
+                    }
 
                     pluginCell.textContent =
-                        directionAbbreviations[directionText] || directionText;
-                    pluginCell.title = `${plugin}: ${directionText}`;
+                        (directionAbbreviations[direction] || direction) +
+                        (optional ? "*" : "");
+                    pluginCell.title = titleParts.join("\n");
                     pluginCell.className =
-                        directionClasses[directionText] || "io-cell-empty";
+                        directionClasses[direction] || "io-cell-empty";
+
+                    if (optional) {
+                        pluginCell.classList.add("io-cell-optional");
+                    }
                 } else {
                     pluginCell.className = "io-cell-empty";
                 }
@@ -428,29 +417,29 @@ document.addEventListener("DOMContentLoaded", () => {
         render();
     });
 
-    fetch("../io_data.json")
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            allRows = data;
-            allPluginNames = getPlugins(allRows);
-            pluginHues = buildPluginHues(allPluginNames);
+    function showLoadError() {
+        countElement.textContent = "Could not load Plugin I/O data.";
+        emptyElement.textContent = "Plugin I/O data could not be loaded.";
+        emptyElement.style.display = "block";
+        tableContainer.style.display = "none";
+        pagination.style.display = "none";
+    }
 
-            pluginSelect.setOptions(allPluginNames);
+    // Set by _static/plugin_io_data.js, which the documentation build
+    // generates (see pyH2A.Utilities.io_information_generator).
+    const data = window.PYH2A_PLUGIN_IO_DATA;
 
-            render();
-        })
-        .catch(error => {
-            console.error("Could not load Plugin I/O data:", error);
+    if (!Array.isArray(data)) {
+        console.error("Could not load Plugin I/O data: PYH2A_PLUGIN_IO_DATA is missing.");
+        showLoadError();
+        return;
+    }
 
-            countElement.textContent = "Could not load Plugin I/O data.";
-            emptyElement.textContent = "Plugin I/O data could not be loaded.";
-            emptyElement.style.display = "block";
-            tableContainer.style.display = "none";
-            pagination.style.display = "none";
-        });
+    allRows = data;
+    allPluginNames = getPlugins(allRows);
+    pluginHues = buildPluginHues(allPluginNames);
+
+    pluginSelect.setOptions(allPluginNames);
+
+    render();
 });

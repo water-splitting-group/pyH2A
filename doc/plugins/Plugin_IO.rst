@@ -2,18 +2,26 @@ Plugin I/O
 ==========
 
 Interactive overview of the inputs and outputs of all pyH2A plugins.
+The data is generated from the ``input_dict`` and ``output_dict`` of each
+plugin during the documentation build
+(see :mod:`pyH2A.Utilities.io_information_generator`).
 
 .. raw:: html
 
    <div id="io-browser">
+
+       <noscript>
+           The Plugin I/O browser requires JavaScript. The inputs and outputs
+           of each plugin are also listed on the individual plugin pages.
+       </noscript>
 
        <div id="io-controls">
 
            <input
                id="io-search"
                type="search"
-               placeholder="Search variables..."
-               aria-label="Search variables"
+               placeholder="Search variables or plugins..."
+               aria-label="Search variables or plugins"
            />
 
            <div class="io-multiselect" id="io-plugin">
@@ -67,6 +75,11 @@ Interactive overview of the inputs and outputs of all pyH2A plugins.
        </div>
 
        <div id="io-count"></div>
+
+       <div id="io-legend">
+           I = input, O = output, I/O = input and output,
+           * = optional for this plugin. Hover a cell for its description.
+       </div>
 
        <div id="io-table-container">
 
