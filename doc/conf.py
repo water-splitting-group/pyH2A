@@ -19,37 +19,6 @@ sys.path.insert(0, os.path.abspath('../src/'))
 from pyH2A import __version__
 
 
-def _generate_plugin_docstring(app, what, name, obj, options, lines):
-    if what != 'class':
-        return
-
-    if not name.startswith('pyH2A.Plugins.'):
-        return
-
-    if not name.endswith('_Plugin'):
-        return
-
-    class DummyDCF:
-        class functional_unit:
-            dimension = 'functional unit'
-
-        unit = None
-
-    plugin = obj(
-        DummyDCF(),
-        print_info=False,
-        run=False,
-    )
-
-    lines.clear()
-    lines.extend(plugin.__doc__.splitlines())
-
-def setup(app):
-    app.connect(
-        'autodoc-process-docstring',
-        _generate_plugin_docstring,
-    )
-
 # -- Project information -----------------------------------------------------
 
 project = 'pyH2A'
@@ -66,12 +35,13 @@ version = __version__
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = ['sphinx.ext.autodoc',
-              'sphinx.ext.autosummary',
-              'sphinx.ext.todo',
-              'sphinx.ext.coverage',
-              'sphinx.ext.viewcode',
-              'numpydoc',
-              'autodocsumm'
+			  'pyH2A.Utilities.docstring_generation',
+			  'sphinx.ext.autosummary',
+   			  'sphinx.ext.todo',
+    		  'sphinx.ext.coverage',
+    		  'sphinx.ext.viewcode',
+    		  'numpydoc',
+    		  'autodocsumm'
 ]
 
 autodoc_default_options = {

@@ -1,439 +1,212 @@
-'''Generate NumPy-style plugin docstrings from `input_dict`/`output_dict` specs.
+'''Generate NumPy-style plugin docstrings from ``input_dict``/``output_dict``.
 
-Plugin modules define a structured `input_dict`/`output_dict` describing every
-parameter/output (type, dimension, optionality, description). This module walks
-those same structures to produce documentation text, so the docstring can never
-drift from the spec it describes. Intended use, from within a plugin module::
+A plugin calls this in ``_set_up``, so its docstring always matches its specification::
 
-    class Some_Plugin:
-        __doc__ = generate_docstring("One-line summary.", input_dict, output_dict)
+    self.__doc__ = generate_docstring("One-line summary.", self.input_dict, self.output_dict)
+
+The module is also a Sphinx extension (see :func:`setup`) that puts the generated
+docstrings on the plugin pages. Any error fails the build.
 '''
 
 import textwrap
 
 import numpy as np
 
-from pyH2A.Utilities.constants import (SPECIAL_MIDDLE_KEYS,
-                                       TYPE_KEY, OPTIONS_KEY, BOUNDS_KEY)
-from pyH2A.Utilities.IO.output_inserter import special_top_level_keys
+from pyH2A.Utilities.constants import TYPE_KEY, OPTIONS_KEY
+from pyH2A.Utilities.plugin_specification import instantiate_plugin_for_docs, iter_spec_rows
 
-DESCRIPTION_KEY = 'description'
+# Type names in the order they are listed.
+_TYPE_NAMES = {int: 'int', float: 'float', str: 'str', bool: 'bool',
+               dict: 'dict', list: 'list', tuple: 'tuple', np.ndarray: 'ndarray'}
 
-_TYPE_ORDER = [int, float, str, bool, dict, list, tuple, np.ndarray]
-_TYPE_PROSE = {int: 'int', float: 'float', str: 'str', bool: 'bool',
-              dict: 'dict', list: 'list', tuple: 'tuple', np.ndarray: 'ndarray'}
+# numpydoc handles the same autodoc event with priority 500; the generated
+# docstring must replace its result, so it runs afterwards.
+AUTODOC_PRIORITY = 900
 
 
-def _type_set_to_prose(type_set):
-    """Convert a set of Python types to canonical prose.
+def _type_prose(types):
+    '''Convert a set of types to text.
 
     Parameters
     ----------
-    type_set : set of type
-        Set of Python types to convert. Types known to this documentation
-        generator are rendered using the order defined by ``_TYPE_ORDER``.
+    types : set of type
+        Types to convert.
 
     Returns
     -------
     str
-        Type names joined by ``" or "``.
+        Type names in a fixed order, joined by ``" or "``.
 
     Examples
     --------
-    >>> _type_set_to_prose({int, float})
+    >>> _type_prose({float, int})
     'int or float'
-    >>> _type_set_to_prose({dict})
-    'dict'
-    """
+    '''
 
-    ordered = [t for t in _TYPE_ORDER if t in type_set]
-    ordered += [t for t in type_set if t not in _TYPE_ORDER]
+    ordered = [t for t in _TYPE_NAMES if t in types] + [t for t in types if t not in _TYPE_NAMES]
 
-    return ' or '.join(
-        _TYPE_PROSE.get(
-            t,
-            getattr(t, '__name__', str(t))
-        )
-        for t in ordered
-    )
+    return ' or '.join(_TYPE_NAMES.get(t, getattr(t, '__name__', str(t))) for t in ordered)
 
 
 def _format_cell(key, value):
-    """Convert a specification value into documentation text.
-
-    Scalar values are converted directly to strings. Type sets are converted
-    to canonical type prose. Nested dictionaries are expanded into separate
-    lines within the same table cell. For the ``Value`` column specifically,
-    multiple lines are rendered as a nested one-column ``list-table`` instead
-    of a plain line block, so the line between entries is a real table-row
-    border — inheriting the surrounding table's own border color and style
-    automatically, rather than a manually styled divider.
+    '''Convert one specification value into the text of a table cell.
 
     Parameters
     ----------
     key : str
-        Specification key associated with ``value``. Special handling is
-        applied to ``TYPE_KEY``, ``OPTIONS_KEY``, and ``BOUNDS_KEY``. When
-        ``key`` is ``'Value'`` and ``value`` is a dict with more than one
-        entry, the lines are rendered as a nested table instead of a line
-        block, giving a native row-border divider between them.
+        Column of the cell, e.g. ``'Value'``, ``'Unit'`` or ``'optional'``.
     value : object
-        Specification value to format.
+        Specification value. A dict is shown as one line per entry; in the
+        ``Value`` column several lines become a nested table with dividers.
 
     Returns
     -------
     str
-        Text representation suitable for use as an RST table cell.
+        RST text of the cell.
 
     Examples
     --------
     >>> _format_cell('Unit', {'type': {int, float}, 'bounds': (0, None)})
     '| type: int or float\\n| bounds: (0, None)'
+    '''
 
-    >>> _format_cell('Value', {'type': {int, float}, 'bounds': (0, None)})
-    '.. list-table::\\n   :widths: 100\\n\\n   * - type: int or float\\n   * - bounds: (0, None)'
-    """
+    if not isinstance(value, dict):
+        return _type_prose(value) if key == TYPE_KEY else str(value)
 
-    if value is None:
-        return ''
+    parts = []
 
-    if key == TYPE_KEY:
-        return _type_set_to_prose(value)
+    for subkey, subvalue in value.items():
+        if subkey == TYPE_KEY:
+            subvalue = _type_prose(subvalue)
+        elif subkey == OPTIONS_KEY:
+            subvalue = ', '.join(repr(option) for option in sorted(subvalue))
+        parts.append(f'{subkey}: {subvalue}')
 
-    if isinstance(value, dict):
-        parts = []
+    if key == 'Value' and len(parts) > 1:
+        return '\n'.join(['.. list-table::', '   :widths: 100', '   :class: value-divider', '']
+                         + [f'   * - {part}' for part in parts])
 
-        for subkey, subvalue in value.items():
+    return '\n'.join(f'| {part}' for part in parts)
 
-            if subkey == TYPE_KEY and isinstance(subvalue, set):
-                subvalue = _type_set_to_prose(subvalue)
-
-            elif subkey == OPTIONS_KEY and subvalue:
-                subvalue = ', '.join(
-                    repr(option) for option in sorted(subvalue)
-                )
-
-            elif subkey == BOUNDS_KEY and isinstance(subvalue, tuple):
-                lower, upper = subvalue
-                subvalue = f'({lower}, {upper})'
-
-            parts.append(f'{subkey}: {subvalue}')
-
-        # Only the Value column gets split by a real divider line. Using a
-        # nested list-table (rather than a manually drawn <hr>) means the
-        # line between rows is the table's own border -- same color and
-        # style as the rest of the table, with nothing hardcoded here.
-        if key == 'Value' and len(parts) > 1:
-
-            inner_lines = [
-                '.. list-table::',
-                '   :widths: 100',
-                '   :class: value-divider',
-                '',
-            ]
-            inner_lines += [f'   * - {part}' for part in parts]
-
-            return '\n'.join(inner_lines)
-
-        # Use a line block so Sphinx creates real line breaks.
-        return '\n'.join(f'| {part}' for part in parts)
-
-    return str(value)
 
 def _render_table(title, rows):
-    """Render one top-level specification as an RST list-table.
-
-    The table contains one row for each middle-level specification key.
-    Columns are determined dynamically from the keys present in the rows.
-    The internal ``_name`` key is used for the row name and is not rendered
-    as a separate specification column.
+    '''Render one table as an RST ``list-table``.
 
     Parameters
     ----------
     title : str
-        Title of the table, normally the top-level specification key.
-    rows : list of dict
-        Specification rows. Each row must contain an internal ``_name`` key
-        identifying the parameter or output represented by that row.
+        Table name (top-level key).
+    rows : list of tuple
+        ``(name, row_dict)`` per row (middle-level key and its specification).
 
     Returns
     -------
     list of str
-        RST lines representing the table. Returns an empty list when
-        ``rows`` is empty.
+        RST lines of the table. The columns are the keys of the rows, in the
+        order in which they first appear.
+    '''
 
-    Examples
-    --------
-    A row such as::
+    columns = list(dict.fromkeys(key for _, row in rows for key in row))
+    lines = [title, '-' * len(title), '', '.. list-table::', '   :header-rows: 1',
+             '   :widths: ' + ' '.join(['25'] * (len(columns) + 1)), '', '   * - Name']
+    lines += [f'     - {column}' for column in columns]
 
-        {
-            '_name': 'Design capacity',
-            'Value': {'type': {int, float}, 'bounds': (0, None)},
-            'Unit': {'dimension': 'energy'},
-            'optional': False,
-            'description': 'Full design capacity.'
-        }
-
-    is rendered as a table row with columns for ``Value``, ``Unit``,
-    ``optional``, and ``description``.
-    """
-
-    if not rows:
-        return []
-
-    # Find every inner key used by the rows.
-    # Keep the order in which keys first appear.
-    columns = []
-
-    for row_dict in rows:
-        for key in row_dict:
-            if key not in columns:
-                columns.append(key)
-
-    # _name is our internal helper and must never become a table column.
-    columns = [
-        column for column in columns
-        if column != '_name'
-    ]
-
-    number_of_columns = len(columns) + 1
-
-    lines = [
-        title,
-        '-' * len(title),
-        '',
-        '.. list-table::',
-        '   :header-rows: 1',
-        '   :widths: ' + ' '.join(
-            ['25'] * number_of_columns
-        ),
-        '',
-        '   * - Name',
-    ]
-
-    # Header
-    for column in columns:
-        lines.append(f'     - {column}')
-
-    # Rows
-    for row_dict in rows:
-
-        name = row_dict['_name']
-
+    for name, row in rows:
         lines.append(f'   * - ``{name}``')
 
         for column in columns:
+            cell = _format_cell(column, row.get(column, '')).splitlines() or ['']
+            lines.append(f'     - {cell[0]}' if cell[0] else '     -')
+            lines += [f'       {line}' for line in cell[1:]]
 
-            value = row_dict.get(column, '')
-            cell = _format_cell(column, value)
-
-            if not cell:
-                lines.append('     -')
-                continue
-
-            cell_lines = cell.splitlines()
-
-            # First line starts the table cell.
-            lines.append(f'     - {cell_lines[0]}')
-
-            # Remaining lines belong to the same cell.
-            for continuation in cell_lines[1:]:
-                lines.append(f'       {continuation}')
-
-    lines.append('')
-
-    return lines
+    return lines + ['']
 
 
-def _render_input_tables(input_dict):
-    """Render all input specifications as RST tables.
-
-    Each top-level key in ``input_dict`` becomes a separate table. Middle-level
-    keys become table rows, while the keys inside each middle-level
-    specification become table columns.
+def _render_tables(spec_dict, name):
+    '''Render all tables of an ``input_dict`` or ``output_dict``.
 
     Parameters
     ----------
-    input_dict : dict
-        Plugin input specification. The expected structure is::
-
-            {
-                'Top level': {
-                    'Parameter': {
-                        'Value': ...,
-                        'Unit': ...,
-                        'optional': ...,
-                        'description': ...
-                    }
-                }
-            }
+    spec_dict : dict
+        Plugin specification. ``sum_tables`` is skipped and tables inside
+        ``special_insertions`` are shown like regular tables.
+    name : str
+        Name used in error messages.
 
     Returns
     -------
     list of str
-        RST lines containing all generated input tables.
+        RST lines of all tables.
+    '''
 
-    Notes
-    -----
-    Keys listed in ``SPECIAL_MIDDLE_KEYS`` are skipped because they represent
-    internal input structures rather than normal documented parameters.
-    """
+    tables = {}
 
-    lines = []
+    for top, middle, row in iter_spec_rows(spec_dict, name):
+        tables.setdefault(top, []).append((middle, row))
 
-    for top_key, table_dict in input_dict.items():
-        rows = []
-
-        for middle_key, row_dict in table_dict.items():
-
-            if middle_key in SPECIAL_MIDDLE_KEYS:
-                continue
-
-            row = dict(row_dict)
-            row['_name'] = middle_key
-            rows.append(row)
-
-        lines += _render_table(top_key, rows)
-
-    return lines
-
-
-def _render_output_tables(output_dict):
-    """Render all output specifications as RST tables.
-
-    Normal output specifications are rendered directly from their top-level
-    and middle-level keys. Special output structures listed in
-    ``special_top_level_keys`` are expanded through their
-    ``sum_all_tables`` structure.
-
-    Parameters
-    ----------
-    output_dict : dict
-        Plugin output specification. Normal output structures are expected
-        to follow the form::
-
-            {
-                'Top level': {
-                    'Output': {
-                        'Value': ...,
-                        'optional': ...,
-                        'description': ...
-                    }
-                }
-            }
-
-        Special output structures may contain::
-
-            {
-                'special_insertions': {
-                    'sum_all_tables': {
-                        'Group': {
-                            'Output': {...}
-                        }
-                    }
-                }
-            }
-
-    Returns
-    -------
-    list of str
-        RST lines containing all generated output tables.
-    """
-
-    lines = []
-
-    for top_key, table_dict in output_dict.items():
-
-        if top_key in special_top_level_keys:
-
-            sum_all_tables = table_dict.get('sum_all_tables', {})
-
-            for group_key, group_dict in sum_all_tables.items():
-
-                rows = []
-
-                for middle_key, row_dict in group_dict.items():
-
-                    row = dict(row_dict)
-                    row['_name'] = middle_key
-                    rows.append(row)
-
-                lines += _render_table(group_key, rows)
-
-            continue
-
-        rows = []
-
-        for middle_key, row_dict in table_dict.items():
-
-            row = dict(row_dict)
-            row['_name'] = middle_key
-            rows.append(row)
-
-        lines += _render_table(top_key, rows)
-
-    return lines
+    return [line for top, rows in tables.items() for line in _render_table(top, rows)]
 
 
 def generate_docstring(summary, input_dict, output_dict, notes=None):
-    """Generate a NumPy-style class docstring from plugin specifications.
+    '''Generate a NumPy-style plugin docstring from its specifications.
 
     Parameters
     ----------
     summary : str
-        One-line or short paragraph summarizing what the plugin does. This is
-        the only part of the generated docstring that is not derived from
-        ``input_dict`` or ``output_dict``.
-
+        Short description of the plugin.
     input_dict : dict
-        Plugin input specification as passed to
-        ``input_resolver_function``.
-
+        Input specification of the plugin.
     output_dict : dict
-        Plugin output specification as passed to
-        ``output_inserter_function``.
-
+        Output specification of the plugin.
     notes : str, optional
-        Free-form text for information that cannot be expressed by the
-        structured specifications, such as internal sub-keys of a
-        dict-typed output or plugin-instance attributes read directly by
-        other modules. Rendered as a NumPy-style ``Notes`` section.
+        Extra text, rendered as a ``Notes`` section.
 
     Returns
     -------
     str
-        Complete generated NumPy-style docstring, ready to be assigned to a
-        plugin class's ``__doc__``.
-    """
+        Docstring with ``Parameters`` and ``Outputs`` tables.
 
-    lines = [
-        textwrap.dedent(summary).strip(),
-        '',
-    ]
+    Raises
+    ------
+    ValueError
+        If a specification does not follow the ``top > middle > bottom`` structure.
 
-    lines += [
-        'Parameters',
-        '----------',
-        '',
-    ]
+    Examples
+    --------
+    >>> generate_docstring('Summary.', {}, {}).splitlines()[0]
+    'Summary.'
+    '''
 
-    lines += _render_input_tables(input_dict)
-
-    lines += [
-        'Outputs',
-        '-------',
-        '',
-    ]
-
-    lines += _render_output_tables(output_dict)
+    lines = [textwrap.dedent(summary).strip(), '',
+             'Parameters', '----------', '', *_render_tables(input_dict, 'input_dict'),
+             'Outputs', '-------', '', *_render_tables(output_dict, 'output_dict')]
 
     if notes:
-        lines += [
-            'Notes',
-            '-----',
-            '',
-            notes.strip(),
-            '',
-        ]
+        lines += ['Notes', '-----', '', notes.strip(), '']
 
     return '\n'.join(lines).rstrip() + '\n'
+
+
+# -- Sphinx extension ----------------------------------------------------------
+
+def _autodoc_process_docstring(app, what, name, obj, options, lines):
+    '''Replace a plugin class docstring by the one the plugin generates.
+
+    Handler of Sphinx's ``autodoc-process-docstring`` event. Plugins that do
+    not assign ``self.__doc__`` keep their regular docstring.
+    '''
+
+    if what == 'class' and name.startswith('pyH2A.Plugins.') and name.endswith('_Plugin'):
+        generated = vars(instantiate_plugin_for_docs(obj)).get('__doc__')
+
+        if generated:
+            lines[:] = generated.splitlines()
+
+
+def setup(app):
+    '''Register the docstring generation as a Sphinx extension (see ``doc/conf.py``).'''
+
+    app.setup_extension('sphinx.ext.autodoc')
+    app.connect('autodoc-process-docstring', _autodoc_process_docstring, priority=AUTODOC_PRIORITY)
+
+    return {'parallel_read_safe': True, 'parallel_write_safe': True}

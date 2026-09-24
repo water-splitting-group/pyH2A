@@ -13,6 +13,7 @@ Utilities
    output_inserter_guide
    output_utilities
    plugin_input_output_processing
+   plugin_specification
    quantity
    quantity_guide
    utilities_guide
