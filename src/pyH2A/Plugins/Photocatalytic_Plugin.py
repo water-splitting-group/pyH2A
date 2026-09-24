@@ -451,36 +451,31 @@ class Photocatalytic_Plugin:
 		self.catalyst_lifetime = self.input_dict_resolved['Catalyst']['Lifetime']['Value']
 		self.baggie_lifetime = self.input_dict_resolved['Reactor Baggies']['Lifetime']['Value']
 
-		reactor_hourly_temperature_K, soil_hourly_temperature_K = energy_balance(
+		reactor_hourly_temperature_K, ground_HX = energy_balance(
 											rho_kg_m3 = 1000, # water density
 											thickness_m = self.input_dict_resolved['Reactor Baggies']['Filling height']['Value'].unit['m'], # only the slurry is assumed to have thermal inertia
 											Cp_J_kg_K = 4.2e3, # slurry Cp. Could later come from water + catalyst mixture actual properties. 
 											Irrad_in_W_m2 = self.input_dict_resolved['Solar Input']['Hourly']['Value'].unit['Wh/m2'],											
 											eta_irrad = 0.4, # assumed: 40% of incident irradiation is absorbed and heats up the slurry (basically: IR radiation)
-											h_soil_W_m2_K = 10, # assumed
 											lambda_soil_W_m_K = 1, # assumed
 											Cp_soil_J_kg_K = 1200, # assumed
 											rho_soil_kg_m3 = 1700, # assumed											
 											epsilon = 0.9, # black body emissivity coefficient, assumed
 											sigma_W_m2_K4 = 5.67e-8, # Stefan-Boltzmann constant
 											T_air_K = self.input_dict_resolved['Meteorological Conditions']['Temperature']['Value'].unit['K'],
-											T_soil_deep_K = np.mean(self.input_dict_resolved['Meteorological Conditions']['Temperature']['Value'].unit['K']), # assumed: far field temperature of the soil is just the yearly average air temeprature
 											wind_speed_m_s = self.input_dict_resolved['Meteorological Conditions']['Wind speed']['Value'].unit['m/s']
 											)
 	
 		self.reactor_hourly_temperature = Quantity(reactor_hourly_temperature_K, 'K')
-		#plt.plot(self.reactor_hourly_temperature.unit['degC'])
-		#plt.show()
+		plt.plot(ground_HX)
+		plt.show()
 		plt.plot(self.reactor_hourly_temperature.unit['degC'] - self.input_dict_resolved['Meteorological Conditions']['Temperature']['Value'].unit['degC'])
 		plt.show()					
 		print('max temperature °C ', np.max(self.reactor_hourly_temperature.unit['degC']))
 		abs_diff = np.abs(self.reactor_hourly_temperature.unit['degC'] - self.input_dict_resolved['Meteorological Conditions']['Temperature']['Value'].unit['degC'])
 		#print('min temperature difference °C ', np.min(abs_diff))
 		print('max temperature difference °C ', np.max(abs_diff))
-		plt.plot(soil_hourly_temperature_K - 273.15)
-		plt.show()	
-		print('min soil T ', np.min(soil_hourly_temperature_K)-273.15)		
-		print('max soil T ', np.max(soil_hourly_temperature_K)-273.15)		
+	
 
 		self.hydrogen_production()
 		self.baggie_cost()
@@ -701,14 +696,12 @@ def energy_balance(
         Cp_J_kg_K,
 		Irrad_in_W_m2,
         eta_irrad,
-        h_soil_W_m2_K,
 		lambda_soil_W_m_K,
 		Cp_soil_J_kg_K,
 		rho_soil_kg_m3,
         epsilon,
         sigma_W_m2_K4,
 		T_air_K,
-		T_soil_deep_K, 
 		wind_speed_m_s
 	):		
 	''' Energy balance performed in 0D in the slurry, per unit of horizontal surface area
@@ -718,18 +711,14 @@ def energy_balance(
 	but at each instant.
 	That is: closed form based on the values at instant h serve to predict hour h+1, and the later serves in turn to assess the closed form that calculates h+2
 	'''
+	# Constant coefficients for Prony approximation
+	prony_c = np.array([0.01583021,	0.00036996,	0.00087007, 0.00423281, 0.00202002, 0.00825162])
+	prony_gamma = np.array([4.06733606E-04,	2.15434843E-08,	4.30490266E-07,	2.06793926E-05,	3.52502509E-06, 9.81637988E-05])
 
 	Capacity_J_K = Cp_J_kg_K * rho_kg_m3 * thickness_m # Heat capacity of the slurry (per m2)
 	h_wind_W_m2_K = 5.7 + 3.8*wind_speed_m_s # Heat exchange coefficient between reactor and air, based on Choi et al (2026), DOI 10.1016/j.enconman.2026.121998
 
-	Diffusivity_soil_m2_s = lambda_soil_W_m_K/(rho_soil_kg_m3*Cp_soil_J_kg_K) #4.9e-7
-	Characteristic_length_soil_m = (2*Diffusivity_soil_m2_s # 2.2
-								 	/
-									 (2*np.pi/(8760*3600))
-								 	)**0.5
-
-	h_soil_W_m2_K = lambda_soil_W_m_K/Characteristic_length_soil_m
-	Capacity_soil_J_K = Cp_soil_J_kg_K * rho_soil_kg_m3 * Characteristic_length_soil_m # 5236000 J
+	effusivity_soil = (lambda_soil_W_m_K * rho_soil_kg_m3 * Cp_soil_J_kg_K)**0.5
 	
 	# initial conditions are not known. 
 	# Therefore, we use a spin up strategy: 
@@ -740,48 +729,48 @@ def energy_balance(
 	h_wind_typical = np.mean(h_wind_W_m2_K)
 	T_typical = np.mean(T_air_K) # For the moment it's just equal to T_soil, but in the general cas it might not be true
 
-	tau_s = Capacity_J_K/(2*lambda_soil_W_m_K / Characteristic_length_soil_m + h_wind_typical + 4*epsilon*sigma_W_m2_K4*T_typical**3) # typical thermal characteristic time in seconds
+	tau_s = Capacity_J_K/(h_wind_typical + 4*epsilon*sigma_W_m2_K4*T_typical**3) # typical thermal characteristic time in seconds
 	#print('characteristic time h ', tau_s/3600)
-	tau_soil_s = Capacity_soil_J_K /(h_soil_W_m2_K + 2*lambda_soil_W_m_K / Characteristic_length_soil_m) # typical thermal characteristic time of the soil intermediate layer in seconds
-	#print('soil characteristic time h ', tau_soil_s/3600)	
-	spin_up_time_h = round (5 * max(tau_s, tau_soil_s) / 3600) + 1 # 10* characteristic time + 1 h to ensure we always get at least one previous step from our initial estimate
+	spin_up_time_h = 8760#round (10 * tau_s / 3600) + 1 # 10* characteristic time + 1 h to ensure we always get at least one previous step from our initial estimate
 	print('spin_up_time_h ', spin_up_time_h)
 	# fictitious temperature estimate for initialisation
-	T_spin_up = ( # initial guess based on quasi steady-state approximation, assuming the radiative linearized heat transfer coefficient is calcualted at air temperature
-					(eta_irrad * Irrad_in_W_m2[-spin_up_time_h] + 2*lambda_soil_W_m_K/Characteristic_length_soil_m * T_soil_deep_K + h_wind_W_m2_K[-spin_up_time_h] * T_air_K[-spin_up_time_h] + 4*epsilon*sigma_W_m2_K4*T_air_K[-spin_up_time_h]**4)
+	T_spin_up = ( # initial guess based on quasi steady-state approximation, assuming the radiative linearized heat transfer coefficient is calculated at air temperature, and the bag is in thermal equilibrium with the ground
+					(eta_irrad * Irrad_in_W_m2[-spin_up_time_h] + h_wind_W_m2_K[-spin_up_time_h] * T_air_K[-spin_up_time_h] + 4*epsilon*sigma_W_m2_K4*T_air_K[-spin_up_time_h]**4)
 					/
-					(2*lambda_soil_W_m_K/Characteristic_length_soil_m + h_wind_W_m2_K[-spin_up_time_h] + 4*epsilon*sigma_W_m2_K4*T_air_K[-spin_up_time_h]**3)
+					(h_wind_W_m2_K[-spin_up_time_h] + 4*epsilon*sigma_W_m2_K4*T_air_K[-spin_up_time_h]**3)
 					) 
-	
-	T_soil_spin_up = T_soil_deep_K # initial guess for soil layer temperature
+	phi_prony = np.zeros(6)
+	phi_soil_W_m2 = 0
+	ground_HX = np.zeros_like(Irrad_in_W_m2)
 
 	for i in range(1, spin_up_time_h):
 		idx = i-spin_up_time_h
 		# Baggie system
-		linear = -(2*lambda_soil_W_m_K/Characteristic_length_soil_m + h_wind_W_m2_K[idx] + 4*epsilon*sigma_W_m2_K4*T_spin_up**3) / Capacity_J_K
-		offset = (eta_irrad * Irrad_in_W_m2[idx] + 2*lambda_soil_W_m_K/Characteristic_length_soil_m * T_soil_spin_up + h_wind_W_m2_K[idx] * T_air_K[idx] + epsilon*sigma_W_m2_K4 * (3*T_spin_up**4 + T_air_K[idx]**4) ) / Capacity_J_K
+		linear = -(h_wind_W_m2_K[idx] + 4*epsilon*sigma_W_m2_K4*T_spin_up**3) / Capacity_J_K
+		offset = (eta_irrad * Irrad_in_W_m2[idx] + phi_soil_W_m2 + h_wind_W_m2_K[idx] * T_air_K[idx] + epsilon*sigma_W_m2_K4 * (3*T_spin_up**4 + T_air_K[idx]**4) ) / Capacity_J_K
 		T_equilibrium = -offset/linear
-		# update of T_spin_up, i.e.: estimate the spin up temperature at instant i from the begining of the spin up period (= instant i-spin_up_time_h from the start of the "real" period of integration)
-		T_spin_up = T_equilibrium + (T_spin_up - T_equilibrium)*math.exp(linear * 3600) 
-		# Soil layer
-		linear = -(2*lambda_soil_W_m_K/Characteristic_length_soil_m + h_soil_W_m2_K) / Capacity_soil_J_K
-		offset = (2*lambda_soil_W_m_K/Characteristic_length_soil_m * T_soil_spin_up + h_soil_W_m2_K * T_soil_deep_K) / Capacity_soil_J_K
-		T_equilibrium = -offset/linear
-		T_soil_spin_up = T_equilibrium + (T_soil_spin_up - T_equilibrium)*math.exp(linear * 3600) 
-	# at this stage, we have T_spin_up = value at the begining of the first time_interval_initial_temperature_K
+		T_updated = T_equilibrium + (T_spin_up - T_equilibrium)*math.exp(linear * 3600) 
+		# Calculate flux from the ground using Prony approximation
+		phi_prony = phi_prony * np.exp(-prony_gamma * 3600) + ((T_updated - T_spin_up)/3600) * (1 - np.exp(-prony_gamma * 3600)) / prony_gamma
+		phi_soil_W_m2 = - effusivity_soil * np.sum(prony_c * phi_prony) / np.pi**0.5		
+		# update of T_spin_up, i.e.: estimate the spin up temperature at instant i from the beginning of the spin up period (= instant i-spin_up_time_h from the start of the "real" period of integration)
+		T_spin_up = T_updated
+	# at this stage, we have T_spin_up = value at the beginning of the first time_interval_initial_temperature_K
 	# the first time_interval_initial_temperature_K is the temperature at the beginning of the first interval in which the irradiation and wind speed are assumed to be constant for 1h (centered on January 1st, Midnight).
-	# However, the typical temperature reactor_hourly_temperature_K during the interval is not equal to the temperature at the begining of the interval, but to the average between the begining and end of interval
+	# However, the typical temperature reactor_hourly_temperature_K during the interval is not equal to the temperature at the beginning of the interval, but to the average between the beginning and end of interval
 	reactor_hourly_temperature_K = np.zeros_like(Irrad_in_W_m2)
-	soil_hourly_temperature_K = np.zeros_like(Irrad_in_W_m2)
 	time_interval_initial_temperature_K = T_spin_up
-	time_interval_soil_initial_temperature_K = T_soil_spin_up
 	print('initial T ', T_spin_up)
 	# Loop for the actual temperature over the integration period of 1 year
 	for i in range(0, len(reactor_hourly_temperature_K)):
-		linear = -(2*lambda_soil_W_m_K/Characteristic_length_soil_m + h_wind_W_m2_K[i] + 4*epsilon*sigma_W_m2_K4*time_interval_initial_temperature_K**3) / Capacity_J_K
-		offset = (eta_irrad * Irrad_in_W_m2[i] + 2*lambda_soil_W_m_K/Characteristic_length_soil_m * time_interval_soil_initial_temperature_K + h_wind_W_m2_K[i] * T_air_K[i] + epsilon*sigma_W_m2_K4 * (3*time_interval_initial_temperature_K**4 + T_air_K[i]**4) ) / Capacity_J_K
+		linear = -(h_wind_W_m2_K[i] + 4*epsilon*sigma_W_m2_K4*time_interval_initial_temperature_K**3) / Capacity_J_K
+		offset = (eta_irrad * Irrad_in_W_m2[i] + phi_soil_W_m2 + h_wind_W_m2_K[i] * T_air_K[i] + epsilon*sigma_W_m2_K4 * (3*time_interval_initial_temperature_K**4 + T_air_K[i]**4) ) / Capacity_J_K
 		T_equilibrium = -offset/linear
 		time_interval_end_temperature = T_equilibrium + (time_interval_initial_temperature_K - T_equilibrium)*math.exp(linear * 3600)	
+		# Calculate flux from the ground using Prony approximation
+		phi_prony = phi_prony * np.exp(-prony_gamma * 3600) + ((time_interval_end_temperature - time_interval_initial_temperature_K)/3600) * (1 - np.exp(-prony_gamma * 3600)) / prony_gamma
+		phi_soil_W_m2 = - effusivity_soil * np.sum(prony_c * phi_prony) / np.pi**0.5	
+		ground_HX[i] = phi_soil_W_m2
 		# average temperature during the interval
 		reactor_hourly_temperature_K[i] = (T_equilibrium 
 											+ 
@@ -793,16 +782,7 @@ def energy_balance(
 												(time_interval_initial_temperature_K-T_equilibrium)
 												)
 										 )
-
-		linear = -(2*lambda_soil_W_m_K/Characteristic_length_soil_m + h_soil_W_m2_K) / Capacity_soil_J_K
-		offset = (2*lambda_soil_W_m_K/Characteristic_length_soil_m * time_interval_initial_temperature_K + h_soil_W_m2_K *  T_soil_deep_K) / Capacity_soil_J_K
-		T_equilibrium = -offset/linear
-		time_interval_soil_end_temperature_K = T_equilibrium + (time_interval_soil_initial_temperature_K - T_equilibrium)*math.exp(linear * 3600)	
-		soil_hourly_temperature_K[i] = (time_interval_soil_end_temperature_K + time_interval_soil_initial_temperature_K)/2
-
-		# for the next time step, the end of the current interval becomes the begining of the next interval
+		# for the next time step, the end of the current interval becomes the beginning of the next interval
 		time_interval_initial_temperature_K = time_interval_end_temperature		
-		time_interval_soil_initial_temperature_K = time_interval_soil_end_temperature_K
 
-
-	return reactor_hourly_temperature_K, soil_hourly_temperature_K
+	return reactor_hourly_temperature_K, ground_HX
