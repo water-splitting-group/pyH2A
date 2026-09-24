@@ -11,7 +11,7 @@ Finance.Labor_Operating_Cost_Plugin | 600 | Calculation of labor operating costs
 Finance.Other_Fixed_Operating_Cost_Plugin | 700 | Calculation of other fixed operating costs
 Finance.Variable_Operating_Cost_Plugin | 800 | Calculation of variable operating costs, including utilities
 Assessment.Discounted_Cash_Flow_Plugin | 900 | Performs discounted cash flow analysis to determine the levelized cost of hydrogen
-Life_Cycle_Assessment_Plugin | 1000 | Performs life-cycle assessment to determine environmental impacts
+Assessment.Life_Cycle_Assessment_Plugin | 1000 | Performs life-cycle assessment to determine environmental impacts
 
 # Functional Unit
 
