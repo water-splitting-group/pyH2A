@@ -129,8 +129,10 @@ def test():
 	print(Energy(285.83 * (1000./2.) * con.Avogadro, kJmol).J)
 
 def lca():
-	result = pyH2A('src/tests/end_to_end/Thermal_Base.md', '.')
-	print(result)
+	pyH2A('src/tests/end_to_end/PV_Wind_Storage_main_consumer_FU.md', '.')
+	pyH2A('src/tests/end_to_end/PV_Wind_Storage_power_generation_FU.md', '.')
+	pyH2A('src/tests/end_to_end/PV_Wind_Storage_w_flex_consumer_FU.md', '.')
+	#print(result)
 
 def main():
 	#dcf_test()

@@ -1,4 +1,4 @@
-from pyH2A.Utilities.input_modification import daily_to_yearly_power_quantity
+from pyH2A.Utilities.input_modification import dict_to_yearly_array_power_quantity
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import numpy as np
@@ -206,13 +206,13 @@ class Power_Management_Plugin:
         '''
 
         try:
-            flexible_available_energy_yearly = daily_to_yearly_power_quantity(
+            flexible_available_energy_yearly = dict_to_yearly_array_power_quantity(
                 self.input_dict_resolved['Power Generation']['Available energy (daily)']['Value'])
         except KeyError:
             flexible_available_energy_yearly = np.zeros_like(self.input_dict_resolved['Time']['Years']['Value']['Operation years ones'].unit['-'])
 
         try:
-            stored_available_energy_yearly = daily_to_yearly_power_quantity(
+            stored_available_energy_yearly = dict_to_yearly_array_power_quantity(
                 self.input_dict_resolved['Power Generation']['Stored energy (daily)']['Value'])
         except KeyError:
             stored_available_energy_yearly = np.zeros_like(self.input_dict_resolved['Time']['Years']['Value']['Operation years ones'].unit['-'])
