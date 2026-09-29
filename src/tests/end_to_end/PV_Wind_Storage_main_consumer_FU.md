@@ -35,19 +35,19 @@ Plant modules | 10 | - | Modelling of 10 modules for calculation of staff cost t
 # Hourly Irradiation
 
 Name | Value | Comment 
---- | --- | --- | --- 
+--- | --- | --- 
 File | pyH2A.Lookup_Tables.Hourly_Irradiation_Data~tmy_34.859_-116.889_2006_2015.csv | Location: Dagget, CA, USA 
 
 # Hourly Wind
 
 Name | Value | Comment 
---- | --- | --- | --- 
+--- | --- | --- 
 File | pyH2A.Lookup_Tables.Hourly_Wind_Data~Jena.615_2005_2023.csv | Location: Jena, DE
 
 # Hourly Main Consumer Profile
 
 Name | Value  
---- | --- | --- 
+--- | --- 
 File | pyH2A.Lookup_Tables.Hourly_Consumption~Constant_consumption_10MW.csv 
 
 # Irradiance Area Parameters
@@ -106,7 +106,7 @@ Areal energy capacity | 32 | kWh/m2
 # Battery Cell Stack
 
 Name | Value | Unit 
---- | --- | --- | ---
+--- | --- | --- 
 Power per cell stack | 10 | kW
 Lifetime | 2 | year
 
@@ -116,7 +116,7 @@ Name | Value | Unit
 --- | --- | ---
 Energy density | 40 | Wh/kg
 Fraction of electrolyte to replace per year | 1% | -
-Fraction of replaced electrolyte to produce per year | 40% | -
+Fraction of recyclable electrolyte | 60% | -
 Electrolyte density | 1400 | kg/m3
 
 # Battery Periphery
@@ -131,7 +131,7 @@ Name | GWP_Value | GWP_Unit | Energy_Value | Energy_Unit | Toxicity_Value | Toxi
 --- | --- | --- | --- | --- | --- | --- | --- | --- 
 Stack | 10 | kg | 10 | J | 10 | - | 10 | kg
 Electrolyte | 20 | kg/kg | 100 | kWh/kg | 12 | 1/kg | 2 | kg/kg
-Steel | 2 | kg/kg | 6 | kWh/kg | 20 | 1/kg | 10 | kg/kg
+Tank | 2 | kg/kg | 6 | kWh/kg | 20 | 1/kg | 10 | kg/kg
 Periphery | 10 | kg | 10 | J | 10 | - | 10 | kg
 
 # Direct Capital Costs - Power generation

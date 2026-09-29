@@ -102,7 +102,7 @@ class RFB_Plugin:
 									},
 									"description": "Fraction of the electrolyte holdup that is replaced per year. The fresh electrolyte can be produced form scratch, or obtained by regeneration."
 								},
-				"Fraction of replaced electrolyte to produce per year": {
+				"Fraction of recyclable electrolyte": {
 					"Value": {
 						"type": {float, int,},
 						"bounds": (0, 1), 
@@ -110,7 +110,7 @@ class RFB_Plugin:
 					"Unit": {
 						"dimension": "dimensionless",
 					},
-					"description": "Fraction of the replacement electrolyte that must be produced. The complement is regenerated"
+					"description": "Fraction of the replacement electrolyte that can be regenerated. The complement is produced from scratch"
 				},
 				"Electrolyte density": {
 					"Value": {
@@ -229,7 +229,7 @@ class RFB_Plugin:
 					},														
 					"description": "Impact per periphery item."
 				}, 
-				"Steel": {
+				"Tank": {
 					"GWP_Value": {
 						"type": {int, float},
 						"bounds": (0, None),
@@ -258,7 +258,7 @@ class RFB_Plugin:
 					"Resource_use_Unit": {
 						"dimension": "mass/mass" 
 					},														
-					"description": "Impact per mass of steel."
+					"description": "Impact per mass of tank."
 				}, 								
 			},  					
 		}
@@ -370,28 +370,28 @@ class RFB_Plugin:
 					},													
 					"description": "Impact of the periphery for the entire the battery lifetime.",
 				},
-				"Steel": {
+				"Tank": {
 					"GWP_Value": {
-						"inserted_value": "total_steel_gwp",
+						"inserted_value": "total_tank_gwp",
 						"type": {float,},
 						"dimension": "mass",
 					},
 					"Energy_Value": {
-						"inserted_value": "total_steel_energy",
+						"inserted_value": "total_tank_energy",
 						"type": {float,},
 						"dimension": "energy",
 					},		
 					"Toxicity_Value": {
-						"inserted_value": "total_steel_toxicity",
+						"inserted_value": "total_tank_toxicity",
 						"type": {float,},
 						"dimension": "dimensionless",
 					},		
 					"Resource_use_Value": {
-						"inserted_value": "total_steel_resource_use",
+						"inserted_value": "total_tank_resource_use",
 						"type": {float,},
 						"dimension": "mass",
 					},													
-					"description": "Impact of the steel for the entire the battery lifetime.",
+					"description": "Impact of the tank for the entire the battery lifetime.",
 				},		
 				"Battery": {
 					"GWP_Value": {
@@ -440,7 +440,7 @@ class RFB_Plugin:
 
 	def calculate_electrolyte(self):
 		'''Calculate the amount of electrolyte in the battery, the amount that needs to be produced during lifetime to replace the faded one, and the grand total (initial + replacement).
-		The amount of steel that constitutes the tanks containing the electrolyte is calculated as well'''
+		The amount of tank that constitutes the tanks containing the electrolyte is calculated as well'''
 
 		self.initial_electrolyte_amount = Quantity(
 												self.input_dict_resolved['Battery']['Gross capacity']['Value'].unit['J']
@@ -455,7 +455,7 @@ class RFB_Plugin:
 
 		yearly_electrolyte_produced_kg = (yearly_electrolyte_needed_kg
 										 *
-										 self.input_dict_resolved['Battery Electrolyte']['Fraction of replaced electrolyte to produce per year']['Value'].unit['-'])
+										 (1-self.input_dict_resolved['Battery Electrolyte']['Fraction of recyclable electrolyte']['Value'].unit['-']))
 
 		self.total_electrolyte = Quantity(
 												np.sum(self.input_dict_resolved['Time']['Years']['Value']['Operation years ones'].unit['-']) # this assumes that the renewal occurs continuously all along the year. 
@@ -466,16 +466,16 @@ class RFB_Plugin:
 												, 
 												'kg')
 
-		# The amount of steel for tanks assumes tanks of the same size as in the following paper
+		# The amount of tank for tanks assumes tanks of the same size as in the following paper
 		# "Life cycle assessment of an industrial-scale vanadium flow battery, Blume et al (2022), DOI: 10.1111/jiec.13328"
 		# but with a number of tanks proportional to the volume of electrolytes
 
 		# Hardcoded values obtained from the article
 		reference_capacity_MWh = 8
 		reference_density_kg_per_m3 = 1350 # 506746 kg / 375.4 m3
-		reference_tank_steel_kg = 264622
-		self.total_steel = Quantity(
-							reference_tank_steel_kg 
+		reference_tank_kg = 264622
+		self.total_tank = Quantity(
+							reference_tank_kg 
 							* 
 							self.input_dict_resolved['Battery']['Gross capacity']['Value'].unit['MWh']
 							/
@@ -500,10 +500,11 @@ class RFB_Plugin:
 		self.total_stack = Quantity(
 										self.number_cell_stacks.unit['-']
 										*
+										np.ceil(
 										(np.sum(self.input_dict_resolved['Time']['Years']['Value']['Operation years ones'].unit['-'])
-										//
+										/
 										self.input_dict_resolved['Battery Cell Stack']['Lifetime']['Value'].unit['year']
-										), 
+										)), 
 										'-'
 										)
 

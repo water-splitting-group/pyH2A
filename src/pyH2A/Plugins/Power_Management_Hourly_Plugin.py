@@ -146,13 +146,22 @@ class Power_Management_Hourly_Plugin:
             "Grid Electricity": {
                 "Used grid electricity (yearly)": {
                     "Value": {
-                        "inserted_value": "total_unfulfilled",
+                        "inserted_value": "total_unfulfilled_yearly",
                         "type": {np.ndarray,},
                         "dimension": "energy",
                     },
                     "optional": False,
                     "description": "Used grid electricity, yearly basis.",
                 },
+                "Total used grid electricity": {
+                    "Value": {
+                        "inserted_value": "total_unfulfilled",
+                        "type": {float,int,},
+                        "dimension": "energy",
+                    },
+                    "optional": False,
+                    "description": "Used grid electricity over lifetime.",
+                },                
             },
             "Other Variable Operating Cost - Grid Electricity": {
                 "Cost of grid electricity (yearly)": {
@@ -205,7 +214,8 @@ class Power_Management_Hourly_Plugin:
                                             self.input_dict_resolved ['Power Demand']['Main consumer yearly consumption']['Value'].unit['J'], 
                                             'J')
 
-        self.total_unfulfilled = Quantity(secondary_unfulfilled.unit['J'] + main_unfulfilled_yearly.unit['J'],'J')
+        self.total_unfulfilled_yearly = Quantity(secondary_unfulfilled.unit['J'] + main_unfulfilled_yearly.unit['J'],'J')
+        self.total_unfulfilled = Quantity(np.sum(self.total_unfulfilled_yearly.unit['J']),'J')
 
         self.production_oversizing = Quantity(
                                         np.sum(self.input_dict_resolved['Power Generation']['Total yearly power generation']['Value'].unit['J'])
@@ -215,7 +225,7 @@ class Power_Management_Hourly_Plugin:
                                         '-')
 
     def calculate_electricity_cost(self):
-        self.electricity_cost = Quantity(self.total_unfulfilled.unit['J']
+        self.electricity_cost = Quantity(self.total_unfulfilled_yearly.unit['J']
                                         * self.input_dict_resolved['Grid Electricity']['Cost']['Value'].unit['USD/J'], 
                                 'USD')
 
