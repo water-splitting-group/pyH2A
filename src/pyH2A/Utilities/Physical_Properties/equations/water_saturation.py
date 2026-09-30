@@ -1,3 +1,4 @@
+import numpy as np
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
 
@@ -16,50 +17,31 @@ def calc_water_saturation_pressure(T):
 
     Returns
     -------
-    P:
+    psat:
         Saturation pressure.
     """
 
-    if T.unit['K'] < 273.:
+    t = np.asarray(T.unit['K'])
 
-        raise ValueError(
-            "Water vapour saturation pressure not available for T < 273 K"
-        )
+    if np.any(t < 273.):
+        raise ValueError("Water vapour saturation pressure not available for T < 273 K")
+    if np.any((t >= 373.) & (t < 379.)):
+        raise ValueError("Water vapour saturation pressure not available for 373 < T < 379 K")
+    if np.any(t >= 573.15):
+        raise ValueError("Water vapour saturation pressure not available for T > 573 K")
 
-    elif T.unit['K'] < 303.:
+    # Antoine constants (A, B, C) per temperature range
+    conditions = [
+        t < 303.,
+        t < 333.,
+        t < 363.,
+        t < 373.,
+        t < 573.15,
+    ]
+    A = np.select(conditions, [5.40221, 5.20389, 5.0768,  5.08354, 3.55959])
+    B = np.select(conditions, [1838.675, 1733.926, 1659.793, 1663.125, 643.748])
+    C = np.select(conditions, [-31.737, -39.485, -45.854, -45.622, -198.043])
 
-        A, B, C = 5.40221, 1838.675, -31.737
+    psat = 10 ** (A - B / (C + t))
 
-    elif T.unit['K'] < 333.:
-
-        A, B, C = 5.20389, 1733.926, -39.485
-
-    elif T.unit['K'] < 363.:
-
-        A, B, C = 5.0768, 1659.793, -45.854
-
-    elif T.unit['K'] < 373.:
-
-        A, B, C = 5.08354, 1663.125, -45.622
-
-    elif T.unit['K'] < 379.:
-
-        raise ValueError(
-            "Water vapour saturation pressure not available for 373 < T < 379 K"
-        )
-
-    elif T.unit['K'] < 573.15:
-
-        A, B, C = 3.55959, 643.748, -198.043
-
-    else:
-
-        raise ValueError(
-            "Water vapour saturation pressure not available for T > 573 K"
-        )
-
-
-    psat = 10**(A - B/(C + T.unit['K']))
-
-
-    return Quantity(psat,'bar')
+    return Quantity(psat, 'bar')
