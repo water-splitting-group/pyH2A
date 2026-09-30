@@ -111,6 +111,17 @@ class Photovoltaic_Plugin:
 		}
 
 		self.output_dict = {
+			"Photovoltaic": {
+				"Module area": {
+					"Value": {
+						"inserted_value": "area",
+						"type": {float,},
+						"dimension": "area",
+					},
+					"description": "Total area of PV modules.",
+					"optional": False,
+				},
+			},
 			"Power Generation": {
 				"PV hourly power generation": {
 					"Value": {

@@ -83,6 +83,17 @@ class Electrolyzer_Plugin:
                     "optional": False,
                     "description": "Nominal power of electrolyzer."
                 },
+                "Unit nominal power": {
+                    "Value": {
+                        "type": {int,float,},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "power",
+                    },
+                    "optional": True,
+                    "description": "Nominal power of one electrolyzer unit, used to calculate the number of electrolyzers and stacks."
+                },
                 "Power requirement increase per year": {
                     "Value": {
                         "type": {int,float,},
@@ -177,11 +188,29 @@ class Electrolyzer_Plugin:
                 "Actual stack replacement time": {
                     "Value": {
                         "inserted_value": "replacement_frequency",
-                        "type": {float,},
+                        "type": {int, float,},
                         "dimension": "time",
                     },
                     "description": "Actual stack replacement time, \
                             calculated from replacement time and operation data."
+                },
+                "Number of units": {
+                    "Value": {
+                        "inserted_value": "number_of_units",
+                        "type": {int, float,},
+                        "dimension": "dimensionless",
+                    },
+                    "optional": True,
+                    "description": "Number of electrolyzer units required for the system."
+                },
+                "Number of stacks": {
+                    "Value": {
+                        "inserted_value": "number_of_stacks",
+                        "type": {int, float,},
+                        "dimension": "dimensionless",
+                    },
+                    "optional": True,
+                    "description": "Number of electrolyzer stacks required for the system, whole lifetime."
                 },
             },
             "Power Generation": {
@@ -210,8 +239,15 @@ class Electrolyzer_Plugin:
         self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Electrolyzer_Plugin')
 
         self.calculate_H2_production()
-        self.replacement_frequency = calculate_stack_replacement(self.yearly_data_duration, 
-                                    self.input_dict_resolved['Electrolyzer']['Replacement time']['Value'].unit['h'])
+        (self.replacement_frequency, 
+         self.number_of_replacements) = calculate_stack_replacement(self.yearly_data_duration, 
+                                        self.input_dict_resolved['Electrolyzer']['Replacement time']['Value'].unit['h'])
+
+        if 'Unit nominal power' in self.input_dict_resolved['Electrolyzer']:
+            (self.number_of_units, 
+             self.number_of_stacks) = calculate_number_of_units(self.input_dict_resolved['Electrolyzer']['Unit nominal power']['Value'],
+                                      self.input_dict_resolved['Electrolyzer']['Nominal power']['Value'],
+                                      self.number_of_replacements)
 
         output_inserter_function(self.output_dict, self, dcf, 'Electrolyzer_Plugin') 
 
@@ -238,8 +274,7 @@ class Electrolyzer_Plugin:
                               year) # returns: power (Watt), dimensionless
 
             electrolyzer_energy_demand = 3600*electrolyzer_power_demand # integrate the power over 1 hour, since we ultimately think in terms of energy involved in each 1-hour slot
-            electrolyzer_energy_demand *= np.ones(len(energy_generation))
-            electrolyzer_energy_consumption = np.amin(np.c_[energy_generation, electrolyzer_energy_demand], axis = 1)
+            electrolyzer_energy_consumption = np.minimum(energy_generation, electrolyzer_energy_demand)
 
             threshold = self.input_dict_resolved['Electrolyzer']['Minimum capacity']['Value'].unit['-']
             electrolyzer_capacity = electrolyzer_energy_consumption / electrolyzer_energy_demand
@@ -300,5 +335,20 @@ def calculate_stack_replacement(operation_hours, replacement_time):
     number_of_replacements = np.floor_divide(stack_usage[-1], 1)
     replacement_frequency = len(stack_usage) / (number_of_replacements + 1.)
 
-    return Quantity(replacement_frequency, 'year') # the inputs being : (hours of operation in the year, hours of operation before replacement), 
+    return Quantity(replacement_frequency, 'year'), Quantity(number_of_replacements, '-') # the inputs being : (hours of operation in the year, hours of operation before replacement), 
                                                    # the result corresponds to the number of years between replacements
+
+def calculate_number_of_units(unit_nominal_power, 
+                              nominal_power, 
+                              number_of_replacements):
+    '''Calculation of number of electrolyzer BOP units and stacks.
+    '''
+
+    number_of_units = Quantity(np.ceil(nominal_power.unit['W'] 
+                                       / unit_nominal_power.unit['W']), 
+                               '-')
+    number_of_stacks = Quantity(number_of_units.unit['-']
+                                * (1 + number_of_replacements.unit['-']),
+                                '-')
+
+    return number_of_units, number_of_stacks

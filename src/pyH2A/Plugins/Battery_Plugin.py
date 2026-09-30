@@ -70,7 +70,6 @@ class Battery_Plugin:
                     "description": " Available energy, daily basis, dictionary of years."
                 },                      
             },
-
             "Battery": {
                 "Design capacity": { 
                     "Value": {
@@ -83,7 +82,6 @@ class Battery_Plugin:
                     "optional": False,
                     "description": "Full design capacity of battery."
                 },
-
                 "Lowest discharge level": {
                     "Value": {
                         "type": {int, float,},
@@ -95,7 +93,6 @@ class Battery_Plugin:
                     "optional": False,
                     "description": "Lowest level to which battery can be discharged."
                 },
-
                 "Capacity loss per year": {
                     "Value": {
                         "type": {int, float,},
@@ -107,7 +104,6 @@ class Battery_Plugin:
                     "optional": False,
                     "description": "Loss of capacity per year."
                 },
-
                 "Round trip efficiency": {
                     "Value": {
                         "type": {int, float,},
@@ -119,10 +115,52 @@ class Battery_Plugin:
                     "optional": False,
                     "description": "Round trip efficiency of battery."
                 },  
+                "Energy density": {
+                    "Value": {
+                        "type": {int, float,},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "energy / mass",
+                    },                    
+                    "optional": True,
+                    "description": "Energy density of battery."
+                },
+                "Lifetime": {
+                    "Value": {
+                        "type": {int, float,},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "time",
+                    },                    
+                    "optional": True,
+                    "description": "Lifetime of battery (on a regular time basis, not usage basis)."
+                },
             } 
         }
 
         self.output_dict = {
+            "Battery": {
+                "Initial battery mass": {
+                    "Value": {
+                        "inserted_value": "battery_mass",
+                        "type": {float, int},
+                        "dimension": "mass",
+                    },
+                    "description": "Initial mass of battery (not including replacements)",
+                    "optional": True,
+                },
+                "Lifetime battery mass": {
+                    "Value": {
+                        "inserted_value": "lifetime_battery_mass",
+                        "type": {float, int},
+                        "dimension": "mass",
+                    },
+                    "description": "Lifetime mass of the battery system (including replacements)",
+                    "optional": True,
+                }
+            },
             "Power Generation": {
                 "Stored energy (daily)": {
                     "Value": {
@@ -158,6 +196,9 @@ class Battery_Plugin:
         self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Battery_Plugin')
 
         self.calculate_electricity_storage()
+
+        if 'Energy density' and 'Lifetime' in self.input_dict_resolved['Battery']:
+            self.calculate_battery_mass()
         
         output_inserter_function(self.output_dict, self, dcf, 'Battery_Plugin')            
 
@@ -192,3 +233,30 @@ class Battery_Plugin:
         capacity = nominal_capacity * capacity_decrease
 
         return capacity, capacity_decrease
+
+    def calculate_battery_mass(self):
+        '''Calculates the mass of the battery based on the energy density and design capacity
+        as well as the lifetime battery mass based on the number of replacements.
+
+        ### DISCLAIMER ###
+        ### The replacement calculation is only approximate and for testing
+        ### The capacity loss continues even after battery replacement and does not reset
+        ### introducing a systematic error in the calculation - not to be used for 
+        ### actual calculations
+        '''
+
+        plant_lifetime_years = len(self.input_dict_resolved['Time']['Years']['Value']['Operation years'].unit['-'])
+        number_of_replacements = np.ceil(plant_lifetime_years /
+                                         self.input_dict_resolved['Battery']['Lifetime']['Value'].unit['year'])
+
+        self.battery_mass = Quantity(self.input_dict_resolved['Battery']['Design capacity']['Value'].unit['J'] 
+                                     / self.input_dict_resolved['Battery']['Energy density']['Value'].unit['J/kg'],
+                                     'kg')
+        self.lifetime_battery_mass = Quantity(self.battery_mass.unit['kg']
+                                              * number_of_replacements,
+                                              'kg')
+
+
+
+
+
