@@ -56,7 +56,7 @@ from pyH2A.Utilities.Unit_Handler import Quantity
         "Photocatalytic_Base",
         "PV_E_Base",
         "Thermal_Base",
-        "Thermal_Base_Merge"
+        "Thermal_Base_Merge",
     ]
 )
 def test_e2e_lcoh(case):

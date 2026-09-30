@@ -1,7 +1,9 @@
-<img align="right" src="https://github.com/water-splitting-group/pyH2A/blob/chore/logo_update/src/pyH2A/Other/pyH2A.svg?raw=true"/>
+<img align="right" src="https://raw.githubusercontent.com/water-splitting-group/pyH2A/master/src/pyH2A/Other/pyH2A.svg"/>
 
+[![CI](https://github.com/water-splitting-group/pyH2A/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/water-splitting-group/pyH2A/actions/workflows/ci.yml)
+[![Coverage](https://raw.githubusercontent.com/water-splitting-group/pyH2A/badges/coverage_badge.svg)](https://github.com/water-splitting-group/pyH2A/actions/workflows/ci.yml)
 [![Documentation Status](https://readthedocs.org/projects/pyh2a/badge/?version=latest)](https://pyh2a.readthedocs.io/en/latest/?badge=latest)
-[![DOI](https://zenodo.org/badge/332826132.svg)](https://zenodo.org/badge/latestdoi/332826132)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6365957.svg)](https://doi.org/10.5281/zenodo.6365957)
 
 # pyH2A
 
@@ -9,11 +11,11 @@
 - **Documentation:** https://pyh2a.readthedocs.io
 - **Source code:** https://github.com/jschneidewind/pyH2A
 
-pyH2A is an extensible Python framework for the analysis of hydrogen production cost. Its discounted cash flow module is based on the H2A Hydrogen Analysis model developed by the [U.S. Department of Energy](https://www.hydrogen.energy.gov/h2a_analysis.html)/[NREL](https://www.nrel.gov/hydrogen/h2a-production-models.html).
+pyH2A is an extensible Python framework for techno-economic and life-cycle assessment of chemical production processes and renewable energy technologies. Its discounted cash flow module is based on the H2A Hydrogen Analysis model developed by the [U.S. Department of Energy](https://www.hydrogen.energy.gov/h2a_analysis.html)/[NREL](https://www.nrel.gov/hydrogen/h2a-production-models.html).
 
-The basic discounted cash flow analysis functionality enables calculation of levelized cost of hydrogen (LCOH<sub>2</sub>). It can be interfaced with different `Plugins` to allow modelling of various hydrogen production technologies. Furthermore, different `Analysis` modules can be applied, allowing for detailed analysis of the discounted cash flow results.
+The basic discounted cash flow analysis functionality enables calculation of levelized cost of the product(e.g. levelized cost of hydrogen, LCOH<sub>2</sub>). It can be interfaced with different `Plugins` to allow modelling of various production technologies. Furthermore, different `Analysis` modules can be applied, allowing for detailed analysis of the discounted cash flow/life-cycle assessment results.
 
-It is a command line tool, with the input being provided using Markdown formatted plaintext files and the output being plots (and formatted PDF reports in the future).
+It is a command line tool, with the input being provided using Markdown formatted plaintext files and the output being plots.
 
 Note: pyH2A is currently under development and may undergo major changes in its design.
 
@@ -32,13 +34,20 @@ uv add pyH2A
 uv pip install .
 ```
 
+To use scikit-umfpack for faster matrix operations (relevant for LCA, after installation of SuitSparse and Swig using Homebrew):
+
+```bash
+export PKG_CONFIG_PATH="$(brew --prefix suite-sparse)/lib/pkgconfig:$PKG_CONFIG_PATH"
+uv sync --extra performance
+```
+
 # Documentation
 
 Documentation for pyH2A is available at: https://pyh2a.readthedocs.io
 
 # Dependencies
 
-pyH2A uses Python >=3.7 with the following libraries: `NumPy`, `SciPy`, `Pandas`, `Matplotlib` and `Click`
+pyH2A uses Python >=3.9 with the following libraries: `NumPy`, `SciPy`, `Pandas`, `Matplotlib` and `Click`
 
 # Use
 

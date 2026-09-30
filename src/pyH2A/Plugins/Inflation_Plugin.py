@@ -4,137 +4,6 @@ import pyH2A.Utilities.find_nearest as fn
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import numpy as np
 
-input_dict = {
-    "Financial Input Values": {
-        "Inflation rate": {
-            "Value": {
-                "type": {int, float},
-                "bounds": (0, None),
-            },
-            "Unit": {
-                "dimension": "dimensionless",
-            },
-            "optional": False,
-            "description": "inflation factor"
-        },
-        "Current year for capital costs": {
-            "Value": {
-                "type": {int, float},
-                "bounds": (0, None),
-            },
-            "Unit": {
-                "dimension": "dimensionless",
-            },
-            "optional": False,
-            "description": "current year capital costs"
-        },     
-        "Basis year": {
-            "Value": {
-                "type": {int, float},
-                "bounds": (0, None),
-            },
-            "Unit": {
-                "dimension": "dimensionless",
-            },
-            "optional": False,
-            "description": "basis year for inflation calculation"
-        },    
-        "Reference year": {
-            "Value": {
-                "type": {int, float},
-                "bounds": (0, None),
-            },
-            "Unit": {
-                "dimension": "dimensionless",
-            },
-            "optional": False,
-            "description": "reference year for inflation calculation"
-        },                       
-    },
-    "Time": {
-        "Years": {
-            "Value": {
-                "type": {dict,},
-                "bounds": (None, None),
-            },
-            "Unit": {
-                "dimension": "dimensionless",
-            },
-            "optional": False,
-            "description": "Dictionary containing all time-related quantities."
-        }, 
-    },      
-}
-
-output_dict = {
-    "Inflation": {
-        "Inflation factor full": {
-            "Value": {
-                "inserted_value": "inflation_factor_full",
-                "type": {np.ndarray},
-				"dimension": "dimensionless",                     
-            },
-            "optional": False,
-            "description": "Array containing the inflation factor for each year of the plant life, including construction and production"
-        },                 
-        "Inflation correction": {
-            "Value": {
-                "inserted_value": "inflation_correction",
-                "type": {float},
-				"dimension": "dimensionless",                     
-            },
-            "optional": False,
-            "description":"Correction factor applied to the inflation factors, to account for the time ofset between reference year and startup year"
-        },      
-        "CEPCI inflator": {
-            "Value": {
-                "inserted_value": "cepci_inflator",
-                "type": {float},
-				"dimension": "dimensionless",                     
-            },
-            "optional": False,
-            "description": "CEPCI inflation factor"
-        },  
-        "CI inflator": {
-            "Value": {
-                "inserted_value": "ci_inflator",
-                "type": {float},
-				"dimension": "dimensionless",                     
-            },
-            "optional": False,
-            "description": "CI inflation factor"
-        }, 
-        "Combined inflator": {
-            "Value": {
-                "inserted_value": "combined_inflator",
-                "type": {float},
-				"dimension": "dimensionless",               
-            },
-            "optional": False,
-            "description": "Sum of CEPCI and CI inflation factors"                  
-        }, 
-        "Labor inflator": {
-            "Value": {
-                "inserted_value": "labor_inflator",
-                "type": {float},
-				"dimension": "dimensionless",                     
-            },
-            "optional": False,
-            "description": "Cost of labor inflation factor"                  
-        }, 
-        "Chemical inflator": {
-            "Value": {
-                "inserted_value": "chemical_inflator",
-                "type": {float},
-				"dimension": "dimensionless",                     
-            },
-            "optional": False,
-            "description": "Cost of chemicals inflation factor"                  
-        },                                                      
-    }
-}
-
-
 class Inflation_Plugin:
     '''Generation of a the necessary inflation-related quantities for other plugins.
 
@@ -168,12 +37,151 @@ class Inflation_Plugin:
     Inflation > Chemical inflator > Value : float
        Cost of chemicals inflation factor.                                   
     '''
-    def __init__(self, dcf, print_info):
-        self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Inflation_Plugin')
+    def __init__(self, dcf, print_info, run = True):
+        self._set_up(dcf)
+        if run:
+            self._run(dcf)
+
+    def _set_up(self, dcf):
+
+        self.functional_unit = dcf.functional_unit
+
+        self.input_dict = {
+            "Financial Input Values": {
+                "Inflation rate": {
+                    "Value": {
+                        "type": {int, float},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "dimensionless",
+                    },
+                    "optional": False,
+                    "description": "inflation factor"
+                },
+                "Current year for capital costs": {
+                    "Value": {
+                        "type": {int, float},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "dimensionless",
+                    },
+                    "optional": False,
+                    "description": "current year capital costs"
+                },     
+                "Basis year": {
+                    "Value": {
+                        "type": {int, float},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "dimensionless",
+                    },
+                    "optional": False,
+                    "description": "basis year for inflation calculation"
+                },    
+                "Reference year": {
+                    "Value": {
+                        "type": {int, float},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "dimensionless",
+                    },
+                    "optional": False,
+                    "description": "reference year for inflation calculation"
+                },                       
+            },
+            "Time": {
+                "Years": {
+                    "Value": {
+                        "type": {dict,},
+                        "bounds": (None, None),
+                    },
+                    "Unit": {
+                        "dimension": "dimensionless",
+                    },
+                    "optional": False,
+                    "description": "Dictionary containing all time-related quantities."
+                }, 
+            },      
+        }
+
+        self.output_dict = {
+            "Inflation": {
+                "Inflation factor full": {
+                    "Value": {
+                        "inserted_value": "inflation_factor_full",
+                        "type": {np.ndarray},
+        				"dimension": "dimensionless",                     
+                    },
+                    "optional": False,
+                    "description": "Array containing the inflation factor for each year of the plant life, including construction and production"
+                },                 
+                "Inflation correction": {
+                    "Value": {
+                        "inserted_value": "inflation_correction",
+                        "type": {float},
+        				"dimension": "dimensionless",                     
+                    },
+                    "optional": False,
+                    "description":"Correction factor applied to the inflation factors, to account for the time ofset between reference year and startup year"
+                },      
+                "CEPCI inflator": {
+                    "Value": {
+                        "inserted_value": "cepci_inflator",
+                        "type": {float},
+        				"dimension": "dimensionless",                     
+                    },
+                    "optional": False,
+                    "description": "CEPCI inflation factor"
+                },  
+                "CI inflator": {
+                    "Value": {
+                        "inserted_value": "ci_inflator",
+                        "type": {float},
+        				"dimension": "dimensionless",                     
+                    },
+                    "optional": False,
+                    "description": "CI inflation factor"
+                }, 
+                "Combined inflator": {
+                    "Value": {
+                        "inserted_value": "combined_inflator",
+                        "type": {float},
+        				"dimension": "dimensionless",               
+                    },
+                    "optional": False,
+                    "description": "Sum of CEPCI and CI inflation factors"                  
+                }, 
+                "Labor inflator": {
+                    "Value": {
+                        "inserted_value": "labor_inflator",
+                        "type": {float},
+        				"dimension": "dimensionless",                     
+                    },
+                    "optional": False,
+                    "description": "Cost of labor inflation factor"                  
+                }, 
+                "Chemical inflator": {
+                    "Value": {
+                        "inserted_value": "chemical_inflator",
+                        "type": {float},
+        				"dimension": "dimensionless",                     
+                    },
+                    "optional": False,
+                    "description": "Cost of chemicals inflation factor"                  
+                },                                                      
+            }
+        }
+
+    def _run(self, dcf):
+        self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Inflation_Plugin')
 
         self.inflation()
 
-        output_inserter_function(output_dict,self,dcf,'Inflation_Plugin')
+        output_inserter_function(self.output_dict,self,dcf,'Inflation_Plugin')
 
     def inflation(self):
         finance_dict = self.input_dict_resolved['Financial Input Values']
