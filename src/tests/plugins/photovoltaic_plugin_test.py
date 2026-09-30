@@ -17,7 +17,7 @@ class DummyDCF:
         efficiency,
     ):
         
-        self.functional_unit = resolve_functional_unit('kWh') 
+        self.functional_unit = resolve_functional_unit('kWh[produced]') 
 
         self.functional_unit = resolve_functional_unit('kg[H2]')
         self.inp = {
