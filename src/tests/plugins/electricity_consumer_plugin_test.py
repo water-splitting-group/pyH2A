@@ -15,7 +15,7 @@ class DummyDCF:
         available_energy_hourly
     ):
 
-        self.functional_unit = resolve_functional_unit('kWh')
+        self.functional_unit = resolve_functional_unit('kWh[electricity]')
         self.inp = {
             "Time": {
                 "Years": {
