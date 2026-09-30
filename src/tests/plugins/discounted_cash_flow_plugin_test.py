@@ -34,7 +34,7 @@ class DummyDCF:
         annual_fixed_operating_costs,
         annual_variable_operating_costs,
     ):
-        self.functional_unit = resolve_functional_unit('kg')  # Set a default functional unit for testing
+        self.functional_unit = resolve_functional_unit('kg[H2]')  # Set a default functional unit for testing
         self.inp = {
             "Time": {
                 "Years": {
@@ -51,7 +51,7 @@ class DummyDCF:
             "Technical Operating Parameters and Specifications": {
                 "Output at gate by year": {
                     "Value": output_at_gate,
-                    "Unit": "kg",
+                    "Unit": "kg[H2]",
                     "Processed": "Yes",
                 },
             },

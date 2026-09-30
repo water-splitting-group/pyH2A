@@ -86,3 +86,8 @@ celerybeat-schedule
 *.cube
 
 build
+# LCA cached artifacts
+Initial_Artifacts/
+
+# Packaging build artifacts
+*.egg-info/

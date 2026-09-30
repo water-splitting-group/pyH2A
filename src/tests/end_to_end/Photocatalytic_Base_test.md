@@ -6,12 +6,12 @@ Default TEA | pyH2A.Config~Defaults_TEA.md
 
 # Workflow
 
-Name | Type | Description | Position
---- | --- | --- | ---
-Hourly_Irradiation_Plugin | plugin | Plugin to calculate solar irradiation from typical meteorological year data | 201 |
-Photocatalytic_Plugin | plugin | Computes number of required baggies, cost of baggies and catalyst cost | 301 |
-Catalyst_Separation_Plugin | plugin | Computes cost of catalyst separation | 302 |
-Multiple_Modules_Plugin | plugin | Modelling of multiple plant modules, adjustment of labor requirement | 401 |
+Name | Description | Position
+--- | --- | ---
+Hourly_Irradiation_Plugin | Plugin to calculate solar irradiation from typical meteorological year data | 201 |
+Photocatalytic_Plugin | Computes number of required baggies, cost of baggies and catalyst cost | 301 |
+Catalyst_Separation_Plugin | Computes cost of catalyst separation | 302 |
+Multiple_Modules_Plugin | Modelling of multiple plant modules, adjustment of labor requirement | 401 |
 
 # Display Parameters
 
@@ -25,7 +25,7 @@ Color | darkgreen
 Name | Value | Path | Unit | Comment
 --- | --- | --- | --- | --- 
 Operating capacity factor | 90% | None | - 
-Plant design capacity | 1,111 | None | kg/day 
+Plant design capacity | 1,111 | None | kg[H2]/day 
 Fraction of output that reaches gate | 90% | None | - | Reduction due to loss in H2/O2 separation. 
 Plant modules | 10 | None | - | 10 identical modules, only affects labor requirement calculation. 
 
@@ -184,8 +184,8 @@ fees | 1000.0 | None | USD | Licensing, Permits and Fees
 
 Name | Usage_Value | Usage_Path | Usage_Unit | Cost_Value | Cost_Path | Cost_Unit | Price_Conversion_Factor_Value | Price_Conversion_Factor_Unit | Comment 
 --- | --- | --- | --- | --- | --- | --- | --- | --- | --- 
-Industrial electricity | 3.29 | None | 1/kg | pyH2A.Lookup_Tables.Utility_Cost~Industrial_Electricity_AEO_2017_Reference_Case.csv | None | USD | 0.0036 | - | Electricity usage based on Pinaud 2013
-Process water | 2.637 | None | 1/kg | 0.0023749510945008 | None | USD | 1.0 | - | Seawater reverse osmosis cost ca. 0.6 USD/m3 (equal to ca. 0.0023 USD/gal), based on Kibria 2021 and Driess 2021
+Industrial electricity | 3.29 | None | 1/kg[H2] | pyH2A.Lookup_Tables.Utility_Cost~Industrial_Electricity_AEO_2017_Reference_Case.csv | None | USD | 0.0036 | - | Electricity usage based on Pinaud 2013
+Process water | 2.637 | None | 1/kg[H2] | 0.0023749510945008 | None | USD | 1.0 | - | Seawater reverse osmosis cost ca. 0.6 USD/m3 (equal to ca. 0.0023 USD/gal), based on Kibria 2021 and Driess 2021
 
 # Unplanned Replacement
 

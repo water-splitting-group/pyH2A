@@ -6,10 +6,10 @@ Default TEA | pyH2A.Config~Defaults_TEA.md
 
 # Workflow
 
-Name | Type | Position
---- | --- | ---
-Test_Plugin_A | plugin | 201
-Test_Plugin_B | plugin | 202
+Name | Position
+--- |  ---
+Test_Plugin_A | 201
+Test_Plugin_B | 202
 
 # Plugin A - Photovoltaic Input
 
@@ -98,7 +98,7 @@ Color | darkblue
 
 Name | Value | Unit | Comment
 --- | --- | --- | ---
-Plant design capacity | 1000 | kg/day | Placeholder
+Plant design capacity | 1000 | kg[H2]/day | Placeholder
 Operating capacity factor | 100% | - | Placeholder
 Fraction of output that reaches gate | 100% | - | Placeholder
 
@@ -126,6 +126,6 @@ Staff | Staff needed | 3 | - |Placeholder
 
 Name | Usage_Value | Usage_Unit | Cost_Value | Cost_Unit | Price_Conversion_Factor_Value | Price_Conversion_Factor_Unit | Comment
 --- | --- | --- | --- | --- | --- | --- | ---
-Process water | 10 | 1/kg | 0.0006 | USD | 1.0 | - | Seawater reverse osmosis cost ca. 0.6 $/m3 (equal to 0.0006 $/L), based on Kibria 2021 and Driess 2021.
+Process water | 10 | 1/kg[H2] | 0.0006 | USD | 1.0 | - | Seawater reverse osmosis cost ca. 0.6 $/m3 (equal to 0.0006 $/L), based on Kibria 2021 and Driess 2021.
 
 # Planned Replacement

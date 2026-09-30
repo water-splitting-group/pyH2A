@@ -2,336 +2,6 @@ import numpy as np
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 
-input_dict = {
-	"Technical Operating Parameters and Specifications": {
-		"Plant design capacity": {
-			"Value": {
-				"type": {int,float},
-				"bounds": (0, None),
-			},
-			"Unit": {
-				"dimension": "mass/time",
-			},
-			"optional": False,
-			"description": "Plant design capacity, in mass of hydrogen/time."
-		},
-	},
-	"Reactor Baggies": {
-		"Cost material top": {
-			"Value": {
-				"type": {int,float},
-				"bounds": (0, None),
-			},
-			"Unit": {
-				"dimension": "currency / area",
-			},
-			"optional": False,
-			"description": "Cost of baggie top material in currency / area."
-		},
-		"Cost material bottom": {
-			"Value": {
-				"type": {int,float},
-				"bounds": (0, None),
-			},
-			"Unit": {
-				"dimension": "currency / area",
-			},
-			"optional": False,
-			"description": "Cost of baggie bottom material in currency / area."
-		},
-		"Number of ports per baggie": {
-			"Value": {
-				"type": {int,},
-				"bounds": (0, None),
-			},
-			"Unit": {
-				"dimension": "dimensionless",
-			},
-			"optional": False,
-			"description": "Number of ports per baggie."
-		},
-		"Cost of port": {
-			"Value": {
-				"type": {int,float,},
-				"bounds": (0, None),
-			},
-			"Unit": {
-				"dimension": "currency",
-			},
-			"optional": False,
-			"description": "Cost of a port."
-		},		
-		"Other costs per baggie": {
-			"Value": {
-				"type": {int,float,},
-				"bounds": (0, None),
-			},
-			"Unit": {
-				"dimension": "currency",
-			},
-			"optional": False,
-			"description": "Other costs per baggie."
-		},
-		"Markup factor": {
-			"Value": {
-				"type": {int,float,},
-				"bounds": (1, None),
-			},
-			"Unit": {
-				"dimension": "dimensionless",
-			},
-			"optional": False,
-			"description": "Markup factor for baggies, typically > 1."
-		},
-		"Length": {
-			"Value": {
-				"type": {int,float,},
-				"bounds": (0, None),
-			},
-			"Unit": {
-				"dimension": "length",
-			},
-			"optional": False,
-			"description": "Length of single baggie."
-		},
-		"Width": {
-			"Value": {
-				"type": {int,float,},
-				"bounds": (0, None),
-			},
-			"Unit": {
-				"dimension": "length",
-			},
-			"optional": False,
-			"description": "Width of single baggie."
-		},
-		"Filling height": {
-			"Value": {
-				"type": {int,float,},
-				"bounds": (0, None),
-			},
-			"Unit": {
-				"dimension": "length",
-			},
-			"optional": False,
-			"description": "Height of reactor baggie. In this simulation this value determines the height of the water level and hence is an important parameter ultimately determining the level of light absorption and total catalyst amount."
-		},
-		"Additional land area": {
-			"Value": {
-				"type": {int,float,},
-				"bounds": (0, None),
-			},
-			"Unit": {
-				"dimension": "dimensionless",
-			},
-			"optional": False,
-			"description": "Additional land area required, percentage or value > 0. Calculated as: (1 + addtional land area) * baggie area."
-		},
-		"Lifetime": {
-			"Value": {
-				"type": {int,float,},
-				"bounds": (0, None),
-			},
-			"Unit": {
-				"dimension": "time",
-			},
-			"optional": False,
-			"description": "Lifetime of reactor baggies before replacement is required."
-		},
-	},
-	"Catalyst": {
-		"Cost per unit of mass": {
-			"Value": {
-				"type": {int,float,},
-				"bounds": (0, None),
-			},
-			"Unit": {
-				"dimension": "currency / mass",
-			},
-			"optional": False,
-			"description": "Cost of catalyst per unit of mass."
-		},
-		"Concentration": {
-			"Value": {
-				"type": {int,float,},
-				"bounds": (0, None),
-			},
-			"Unit": {
-				"dimension": "mass / volume",
-			},
-			"optional": False,
-			"description": "Concentration of catalyst."
-		},
-		"Lifetime": {
-			"Value": {
-				"type": {int,float,},
-				"bounds": (0, None),
-			},
-			"Unit": {
-				"dimension": "time",
-			},
-			"optional": False,
-			"description": "Lifetime of catalysts before replacement is required."
-		},
-		"Molar weight": {
-			"Value": {
-				"type": {int,float,},
-				"bounds": (0, None),
-			},
-			"Unit": {
-				"dimension": "mass / substance",
-			},
-			"optional": True,
-			"description": "If the molar weight of the catalyst is specified, homogeneous catalyst properties (TON, TOF etc. are calculated)."
-		},
-		"Molar attenuation coefficient": {
-			"Value": {
-				"type": {int,float,},
-				"bounds": (0, None),
-			},
-			"Unit": {
-				"dimension": "volume / (length * substance)",
-			},
-			"optional": True,
-			"description": "If the molar attenuation coefficient is specified (along with the molar weight), absorbance and the fraction of absorbed light are also calculated."
-		},
-	},
-	"Solar-to-Hydrogen Efficiency": {
-		"STH": {
-			"Value": {
-				"type": {int, float,},
-				"bounds": (0, 1),
-			},
-			"Unit": {
-				"dimension": "dimensionless",
-			},
-			"optional": False,
-			"description": "Solar-to-hydrogen efficiency in percentage or as a value between 0 and 1."
-		},
-	},
- 	"Solar Input": {
-		"Mean solar input": {
-			"Value": {
-				"type": {int, float,},
-				"bounds": (0, None),
-			},
-			"Unit": {
-				"dimension": "power / area", 
-			},
-			"optional": False,
-			"description": "Mean solar input."
-		},
-		"Hourly": {
-			"Value": {
-				"type": {np.ndarray,},
-				"bounds": (0, None),
-			},
-			"Unit": {
-				"dimension": "energy / area",
-			},
-			"optional": False,
-			"description": "Hourly irradiation data."
-		},
-	},	
-}
-  
-output_dict = {
-	"Non-Depreciable Capital Costs": {
-		"Land required": {
-			"Value": {
-				"inserted_value": "total_land_area",
-				"type": {int, float,},
-				"dimension": "area",
-			},
-			"optional": False,
-			"description": "Total land area required."
-		},
-		"Solar collection area": {
-			"Value": {
-				"inserted_value": "total_solar_collection_area",
-				"type": {int,float,},
-				"dimension": "area",
-			},
-			"optional": False,
-			"description": "Solar collection area"
-		},
-	},
-	"Planned Replacement": {
-		"Planned replacement catalyst": {
-			"Cost_Value": {
-				"inserted_value": "catalyst_cost",
-				"type": {int, float,},
-				"dimension": "currency",
-			},
-			"Frequency_Value": {
-				"inserted_value": "catalyst_lifetime",
-				"type": {int,float,},
-				"dimension": "time",
-			},
-			"optional": False,
-			"description": "Total cost of completely replacing the catalyst once and replacement frequency in years, identical to catalyst lifetime."
-		},
-		"Planned Replacement Baggie": {
-			"Cost_Value": {
-				"inserted_value": "baggies_cost",
-				"type": {int, float,},
-				"dimension": "currency",
-			},
-			"Frequency_Value": {
-				"inserted_value": "baggie_lifetime",
-				"type": {int,float,},
-				"dimension": "time",
-			},
-			"optional": False,
-			"description": "Total cost of replacing all  baggies and replacement frequency in year, identical to baggie lifetime."
-		},
-	},
-	"Direct Capital Costs - Reactor Baggies": {
-		"Baggie cost": {
-			"Value": {
-				"inserted_value": "baggies_cost",
-				"type": {int, float,},
-				"dimension": "currency",
-			},
-			"optional": False,
-			"description": "Total baggie cost."
-		},
-	},
- 	"Direct Capital Costs - Photocatalyst": {
-		"Catalyst cost": {
-			"Value": {
-				"inserted_value": "catalyst_cost",
-				"type": {int, float,},
-				"dimension": "currency",
-			},
-			"optional": False,
-			"description": "Total catalyst cost."
-		},
-	},
-	"Reactor Baggies": {
-		"Number": {
-			"Value": {
-				"inserted_value": "baggie_number",
-				"type": {int,float}, # should only be an int, but going throught the output inserter makes it a float despite the use of the .astype(int)
-				"dimension": "dimensionless",
-			},
-			"optional": False,
-			"description": "Number of individual baggies required for design H2 production capacity."
-		},
-	},
-	"Water Volume": {
-		"Volume": {
-			"Value": {
-				"inserted_value": "total_volume",
-				"type": {int,float,},
-				"dimension": "volume",
-			},
-			"optional": False,
-			"description": "Total water volume"
-		},
-	},
-}
-
 class Photocatalytic_Plugin:
 	'''Simulating H2 production using photocatalytic water splitting in plastic baggie reactors.
 
@@ -407,8 +77,347 @@ class Photocatalytic_Plugin:
 		Total water volume.
 	'''
 
-	def __init__(self, dcf, print_info):
-		self.input_dict_resolved = input_resolver_function(input_dict, dcf, 'Photocatalytic_Plugin')
+	def __init__(self, dcf, print_info, run = True):
+		self._set_up(dcf)
+		if run:
+			self._run(dcf)
+
+	def _set_up(self, dcf):
+
+		self.functional_unit = dcf.functional_unit
+
+		self.input_dict = {
+			"Technical Operating Parameters and Specifications": {
+				"Plant design capacity": {
+					"Value": {
+						"type": {int,float},
+						"bounds": (0, None),
+					},
+					"Unit": {
+						"dimension": "mass/time",
+					},
+					"optional": False,
+					"description": "Plant design capacity, in mass of hydrogen/time."
+				},
+			},
+			"Reactor Baggies": {
+				"Cost material top": {
+					"Value": {
+						"type": {int,float},
+						"bounds": (0, None),
+					},
+					"Unit": {
+						"dimension": "currency / area",
+					},
+					"optional": False,
+					"description": "Cost of baggie top material in currency / area."
+				},
+				"Cost material bottom": {
+					"Value": {
+						"type": {int,float},
+						"bounds": (0, None),
+					},
+					"Unit": {
+						"dimension": "currency / area",
+					},
+					"optional": False,
+					"description": "Cost of baggie bottom material in currency / area."
+				},
+				"Number of ports per baggie": {
+					"Value": {
+						"type": {int,},
+						"bounds": (0, None),
+					},
+					"Unit": {
+						"dimension": "dimensionless",
+					},
+					"optional": False,
+					"description": "Number of ports per baggie."
+				},
+				"Cost of port": {
+					"Value": {
+						"type": {int,float,},
+						"bounds": (0, None),
+					},
+					"Unit": {
+						"dimension": "currency",
+					},
+					"optional": False,
+					"description": "Cost of a port."
+				},		
+				"Other costs per baggie": {
+					"Value": {
+						"type": {int,float,},
+						"bounds": (0, None),
+					},
+					"Unit": {
+						"dimension": "currency",
+					},
+					"optional": False,
+					"description": "Other costs per baggie."
+				},
+				"Markup factor": {
+					"Value": {
+						"type": {int,float,},
+						"bounds": (1, None),
+					},
+					"Unit": {
+						"dimension": "dimensionless",
+					},
+					"optional": False,
+					"description": "Markup factor for baggies, typically > 1."
+				},
+				"Length": {
+					"Value": {
+						"type": {int,float,},
+						"bounds": (0, None),
+					},
+					"Unit": {
+						"dimension": "length",
+					},
+					"optional": False,
+					"description": "Length of single baggie."
+				},
+				"Width": {
+					"Value": {
+						"type": {int,float,},
+						"bounds": (0, None),
+					},
+					"Unit": {
+						"dimension": "length",
+					},
+					"optional": False,
+					"description": "Width of single baggie."
+				},
+				"Filling height": {
+					"Value": {
+						"type": {int,float,},
+						"bounds": (0, None),
+					},
+					"Unit": {
+						"dimension": "length",
+					},
+					"optional": False,
+					"description": "Height of reactor baggie. In this simulation this value determines the height of the water level and hence is an important parameter ultimately determining the level of light absorption and total catalyst amount."
+				},
+				"Additional land area": {
+					"Value": {
+						"type": {int,float,},
+						"bounds": (0, None),
+					},
+					"Unit": {
+						"dimension": "dimensionless",
+					},
+					"optional": False,
+					"description": "Additional land area required, percentage or value > 0. Calculated as: (1 + addtional land area) * baggie area."
+				},
+				"Lifetime": {
+					"Value": {
+						"type": {int,float,},
+						"bounds": (0, None),
+					},
+					"Unit": {
+						"dimension": "time",
+					},
+					"optional": False,
+					"description": "Lifetime of reactor baggies before replacement is required."
+				},
+			},
+			"Catalyst": {
+				"Cost per unit of mass": {
+					"Value": {
+						"type": {int,float,},
+						"bounds": (0, None),
+					},
+					"Unit": {
+						"dimension": "currency / mass",
+					},
+					"optional": False,
+					"description": "Cost of catalyst per unit of mass."
+				},
+				"Concentration": {
+					"Value": {
+						"type": {int,float,},
+						"bounds": (0, None),
+					},
+					"Unit": {
+						"dimension": "mass / volume",
+					},
+					"optional": False,
+					"description": "Concentration of catalyst."
+				},
+				"Lifetime": {
+					"Value": {
+						"type": {int,float,},
+						"bounds": (0, None),
+					},
+					"Unit": {
+						"dimension": "time",
+					},
+					"optional": False,
+					"description": "Lifetime of catalysts before replacement is required."
+				},
+				"Molar weight": {
+					"Value": {
+						"type": {int,float,},
+						"bounds": (0, None),
+					},
+					"Unit": {
+						"dimension": "mass / substance",
+					},
+					"optional": True,
+					"description": "If the molar weight of the catalyst is specified, homogeneous catalyst properties (TON, TOF etc. are calculated)."
+				},
+				"Molar attenuation coefficient": {
+					"Value": {
+						"type": {int,float,},
+						"bounds": (0, None),
+					},
+					"Unit": {
+						"dimension": "volume / (length * substance)",
+					},
+					"optional": True,
+					"description": "If the molar attenuation coefficient is specified (along with the molar weight), absorbance and the fraction of absorbed light are also calculated."
+				},
+			},
+			"Solar-to-Hydrogen Efficiency": {
+				"STH": {
+					"Value": {
+						"type": {int, float,},
+						"bounds": (0, 1),
+					},
+					"Unit": {
+						"dimension": "dimensionless",
+					},
+					"optional": False,
+					"description": "Solar-to-hydrogen efficiency in percentage or as a value between 0 and 1."
+				},
+			},
+		 	"Solar Input": {
+				"Mean solar input": {
+					"Value": {
+						"type": {int, float,},
+						"bounds": (0, None),
+					},
+					"Unit": {
+						"dimension": "power / area", 
+					},
+					"optional": False,
+					"description": "Mean solar input."
+				},
+				"Hourly": {
+					"Value": {
+						"type": {np.ndarray,},
+						"bounds": (0, None),
+					},
+					"Unit": {
+						"dimension": "energy / area",
+					},
+					"optional": False,
+					"description": "Hourly irradiation data."
+				},
+			},	
+		}
+
+		self.output_dict = {
+			"Non-Depreciable Capital Costs": {
+				"Land required": {
+					"Value": {
+						"inserted_value": "total_land_area",
+						"type": {int, float,},
+						"dimension": "area",
+					},
+					"optional": False,
+					"description": "Total land area required."
+				},
+				"Solar collection area": {
+					"Value": {
+						"inserted_value": "total_solar_collection_area",
+						"type": {int,float,},
+						"dimension": "area",
+					},
+					"optional": False,
+					"description": "Solar collection area"
+				},
+			},
+			"Planned Replacement": {
+				"Planned replacement catalyst": {
+					"Cost_Value": {
+						"inserted_value": "catalyst_cost",
+						"type": {int, float,},
+						"dimension": "currency",
+					},
+					"Frequency_Value": {
+						"inserted_value": "catalyst_lifetime",
+						"type": {int,float,},
+						"dimension": "time",
+					},
+					"optional": False,
+					"description": "Total cost of completely replacing the catalyst once and replacement frequency in years, identical to catalyst lifetime."
+				},
+				"Planned Replacement Baggie": {
+					"Cost_Value": {
+						"inserted_value": "baggies_cost",
+						"type": {int, float,},
+						"dimension": "currency",
+					},
+					"Frequency_Value": {
+						"inserted_value": "baggie_lifetime",
+						"type": {int,float,},
+						"dimension": "time",
+					},
+					"optional": False,
+					"description": "Total cost of replacing all  baggies and replacement frequency in year, identical to baggie lifetime."
+				},
+			},
+			"Direct Capital Costs - Reactor Baggies": {
+				"Baggie cost": {
+					"Value": {
+						"inserted_value": "baggies_cost",
+						"type": {int, float,},
+						"dimension": "currency",
+					},
+					"optional": False,
+					"description": "Total baggie cost."
+				},
+			},
+		 	"Direct Capital Costs - Photocatalyst": {
+				"Catalyst cost": {
+					"Value": {
+						"inserted_value": "catalyst_cost",
+						"type": {int, float,},
+						"dimension": "currency",
+					},
+					"optional": False,
+					"description": "Total catalyst cost."
+				},
+			},
+			"Reactor Baggies": {
+				"Number": {
+					"Value": {
+						"inserted_value": "baggie_number",
+						"type": {int,float}, # should only be an int, but going throught the output inserter makes it a float despite the use of the .astype(int)
+						"dimension": "dimensionless",
+					},
+					"optional": False,
+					"description": "Number of individual baggies required for design H2 production capacity."
+				},
+			},
+			"Water Volume": {
+				"Volume": {
+					"Value": {
+						"inserted_value": "total_volume",
+						"type": {int,float,},
+						"dimension": "volume",
+					},
+					"optional": False,
+					"description": "Total water volume"
+				},
+			},
+		}
+
+	def _run(self, dcf):
+		self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Photocatalytic_Plugin')
 		
 		self.H2_molecule_energy = Quantity(2*1.229, 'eV/entity')
 		self.H2_molecular_weight = Quantity(2, 'g/mol')
@@ -422,7 +431,7 @@ class Photocatalytic_Plugin:
 		self.land_area()
 		self.catalyst_activity()
 		
-		output_inserter_function(output_dict, self, dcf, 'Photocatalytic_Plugin') 
+		output_inserter_function(self.output_dict, self, dcf, 'Photocatalytic_Plugin') 
 
 	def hydrogen_production(self):
 		'''Calculation of hydrogen produced per day per baggie (in kg).

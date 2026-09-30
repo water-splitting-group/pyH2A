@@ -2,6 +2,7 @@ import pytest
 import numpy as np
 from pyH2A.Plugins.Production_Plugin import Production_Plugin
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+from pyH2A.Utilities.functional_unit import resolve_functional_unit
 
 class DummyDCF:
     """Minimal DCF object for Production_Plugin testing with configurable inputs."""
@@ -14,6 +15,7 @@ class DummyDCF:
         design_output_by_year,
         fraction_of_output_that_reaches_gate,
     ):
+        self.functional_unit = resolve_functional_unit('kg[H2]')
         if design_output_by_year is None:
             self.inp = {
                 "Time": {
@@ -26,7 +28,7 @@ class DummyDCF:
                 "Technical Operating Parameters and Specifications": {
                     "Plant design capacity": {
                         "Value": plant_design_capacity, 
-                        "Unit":"kg/year"
+                        "Unit":"kg[H2]/year"
                     },
                     "Operating capacity factor": {
                         "Value": operating_capacity_factor, 
@@ -55,7 +57,7 @@ class DummyDCF:
                     },
                     "Design output by year": {
                         "Value": design_output_by_year, 
-                        "Unit": "kg",
+                        "Unit": "kg[H2]",
                         "Processed": "Yes",
                     },
                     "Fraction of output that reaches gate": {
