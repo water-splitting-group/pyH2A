@@ -66,7 +66,7 @@ class Reverse_Osmosis_Plugin:
             "Reverse Osmosis": {
                 "Power demand": {
                     "Value": {
-                        "type": {float,},
+                        "type": {int, float,},
                         "bounds": (0, None),
                     },
                     "Unit": {
@@ -77,7 +77,7 @@ class Reverse_Osmosis_Plugin:
                 },
                 "Average operating time fraction": {
                     "Value": {
-                        "type": {float,},
+                        "type": {int, float,},
                         "bounds": (0, 1),
                     },
                     "Unit": {
@@ -89,7 +89,7 @@ class Reverse_Osmosis_Plugin:
                 },
                 "Recovery rate": {
                     "Value": {
-                        "type": {float,},
+                        "type": {int, float,},
                         "bounds": (0, 1),
                     },
                     "Unit": {
@@ -97,6 +97,17 @@ class Reverse_Osmosis_Plugin:
                     },
                     "optional": False,
                     "description": "Fraction of fresh water obtained from given volume of sea water."
+                },
+                "Device output": {
+                    "Value": {
+                        "type": {int,float,},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "volume / time",
+                    },
+                    "optional": True,
+                    "description": "Purified water output of one reverse osmosis device, used to calculate the number of devices."
                 },
             },
         }
@@ -126,6 +137,15 @@ class Reverse_Osmosis_Plugin:
                     },
                     "description": "Maximum sea water processing capacity per hour of reverse osmosis plant.",
                     "optional": False,
+                },
+                "Number of devices": {
+                    "Value": {
+                        "inserted_value": "number_of_devices",
+                        "type": {float,int,},
+                        "dimension": "dimensionless",
+                    },
+                    "description": "Number of reverse osmosis devices required for the system, whole lifetime.",
+                    "optional": True,
                 },
             },
         }
@@ -170,3 +190,15 @@ class Reverse_Osmosis_Plugin:
         self.maximum_sea_water_processing_flowrate = Quantity(maximum_yearly_sea_water_demand_m3 
                                                               / self.input_dict_resolved['Reverse Osmosis']['Average operating time fraction']['Value'].unit['-'], 
                                                      'm3/year')
+
+        if 'Device output' in self.input_dict_resolved['Reverse Osmosis']:
+            maximum_fresh_water_processing_flowrate = Quantity(self.maximum_sea_water_processing_flowrate.unit['m3/year'] 
+                                                               * self.input_dict_resolved['Reverse Osmosis']['Recovery rate']['Value'].unit['-'],
+                                                      'm3/year')
+
+            self.number_of_devices = Quantity(maximum_fresh_water_processing_flowrate.unit['m3/year'] 
+                                              / self.input_dict_resolved['Reverse Osmosis']['Device output']['Value'].unit['m3/year'],
+                                     '-')
+
+        
+        

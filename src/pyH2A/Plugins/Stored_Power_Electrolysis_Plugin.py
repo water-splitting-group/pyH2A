@@ -1,5 +1,8 @@
 from pyH2A.Utilities.input_modification import daily_to_yearly_power
-from pyH2A.Plugins.Electrolyzer_Plugin import calculate_electrolyzer_power_demand, calculate_hydrogen_production, calculate_stack_replacement
+from pyH2A.Plugins.Electrolyzer_Plugin import (calculate_electrolyzer_power_demand, 
+                                               calculate_hydrogen_production, 
+                                               calculate_stack_replacement,
+                                               calculate_number_of_units)
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import numpy as np
@@ -94,6 +97,17 @@ class Stored_Power_Electrolysis_Plugin:
                     },
                     "optional": False,
                     "description": "Nominal power of electrolyzer."
+                },
+                "Unit nominal power": {
+                    "Value": {
+                        "type": {int,float,},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "power",
+                    },
+                    "optional": True,
+                    "description": "Nominal power of one electrolyzer unit, used to calculate the number of electrolyzers and stacks."
                 },
                 "Power requirement increase per year": {
                     "Value": {
@@ -202,6 +216,15 @@ class Stored_Power_Electrolysis_Plugin:
                     "description": "Actual stack replacement time, \
                             calculated from replacement time and operation data."
                 },
+                "Number of stacks": {
+                    "Value": {
+                        "inserted_value": "number_of_stacks",
+                        "type": {int, float,},
+                        "dimension": "dimensionless",
+                    },
+                    "optional": True,
+                    "description": "Number of electrolyzer stacks required for the system, whole lifetime."
+                },
                 "H2 production (yearly)": {
                     "Value": {
                         "inserted_value": "new_h2_production",
@@ -236,9 +259,16 @@ class Stored_Power_Electrolysis_Plugin:
         self.calculate_H2_production()
         self.on_demand = "on_demand"
 
-        self.replacement_frequency = calculate_stack_replacement(self.operation_hours, # operation hours being for each year, the result is in years between replacement
-                                                                 self.input_dict_resolved['Electrolyzer']['Replacement time']['Value'].unit['h']) 
-                                                                
+        (self.replacement_frequency, 
+         self.number_of_replacements) = calculate_stack_replacement(self.operation_hours, # operation hours being for each year, the result is in years between replacement
+                                                        self.input_dict_resolved['Electrolyzer']['Replacement time']['Value'].unit['h']) 
+
+        if 'Unit nominal power' in self.input_dict_resolved['Electrolyzer']:
+            (self.number_of_units, 
+             self.number_of_stacks) = calculate_number_of_units(self.input_dict_resolved['Electrolyzer']['Unit nominal power']['Value'],
+                                      self.input_dict_resolved['Electrolyzer']['Nominal power']['Value'],
+                                      self.number_of_replacements)
+
         output_inserter_function(self.output_dict, self, dcf, 'Stored_Power_Electrolysis_Plugin') 
 
     def calculate_H2_production(self):
