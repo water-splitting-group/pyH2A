@@ -13,7 +13,7 @@ def numpy_npv(rate, values):
 	values = np.asarray(values)
 	return (values / (1+rate)**np.arange(0, len(values))).sum(axis=0)
 
-@lru_cache(maxsize = None)
+@lru_cache(maxsize = 1024)
 def get_idx(diagonal_number, axis0, axis1):
 	'''Calculation of index for MACRS calculation.
 	Uses ``lru_cache`` for repeated calculations.

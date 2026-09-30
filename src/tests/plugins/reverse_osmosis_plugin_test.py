@@ -16,7 +16,7 @@ class DummyDCF:
         operating_time_fraction, 
         recovery_rate
     ):
-        self.functional_unit = resolve_functional_unit('kg')
+        self.functional_unit = resolve_functional_unit('kg[H2]')
         self.inp = {
             "Technical Operating Parameters and Specifications": {
                 "Design output by year": {

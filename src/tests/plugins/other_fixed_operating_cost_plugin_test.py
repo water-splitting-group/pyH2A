@@ -20,7 +20,7 @@ class DummyDCF:
         start_up_time,
         fraction_during_start_up,
     ):
-        self.functional_unit = resolve_functional_unit('kg')
+        self.functional_unit = resolve_functional_unit('kg[H2]')
         self.inp = {
             "Time": {
                 "Years": {

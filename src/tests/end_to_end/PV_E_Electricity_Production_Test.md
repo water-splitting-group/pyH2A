@@ -8,7 +8,7 @@ Default TEA | pyH2A.Config~Defaults_TEA.md
 
 Name | Unit | Comment
 --- | --- | ---
-Functional Unit | kWh | kWh of produced electricity is functional unit
+Functional Unit | kWh[electricity] | kWh of produced electricity is functional unit
 
 # Workflow
 
@@ -22,7 +22,7 @@ Multiple_Modules_Plugin | 401
 
 Name | Value | Unit | Comment 
 --- | --- | --- | --- 
-Design output by year | {Power Generation > PV yearly power generation > Value, kWh} | kWh | Electricity production by PV system is considered as design output by year
+Design output by year | {Power Generation > PV yearly power generation > Value, kWh} | kWh[electricity] | Electricity production by PV system is considered as design output by year
 Operating capacity factor | 100% | - | Set to 100%, operating capacity factor is considered during modelling of electrolyzer operation
 Fraction of output that reaches gate | 100% | -
 Plant modules | 10 | - | Modelling of 10 modules for calculation of staff cost to facilitate comparison with PEC and photocatalytic model

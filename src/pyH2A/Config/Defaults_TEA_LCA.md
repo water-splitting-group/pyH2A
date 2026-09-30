@@ -11,13 +11,13 @@ Labor_Operating_Cost_Plugin | 600 | Calculation of labor operating costs
 Other_Fixed_Operating_Cost_Plugin | 700 | Calculation of other fixed operating costs
 Variable_Operating_Cost_Plugin | 800 | Calculation of variable operating costs, including utilities
 Discounted_Cash_Flow_Plugin | 900 | Performs discounted cash flow analysis to determine the levelized cost of hydrogen
-Life_Cycle_Assessment_Plugin | 1000 | Performs life-cycle assessment to determine environmental impacts
+LCA_Plugin | 1000 | Performs life-cycle assessment to determine environmental impacts
 
 # Functional Unit
 
 Name | Unit | Comment
 --- | --- | ---
-Functional Unit | kg | kg[H2] is functional unit
+Functional Unit | kg[H2] | kg[H2] is functional unit
 
 # Financial Input Values
 
