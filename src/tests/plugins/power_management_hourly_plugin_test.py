@@ -20,7 +20,7 @@ class DummyDCF:
         grid_cost,
     ):
 
-        self.functional_unit = resolve_functional_unit('kWh')
+        self.functional_unit = resolve_functional_unit('kWh[electricity]')
         self.inp = {
             "Time": {
                 "Years": {
@@ -93,7 +93,8 @@ class DummyDCF:
                 "remaining_available": Quantity(np.array([12., 0.]), 'kWh'),
                 "production_oversizing": Quantity(1.9148936170212767, '-'),
                 "total_energy_demand": Quantity(np.array([470, 470]), 'kWh'),                
-                "total_unfulfilled": Quantity(np.array([1.0, 5.0]), 'kWh'),
+                "total_unfulfilled_yearly": Quantity(np.array([1.0, 5.0]), 'kWh'),
+                "total_unfulfilled": Quantity(6., 'kWh'),
                 "electricity_cost": Quantity(np.array([3.14159, 15.70795]), 'USD'),
             },
         },
@@ -132,10 +133,15 @@ def test_power_management_hourly_plugin(case):
     )    
 
     np.testing.assert_allclose(
-        plugin.total_unfulfilled.unit['J'],
-        expected["total_unfulfilled"].unit['J'],
+        plugin.total_unfulfilled_yearly.unit['J'],
+        expected["total_unfulfilled_yearly"].unit['J'],
         rtol=tolerance,
         atol=tolerance,
+    )   
+
+    assert plugin.total_unfulfilled.unit['J'] == pytest.approx(
+        expected["total_unfulfilled"].unit['J'],
+        abs=tolerance,
     )
 
     np.testing.assert_allclose(
