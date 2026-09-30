@@ -1,0 +1,17 @@
+index,indicator ID,indicator name,indicator unit
+0,0f1c06bd-16ab-4e19-b78c-4ee4054286c2,Climate change: aircraft emissions - Global warming potential (GWP100),kg CO2-Eq
+1,efd9a01f-bc47-4a8f-97dc-651fa4891675,Climate change: biogenic (excl. CO2) - Global warming potential (GWP100),kg CO2-Eq
+2,68fc5fa5-ecf5-4e12-a089-40edcb5418f0,Climate change: direct land use change - Global warming potential (GWP100),kg CO2-Eq
+3,e59ebdb9-910c-470d-be99-9b57c1a60232,Climate change: emissions from direct land use change - Global warming potential (GWP100),kg CO2-Eq
+4,32d234be-9b63-43ec-8a16-187866355c2e,Climate change: fossil - Global warming potential (GWP100),kg CO2-Eq
+5,386827f3-7130-4e6d-aa44-f83f1e6905c5,Climate change: fossil emissions (excl. aircraft emissions) - Global warming potential (GWP100),kg CO2-Eq
+6,6574057c-67ab-444a-9188-b1a0d0c057a9,Climate change: removals from direct land use change - Global warming potential (GWP100),kg CO2-Eq
+7,c2cf0c84-e7a6-402b-bf9d-ae50a26e823d,Climate change: total (excl. biogenic CO2) - Global warming potential (GWP500),kg CO2-Eq
+8,3ab79161-f9a0-4e8a-8295-8f2c0c74a1e6,Climate change: total (excl. biogenic CO2) - Global warming potential (GWP20),kg CO2-Eq
+9,50bc2e75-0303-42a9-9dd5-7d2b8dc2108d,Climate change: total (excl. biogenic CO2) - Global warming potential (GWP100),kg CO2-Eq
+10,21b3ad99-44c5-4b5b-9d9b-3c75c51153c8,Climate change: total (excl. biogenic CO2) - Global temperature change potential (GTP50),kg CO2-Eq
+11,8d5c0aba-2a8a-4454-ae45-c8e5f385495c,Climate change: total (excl. biogenic CO2) - Global temperature change potential (GTP100),kg CO2-Eq
+12,5c376320-a28f-4202-b6f0-d545a9bb9a59,"Climate change: total (excl. biogenic CO2, incl. SLCFs) - Global warming potential (GWP100)",kg CO2-Eq
+13,23819111-b70a-4743-b7d6-a0da6e63a89a,"Climate change: biogenic (excl. CO2, incl. SLCFs) - Global warming potential (GWP100)",kg CO2-Eq
+14,7574d177-7252-4808-a711-46591d970937,"Climate change: fossil (excl. biogenic CO2, incl. SLCFs) - Global warming potential (GWP100)",kg CO2-Eq
+15,f5de8a45-d923-4541-8b87-a80cbfd43242,Climate change: direct land use change (incl. SLCFs) - Global warming potential (GWP100),kg CO2-Eq

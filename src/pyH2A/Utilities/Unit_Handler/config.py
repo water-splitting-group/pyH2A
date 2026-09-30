@@ -33,7 +33,6 @@ DIMENSIONS = {
             "MWh": 3.6e9,
             "GWh": 3.6e12,
             "TWh": 3.6e15,
-            #"eV": 1.602176634e-19,
             "eV": 1.602176e-19,
             "cal": 4.184,
             "kcal": 4184.0, 
@@ -86,8 +85,8 @@ DIMENSIONS = {
             "mm2": 1e-6,
             "cm2": 1e-4,
             "km2": 1e6,
-            #"acre": 4046.8564224,
             "acre": 4046.86266972,
+            "acres": 4046.86266972,
             "ha": 1e4
         }
     },
@@ -110,10 +109,16 @@ DIMENSIONS = {
             "s": 1.0,
             "ms": 1e-3,
             "minute": 60.0,
+            "minutes": 60.0,
             "h": 3600.0,
+            "hour": 3600.0,
+            "hours": 3600.0,
             "day": 86400.0,
+            "days": 86400.0,
             "week": 604800.0,
+            "weeks": 604800.0,
             "year": 31536000.0, # Assuming 365 days in a year for simplicity
+            "years": 31536000.0,
         }
     },
     "currency": {
@@ -129,7 +134,9 @@ DIMENSIONS = {
             "kg": 1.0,
             "mg": 1e-6,
             "g": 1e-3,
-            "ton": 1000.0  # Note: ton implies metric tonne here
+            "ton": 1000.0,  # Note: ton implies metric tonne here
+            "tons": 1000.0,  # Note: ton implies metric tonne here
+            "lb": 0.45359237,
         }
     },
     "temperature_diff": {
