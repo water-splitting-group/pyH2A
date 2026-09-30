@@ -19,7 +19,7 @@ class DummyDCF:
         power_loss_per_year
     ):
 
-        self.functional_unit = resolve_functional_unit('kWh')        
+        self.functional_unit = resolve_functional_unit('kWh[produced]')        
         self.inp = {
             "Time": {
                 "Years": {
