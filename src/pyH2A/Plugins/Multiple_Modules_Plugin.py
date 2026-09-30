@@ -5,24 +5,6 @@ from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 class Multiple_Modules_Plugin:
 	''' Simulating mutliple plant modules which are operated together, assuming that only labor cost is reduced. 
 	Calculation of required labor to operate all modules, scaling down labor requirement to one module for subsequent calculations.
-
-	Parameters
-	----------
-	Technical Operating Parameters and Specifications > Plant modules > Value : float or int
-		Number of plant modules considered in this calculation.
-	Non-Depreciable Capital Costs > Solar collection area > Value : float
-		Solar collection area for one plant module.
-	Fixed Operating Costs > Solar collection area per staffer > Value : float
-		Solar collection area that can be covered by one staffer.
-	Fixed Operating Costs > Number of 8-hour shifts > Value : float or int
-		Number of 8-hour shifts (typically 3 for 24h operation).
-	Fixed Operating Costs > Number of supervisors > Value : float or int
-		Number of shift supervisors.
-
-	Returns
-	-------
-	Fixed Operating Costs > Staff > Value : float
-		Number of 8-hour equivalent staff required for operating one plant module.
 	''' 
 
 	def __init__(self, dcf, print_info, run = True):
@@ -57,10 +39,36 @@ class Multiple_Modules_Plugin:
 					"Unit": {
 						"dimension": "area",
 					},
-					"optional": False,
+					"optional": True,
 					"description": "Solar collection area for one plant module."
 				},
 			},
+			"Battery": {
+				"Number of needed modules": {
+					"Value": {
+						"type": {float, int,},
+						"bounds": (0, None),
+					},
+					"Unit": {
+						"dimension": "dimensionless",
+					},
+					"optional": True,
+					"description": "Number of battery modules."
+				},
+			},		
+			"Wind Turbine": {
+				"Number of wind turbines": {
+					"Value": {
+						"type": {float, int,},
+						"bounds": (0, None),
+					},
+					"Unit": {
+						"dimension": "dimensionless",
+					},
+					"optional": True,
+					"description": "Number of wind turbines needed to match the required installed power."
+				},
+			},						
 			"Fixed Operating Costs": {
 				"Solar collection area per staffer": {
 					"Value": {
@@ -70,9 +78,31 @@ class Multiple_Modules_Plugin:
 					"Unit": {
 						"dimension": "area",
 					},
-					"optional": False,
+					"optional": True,
 					"description": "Solar collection area that can be covered by one staffer."
 				},
+				"Battery modules per staffer": {
+					"Value": {
+						"type": {int, float,},
+						"bounds": (0, None),
+					},
+					"Unit": {
+						"dimension": "dimensionless",
+					},
+					"optional": True,
+					"description": "Number of battery modules that can be handeled by one staffer."
+				},
+				"Wind turbines per staffer": {
+					"Value": {
+						"type": {int, float,},
+						"bounds": (0, None),
+					},
+					"Unit": {
+						"dimension": "dimensionless",
+					},
+					"optional": True,
+					"description": "Number of battery modules that can be maintained by one staffer."
+				},								
 				"Number of 8-hour shifts": {
 					"Value": {
 						"type": {float, int,},
@@ -123,14 +153,39 @@ class Multiple_Modules_Plugin:
 		'''Calculation of total required staff for all plant modules, then scaling down to staff
 		requirements for one module.'''
 
-		area = (self.input_dict_resolved['Technical Operating Parameters and Specifications']['Plant modules']['Value'].unit['-'] 
-			   * self.input_dict_resolved['Non-Depreciable Capital Costs']['Solar collection area']['Value'].unit['m2'])
+		if 'Solar collection area' in self.input_dict_resolved['Non-Depreciable Capital Costs']:
+			area = (self.input_dict_resolved['Technical Operating Parameters and Specifications']['Plant modules']['Value'].unit['-'] 
+				* self.input_dict_resolved['Non-Depreciable Capital Costs']['Solar collection area']['Value'].unit['m2'])
 
-		staff = (np.ceil(area 
-						 / self.input_dict_resolved['Fixed Operating Costs']['Solar collection area per staffer']['Value'].unit['m2'])
-		         + self.input_dict_resolved['Fixed Operating Costs']['Number of supervisors']['Value'].unit['-'])
+			staff_solar = (np.ceil(area 
+							/ self.input_dict_resolved['Fixed Operating Costs']['Solar collection area per staffer']['Value'].unit['m2'])
+							)
+		else:
+			staff_solar = 0
+
+		if 'Wind Turbine' in self.input_dict_resolved:
+			turbines_number = (self.input_dict_resolved['Technical Operating Parameters and Specifications']['Plant modules']['Value'].unit['-'] 
+				* self.input_dict_resolved['Wind Turbine']['Number of wind turbines']['Value'].unit['-'])
+
+			staff_wind = (np.ceil(turbines_number 
+							/ self.input_dict_resolved['Fixed Operating Costs']['Wind turbines per staffer']['Value'].unit['-'])
+							)
+		else:
+			staff_wind = 0
+
+		if 'Battery' in self.input_dict_resolved and 'Number of needed modules' in self.input_dict_resolved['Battery']:
+			storage = (self.input_dict_resolved['Technical Operating Parameters and Specifications']['Plant modules']['Value'].unit['-'] 
+				* self.input_dict_resolved['Battery']['Number of needed modules']['Value'].unit['-'])
+			
+			staff_storage = (np.ceil(storage 
+							/ self.input_dict_resolved['Fixed Operating Costs']['Battery modules per staffer']['Value'].unit['-'])
+							)
+		else:
+			staff_storage = 0
 		
-		staff = staff * self.input_dict_resolved['Fixed Operating Costs']['Number of 8-hour shifts']['Value'].unit['-']
+		staff = ((staff_solar + staff_wind + staff_storage + self.input_dict_resolved['Fixed Operating Costs']['Number of supervisors']['Value'].unit['-']) 
+		   			* self.input_dict_resolved['Fixed Operating Costs']['Number of 8-hour shifts']['Value'].unit['-']
+					)
 
 		self.staff_per_module = Quantity(staff 
 										 / self.input_dict_resolved['Technical Operating Parameters and Specifications']['Plant modules']['Value'].unit['-'], 
