@@ -134,7 +134,7 @@ def lca():
  
 def gen():
     from pyH2A.Utilities.plugin_input_output_processing import Generate_Template_Input_File
-    Generate_Template_Input_File('src/tests/end_to_end/PV_E_Base_test.md', 'template.md', origin=True, comment=True)
+    Generate_Template_Input_File('src/tests/end_to_end/PV_E_Base_test.md', 'template.md', origin=False, comment=False)
 
 def main():
 	#dcf_test()
