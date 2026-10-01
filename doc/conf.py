@@ -35,6 +35,7 @@ version = __version__
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = ['sphinx.ext.autodoc',
+			  'pyH2A.Utilities.docstring_generation',
 			  'sphinx.ext.autosummary',
    			  'sphinx.ext.todo',
     		  'sphinx.ext.coverage',

@@ -1,34 +1,9 @@
 import numpy as np
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+from pyH2A.Utilities.docstring_generation import generate_docstring
 
 class Solar_Concentrator_Plugin:
-	'''Simulation of solar concentration (used in combination with PEC cells).
-
-	Parameters
-	----------
-	Solar Concentrator > Concentration factor > Value : float
-		Concentration factor of solar concentration, value > 1.
-	Solar Concentrator > Cost > Value : float
-		Cost of solar concentrator.
-	PEC Cells > Number > Value : float
-		Number of PEC cells required for design H2 production capacity.
-	Land Area Requirement > South spacing > Value : float
-		South spacing of solar concentrators (in length).
-	Land Area Requirement > East/West spacing > Value : float
-		East/West spacing of solar concentrators (in length).
-	Non-Depreciable Capital Costs > Solar Collection Area > Value : float
-		Total solar collection area.
-
-	Returns
-	-------
-	Non-Depreciable Capital Costs > Land required > Value : float
-		Total land requirement.
-	Non-Depreciable Capital Costs > Solar Collection Area > Value : float
-		Total solar collection area.
-	Direct Capital Costs - Solar Concentrator > Solar Concentrator Cost > Value : float
-		Total cost of all solar concentrators.
-	'''
 
 	def __init__(self, dcf, print_info, run = True):
 		self._set_up(dcf)
@@ -149,6 +124,9 @@ class Solar_Concentrator_Plugin:
 				},
 			},
 		}
+
+		self.__doc__ = generate_docstring("Simulation of solar concentration (used in combination with PEC cells).",
+                                    self.input_dict, self.output_dict)
 
 	def _run(self, dcf):
 		self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Solar_Concentrator_Plugin')

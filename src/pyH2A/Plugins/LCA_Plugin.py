@@ -11,94 +11,10 @@ from pyH2A.Utilities.lca_utilities import (
     factorize,
 )
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+from pyH2A.Utilities.docstring_generation import generate_docstring
 
 
 class LCA_Plugin:
-    '''Performs life-cycle assessment to determine environmental impacts, from an
-    openLCA matrix export.
-
-    Runs as an ordinary Workflow plugin (see ``Config/Defaults_LCA.md`` and
-    ``Config/Defaults_TEA_LCA.md``). Whether LCA runs at all is
-    controlled by which default file is merged in (``Defaults_TEA.md`` omits this
-    plugin entirely).
-
-    Parameters
-    ----------
-    Technical Operating Parameters and Specifications > Total output at gate > Value : float or int
-        Cumulated output of product at the gate over the plant lifetime, in the
-        functional unit of the product. Computed by
-        :class:`~pyH2A.Plugins.Production_Plugin.Production_Plugin`, and used as
-        the amount of the reference flow in the technosphere column.
-    Life Cycle Assessment > Matrix Folder > Value : str
-        Path to the openLCA matrix export folder containing the technosphere
-        (A), intervention (B) and characterization (C) matrices.
-    Life Cycle Assessment > UUID of product > Value : str
-        openLCA technosphere UUID of the product flow, i.e. the entry of the
-        technosphere column that ``Total output at gate`` supplies the value of.
-    <...> LCA <...> >> Value : float, int, or ndarray
-        Value of an individual LCA technosphere component entry, in a
-        component-specific unit. Every table in ``dcf.inp`` whose name
-        contains ``"LCA"`` is matched (``sum_all_tables()``-style wildcard
-        table group, and every row within each matched table is resolved
-        regardless of its name.
-    <...> LCA <...> >> UUID : str
-        openLCA technosphere UUID identifying which technosphere column entry
-        this component value updates.
-
-    Returns
-    -------
-    Dependent Variables > <impact name> > Value : Quantity
-        One row per impact category of the export, keyed by the verbatim impact
-        name of ``index_C.csv``. Each value is a
-        :class:`~pyH2A.Utilities.Unit_Handler.quantity.Quantity` instance,
-        inherently expressed per 1 unit of the reference flow (the demand is
-        always exactly one unit of it, regardless of the magnitude reported by
-        openLCA), as a composite unit of
-        ``<impact unit> / <functional unit>``. Computed by :meth:`perform_lca`.
-    ['LCA_Plugin'].lca_results : dict
-        The same results as a single dictionary keyed by impact name, accessible
-        directly off the plugin instance via
-        ``dcf.plugs['LCA_Plugin']``.
-    self.matrix_folder : str
-        Path to the openLCA matrix export folder.
-    self.component_values : numpy.ndarray
-        Scenario-specific technosphere column values aligned to the cached
-        ``A0_column`` ordering. Set by :meth:`apply_component_updates`.
-    self.scaling_vector : numpy.ndarray
-        Scenario-specific activity scaling vector, for contribution analysis.
-        Computed on demand; not used by :meth:`perform_lca`.
-
-    Raises
-    ------
-    ValueError
-        Raised when the UUIDs of the LCA input tables and of the product do not
-        match the nonzero entries of the technosphere column exactly, when a UUID
-        is declared more than once, when ``UUID of product`` is not the export's
-        reference flow, when a resolved component value is negative, when a
-        declared Unit cannot be converted into the flow unit the export records
-        for that entry, when the declared Functional Unit carries no reference, or
-        when an impact unit of the export is neither a pyH2A unit nor mapped in
-        ``Config/OpenLCA_config.py``.
-    ZeroDivisionError
-        Raised when the Sherman-Morrison denominator is singular to working
-        precision.
-
-    Notes
-    -----
-    Every amount in the technosphere column is a plant-lifetime total, because
-    ``Total output at gate`` is; a component supplied per year, or an installed
-    stock supplied as a per-year array (which is summed), is out by the number of
-    operating years. Only entries that are already nonzero in the export's first
-    technosphere column can be given a scenario value, so a process a scenario may
-    need has to be present in the export, with a placeholder amount if necessary.
-
-    All caches are class-level and process-local. Disk artifacts are stored
-    inside an ``Initial_Artifacts`` subdirectory of the matrix export folder,
-    managed by :func:`pyH2A.Utilities.lca_utilities.get_cache_paths`. Both the RAM
-    and disk caches are keyed by
-    :func:`~pyH2A.Utilities.lca_utilities.export_fingerprint`, so switching matrix
-    folder or replacing the export invalidates them.
-    '''
 
     _SHERMAN_MORRISON_TOLERANCE = 1e-8  # Relative tolerance for cancellation in the Sherman-Morrison update denominator.
     # Class-level RAM cache. Not shared across multiprocessing workers; disk caching covers cross-process reuse.
@@ -186,6 +102,54 @@ class LCA_Plugin:
                 }
             }
         }
+        
+        summary = """
+        Performs life-cycle assessment to determine environmental impacts, from an
+        openLCA matrix export.
+
+        Runs as an ordinary Workflow plugin (see ``Config/Defaults_LCA.md`` and
+        ``Config/Defaults_TEA_LCA.md``). Whether LCA runs at all is
+        controlled by which default file is merged in (``Defaults_TEA.md`` omits this
+        plugin entirely).
+        """
+        
+        notes = """
+            Raises
+            ------
+            ValueError
+                Raised when the UUIDs of the LCA input tables and of the product do not
+                match the nonzero entries of the technosphere column exactly, when a UUID
+                is declared more than once, when ``UUID of product`` is not the export's
+                reference flow, when a resolved component value is negative, when a
+                declared Unit cannot be converted into the flow unit the export records
+                for that entry, when the declared Functional Unit carries no reference, or
+                when an impact unit of the export is neither a pyH2A unit nor mapped in
+                ``Config/OpenLCA_config.py``.
+            ZeroDivisionError
+                Raised when the Sherman-Morrison denominator is singular to working
+                precision.
+        
+            Notes
+            -----
+            Every amount in the technosphere column is a plant-lifetime total, because
+            ``Total output at gate`` is; a component supplied per year, or an installed
+            stock supplied as a per-year array (which is summed), is out by the number of
+            operating years. Only entries that are already nonzero in the export's first
+            technosphere column can be given a scenario value, so a process a scenario may
+            need has to be present in the export, with a placeholder amount if necessary.
+
+            All caches are class-level and process-local. Disk artifacts are stored
+            inside an ``Initial_Artifacts`` subdirectory of the matrix export folder,
+            managed by :func:`pyH2A.Utilities.lca_utilities.get_cache_paths`. Both the RAM
+            and disk caches are keyed by
+            :func:`~pyH2A.Utilities.lca_utilities.export_fingerprint`, so switching matrix
+            folder or replacing the export invalidates them.
+        """
+        
+        
+        
+        self.__doc__ = generate_docstring(summary, 
+                                            self.input_dict, self.output_dict, notes)
 
     def _run(self, dcf):
         '''Resolve the matrix folder and run the full LCA calculation workflow.

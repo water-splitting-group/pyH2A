@@ -2,37 +2,9 @@ from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import pyH2A.Utilities.find_nearest as fn
 import numpy as np
+from pyH2A.Utilities.docstring_generation import generate_docstring
 
 class Time_Plugin:
-    '''Generation of a unique dictionary contianing all the necessary time-related arrays and values for other plugins.
-    All the quantities are dimensionless, no conversion being expected, and the years play the role of indexes rather than durations.
-
-
-    Parameters
-    ----------
-    Construction > [...] > Value : int or float
-        Fraction of capital spent during each construction year. Serves to determine the duration of the construction.
-    Financial Input Values > Plant life > Value : int or float
-        Operating lifetime of the plant.
-    Financial Input Values > Assumed start-up year > Value : int
-        Year the operation starts.
-    Financial Input Values > Reference year > Value : int
-        Reference year for startup.        
-    
-    Returns
-    -------
-    Time > Years > Value : dict
-        Dictionary containing all the year-related variables that are needed in other plugins.
-        Startup time offset: the offset between the reference year and the startup year (scalar)
-        Plant years relative: array of indexes representing the years involved in the plant life, 0 being the year production starts
-        Operation years: Array containing the calendar years during which production takes place
-        Operation years relative: array of indexes representing the years during which production takes place, 0 being the year production starts
-        Start index: relative year of startup
-        Operation years ones: array of ones, of length equal to the number of production years        
-        Analysis years ones: array of ones, of length equal to the construciton time + the number of production years        
-        Construction years ones: array of ones, of length equal to the number of construction years        
-
-    '''
 
     def __init__(self, dcf, print_info, run = True):
         self._set_up(dcf)
@@ -115,6 +87,10 @@ class Time_Plugin:
                 },   
             }
         }
+        
+        self.__doc__ = generate_docstring("""Generation of a unique dictionary contianing all the necessary time-related arrays and values for other plugins.
+                                    All the quantities are dimensionless, no conversion being expected, and the years play the role of indexes rather than durations.
+                          """, self.input_dict, self.output_dict)
 
     def _run(self, dcf):
         self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Time_Plugin')

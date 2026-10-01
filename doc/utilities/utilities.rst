@@ -5,7 +5,6 @@ Utilities
    :maxdepth: 1
    :caption: Utilities
 
-   Energy_Conversion
    find_nearest
    input_modification
    input_resolver
@@ -14,7 +13,10 @@ Utilities
    output_inserter_guide
    output_utilities
    plugin_input_output_processing
+   plugin_specification
    quantity
    quantity_guide
    utilities_guide
    lca_utilities
+   docstring_generation
+   

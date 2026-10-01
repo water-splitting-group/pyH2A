@@ -1,29 +1,9 @@
 import numpy as np
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+from pyH2A.Utilities.docstring_generation import generate_docstring
 
 class Multiple_Modules_Plugin:
-	''' Simulating mutliple plant modules which are operated together, assuming that only labor cost is reduced. 
-	Calculation of required labor to operate all modules, scaling down labor requirement to one module for subsequent calculations.
-
-	Parameters
-	----------
-	Technical Operating Parameters and Specifications > Plant modules > Value : float or int
-		Number of plant modules considered in this calculation.
-	Non-Depreciable Capital Costs > Solar collection area > Value : float
-		Solar collection area for one plant module.
-	Fixed Operating Costs > Solar collection area per staffer > Value : float
-		Solar collection area that can be covered by one staffer.
-	Fixed Operating Costs > Number of 8-hour shifts > Value : float or int
-		Number of 8-hour shifts (typically 3 for 24h operation).
-	Fixed Operating Costs > Number of supervisors > Value : float or int
-		Number of shift supervisors.
-
-	Returns
-	-------
-	Fixed Operating Costs > Staff > Value : float
-		Number of 8-hour equivalent staff required for operating one plant module.
-	''' 
 
 	def __init__(self, dcf, print_info, run = True):
 		self._set_up(dcf)
@@ -111,6 +91,10 @@ class Multiple_Modules_Plugin:
 				},
 			},
 		}
+  
+		self.__doc__ = generate_docstring("""Simulating mutliple plant modules which are operated together, assuming that only labor cost is reduced. 
+                                Calculation of required labor to operate all modules, scaling down labor requirement to one module for subsequent calculations.""",
+                                self.input_dict, self.output_dict)
 
 	def _run(self, dcf):
 		self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Multiple_Modules_Plugin')

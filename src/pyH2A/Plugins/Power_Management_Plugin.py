@@ -2,45 +2,9 @@ from pyH2A.Utilities.input_modification import daily_to_yearly_power_quantity
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 import numpy as np
+from pyH2A.Utilities.docstring_generation import generate_docstring
 
 class Power_Management_Plugin:
-    '''Management of electricity production and consumption.
-    
-    Parameters
-    ----------
-    Time > Years > Value : dict
-        Dictionary containing plant life time-related quantities    
-	Power Generation > Available energy (daily) > Value : dict, optional
-        Available energy, daily basis, dictionary of years
-    Power Generation > Stored energy (daily) > Value : dict, optional
-        Stored energy, daily basis, dictionary of years
-    Power Consumption > [...] > Value : nd.array or float, optional
-        Array of yearly power consumption values
-    Power Consumption > [...] > Type : str, optional
-        Type of power consumer, either 'flexible' for power consumer that can consume both 
-        available power (not stored) or stored power, or 'on_demand' for power consumer that 
-        can only consume stored power.
-    Grid Electricity > Cost > Value : float or nd.array, optional
-        Cost of grid electricity, can be float or nd.array with same shape
-        as Technical Operating Parameters and Specifications> Output per Year > Value
-
-    Returns
-    -------
-    Power Generation > Available energy (yearly) > Value : nd.array
-        Reamining available energy, yearly basis.
-    Power Generation > Stored energy (yearly) > Value : nd.array
-        Reamining stored energy, yearly basis.
-    Power Generation > Available energy (daily) > Value : float
-        Available energy (daily) is set to zero, since available energy is now 
-        only in yearly format.
-    Power Generation > Stored energy (daily) > Value : float
-        Stored energy (daily) is set to zero, since stored energy is now
-        only in yearly format.
-    Grid Electricity > Used grid electricity (yearly) > Value : nd.array
-        Used grid electricity, yearly basis.
-    Other Variable Operating Cost - Grid Electricity > Cost of grid electricity (yearly) > Value : nd.array
-        Cost of grid electricity, yearly basis.
-    '''
 
     def __init__(self, dcf, print_info, run = True):
         self._set_up(dcf)
@@ -189,6 +153,9 @@ class Power_Management_Plugin:
                 },
             },
         }
+        
+        self.__doc__ = generate_docstring("Management of electricity production and consumption.",
+                                          self.input_dict, self.output_dict)
 
     def _run(self, dcf):
         self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, 'Power_Management_Plugin')  
