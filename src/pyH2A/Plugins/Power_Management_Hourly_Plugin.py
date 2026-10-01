@@ -216,6 +216,8 @@ class Power_Management_Hourly_Plugin:
 
         self.total_unfulfilled_yearly = Quantity(secondary_unfulfilled.unit['J'] + main_unfulfilled_yearly.unit['J'],'J')
         self.total_unfulfilled = Quantity(np.sum(self.total_unfulfilled_yearly.unit['J']),'J')
+        print("Grid yearly:", self.total_unfulfilled_yearly)
+        print("Grid:", self.total_unfulfilled)
 
         self.production_oversizing = Quantity(
                                         np.sum(self.input_dict_resolved['Power Generation']['Total yearly power generation']['Value'].unit['J'])

@@ -184,6 +184,7 @@ class Wind_Plugin:
 										/
 										self.input_dict_resolved['Wind Turbine']['Power per wind turbine']['Value'].unit['W'], 
 								  	'-')
+		print("Wind turbines:", self.number_turbines)
 
 	def calculate_wind_power_production(self):
 		'''
