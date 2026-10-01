@@ -1,7 +1,14 @@
 from pathlib import Path
+from importlib import import_module
 
-from pyH2A.Utilities.input_modification import insert, convert_input_to_dictionary, check_for_meta_module, import_plugin, merge, parse_parameter
-from pyH2A.Discounted_Cash_Flow import Discounted_Cash_Flow
+import numpy as np
+
+from pyH2A.Utilities.input_modification import (insert, convert_input_to_dictionary, convert_file_to_dictionary,
+												file_import, check_for_meta_module, import_plugin, merge,
+												parse_parameter, identify_bottom_keys)
+from pyH2A.Utilities.plugin_specification import instantiate_plugin_for_docs, iter_spec_rows, iter_bottom_entries
+from pyH2A.Utilities.constants import (WILDCARD_MARKER, TYPE_KEY, OPTIONS_KEY, DIMENSION_KEY,
+									   DESCRIPTION_KEY)
 
 def is_parameter_or_output(line, spaces_for_tab = 4, spaces_cutoff = 5):
 	'''Detection of parameters and output values in line based on presence of more than `spaces_cuttoff`
@@ -88,6 +95,115 @@ def convert_inp_to_requirements(dictionary, path = None):
 
 	return output
 
+_TYPE_NAMES = {int: 'int', float: 'float', str: 'str', bool: 'bool',
+			   dict: 'dict', list: 'list', tuple: 'tuple', np.ndarray: 'ndarray'}
+
+def convert_types_to_string(types):
+	'''Convert set of types from a plugin specification (e.g. `{int, float}`)
+	to string (e.g. `"int or float"`), using a fixed order.'''
+
+	if isinstance(types, type):
+		types = {types}
+
+	ordered = [t for t in _TYPE_NAMES if t in types] + [t for t in types if t not in _TYPE_NAMES]
+
+	return ' or '.join(_TYPE_NAMES.get(t, getattr(t, '__name__', str(t))) for t in ordered)
+
+def get_unit_key(row_dict, value_key):
+	'''Get unit key paired with `value_key` in `row_dict` (`None` if there is no unit key).'''
+
+	keys = identify_bottom_keys(row_dict)[value_key]
+	unit_key = keys.get('Unit')
+
+	return unit_key if unit_key != value_key else None
+
+def join_path(top_key, middle_key, bottom_key):
+	'''Join keys to path string (`top > middle > bottom`). The wildcard marker (`<...>`)
+	is replaced by the `[...]` placeholder used in input file templates, since its `>`
+	would otherwise interfere with `parse_parameter`.'''
+
+	keys = [key.replace(WILDCARD_MARKER, '[...]') for key in (top_key, middle_key, bottom_key)]
+
+	return ' > '.join(keys)
+
+def extract_input_output_from_specification(input_dict, output_dict, origin):
+	'''Convert plugin `input_dict`/`output_dict` to structured dictionary.
+
+	Parameters
+	----------
+	input_dict : dict
+		Input specification of plugin (see input resolver).
+	output_dict : dict
+		Output specification of plugin (see output inserter).
+	origin : str
+		Name of plugin.
+
+	Returns
+	-------
+	plugin_dict : dict
+		Dictionary with `Parameters` and `Output`, using the same structure 
+		as `extract_input_output_from_docstring`. Parameters additionally contain 
+		the unit key and dimension of a value (if present).
+	'''
+
+	parameters_dict = {}
+	output_dict_processed = {}
+
+	for top_key, middle_key, row_dict in iter_spec_rows(input_dict, f'{origin} input_dict'):
+		description = row_dict.get(DESCRIPTION_KEY, '')
+
+		for bottom_key, value_spec, optional in iter_bottom_entries(row_dict):
+			variable_type = convert_types_to_string(value_spec.get(TYPE_KEY, set()))
+
+			if OPTIONS_KEY in value_spec:
+				variable_type += ' {{{0}}}'.format(', '.join(repr(o) for o in sorted(value_spec[OPTIONS_KEY])))
+
+			if optional:
+				variable_type += ', optional'
+
+			path = join_path(top_key, middle_key, bottom_key)
+			entry = {'Type': variable_type, 'Origin': origin, 'Types': value_spec.get(TYPE_KEY, set())}
+
+			unit_key = get_unit_key(row_dict, bottom_key)
+			if unit_key is not None:
+				entry['Unit'] = {'Key': unit_key, 
+								 'Dimension': row_dict[unit_key].get(DIMENSION_KEY, '')}
+
+			if description:
+				entry[f'Comment {bottom_key}'] = description
+
+			parameters_dict[path] = entry
+
+	for top_key, middle_key, row_dict in iter_spec_rows(output_dict, f'{origin} output_dict'):
+		for bottom_key, value_spec, _ in iter_bottom_entries(row_dict):
+			path = join_path(top_key, middle_key, bottom_key)
+			output_dict_processed[path] = {'Type': convert_types_to_string(value_spec.get(TYPE_KEY, set())), 
+										   'Origin': origin,
+										   'Types': value_spec.get(TYPE_KEY, set())}
+
+	plugin_dict = {'Parameters': parameters_dict, 'Output': output_dict_processed}
+
+	return plugin_dict
+
+def get_plugin_specification(plugin_name):
+	'''Get `input_dict` and `output_dict` of plugin without running it.
+
+	Notes
+	-----
+	Plugins either define `input_dict`/`output_dict` at module level (see Plugin Guide)
+	or set them up in `_set_up` (in this case, plugin is instantiated with `run = False`,
+	see `pyH2A.Utilities.plugin_specification.instantiate_plugin_for_docs`).
+	'''
+
+	module = import_module('pyH2A.Plugins.' + plugin_name)
+
+	if hasattr(module, 'input_dict') and hasattr(module, 'output_dict'):
+		return module.input_dict, module.output_dict
+
+	plugin = instantiate_plugin_for_docs(plugin_name)
+
+	return plugin.input_dict, plugin.output_dict
+
 class Generate_Template_Input_File:
 	'''Generate input file template from a minimal input file.
 
@@ -109,28 +225,34 @@ class Generate_Template_Input_File:
 	Template : object
 		Template object which contains information on requirements and
 		output. Input template is written to specified output file.
+
+	Notes
+	-----
+	Input files referenced in the ``Input files to merge`` table of the input
+	file stub (e.g. ``pyH2A.Config~Defaults_TEA.md``) are merged into the stub.
+	Their workflow is used and the parameters they provide are not requested
+	in the template.
+
+	Requirements and outputs of plugins are read from their ``input_dict`` 
+	and ``output_dict`` specifications. Analysis modules are read from their
+	docstrings.
 	'''
 
 	def __init__(self, input_file_stub, output_file, 
 				 origin = False, comment = False):
 		if isinstance(input_file_stub, str):
 			self.inp_stub = convert_input_to_dictionary(input_file_stub)
+			inp_stub_unmerged = convert_file_to_dictionary(file_import(input_file_stub, mode = 'r'))
 		else:
 			self.inp_stub = input_file_stub
+			inp_stub_unmerged = input_file_stub
 
 		self.inp = {}
 
+		for key in self.inp_stub['Workflow']:
+			self.inp_stub['Workflow'][key].setdefault('Type', 'plugin')
+
 		post_workflow_position = self.get_post_workflow_position()
-
-		pre_workflow = {'Description': 'Functions executed before workflow.',
-						'Position': -1,
-						'Type': 'function'}
-		post_workflow = {'Description': 'Function executed after workflow.',
-						 'Position': post_workflow_position, 
-						 'Type': 'function'}
-
-		self.inp_stub['Workflow']['pre_workflow'] = pre_workflow
-		self.inp_stub['Workflow']['post_workflow'] = post_workflow
 		self.get_analysis_modules(post_workflow_position)
 
 		self.sorted_keys = sorted(self.inp_stub['Workflow'], 
@@ -143,9 +265,7 @@ class Generate_Template_Input_File:
 		self.generate_requirements()
 		self.convert_requirements_to_inp(insert_origin = origin, insert_comment = comment)
 
-		self.inp = merge(self.inp, 
-						 convert_input_to_dictionary(input_file_stub, 
-						 							 merge_default = False))
+		self.inp = merge(self.inp, inp_stub_unmerged)
 
 		template_file = Template_File(self.inp)
 		template_file.write_template_file(output_file)
@@ -179,7 +299,7 @@ class Generate_Template_Input_File:
 		requirements = {}
 
 		for key in self.sorted_keys:
-			data = self.get_docstring_data(key, self.inp_stub['Workflow'][key]['Type'])
+			data = self.get_input_output_data(key, self.inp_stub['Workflow'][key]['Type'])
 
 			needed_parameters = self.check_parameters(data['Parameters'], output)
 			requirements = merge(requirements, needed_parameters)
@@ -187,23 +307,20 @@ class Generate_Template_Input_File:
 			output = merge(output, data['Output'])
 
 		self.requirements = requirements
+		self.output = output
 
-	def get_docstring_data(self, target_name, target_type):
-		'''Get parameter requirements and outputs from docstrings.
+	def get_input_output_data(self, target_name, target_type):
+		'''Get parameter requirements and outputs from plugin specifications
+		(`input_dict`/`output_dict`) or, for analysis modules, from docstrings.
 		'''
 
-		if target_type == 'function':
-			target = getattr(Discounted_Cash_Flow, target_name)
-			data = extract_input_output_from_docstring(target, spaces_cutoff = 9)
+		if target_type == 'analysis':
+			target = import_plugin(target_name, False)
+			data = extract_input_output_from_docstring(target)
 
 		else:
-			if target_type == 'plugin':
-				plugin_module = True
-			else:
-				plugin_module = False
-
-			target = import_plugin(target_name, plugin_module)
-			data = extract_input_output_from_docstring(target)
+			input_dict, output_dict = get_plugin_specification(target_name)
+			data = extract_input_output_from_specification(input_dict, output_dict, target_name)
 
 		return data
 
@@ -219,11 +336,11 @@ class Generate_Template_Input_File:
 			else:
 				item['Fullfilled by'] = output[key]['Origin']
 
-				try:
-					if output[key]['Type'] != item['Type']:
-						print('Warning: type of output and requirement differs for: `{0}`. `{1}` required, `{2}` provided'.format(key, item['Type'], output[key]['Type']))
-				except KeyError:
-					pass
+				required_types = item.get('Types')
+				provided_types = output[key].get('Types')
+
+				if required_types and provided_types and not set(provided_types) <= set(required_types):
+					print('Warning: type of output and requirement differs for: `{0}`. `{1}` required, `{2}` provided'.format(key, item['Type'], output[key]['Type']))
 
 		return requirements
 
@@ -237,6 +354,10 @@ class Generate_Template_Input_File:
 
 			insert(self, *path, item['Type'], None, print_info = False, 
 				  add_processed = False, insert_path = False)
+
+			if 'Unit' in item:
+				insert(self, *path[:-1], item['Unit']['Key'], item['Unit']['Dimension'], None,
+					   print_info = False, add_processed = False, insert_path = False)
 
 			if insert_origin:
 				insert(self, *path[:-1], 'Requested by', item['Origin'], None, 
@@ -345,6 +466,3 @@ class Template_File:
 
 		with open(Path(file_name), 'w') as text_file:
 			text_file.write(self.output)
-
-
-		
