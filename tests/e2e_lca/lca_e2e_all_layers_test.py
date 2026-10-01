@@ -1,0 +1,233 @@
+"""Combined ground-truth end-to-end tests for pyH2A.Plugins.LCA_Plugin across the
+Smartphone_1Layer, Smartphone_2Layer, and Smartphone_3Layer toy models.
+
+Each scenario is run through ``pyH2A.run_pyH2A.pyH2A`` (the same entry point
+as the command-line pipeline). ``Test_Plugin_C``, ``Test_Plugin_D``, and
+``Test_Plugin_E`` are introduced as dummy plugins (for Circuit Board, Display,
+and Battery respectively). For 2-layer and 3-layer models, these three plugins
+compute the Circuit Board / Display / Battery quantities
+(base quantity * scenario factor) and insert them into dedicated output tables; the
+``LCA - Smartphone GT Components`` table then references those outputs via
+path syntax (e.g. ``{GT Display Output > Display > Value, kg}``). The Smartphone
+itself (the reference flow) is no longer a row of that table: it is identified by
+``Life Cycle Assessment > UUID of product`` and its amount comes from
+``Technical Operating Parameters and Specifications > Total output at gate``, which
+``Production_Plugin`` computes. Every scenario declares a plant design capacity of
+0.05 kg/year over a 20-year plant life at a capacity factor of 100% and no gate
+losses, so that total is exactly 1 kg -- the reference flow amount the ground-truth
+impacts below are stated per. The 1-layer model -- which has no sub-components --
+carries no GT plugins and no component table at all.
+
+Model summary
+-------------
+- 1-layer: single foreground process (Smartphone itself, no sub-components).
+  One base scenario per impact method (GWP, CED, ACIDIFICATION).
+- 2-layer: Smartphone directly consumes Display, Circuit Board, and Battery
+  (no further sub-components). One base scenario per impact method (GWP, CED, ACIDIFICATION).
+- 3-layer: Smartphone consumes Circuit Board/Display/Battery, each of which
+  in turn consumes two raw-material sub-components. Five component-quantity
+  scenarios (base, S2-S5) per impact method (GWP, CED, ACIDIFICATION), driven
+  by each scenario's ``GT <Component> Input > Scenario Factor`` value.
+
+All three models share the same expected base-case totals (GWP=10.0 kg CO2-eq,
+CED=50.0 kWh, ACID=4.0 kg SO2-eq), since each is a progressively finer-grained
+breakdown of the same underlying bill of materials and elementary flows.
+
+Caching note
+------------
+LCA_Plugin._cache is a single process-wide class attribute
+shared by every LCA instance for the lifetime of the pytest process, but it is
+keyed by (matrix folder, export fingerprint), so switching matrix folder
+between groups invalidates it on its own. The tests below clear caches only to
+exercise a particular caching path, never for correctness.
+
+All groups (1-layer, 2-layer, and 3-layer per impact method) are driven by a
+single parametrized test, ``test_scenarios``, that exercises all three LCA
+caching paths across each group's scenarios in parametrize-list (execution)
+order: scenario labeled "base" clears the disk cache itself before running (cold
+disk+RAM); scenario labeled "S2", where present, clears only RAM (warm disk); any
+remaining scenarios (S3-S5), where present, rely on RAM staying warm from the
+previous scenario. 1-layer and 2-layer groups only have a base scenario, so
+they always take the cold-disk+RAM path -- structurally identical to a
+3-layer group's first scenario. A single module-scoped fixture clears every
+group's on-disk cache once after the whole module finishes, for hygiene.
+"""
+
+import shutil
+from pathlib import Path
+
+import pytest
+from pyH2A.Plugins.LCA_Plugin import LCA_Plugin
+from pyH2A.run_pyH2A import pyH2A
+from pyH2A.Utilities.input_modification import convert_input_to_dictionary
+
+
+# ── Paths ──────────────────────────────────────────────────────────────────
+
+_HERE = Path(__file__).parent
+_INPUT_FILES_DIR = _HERE / 'data' / 'input_files'
+
+
+# ── Shared helpers ─────────────────────────────────────────────────────────
+
+def _clear_ram_only():
+    """Force the next run onto the disk-cache path without touching disk."""
+    LCA_Plugin._cache_key = None
+
+
+def _clear_disk(matrix_folder):
+    disk_cache_dir = Path(matrix_folder) / 'Initial_Artifacts'
+    if disk_cache_dir.exists():
+        shutil.rmtree(disk_cache_dir)
+
+
+def _load_scenario(input_file_stem):
+    """Parse a scenario input file and return (inp, matrix_folder)."""
+    inp = convert_input_to_dictionary(str(_INPUT_FILES_DIR / f'{input_file_stem}.md'))
+    matrix_folder = inp['Life Cycle Assessment']['Matrix Folder']['Value']
+    return inp, matrix_folder
+
+
+# ── Scenario data ────────────────────────────────────────────────────────────
+#
+# Each group is (input_file_stem, impact_name, expected_value, expected_unit)
+# in base, S2, S3, S4, S5 order. 1-layer and 2-layer groups only have a base
+# scenario; 3-layer groups have all five.
+#
+# ``expected_unit`` is the full composite unit of the result Quantity: the impact
+# unit of ``index_C.csv`` as translated by ``Config/OpenLCA_config.py`` (so
+# 'kg CO2-eq' becomes 'kg[$CO_{2}$-Eq]', while 'kWh' is already a pyH2A unit and
+# passes through unlabelled), over the declared Functional Unit.
+
+_FUNCTIONAL_UNIT = 'kg[smartphones]'
+
+_SCENARIOS_BY_GROUP = {
+    '1L-gwp': [('smartphone_1layer_gwp_base', 'Global warming potential', 10.0, 'kg[$CO_{2}$-Eq]')],
+    '1L-ced': [('smartphone_1layer_ced_base', 'Cumulative energy demand', 50.0, 'kWh')],
+    '1L-acid': [('smartphone_1layer_acid_base', 'Acidification', 4.0, 'kg[SO2-eq]')],
+    '2L-gwp': [('smartphone_2layer_gwp_base', 'Global warming potential', 10.0, 'kg[$CO_{2}$-Eq]')],
+    '2L-ced': [('smartphone_2layer_ced_base', 'Cumulative energy demand', 50.0, 'kWh')],
+    '2L-acid': [('smartphone_2layer_acid_base', 'Acidification', 4.0, 'kg[SO2-eq]')],
+    '3L-gwp': [
+        ('smartphone_3layer_gwp_base', 'Global warming potential', 10.0, 'kg[$CO_{2}$-Eq]'),
+        ('smartphone_3layer_gwp_s2', 'Global warming potential', 8.0, 'kg[$CO_{2}$-Eq]'),
+        ('smartphone_3layer_gwp_s3', 'Global warming potential', 12.0, 'kg[$CO_{2}$-Eq]'),
+        ('smartphone_3layer_gwp_s4', 'Global warming potential', 11.2, 'kg[$CO_{2}$-Eq]'),
+        ('smartphone_3layer_gwp_s5', 'Global warming potential', 9.2, 'kg[$CO_{2}$-Eq]'),
+    ],
+    '3L-ced': [
+        ('smartphone_3layer_ced_base', 'Cumulative energy demand', 50.0, 'kWh'),
+        ('smartphone_3layer_ced_s2', 'Cumulative energy demand', 39.5, 'kWh'),
+        ('smartphone_3layer_ced_s3', 'Cumulative energy demand', 60.5, 'kWh'),
+        ('smartphone_3layer_ced_s4', 'Cumulative energy demand', 54.4, 'kWh'),
+        ('smartphone_3layer_ced_s5', 'Cumulative energy demand', 47.4, 'kWh'),
+    ],
+    '3L-acid': [
+        ('smartphone_3layer_acid_base', 'Acidification', 4.0, 'kg[SO2-eq]'),
+        ('smartphone_3layer_acid_s2', 'Acidification', 3.2, 'kg[SO2-eq]'),
+        ('smartphone_3layer_acid_s3', 'Acidification', 4.8, 'kg[SO2-eq]'),
+        ('smartphone_3layer_acid_s4', 'Acidification', 4.66, 'kg[SO2-eq]'),
+        ('smartphone_3layer_acid_s5', 'Acidification', 3.46, 'kg[SO2-eq]'),
+    ],
+}
+
+_SCENARIO_LABELS = ['base', 'S2', 'S3', 'S4', 'S5']
+
+
+# ── All layers: five (or, for 1-layer/2-layer, one) scenarios per group ─────
+#
+# Each group's scenarios below run consecutively (relying on parametrize-list
+# order) and exercise all three LCA caching paths: cold disk+RAM on the first
+# scenario, warm disk / cold RAM on the second (3-layer groups only), and warm
+# RAM (no disk I/O) on any remaining scenarios. 1-layer and 2-layer groups
+# have just the one (base) scenario, so they always take the cold-disk+RAM
+# path.
+
+@pytest.mark.parametrize(
+    'group, scenario_index',
+    [
+        (group, scenario_index)
+        for group, scenarios in _SCENARIOS_BY_GROUP.items()
+        for scenario_index in range(len(scenarios))
+    ],
+    ids=[
+        f'{group}-{_SCENARIO_LABELS[scenario_index]}'
+        for group, scenarios in _SCENARIOS_BY_GROUP.items()
+        for scenario_index in range(len(scenarios))
+    ],
+)
+def test_scenarios(group, scenario_index):
+    """Exercises all three LCA caching paths across every group's scenarios,
+    in parametrize-list (execution) order: scenario 0 (base) is cold RAM+disk
+    (compute_all_artifacts_from_scratch runs the full LU factorization and
+    writes artifacts to disk and RAM); scenario 1 (S2), where present,
+    explicitly clears RAM while leaving disk warm (load_all_from_disk_to_ram
+    reads the artifacts saved above, bypassing factorization); scenarios 2-4
+    (S3-S5), where present, rely on RAM staying warm from the previous
+    scenario (initialize_all_artifacts exits on the cache-key guard without
+    any disk I/O).
+
+    Note: The disk cache is cleared unconditionally on scenario 0, even though
+    ``_cleanup_disk_caches_after_module`` also clears it at the end of the
+    module: that fixture won't have run yet the first time a fresh checkout
+    runs these tests, may not run at all if the module is interrupted before
+    it finishes, and clearing here is what guarantees a scenario 0 run reads
+    artifacts produced by the current code rather than stale ones left over
+    from a previous session or from before a refactor."""
+
+    scenarios = _SCENARIOS_BY_GROUP[group]
+
+    if scenario_index == 0:
+        # Clear the disk cache as explained in the docstring note above, so that the LCA run
+        # recomputes all artifacts from scratch. The RAM cache invalidates itself: it is keyed
+        # by (matrix folder, export fingerprint), which differs between groups.
+        _, matrix_folder = _load_scenario(scenarios[0][0])
+        _clear_disk(matrix_folder)
+
+    elif scenario_index == 1:
+        _clear_ram_only()
+
+    input_file_stem, impact_name, expected_value, expected_unit = scenarios[scenario_index]
+    input_file = _INPUT_FILES_DIR / f'{input_file_stem}.md'
+
+    result = pyH2A(str(input_file), str(_INPUT_FILES_DIR))
+
+    # Every impact category is inserted as its own row of the 'Dependent Variables'
+    # table, keyed by the verbatim impact name from index_C.csv.
+    quantity = result.base_case.inp['Dependent Variables'][impact_name]['Value']
+
+    assert quantity.supplied_value == pytest.approx(expected_value, rel=1e-8)
+    assert quantity.supplied_unit_reference == f'{expected_unit} / {_FUNCTIONAL_UNIT}'
+
+
+# ── Cleanup: runs once after every test above has finished ─────────────────
+
+@pytest.fixture(scope='module', autouse=True)
+def _cleanup_disk_caches_after_module():  # noqa: F841
+    """Remove every group's on-disk Initial_Artifacts cache once all tests
+    in this module have finished, so no leftover cache directories remain."""
+
+    yield
+
+    for scenarios in _SCENARIOS_BY_GROUP.values():
+        _, matrix_folder = _load_scenario(scenarios[0][0])
+        _clear_disk(matrix_folder)
+
+
+if __name__ == '__main__':
+
+    result = pyH2A('tests/e2e_lca/data/input_files/smartphone_3layer_gwp_base.md', 'tests/e2e_lca/')
+    print(result.base_case.inp['Dependent Variables'])
+
+    from timeit import default_timer as timer
+
+    start = timer()
+    for _ in range(10000):
+        result = pyH2A('tests/e2e_lca/data/input_files/smartphone_3layer_gwp_base.md', 'tests/e2e_lca/')
+    end = timer()
+    print(f'{end - start:.2f} seconds') # Running in 6.5 s (2026-09-19)
+
+    #import pprint as pp
+
+    #pp.pprint(result.base_case.inp['LCA - Smartphone GT Components'])
+    #pp.pprint(result.base_case.plugs['LCA_Plugin'].scaling_vector)
