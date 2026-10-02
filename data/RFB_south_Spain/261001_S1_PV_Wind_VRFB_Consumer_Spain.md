@@ -94,7 +94,7 @@ Gross capacity | 1000 | MWh |
 Lowest charge level | 20% | - | Lowest level to which battery can be discharged
 Capacity loss per year | 0% | - | Loss of capacity per year
 Capacity loss per full charge | 0% | - | loss per full charge equivalent
-Round trip efficiency | 80% | - | 
+Round trip efficiency | 90% | - | 
 Highest charge level | 80% | - | 
 Power | 100 | MW | 
 Charging threshold | 20% | -
@@ -112,7 +112,7 @@ Lifetime | 2 | year
 
 Name | Value | Unit
 --- | --- | ---
-Energy density | 40 | Wh/kg
+Energy density | 70 | Wh/kg
 Fraction of electrolyte to replace per year | 10% | -
 Fraction of recyclable electrolyte | 0% | -
 Electrolyte density | 1400 | kg/m3
@@ -147,8 +147,8 @@ Name | Cost_Value | Cost_Path | Cost_Unit | Frequency_Value | Frequency_Unit | C
 
 Name | Value 
 --- | ---
-Matrix Folder | data/RFB_south_Spain/261001_OBD_S2
-UUID of product | ae9327ad-ccc9-49e5-b9d4-9608f224cd1e
+Matrix Folder | data/RFB_south_Spain/S1-OBD2026
+UUID of product | 9dc809f5-ec26-4dfa-b484-0f5f83615934
 
 # LCA - Photovoltaics
 
@@ -166,16 +166,12 @@ Wind turbine | {Wind Turbine > Number of wind turbines > Value, -} | - | 40e8d79
 
 Name | Value | Unit | UUID
 --- | --- | --- | ---
-Cell stack | {Battery Cell Stack > Number of cell stacks over lifetime > Value, -} | - | a9e8e1e6-335a-4a4e-a3af-254a80a06f8d
+Cell stack | {Battery Cell Stack > Number of cell stacks over lifetime > Value, -} | - | 2b02fc87-10ca-4d4e-a2c7-680688ed916b
 Electrolyte | {Battery Electrolyte > Amount over lifetime > Value, kg} | kg | 73d7afa7-d04c-4813-9776-bdcdb8c6fbb7
 Electrolyte tank | {Battery Tank > Tank material amount > Value, kg} | kg | 60fa4449-7193-41fb-a2bf-e232422c1b74
 Periphery subsystem | {Battery Periphery > Number of periphery items > Value, -} | - | 7d8b2f6c-0d01-4be6-a8f3-d255110af1ad
 
-# LCA - Grid
 
-Name | Value | Unit | UUID
---- | --- | --- | ---
-Grid electricity | {Grid Electricity > Total used grid electricity > Value, kWh} | kWh | bd2f732e-a959-3ee5-8d81-7bbf716d8c24
 
 # Utilities
 

@@ -485,17 +485,18 @@ class RFB_Plugin:
 		reference_capacity_MWh = 8
 		reference_density_kg_per_m3 = 1350 # 506746 kg / 375.4 m3
 		reference_tank_kg = 264622
+		reference_electrolyte_mass_kg = 506746
 		self.total_tank = Quantity(
-							reference_tank_kg 
-							* 
-							self.input_dict_resolved['Battery']['Gross capacity']['Value'].unit['MWh']
-							/
-							reference_capacity_MWh
-							*
-							reference_density_kg_per_m3
-							/
-							self.input_dict_resolved['Battery Electrolyte']['Electrolyte density']['Value'].unit['kg/m3'], 
-							'kg')
+			reference_tank_kg
+			*
+			reference_density_kg_per_m3
+			/
+			self.input_dict_resolved['Battery Electrolyte']['Electrolyte density']['Value'].unit['kg/m3']
+			*
+			self.initial_electrolyte_amount.unit['kg']
+			/
+			reference_electrolyte_mass_kg,
+			'kg')
 		print("Electrolyte tank:", self.total_tank)
 
 
