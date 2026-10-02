@@ -1,4 +1,8 @@
 :root {
+    --io-col-top: 140px;
+    --io-col-medium: 150px;
+    --io-col-bottom: 120px;
+    --io-col-plugin: 56px;
     --io-header-bg: #f0f2f5;
     --io-key-bg: #eef1f6;
     --io-cell-border: #ddd;
@@ -13,6 +17,7 @@
     --io-empty-bg: #f2f2f2;
     --io-surface-bg: #ffffff;
     --io-panel-shadow: rgba(0, 0, 0, 0.15);
+
 }
 
 @media (prefers-color-scheme: dark) {
@@ -84,6 +89,28 @@ body[data-theme="dark"] {
 #io-count {
     margin-bottom: 0.75rem;
     font-size: 0.9rem;
+}
+
+/* Use the full page width. This stylesheet is only loaded on the Plugin I/O
+   page, so these overrides of the Furo layout do not affect other pages. */
+
+.sidebar-drawer {
+    width: 15em;
+}
+
+.main,
+.content,
+.content > * {
+    min-width: 0;
+}
+
+.content {
+    flex: 1;
+    width: auto;
+}
+
+.toc-drawer {
+    display: none;
 }
 
 /* Multiselect dropdown */
@@ -189,7 +216,6 @@ body[data-theme="dark"] {
 
 #io-table {
     width: max-content;
-    min-width: 100%;
     border-collapse: separate;
     border-spacing: 0;
     table-layout: fixed;
@@ -200,9 +226,69 @@ body[data-theme="dark"] {
     padding: 0.5rem 0.6rem;
     border-bottom: 1px solid var(--io-cell-border);
     border-right: 1px solid var(--io-cell-border);
+    box-sizing: border-box;
     text-align: left;
     vertical-align: top;
     overflow-wrap: anywhere;
+}
+
+/* Every column has a fixed width (min = max = width), so columns never
+   stretch or shrink with their content or the number of plugins. */
+#io-table th:nth-child(1),
+#io-table td:nth-child(1) {
+    --io-col: var(--io-col-top);
+}
+
+#io-table th:nth-child(2),
+#io-table td:nth-child(2) {
+    --io-col: var(--io-col-medium);
+}
+
+#io-table th:nth-child(3),
+#io-table td:nth-child(3) {
+    --io-col: var(--io-col-bottom);
+}
+
+#io-table th:nth-child(n + 4),
+#io-table td:nth-child(n + 4) {
+    --io-col: var(--io-col-plugin);
+    text-align: center;
+}
+
+#io-table th,
+#io-table td {
+    width: var(--io-col);
+    min-width: var(--io-col);
+    max-width: var(--io-col);
+}
+
+/* Top, Medium and Bottom stay visible when scrolling horizontally. */
+#io-table th:nth-child(-n + 3),
+#io-table td:nth-child(-n + 3) {
+    position: sticky;
+    z-index: 1;
+    background: var(--io-key-bg);
+}
+
+#io-table th:nth-child(1),
+#io-table td:nth-child(1) {
+    left: 0;
+}
+
+#io-table th:nth-child(2),
+#io-table td:nth-child(2) {
+    left: var(--io-col-top);
+}
+
+#io-table th:nth-child(3),
+#io-table td:nth-child(3) {
+    left: calc(var(--io-col-top) + var(--io-col-medium));
+}
+
+/* Header key cells stick both to the top and to the left, above everything. */
+#io-table thead th:nth-child(-n + 3) {
+    z-index: 3;
+    background: var(--io-header-bg);
 }
 
 #io-table thead th {
