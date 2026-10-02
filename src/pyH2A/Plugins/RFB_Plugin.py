@@ -299,7 +299,17 @@ class RFB_Plugin:
 					},
 					"description": "Mass of electrolyte to produce during the entire battery lifetime.",
 				},					
-			},	
+			},
+			"Battery Tank": {
+				"Tank material amount": {
+					"Value": {
+						"inserted_value": "total_tank",
+						"type": {float,},
+						"dimension": "mass",
+					},
+					"description": "Mass of material needed to build the tank.",
+				},					
+						},		
 			"RFB Lifetime Impacts": {
 				"Stack": {
 					"GWP_Value": {
@@ -465,6 +475,7 @@ class RFB_Plugin:
 												self.initial_electrolyte_amount.unit['kg']
 												, 
 												'kg')
+		print("Electrolyte:", self.total_electrolyte)
 
 		# The amount of tank for tanks assumes tanks of the same size as in the following paper
 		# "Life cycle assessment of an industrial-scale vanadium flow battery, Blume et al (2022), DOI: 10.1111/jiec.13328"
@@ -474,17 +485,19 @@ class RFB_Plugin:
 		reference_capacity_MWh = 8
 		reference_density_kg_per_m3 = 1350 # 506746 kg / 375.4 m3
 		reference_tank_kg = 264622
+		reference_electrolyte_mass_kg = 506746
 		self.total_tank = Quantity(
-							reference_tank_kg 
-							* 
-							self.input_dict_resolved['Battery']['Gross capacity']['Value'].unit['MWh']
-							/
-							reference_capacity_MWh
-							*
-							reference_density_kg_per_m3
-							/
-							self.input_dict_resolved['Battery Electrolyte']['Electrolyte density']['Value'].unit['kg/m3'], 
-							'kg')
+			reference_tank_kg
+			*
+			reference_density_kg_per_m3
+			/
+			self.input_dict_resolved['Battery Electrolyte']['Electrolyte density']['Value'].unit['kg/m3']
+			*
+			self.initial_electrolyte_amount.unit['kg']
+			/
+			reference_electrolyte_mass_kg,
+			'kg')
+		print("Electrolyte tank:", self.total_tank)
 
 
 	def calculate_stack(self):
@@ -507,6 +520,7 @@ class RFB_Plugin:
 										)), 
 										'-'
 										)
+		print("Cell stack:", self.number_cell_stacks)
 
 	def calculate_periphery(self):
 		''' Simply pick up the dictionary entry to generate a variable with the same standard name as the other elements'''

@@ -129,10 +129,15 @@ def test():
 	print(Energy(285.83 * (1000./2.) * con.Avogadro, kJmol).J)
 
 def lca():
-	pyH2A('src/tests/end_to_end/PV_Wind_Storage_main_consumer_FU.md', '.')
-	pyH2A('src/tests/end_to_end/PV_Wind_Storage_power_generation_FU.md', '.')
-	pyH2A('src/tests/end_to_end/PV_Wind_Storage_w_flex_consumer_FU.md', '.')
+	result = pyH2A('data/RFB_south_Spain/261001_sizing_S1_PV_RFB_Grid_Consumer_Spain.md', '.')
+	#pyH2A('src/tests/end_to_end/PV_Wind_Storage_main_consumer_FU.md', '.')
+	#pyH2A('src/tests/end_to_end/PV_Wind_Storage_power_generation_FU.md', '.')
+	#pyH2A('src/tests/end_to_end/PV_Wind_Storage_w_flex_consumer_FU.md', '.')
 	#print(result)
+	
+	lca_plugin = result.base_case.plugs['LCA_Plugin']
+	target = 'Climate change: total (excl. biogenic CO2) - Global warming potential (GWP100)'
+	print(lca_plugin.lca_results[target])
 
 def main():
 	#dcf_test()
