@@ -687,6 +687,9 @@ def process_path(dictionary, path, top_key, key, bottom_key):
 		try:
 			target_value = get_by_path(dictionary, parsed_path)
 
+			if isinstance(target_value, dict):      
+				return target_value                 
+			
 			# If target value is not already processed, it is processed and a quantity object is created for further use
 			if 'Processed' not in dictionary[parsed_path[0]][parsed_path[1]]:
 				target_value = create_quantity_from_user_input_and_insert(dictionary, parsed_path)
@@ -760,6 +763,8 @@ def process_cell(dictionary, top_key, key, bottom_key, cell = None, print_proces
 
 		for path in paths:
 			target_value = process_path(dictionary, path, top_key, key, bottom_key)
+			if isinstance(target_value, dict):  
+				return target_value             
 			value *= target_value
 
 		return value
