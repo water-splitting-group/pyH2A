@@ -687,15 +687,15 @@ def process_path(dictionary, path, top_key, key, bottom_key):
 		try:
 			target_value = get_by_path(dictionary, parsed_path)
 
+			if isinstance(target_value, dict):      
+				return target_value                 
+			
 			# If target value is not already processed, it is processed and a quantity object is created for further use
 			if 'Processed' not in dictionary[parsed_path[0]][parsed_path[1]]:
 				target_value = create_quantity_from_user_input_and_insert(dictionary, parsed_path)
 				
 			if isinstance(target_value, Quantity):
 				target_value = target_value.unit[unit]
-
-			elif isinstance(target_value, dict) and all(isinstance(item, Quantity) for item in target_value.values()):
-				target_value = {key:target_value[key].unit[unit] for key in target_value.keys()}				
 
 			else:
 				print('Warning: Non-numerical (non-Quantity) value retrieved at "{0} > {1} > {2}" (by "{3} > {4}"), obtained value is {5}, setting to 1'
@@ -763,11 +763,9 @@ def process_cell(dictionary, top_key, key, bottom_key, cell = None, print_proces
 
 		for path in paths:
 			target_value = process_path(dictionary, path, top_key, key, bottom_key)
-
-			if isinstance(target_value, dict):				
-				value = {key: value * val for key, val in target_value.items()}
-			else:
-				value *= target_value
+			if isinstance(target_value, dict):  
+				return target_value             
+			value *= target_value
 
 		return value
 
