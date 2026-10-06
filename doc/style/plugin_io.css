@@ -216,7 +216,6 @@ body[data-theme="dark"] {
     /* Keep the z-indexes of the sticky cells inside the table, so the
        dropdown panels of the controls open above the table. */
     isolation: isolate;
-    border: 1px solid var(--io-cell-border);
     -webkit-overflow-scrolling: touch;
 }
 
@@ -289,6 +288,15 @@ body[data-theme="dark"] {
     left: 0;
 }
 
+#io-table th:nth-child(1),
+#io-table td:nth-child(1) {
+    border-left: 1px solid var(--io-cell-border);
+}
+
+#io-table thead th:nth-child(-n + 3) {
+    border-top: 1px solid var(--io-cell-border);
+}
+
 #io-table th:nth-child(2),
 #io-table td:nth-child(2) {
     left: var(--io-col-top);
@@ -317,6 +325,7 @@ body[data-theme="dark"] {
     padding: 0;
     overflow: visible;
     border-right: none;
+    background: var(--color-background-primary, #fff);
     border-bottom: 3px solid hsl(var(--io-plugin-hue, 210) 55% 55%);
 }
 
