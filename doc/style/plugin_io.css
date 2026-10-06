@@ -211,7 +211,7 @@ body[data-theme="dark"] {
     width: 100%;
     max-height: 70vh;
     overflow: auto;
-    padding-right: 140px;
+    padding-right: 190px;
     box-sizing: border-box;
     /* Keep the z-indexes of the sticky cells inside the table, so the
        dropdown panels of the controls open above the table. */
@@ -309,7 +309,7 @@ body[data-theme="dark"] {
    a slanted band with its own borders above it, so every name stays in the
    lane of its column. */
 #io-table thead th {
-    height: 135px;
+    height: 185px;
     vertical-align: bottom;
 }
 
@@ -338,7 +338,7 @@ body[data-theme="dark"] {
     position: absolute;
     left: calc(50% - 0.45rem);
     bottom: 0.3rem;
-    max-width: 170px;
+    max-width: 250px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
