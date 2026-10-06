@@ -138,6 +138,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const pageElement = document.getElementById("io-page");
 
     const emptyElement = document.getElementById("io-empty");
+    const table = document.getElementById("io-table");
     const tableContainer = document.getElementById("io-table-container");
     const pagination = document.getElementById("io-pagination");
 
@@ -279,25 +280,30 @@ document.addEventListener("DOMContentLoaded", () => {
         return [...grouped.values()];
     }
 
+    function createHeaderCell(text) {
+        // Every header name is written in a slanted band above its column.
+        const header = document.createElement("th");
+        const band = document.createElement("div");
+        const label = document.createElement("span");
+
+        band.className = "io-header-band";
+        label.textContent = text;
+        band.appendChild(label);
+        header.appendChild(band);
+        header.title = text;
+
+        return header;
+    }
+
     function renderHeader(plugins) {
         tableHeader.innerHTML = "";
 
         ["Top", "Medium", "Bottom"].forEach(text => {
-            const header = document.createElement("th");
-            header.textContent = text;
-            tableHeader.appendChild(header);
+            tableHeader.appendChild(createHeaderCell(text));
         });
 
         plugins.forEach((plugin, index) => {
-            const header = document.createElement("th");
-            const band = document.createElement("div");
-            const label = document.createElement("span");
-
-            band.className = "io-plugin-band";
-            label.textContent = plugin;
-            band.appendChild(label);
-            header.appendChild(band);
-            header.title = plugin;
+            const header = createHeaderCell(plugin);
             header.className = "io-cell-plugin";
             header.style.setProperty("--io-plugin-hue", pluginHues.get(plugin));
 
@@ -387,6 +393,26 @@ document.addEventListener("DOMContentLoaded", () => {
         nextButton.disabled = currentPage >= totalPages;
     }
 
+    function updateHeaderRoom() {
+        // The slanted names of the last columns reach past the table. Keep
+        // exactly the room they need there, so no name is cut and no more
+        // empty space than necessary is added after the last column.
+        const tableRight = table.getBoundingClientRect().right;
+        const labelRight = Math.max(
+            tableRight,
+            ...[...tableHeader.querySelectorAll(".io-header-band > span")].map(
+                label => label.getBoundingClientRect().right
+            )
+        );
+
+        // If the whole slanted band fits next to the table, keep it uncut.
+        const bandReach = tableHeader.offsetHeight;
+        const bandFits = table.offsetWidth + bandReach <= tableContainer.clientWidth;
+        const room = bandFits ? bandReach : Math.ceil(labelRight - tableRight) + 4;
+
+        table.style.setProperty("--io-header-room", `${room}px`);
+    }
+
     function render() {
         filteredRows = getFilteredRows();
 
@@ -405,6 +431,10 @@ document.addEventListener("DOMContentLoaded", () => {
         emptyElement.style.display = hasRows ? "none" : "block";
         tableContainer.style.display = hasRows ? "block" : "none";
         pagination.style.display = hasRows ? "flex" : "none";
+
+        if (hasRows) {
+            updateHeaderRoom();
+        }
     }
 
     function applyFilters() {
@@ -413,6 +443,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     searchInput.addEventListener("input", applyFilters);
+    window.addEventListener("resize", updateHeaderRoom);
     optionalCheckbox.addEventListener("change", applyFilters);
 
     previousButton.addEventListener("click", () => {
