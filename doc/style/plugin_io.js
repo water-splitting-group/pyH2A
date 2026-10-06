@@ -290,16 +290,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
         plugins.forEach((plugin, index) => {
             const header = document.createElement("th");
+            const band = document.createElement("div");
             const label = document.createElement("span");
 
+            band.className = "io-plugin-band";
             label.textContent = plugin;
-            header.appendChild(label);
+            band.appendChild(label);
+            header.appendChild(band);
             header.title = plugin;
             header.className = "io-cell-plugin";
             header.style.setProperty("--io-plugin-hue", pluginHues.get(plugin));
 
-            // A slanted name reaches over the columns to its right, so each
-            // header cell is stacked above the ones to its right.
+            // The slanted band reaches over the header cells to its right, so
+            // each header cell is stacked above the ones to its right.
             header.style.zIndex = String(2 + plugins.length - index);
 
             tableHeader.appendChild(header);

@@ -211,8 +211,11 @@ body[data-theme="dark"] {
     width: 100%;
     max-height: 70vh;
     overflow: auto;
-    padding-right: 110px;
+    padding-right: 140px;
     box-sizing: border-box;
+    /* Keep the z-indexes of the sticky cells inside the table, so the
+       dropdown panels of the controls open above the table. */
+    isolation: isolate;
     border: 1px solid var(--io-cell-border);
     -webkit-overflow-scrolling: touch;
 }
@@ -302,7 +305,9 @@ body[data-theme="dark"] {
     background: var(--io-header-bg);
 }
 
-/* Plugin names are written diagonally (45 degrees) above their column. */
+/* Plugin names are written diagonally (45 degrees). Each plugin column gets
+   a slanted band with its own borders above it, so every name stays in the
+   lane of its column. */
 #io-table thead th {
     height: 135px;
     vertical-align: bottom;
@@ -311,18 +316,36 @@ body[data-theme="dark"] {
 #io-table th.io-cell-plugin {
     padding: 0;
     overflow: visible;
-    white-space: nowrap;
+    border-right: none;
     border-bottom: 3px solid hsl(var(--io-plugin-hue, 210) 55% 55%);
 }
 
-#io-table th.io-cell-plugin > span {
-    display: inline-block;
-    max-width: 150px;
+.io-plugin-band {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    border-left: 1px solid var(--io-cell-border);
+    border-right: 1px solid var(--io-cell-border);
+    background: var(--io-header-bg);
+    transform-origin: bottom left;
+    transform: skewX(-45deg);
+}
+
+.io-plugin-band > span {
+    position: absolute;
+    left: calc(50% - 0.45rem);
+    bottom: 0.3rem;
+    max-width: 170px;
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
     font-size: 0.8rem;
     transform-origin: bottom left;
-    transform: translate(calc(var(--io-col-plugin) / 2), -0.4rem) rotate(-45deg);
+    /* undo the skew of the band, then turn the text along the band */
+    transform: skewX(45deg) rotate(-45deg);
 }
 
 .io-cell-key {
