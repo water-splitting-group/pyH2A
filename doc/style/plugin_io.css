@@ -1,8 +1,10 @@
 :root {
+    /* Fixed column widths (also used as offsets of the sticky key columns) */
     --io-col-top: 140px;
     --io-col-medium: 150px;
     --io-col-bottom: 120px;
     --io-col-plugin: 56px;
+
     --io-header-bg: #f0f2f5;
     --io-key-bg: #eef1f6;
     --io-cell-border: #ddd;
@@ -17,7 +19,6 @@
     --io-empty-bg: #f2f2f2;
     --io-surface-bg: #ffffff;
     --io-panel-shadow: rgba(0, 0, 0, 0.15);
-
 }
 
 @media (prefers-color-scheme: dark) {
@@ -89,28 +90,6 @@ body[data-theme="dark"] {
 #io-count {
     margin-bottom: 0.75rem;
     font-size: 0.9rem;
-}
-
-/* Use the full page width. This stylesheet is only loaded on the Plugin I/O
-   page, so these overrides of the Furo layout do not affect other pages. */
-
-.sidebar-drawer {
-    width: 15em;
-}
-
-.main,
-.content,
-.content > * {
-    min-width: 0;
-}
-
-.content {
-    flex: 1;
-    width: auto;
-}
-
-.toc-drawer {
-    display: none;
 }
 
 /* Multiselect dropdown */
@@ -204,12 +183,36 @@ body[data-theme="dark"] {
     filter: var(--io-row-hover-filter);
 }
 
+/* Use the full page width. This stylesheet is only loaded on the Plugin I/O
+   page, so these overrides of the Furo layout do not affect other pages. */
+
+.sidebar-drawer {
+    width: 15em;
+}
+
+.main,
+.content,
+.content > * {
+    min-width: 0;
+}
+
+.content {
+    flex: 1;
+    width: auto;
+}
+
+.toc-drawer {
+    display: none;
+}
+
 /* Table */
 
 #io-table-container {
     width: 100%;
     max-height: 70vh;
     overflow: auto;
+    padding-right: 110px;
+    box-sizing: border-box;
     border: 1px solid var(--io-cell-border);
     -webkit-overflow-scrolling: touch;
 }
@@ -230,6 +233,14 @@ body[data-theme="dark"] {
     text-align: left;
     vertical-align: top;
     overflow-wrap: anywhere;
+}
+
+#io-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--io-header-bg);
+    font-weight: bold;
 }
 
 /* Every column has a fixed width (min = max = width), so columns never
@@ -287,49 +298,31 @@ body[data-theme="dark"] {
 
 /* Header key cells stick both to the top and to the left, above everything. */
 #io-table thead th:nth-child(-n + 3) {
-    z-index: 3;
+    z-index: 1000;
     background: var(--io-header-bg);
 }
 
+/* Plugin names are written diagonally (45 degrees) above their column. */
 #io-table thead th {
-    position: sticky;
-    top: 0;
-    z-index: 2;
-    background: var(--io-header-bg);
-    font-weight: bold;
-}
-
-#io-table th:nth-child(1),
-#io-table td:nth-child(1) {
-    width: 140px;
-}
-
-#io-table th:nth-child(2),
-#io-table td:nth-child(2) {
-    width: 150px;
-}
-
-#io-table th:nth-child(3),
-#io-table td:nth-child(3) {
-    width: 120px;
-}
-
-#io-table th:nth-child(n + 4),
-#io-table td:nth-child(n + 4) {
-    width: 56px;
-    text-align: center;
+    height: 135px;
+    vertical-align: bottom;
 }
 
 #io-table th.io-cell-plugin {
-    writing-mode: vertical-rl;
-    transform: rotate(180deg);
-    height: 140px;
-    text-align: left;
-    font-size: 0.8rem;
+    padding: 0;
+    overflow: visible;
     white-space: nowrap;
+    border-bottom: 3px solid hsl(var(--io-plugin-hue, 210) 55% 55%);
+}
+
+#io-table th.io-cell-plugin > span {
+    display: inline-block;
+    max-width: 150px;
     overflow: hidden;
     text-overflow: ellipsis;
-    border-top: 3px solid hsl(var(--io-plugin-hue, 210) 55% 55%);
+    font-size: 0.8rem;
+    transform-origin: bottom left;
+    transform: translate(calc(var(--io-col-plugin) / 2), -0.4rem) rotate(-45deg);
 }
 
 .io-cell-key {
