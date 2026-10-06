@@ -320,45 +320,6 @@ document.addEventListener("DOMContentLoaded", () => {
             bottomCell.className = "io-cell-key";
             tableRow.appendChild(bottomCell);
 
-            plugins.forEach(plugin => {
-                const pluginCell = document.createElement("td");
-                const pluginRow = variable.plugins[plugin];
-
-                pluginCell.style.setProperty(
-                    "--io-plugin-hue",
-                    pluginHues.get(plugin)
-                );
-
-                if (pluginRow) {
-                    const direction = pluginRow.direction;
-                    const optional = isOptional(pluginRow);
-                    const titleParts = [`${plugin}: ${direction}`];
-
-                    if (optional) {
-                        titleParts.push("optional");
-                    }
-
-                    if (pluginRow.description) {
-                        titleParts.push(pluginRow.description);
-                    }
-
-                    pluginCell.textContent =
-                        (directionAbbreviations[direction] || direction) +
-                        (optional ? "*" : "");
-                    pluginCell.title = titleParts.join("\n");
-                    pluginCell.className =
-                        directionClasses[direction] || "io-cell-empty";
-
-                    if (optional) {
-                        pluginCell.classList.add("io-cell-optional");
-                    }
-                } else {
-                    pluginCell.className = "io-cell-empty";
-                }
-
-                tableRow.appendChild(pluginCell);
-            });
-
             tableBody.appendChild(tableRow);
         });
 

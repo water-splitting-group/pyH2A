@@ -76,11 +76,6 @@ plugin during the documentation build
 
        <div id="io-count"></div>
 
-       <div id="io-legend">
-           I = input, O = output, I/O = input and output,
-           * = optional for this plugin. Hover a cell for its description.
-       </div>
-
        <div id="io-table-container">
 
            <table id="io-table">

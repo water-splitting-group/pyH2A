@@ -358,7 +358,6 @@ body[data-theme="dark"] {
 
 /* Optional for this plugin (per cell, not per variable) */
 .io-cell-optional {
-    font-style: italic;
     outline: 1px dashed var(--io-control-border);
     outline-offset: -3px;
 }
