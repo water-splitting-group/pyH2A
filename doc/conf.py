@@ -40,7 +40,8 @@ extensions = ['sphinx.ext.autodoc',
     		  'sphinx.ext.coverage',
     		  'sphinx.ext.viewcode',
     		  'numpydoc',
-    		  'autodocsumm'
+    		  'autodocsumm',
+    		  'pyH2A.Utilities.io_information_generator'
 ]
 
 autodoc_default_options = {
