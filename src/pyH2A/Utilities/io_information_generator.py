@@ -108,7 +108,7 @@ def collect_rows():
     for path in sorted(Path(plugins.__file__).parent.glob('*_Plugin.py')):
         plugin = instantiate_plugin_for_docs(path.stem)
         rows += collect_plugin_rows(plugin.input_dict, plugin.output_dict,
-                                    path.stem.removesuffix('_Plugin'))
+                                    path)
 
     return sorted(rows, key=lambda row: (row['top'], row['medium'], row['bottom'], row['plugin']))
 
