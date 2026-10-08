@@ -111,6 +111,17 @@ class Photovoltaic_Plugin:
 		}
 
 		self.output_dict = {
+			"Photovoltaics": {
+							"Module area": {
+								"Value": {
+									"inserted_value": "area",
+									"type": {float,},
+									"dimension": "area",
+								},
+								"description": "Total area of PV modules.",
+								"optional": False,
+							},
+						},
 			"Power Generation": {
 				"PV hourly power generation": {
 					"Value": {
@@ -237,3 +248,4 @@ class Photovoltaic_Plugin:
 		self.area = Quantity(self.input_dict_resolved['Photovoltaic']['Nominal power']['Value'].unit['kW'] 
 							 / peak_kW_per_m2, 
 					'm2')
+		print("PV:", self.area)
