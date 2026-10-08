@@ -447,7 +447,7 @@ class Photocatalytic_Plugin:
 											thickness_m = self.input_dict_resolved['Reactor Baggies']['Filling height']['Value'].unit['m'], # only the slurry is assumed to have thermal inertia
 											Cp_J_kg_K = 4.2e3, # slurry Cp. Could later come from water + catalyst mixture actual properties. 
 											Irrad_in_W_m2 = self.input_dict_resolved['Solar Input']['Hourly']['Value'].unit['Wh/m2'],											
-											eta_irrad = 0.6, # assumed: 60% of incident irradiation is absorbed and heats up the slurry
+											eta_irrad = 0.7, # assumed: 70% of incident irradiation is absorbed and heats up the slurry
 											lambda_soil_W_m_K = 1, # assumed
 											Cp_soil_J_kg_K = 1200, # assumed
 											rho_soil_kg_m3 = 1700, # assumed											
@@ -465,7 +465,9 @@ class Photocatalytic_Plugin:
 		#print('min temperature difference °C ', np.min(abs_diff))
 		#print('max temperature difference °C ', np.max(abs_diff))
 	
-
+		self.STH_calculation()
+		plt.plot(self.STH_efficiency.unit['-'])
+		plt.show()				
 		self.hydrogen_production()
 		self.baggie_cost()
 		self.catalyst_cost()
@@ -476,11 +478,25 @@ class Photocatalytic_Plugin:
 		
 		output_inserter_function(self.output_dict, self, dcf, 'Photocatalytic_Plugin') 
 
+	def STH_calculation(self):
+		# Kinetic law  according to 'Comparative techno-economic and land-use assessment of photocatalytic water splitting and PV–electrolysis systems for solar hydrogen production', Choi et. al, 2026
+		
+		T_peak_K = 343.15 # temperature where the STH efficiency is maximum, hardcoded for the moment
+		log_eta = np.where(self.reactor_hourly_temperature.unit['K'] <= T_peak_K, 
+		                   -7474.2*(1/self.reactor_hourly_temperature.unit['K'] - 1/T_peak_K), 
+						   813.47*(1/self.reactor_hourly_temperature.unit['K'] - 1/T_peak_K))
+
+		STH_efficiency = np.where((self.reactor_hourly_temperature.unit['degC'] > 0) & (self.reactor_hourly_temperature.unit['degC'] < 81), 
+		                          self.input_dict_resolved['Solar-to-Hydrogen Efficiency']['STH']['Value'].unit['-'] * np.exp(log_eta), 
+								  0) 
+		
+		self.STH_efficiency = Quantity(STH_efficiency, '-')
+
 	def hydrogen_production(self):
 		'''Calculation of hydrogen produced per hour and per year, per baggie (in kg).
 		'''
 		self.hourly_mol_rate_H2_per_surface = Quantity(self.input_dict_resolved['Solar Input']['Hourly']['Value'].unit['Wh/m2']
-														* self.input_dict_resolved['Solar-to-Hydrogen Efficiency']['STH']['Value'].unit['-'] 
+														* self.STH_efficiency.unit['-'] 
 														/ self.H2_molecule_energy.unit['Wh/mol'], 
 														'mol/m2')
 
