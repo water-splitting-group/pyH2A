@@ -1,7 +1,10 @@
 import pytest
 import numpy as np
 
-from pyH2A.Plugins.Discounted_Cash_Flow_Plugin import Discounted_Cash_Flow_Plugin
+from pyH2A.Plugins.Discounted_Cash_Flow_Plugin import (Discounted_Cash_Flow_Plugin,
+                                                       discount_cash_flow,
+                                                       numpy_npv,
+                                                       payback_time)
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
 from pyH2A.Utilities.functional_unit import resolve_functional_unit
 
@@ -232,6 +235,29 @@ class DummyDCF:
                         "Taxes": Quantity(0.20053167813899309, 'USD/kg'),
                         }
                 },
+                "cash_flow": {
+                    "pre_tax_cash_flow": Quantity(
+                        np.array([-464417.5317185698, -314417.5317185698, 172378.9620032975,
+                                  310655.6997431697, 310626.16437240446, 322776.03829422407,
+                                  59511.6522030842]), 'USD'),
+                    "annual_cash_flow": Quantity(
+                        np.array([-460706.45905420993, -310706.45905420993, 173226.10784108817,
+                                  312397.3976811809, 278411.82269408944, 269527.1738559759,
+                                  19876.86636684079]), 'USD'),
+                    "cumulative_cash_flow": Quantity(
+                        np.array([-460706.45905420993, -771412.9181084199, -598186.8102673317,
+                                  -285789.41258615075, -7377.589892061311, 262149.5839639146,
+                                  282026.4503307554]), 'USD'),
+                    "annual_discounted_cash_flow": Quantity(
+                        np.array([-460706.45905420993, -282050.1625401324, 142746.50801801996,
+                                  233687.5770726577, 189056.65279903432, 166143.3340193159,
+                                  11122.549685314116]), 'USD'),
+                    "cumulative_discounted_cash_flow": Quantity(
+                        np.array([-460706.45905420993, -742756.6215943424, -600010.1135763224,
+                                  -366322.53650366474, -177265.88370463043, -11122.54968531453,
+                                  -4.147295840084553e-10]), 'USD'),
+                    "payback_time": Quantity(4.027372341669726, 'year'),
+                },
             },
         }
     ],
@@ -252,3 +278,147 @@ def test_discounted_cash_flow_plugin(case):
 
     check_dicts(plugin.npv_dict, expected["npv_dict"], tolerance=tolerance)
     check_dicts(plugin.contributions, expected["contributions"], tolerance=tolerance)
+
+    obtained_cash_flow = {key: getattr(plugin, key) for key in expected["cash_flow"]}
+    check_dicts(obtained_cash_flow, expected["cash_flow"], tolerance=1e-6)
+
+
+@pytest.mark.parametrize(
+    "case",
+    [
+        {
+            "input": {
+                "plant_years_relative": np.arange(-2, 5),
+                "analysis_years_ones": np.ones(7),
+                "construction_years_ones": np.ones(2),
+                "start_index": 2,
+                "output_at_gate": np.array([100_000.0, 100_000.0, 100_000.0, 100_000.0, 100_000.0]),
+                "inflation_factor_full": (1 + 0.02) ** np.arange(-2, 5),
+                "inflation_correction": 1.01,
+                "financial_input_values": {
+                    "Fraction equity financing": {"Value": 0.6, "Unit": "-"},
+                    "Interest rate on debt": {"Value": 0.05, "Unit": "-"},
+                    "Depreciation schedule length": {"Value": 5, "Unit": "year"},
+                    "After-tax real IRR": {"Value": 0.08, "Unit": "-"},
+                    "Inflation rate": {"Value": 0.02, "Unit": "-"},
+                    "Federal taxes": {"Value": 0.21, "Unit": "-"},
+                    "State taxes": {"Value": 0.06, "Unit": "-"},
+                    "Start-up time": {"Value": 1, "Unit": "year"},
+                    "Fraction of revenues during start-up": {"Value": 0.75, "Unit": "-"},
+                    "Decommissioning costs (fraction of depreciable capital investment)": {
+                        "Value": 0.10, "Unit": "-"},
+                    "Salvage value (fraction of total capital investment)": {
+                        "Value": 0.10, "Unit": "-"},
+                    "Working Capital (fraction of yearly change in operating costs)": {
+                        "Value": 0.15, "Unit": "-"},
+                },
+                "annual_equity_depreciable_capital": np.array(
+                    [400_000.0, 300_000.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+                ),
+                "initial_equity_depreciable_capital": 700_000.0,
+                "depreciable_capital_inflation_corrected": 750_000.0,
+                "annual_non_depreciable_capital": np.array(
+                    [50_000.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+                ),
+                "non_depreciable_capital_inflation_corrected": 55_000.0,
+                "annual_replacement_costs": np.array(
+                    [0.0, 0.0, 5_000.0, 0.0, 6_000.0, 0.0, 7_000.0]
+                ),
+                "annual_fixed_operating_costs": np.array(
+                    [0.0, 0.0, 80_000.0, 82_000.0, 84_000.0, 86_000.0, 88_000.0]
+                ),
+                "annual_variable_operating_costs": np.array(
+                    [0.0, 0.0, 40_000.0, 41_000.0, 42_000.0, 43_000.0, 44_000.0]
+                ),
+            },
+        }
+    ],
+)
+def test_discounted_cash_flow_plugin_cash_flow_consistency(case):
+    """Check that the cash flow data exposed by the plugin is internally consistent and
+    that it is inserted into `dcf.inp`."""
+
+    dcf = DummyDCF(**case["input"])
+    plugin = Discounted_Cash_Flow_Plugin(dcf, print_info=False)
+
+    annual = plugin.annual_cash_flow.unit['USD']
+    discounted = plugin.annual_discounted_cash_flow.unit['USD']
+    cumulative = plugin.cumulative_cash_flow.unit['USD']
+
+    # Net cash flow is the pre-tax cash flow reduced by the taxes of the same year
+    np.testing.assert_allclose(annual,
+                               plugin.pre_tax_cash_flow.unit['USD'] - plugin.annual_taxes,
+                               atol=1e-6)
+
+    # Cumulative cash flows are the running sums of the respective yearly cash flows
+    np.testing.assert_allclose(cumulative, np.cumsum(annual), atol=1e-6)
+    np.testing.assert_allclose(plugin.cumulative_discounted_cash_flow.unit['USD'],
+                               np.cumsum(discounted), atol=1e-6)
+
+    # Cash flow arrays cover the full analysis period (construction and operation years)
+    number_of_analysis_years = len(case["input"]["analysis_years_ones"])
+    assert len(annual) == number_of_analysis_years
+    assert len(cumulative) == number_of_analysis_years
+
+    # The levelized cost of product is defined by the net present value of the after-tax,
+    # post-depreciation cash flow being zero
+    assert np.sum(discounted) == pytest.approx(0.0, abs=1e-6)
+    assert plugin.cumulative_discounted_cash_flow.unit['USD'][-1] == pytest.approx(0.0, abs=1e-6)
+
+    # Payback time is the (interpolated) point at which the cumulative cash flow turns positive
+    payback = plugin.payback_time.unit['year']
+    idx = int(np.floor(payback))
+
+    assert cumulative[idx] < 0
+    assert cumulative[idx + 1] >= 0
+
+    # Cash flow data is accessible through `dcf.inp`
+    np.testing.assert_allclose(dcf.inp['Cash Flow']['Annual']['Value'].unit['USD'], annual)
+    np.testing.assert_allclose(dcf.inp['Cash Flow']['Cumulative']['Value'].unit['USD'], cumulative)
+    assert dcf.inp['Cash Flow']['Payback time']['Value'].unit['year'] == pytest.approx(payback)
+
+
+@pytest.mark.parametrize(
+    "cumulative_cash_flow, expected",
+    [
+        # Sign change halfway between year 2 and year 3
+        (np.array([-100.0, -75.0, -50.0, 50.0, 100.0]), 2.5),
+        # Sign change directly at a year, no interpolation required
+        (np.array([-100.0, -50.0, 0.0, 50.0, 100.0]), 2.0),
+        # Cumulative cash flow is positive from the start
+        (np.array([10.0, 20.0, 30.0, 40.0, 50.0]), 0.0),
+        # Cumulative cash flow never turns positive
+        (np.array([-100.0, -75.0, -50.0, -25.0, -10.0]), np.nan),
+    ],
+    ids=["interpolated", "exact", "positive_from_start", "never_positive"],
+)
+def test_payback_time(cumulative_cash_flow, expected):
+    """Check determination of the payback time from a cumulative cash flow."""
+
+    years = np.arange(len(cumulative_cash_flow))
+    obtained = payback_time(years, cumulative_cash_flow)
+
+    if np.isnan(expected):
+        assert np.isnan(obtained)
+    else:
+        assert obtained == pytest.approx(expected)
+
+
+def test_payback_time_with_shifted_time_axis():
+    """Check that the payback time is given on the provided time axis."""
+
+    cumulative_cash_flow = np.array([-100.0, -75.0, -50.0, 50.0, 100.0])
+
+    assert payback_time(np.arange(-2, 3), cumulative_cash_flow) == pytest.approx(0.5)
+
+
+def test_discount_cash_flow():
+    """Check that discounting each year individually is consistent with `numpy_npv`."""
+
+    rate = 0.08
+    values = np.array([-1000.0, 200.0, 300.0, 400.0, 500.0])
+
+    discounted = discount_cash_flow(rate, values)
+
+    np.testing.assert_allclose(discounted, values / (1 + rate) ** np.arange(len(values)))
+    assert np.sum(discounted) == pytest.approx(numpy_npv(rate, values))
