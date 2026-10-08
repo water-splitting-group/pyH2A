@@ -520,7 +520,7 @@ class RFB_Plugin:
 										)), 
 										'-'
 										)
-		print("Cell stack:", self.number_cell_stacks)
+		print("Cell stack:", self.total_stack)
 
 	def calculate_periphery(self):
 		''' Simply pick up the dictionary entry to generate a variable with the same standard name as the other elements'''
