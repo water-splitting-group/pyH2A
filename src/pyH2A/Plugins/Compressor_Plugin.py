@@ -84,6 +84,17 @@ class Compressor_Plugin:
                 },    
             },
             "Main Stream": {
+				"Is independent from year":  {
+                    "Value": {
+                        "type": {int,float,},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "dimensionless",
+                    },
+                    "optional": True,
+                    "description": "if True: all the years behave identically. Else: each year has to be solved."
+                },		                
                 "Temperature": {
                     "Value": {
                         "type": {dict,},
@@ -248,7 +259,13 @@ class Compressor_Plugin:
         self.hourly_shaft_energy = {}
         self.yearly_shaft_energy = np.zeros_like(self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-'])
         self.peak_shaft_power = 0
-        for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']:
+
+        if ('Is independent from year' in self.input_dict_resolved['Main Stream']) and (bool(self.input_dict_resolved['Main Stream']['Is independent from year']['Value'].unit['-']) is True):
+            years = np.array([0])
+        else: 
+            years = self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']
+
+        for year in years:
             year = round(year)
             self.outlet_temperature[year] = Quantity(
                                             self.input_dict_resolved['Main Stream']['Temperature']['Value'][year].unit['K']
@@ -280,6 +297,12 @@ class Compressor_Plugin:
                                                 np.sum(self.hourly_shaft_energy[year].unit['J']))
 
             self.peak_shaft_power = max(self.peak_shaft_power, np.max(self.hourly_shaft_energy[year].unit['Wh']))
+
+        if ('Is independent from year' in self.input_dict_resolved['Main Stream']) and (bool(self.input_dict_resolved['Main Stream']['Is independent from year']['Value'].unit['-']) is True):
+            self.outlet_temperature = {round(year): self.outlet_temperature[0] for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']}
+            self.outlet_enthalpy = {round(year): self.outlet_enthalpy[0] for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']}
+            self.hourly_shaft_energy = {round(year): self.hourly_shaft_energy[0] for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']}
+            self.yearly_shaft_energy = self.yearly_shaft_energy[0]*np.ones_like(self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-'])
 
         self.yearly_shaft_energy = Quantity(self.yearly_shaft_energy, 'J')
         self.peak_shaft_power = Quantity(self.peak_shaft_power, 'W')

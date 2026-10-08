@@ -103,6 +103,17 @@ class Cooler_Condenser_Plugin:
                 },    
             },    
             "Main Stream": {
+				"Is independent from year":  {
+                    "Value": {
+                        "type": {int,float,},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "dimensionless",
+                    },
+                    "optional": True,
+                    "description": "if True: all the years behave identically. Else: each year has to be solved."
+                },		                
                 "Temperature": {
                     "Value": {
                         "type": {dict,},
@@ -300,7 +311,12 @@ class Cooler_Condenser_Plugin:
         self.outlet_enthalpy = {}
         self.hourly_condensed_water = {}
 
-        for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']:
+        if ('Is independent from year' in self.input_dict_resolved['Main Stream']) and (bool(self.input_dict_resolved['Main Stream']['Is independent from year']['Value'].unit['-']) is True):
+            self.years = np.array([0])
+        else: 
+            self.years = self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']        
+
+        for year in self.years:
             year = round(year)
 
             self.outlet_temperature[year] = Quantity(np.full(8760, self.input_dict_resolved[self.cooler_name]['Hot outlet temperature']['Value'].unit['K']), 'K')
@@ -362,11 +378,20 @@ class Cooler_Condenser_Plugin:
                             composition_basis='mass')
         self.condensed_water_enthalpy = Quantity(h_liq.unit['J'], 'J/kg')
 
-        self.yearly_condensed_water_mass = Quantity(self.input_dict_resolved['Technical Operating Parameters and Specifications']['Operating capacity factor']['Value'].unit['-'] 
-                                                    * 
-                                                    np.array([np.sum(self.hourly_condensed_water[round(year)].unit['kg']) 
-                                                    for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']]),
-                                                    'kg')
+        self.yearly_condensed_water_mass = (self.input_dict_resolved['Technical Operating Parameters and Specifications']['Operating capacity factor']['Value'].unit['-'] 
+                                            * 
+                                            np.array([np.sum(self.hourly_condensed_water[round(year)].unit['kg']) 
+                                            for year in self.years]))
+
+        if ('Is independent from year' in self.input_dict_resolved['Main Stream']) and (bool(self.input_dict_resolved['Main Stream']['Is independent from year']['Value'].unit['-']) is True):
+            self.outlet_temperature = {round(year): self.outlet_temperature[0] for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']}
+            self.outlet_mass_fraction = {round(year): self.outlet_mass_fraction[0] for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']}
+            self.hourly_condensed_water = {round(year): self.hourly_condensed_water[0] for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']}
+            self.hourly_mass_flow = {round(year): self.hourly_mass_flow[0] for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']}
+            self.outlet_enthalpy = {round(year): self.outlet_enthalpy[0] for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']}
+            self.yearly_condensed_water_mass = self.yearly_condensed_water_mass[0]*np.ones_like(self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-'])
+
+        self.yearly_condensed_water_mass = Quantity(self.yearly_condensed_water_mass, 'kg')
 
     def Energy_balance(self):
 
@@ -378,7 +403,7 @@ class Cooler_Condenser_Plugin:
         self.yearly_coolant_mass = np.zeros_like(self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-'])
         self.yearly_pumping_energy = np.zeros_like(self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-'])
 
-        for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']:
+        for year in self.years:
             year = round(year)
 
             hourly_heat_duty_J = (self.input_dict_resolved['Main Stream']['Mass flow (hourly)']['Value'][year].unit['kg']
@@ -421,6 +446,12 @@ class Cooler_Condenser_Plugin:
                                                 / 
                                                 pump_efficiency)
 
+        if ('Is independent from year' in self.input_dict_resolved['Main Stream']) and (bool(self.input_dict_resolved['Main Stream']['Is independent from year']['Value'].unit['-']) is True):
+            self.hourly_heat_duty = {round(year): self.hourly_heat_duty[0] for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']}
+            self.hourly_coolant_mass = {round(year): self.hourly_coolant_mass[0] for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']}
+            self.yearly_coolant_mass = self.yearly_coolant_mass[0]*np.ones_like(self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-'])
+            self.yearly_pumping_energy = self.yearly_pumping_energy[0]*np.ones_like(self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-'])
+
         self.yearly_coolant_mass = Quantity(self.yearly_coolant_mass, 'kg')
         self.yearly_pumping_energy = Quantity(self.yearly_pumping_energy, 'J')
 
@@ -432,7 +463,7 @@ class Cooler_Condenser_Plugin:
         peak_heat_duty_W = 0
         T_in_peak = 0
 
-        for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']:
+        for year in self.years:
             year = round(year)
 
             peak_mass_flowrate_kg_h = max(np.max(self.hourly_mass_flow[round(year)].unit['kg']), 

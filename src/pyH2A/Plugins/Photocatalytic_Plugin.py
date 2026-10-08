@@ -376,6 +376,15 @@ class Photocatalytic_Plugin:
 				},
 			},
 			"Main Stream": {
+				"Is independent from year": {
+					"Value": {
+						"inserted_value": "year_independence",
+						"type": {int, float,},
+						"dimension": "dimensionless",
+					},
+					"optional": False,
+					"description": "if True: all the years behave identically. Else: each year has to be solved"
+				},				
 				"Temperature": {
 					"Value": {
 						"inserted_value": "outlet_temperature",
@@ -622,6 +631,7 @@ class Photocatalytic_Plugin:
 
 	def outlet_flow_properties(self):
 		'''Establishes the thermophysical characteristics of the fluid leaving the reactor, for downstream process sizing'''
+		self.year_independence = Quantity(True, '-')
 		# Pressure and temperatue conditions
 		self.outlet_pressure = Quantity(1.01315e5, 'Pa') # hardcoded for the moment, could become an input later
 
