@@ -1,5 +1,6 @@
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+import numpy as np
 
 class PSA_refactored_Plugin:
 	'''Simulating pressure swing adsorption (PSA) for removal of a adsorbate gas
@@ -27,17 +28,17 @@ class PSA_refactored_Plugin:
 								"optional": False,
 								"description": "Mixture inlet mass fraction of each component."
 							}, 
-							"Peak mass flowrate": {
+							"Mass flow (hourly)": {
 								"Value": {
-									"type": {int,float,},
+									"type": {dict,},
 									"bounds": (0, None),
 								},
 								"Unit": {
-									"dimension": "mass/time",
+									"dimension": "mass",
 								},
 								"optional": False,
-								"description": "Mixture inlet mass flowrate."
-							},    
+								"description": "Mixture outlet mass flow, dictionary of years whose items are hourly arrays."
+							},      
 			},			
 			"PSA": {
 				"Adsorbate": {
@@ -212,9 +213,9 @@ class PSA_refactored_Plugin:
 
 		output_inserter_function(self.output_dict, self, dcf, 'PSA_Plugin')
 
-		print('adsorbent_mass', self.adsorbent_mass)
-		print('bed_volume', self.bed_volume)
-		print('psa_cost', self.psa_cost)
+		#print('adsorbent_mass', self.adsorbent_mass)
+		#print('bed_volume', self.bed_volume)
+		#print('psa_cost', self.psa_cost)
 
 	def calculate_bed_volume(self):
 		'''Calculation of required adsorbent mass and bed volume, across all beds.
@@ -229,11 +230,12 @@ class PSA_refactored_Plugin:
 
 		Adsorbate = self.input_dict_resolved['PSA']['Adsorbate']['Value']
 
-		adsorbate_mass_flow_kg_per_s = (self.input_dict_resolved['Main Stream']['Peak mass flowrate']['Value'].unit['kg/s']
+		peak_flowrate_kg_s = self.input_dict_resolved['Main Stream']['Mass flow (hourly)']['Value'][0].unit['kg']/3600
+		adsorbate_mass_flow_kg_per_s = (peak_flowrate_kg_s
 										*
-										self.input_dict_resolved['Main Stream']['Mass fraction']['Value'][Adsorbate].unit['-'])
+										self.input_dict_resolved['Main Stream']['Mass fraction']['Value'][0][Adsorbate].unit['-'])
 
-		adsorbate_kg_per_cycle_per_bed = (adsorbate_mass_flow_kg_per_s
+		adsorbate_kg_per_cycle_per_bed = (np.max(adsorbate_mass_flow_kg_per_s)
 									  * self.input_dict_resolved['PSA']['Adsorption time']['Value'].unit['s'])
 
 		adsorbent_dict = self.input_dict_resolved['PSA Adsorbent Parameters']

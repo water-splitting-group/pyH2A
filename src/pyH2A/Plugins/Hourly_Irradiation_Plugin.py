@@ -306,7 +306,7 @@ def import_hourly_data(file_name):
 
 	data_dict = {'Time': Quantity(data[:,0], '-'), 
 				 'Temperature': Quantity(data[:,1], 'degC'), 
-				 "Wind speed": Quantity(data[:,7]/10**0.14, 'm/s'), # wind speed is measured at 10 m elevation, we take it at 1 m
+				 "Wind speed": Quantity(data[:,7]*0.1**0.14, 'm/s'), # wind speed is measured at 10 m elevation, we take it at 1 m
 				 'Global Horizontal Irradiance':  Quantity(data[:,3], 'W/m2'),
 				 'Direct Normal Irradiance': Quantity(data[:,4], 'W/m2'), 
 				 'Diffuse Horizontal Irradiance': Quantity(data[:,5], 'W/m2')}
