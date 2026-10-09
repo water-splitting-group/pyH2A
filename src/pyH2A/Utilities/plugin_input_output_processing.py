@@ -137,6 +137,11 @@ TEMPLATE_BASE_REQUIREMENTS = {
 		'Origin': 'Generate_Template_Input_File',
 		'Comment Unit': 'Unit in which all results are reported. It has to name the product it refers to as bracketed reference, e.g. kg[H2].'
 	},
+	f'Input files to merge > {WILDCARD_MARKER} > Value': {
+		'Type': 'str, optional', 
+		'Origin': 'Generate_Template_Input_File',
+		'Comment Value': 'Path to input file which is merged into this input file, e.g. pyH2A.Config~Defaults_TEA.md. Files listed first have higher priority.'
+	},
 }
 
 class Generate_Template_Input_File:
@@ -167,11 +172,11 @@ class Generate_Template_Input_File:
 
 	1. Workflow and analysis modules, specified in input file stub. A ``Workflow`` 
 	   table is required, analysis modules are optional.
-	2. Tables handled by template generation itself: ``Functional Unit`` is always
-	   requested (``TEMPLATE_BASE_REQUIREMENTS``). ``Input files to merge`` is optional:
-	   if it is in the input file stub, the referenced files are merged (plugins and 
-	   parameters they provide are used) and the table is kept in the template; 
-	   otherwise it is not added.
+	2. Tables requested by template generation itself (``TEMPLATE_BASE_REQUIREMENTS``): 
+	   ``Functional Unit`` (required) and ``Input files to merge`` (optional). If 
+	   ``Input files to merge`` is in the input file stub, the referenced files are 
+	   merged (plugins and parameters they provide are used), the table is kept in the 
+	   template and no placeholder row is added.
 	3. Inputs requested by plugins (from their ``input_dict``) and analysis modules
 	   (from their docstrings).
 	'''
@@ -235,7 +240,11 @@ class Generate_Template_Input_File:
 
 		output = self.provided_inp
 
-		requirements = self.check_parameters(copy.deepcopy(TEMPLATE_BASE_REQUIREMENTS), output)
+		base_requirements = copy.deepcopy(TEMPLATE_BASE_REQUIREMENTS)
+		if 'Input files to merge' in self.inp_stub: # placeholder only requested if no files to merge are provided
+			del base_requirements[f'Input files to merge > {WILDCARD_MARKER} > Value']
+
+		requirements = self.check_parameters(base_requirements, output)
 
 		for key in self.sorted_keys:
 			data = self.get_docstring_data(key, self.inp_stub['Workflow'][key].get('Type', 'plugin'))
