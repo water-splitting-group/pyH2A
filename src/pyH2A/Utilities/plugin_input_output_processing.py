@@ -1,4 +1,5 @@
 from pathlib import Path
+import copy
 
 from pyH2A.Utilities.input_modification import insert, convert_input_to_dictionary, check_for_meta_module, import_plugin, merge, parse_parameter, convert_file_to_dictionary, file_import
 from pyH2A.Utilities.plugin_specification import instantiate_plugin_for_docs, iter_spec_rows, iter_bottom_entries
@@ -120,6 +121,18 @@ def convert_inp_to_requirements(dictionary, path = None):
 
 	return output
 
+# Tables which are always requested by template generation (independent of plugins and analysis modules)
+TEMPLATE_BASE_REQUIREMENTS = {
+	'Functional Unit > Functional Unit > Unit': {
+		'Type': 'str', 
+		'Origin': 'Generate_Template_Input_File',
+		'Comment Unit': 'Unit in which all results are reported. It has to name the product it refers to as bracketed reference, e.g. kg[H2].'},
+	'Input files to merge > [...] > Value': {
+		'Type': 'str, optional', 
+		'Origin': 'Generate_Template_Input_File',
+		'Comment Value': 'Path to input file which is merged into this input file, e.g. pyH2A.Config~Defaults_TEA.md. Files listed first have higher priority.'},
+}
+
 class Generate_Template_Input_File:
 	'''Generate input file template from a minimal input file.
 
@@ -141,6 +154,17 @@ class Generate_Template_Input_File:
 	Template : object
 		Template object which contains information on requirements and
 		output. Input template is written to specified output file.
+
+	Notes
+	-----
+	Template generation has three levels:
+
+	1. Workflow and analysis modules, specified in input file stub. A ``Workflow`` 
+	   table is required, analysis modules are optional.
+	2. Tables requested by template generation itself (``TEMPLATE_BASE_REQUIREMENTS``): 
+	   ``Functional Unit`` (required) and ``Input files to merge`` (optional).
+	3. Inputs requested by plugins (from their ``input_dict``) and analysis modules
+	   (from their docstrings).
 	'''
 
 	def __init__(self, input_file_stub, output_file, 
@@ -149,6 +173,9 @@ class Generate_Template_Input_File:
 			self.inp_stub = convert_input_to_dictionary(input_file_stub)
 		else:
 			self.inp_stub = input_file_stub
+
+		if 'Workflow' not in self.inp_stub:
+			raise KeyError('Input file stub has to contain a `Workflow` table.')
 
 		self.inp = {}
 
@@ -198,7 +225,12 @@ class Generate_Template_Input_File:
 		'''
 
 		output = self.provided_inp
-		requirements = {}
+
+		base_requirements = copy.deepcopy(TEMPLATE_BASE_REQUIREMENTS)
+		if 'Input files to merge' in self.inp_stub: # placeholder only requested if no files to merge are provided
+			del base_requirements['Input files to merge > [...] > Value']
+
+		requirements = self.check_parameters(base_requirements, output)
 
 		for key in self.sorted_keys:
 			data = self.get_docstring_data(key, self.inp_stub['Workflow'][key].get('Type', 'plugin'))
