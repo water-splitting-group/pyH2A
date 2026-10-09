@@ -4,12 +4,6 @@ Parameter | Unit
 --- | ---
 Functional Unit | str
 
-# Input files to merge
-
-Parameter | Value
---- | ---
-<...> | str, optional
-
 # Hourly Irradiation
 
 Parameter | Value
