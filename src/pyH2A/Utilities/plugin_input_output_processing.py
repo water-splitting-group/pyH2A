@@ -1,7 +1,9 @@
 from pathlib import Path
+import copy
 
-from pyH2A.Utilities.input_modification import insert, convert_input_to_dictionary, check_for_meta_module, import_plugin, merge, parse_parameter
-from pyH2A.Discounted_Cash_Flow import Discounted_Cash_Flow
+from pyH2A.Utilities.input_modification import insert, convert_input_to_dictionary, check_for_meta_module, import_plugin, merge, parse_parameter, convert_file_to_dictionary, file_import
+from pyH2A.Utilities.plugin_specification import instantiate_plugin_for_docs, iter_spec_rows, iter_bottom_entries
+from pyH2A.Utilities.constants import WILDCARD_MARKER
 
 def is_parameter_or_output(line, spaces_for_tab = 4, spaces_cutoff = 5):
 	'''Detection of parameters and output values in line based on presence of more than `spaces_cuttoff`
@@ -70,7 +72,47 @@ def extract_input_output_from_docstring(target, **kwargs):
 												  target.__name__, variable_string, 
 												  **kwargs)
 
-	plugin_dict = {'Parameters': parameters_dict, 'Output': output_dict}
+	plugin_dict = {'Parameters': convert_docstring_wildcards(parameters_dict),
+				   'Output': convert_docstring_wildcards(output_dict)}
+
+	return plugin_dict
+
+def convert_docstring_wildcards(dictionary):
+	'''Replace docstring wildcards (`[...]` and `>>`) in keys with WILDCARD_MARKER (`<...>`),
+	which is used in plugin specifications.'''
+
+	return {key.replace('>>', f'> {WILDCARD_MARKER} >').replace('[...]', WILDCARD_MARKER): item 
+			for key, item in dictionary.items()}
+
+def convert_types_to_string(types):
+	'''Convert set of types from plugin specification (e.g. `{int, float}`) to string (e.g. `int or float`).'''
+
+	names = {int: 'int', float: 'float', str: 'str', bool: 'bool', dict: 'dict', list: 'list', tuple: 'tuple'}
+
+	return ' or '.join(names.get(t, t.__name__) for t in sorted(types, key = lambda t: list(names).index(t) if t in names else len(names)))
+
+def extract_input_output_from_plugin(plugin_name):
+	'''Convert plugin `input_dict` and `output_dict` to structured dictionary
+	(same structure as `extract_input_output_from_docstring`).'''
+
+	plugin = instantiate_plugin_for_docs(plugin_name)
+
+	plugin_dict = {'Parameters': {}, 'Output': {}}
+
+	for key, spec_dict in (('Parameters', plugin.input_dict), ('Output', plugin.output_dict)):
+		for top_key, middle_key, row_dict in iter_spec_rows(spec_dict, plugin_name):
+			for bottom_key, value_spec, optional in iter_bottom_entries(row_dict):
+
+				variable_string = f'{top_key} > {middle_key} > {bottom_key}'
+				variable_type = convert_types_to_string(value_spec.get('type', set()))
+
+				if optional:
+					variable_type += ', optional'
+
+				plugin_dict[key][variable_string] = {'Type': variable_type, 'Origin': plugin_name}
+
+				if row_dict.get('description'):
+					plugin_dict[key][variable_string][f'Comment {bottom_key}'] = row_dict['description']
 
 	return plugin_dict
 
@@ -87,6 +129,15 @@ def convert_inp_to_requirements(dictionary, path = None):
 				output[path] = {'Entry': bottom_item, 'Origin': 'Input'}
 
 	return output
+
+# Tables which are always requested by template generation (independent of plugins and analysis modules)
+TEMPLATE_BASE_REQUIREMENTS = {
+	'Functional Unit > Functional Unit > Unit': {
+		'Type': 'str', 
+		'Origin': 'Generate_Template_Input_File',
+		'Comment Unit': 'Unit in which all results are reported. It has to name the product it refers to as bracketed reference, e.g. kg[H2].'
+	},
+}
 
 class Generate_Template_Input_File:
 	'''Generate input file template from a minimal input file.
@@ -109,6 +160,20 @@ class Generate_Template_Input_File:
 	Template : object
 		Template object which contains information on requirements and
 		output. Input template is written to specified output file.
+
+	Notes
+	-----
+	Template generation has three levels:
+
+	1. Workflow and analysis modules, specified in input file stub. A ``Workflow`` 
+	   table is required, analysis modules are optional.
+	2. Tables handled by template generation itself: ``Functional Unit`` is always
+	   requested (``TEMPLATE_BASE_REQUIREMENTS``). ``Input files to merge`` is optional:
+	   if it is in the input file stub, the referenced files are merged (plugins and 
+	   parameters they provide are used) and the table is kept in the template; 
+	   otherwise it is not added.
+	3. Inputs requested by plugins (from their ``input_dict``) and analysis modules
+	   (from their docstrings).
 	'''
 
 	def __init__(self, input_file_stub, output_file, 
@@ -118,19 +183,13 @@ class Generate_Template_Input_File:
 		else:
 			self.inp_stub = input_file_stub
 
+		if 'Workflow' not in self.inp_stub:
+			raise KeyError('Input file stub has to contain a `Workflow` table.')
+
 		self.inp = {}
 
 		post_workflow_position = self.get_post_workflow_position()
 
-		pre_workflow = {'Description': 'Functions executed before workflow.',
-						'Position': -1,
-						'Type': 'function'}
-		post_workflow = {'Description': 'Function executed after workflow.',
-						 'Position': post_workflow_position, 
-						 'Type': 'function'}
-
-		self.inp_stub['Workflow']['pre_workflow'] = pre_workflow
-		self.inp_stub['Workflow']['post_workflow'] = post_workflow
 		self.get_analysis_modules(post_workflow_position)
 
 		self.sorted_keys = sorted(self.inp_stub['Workflow'], 
@@ -144,8 +203,7 @@ class Generate_Template_Input_File:
 		self.convert_requirements_to_inp(insert_origin = origin, insert_comment = comment)
 
 		self.inp = merge(self.inp, 
-						 convert_input_to_dictionary(input_file_stub, 
-						 							 merge_default = False))
+						 convert_file_to_dictionary(file_import(input_file_stub, mode = 'r')))
 
 		template_file = Template_File(self.inp)
 		template_file.write_template_file(output_file)
@@ -176,10 +234,11 @@ class Generate_Template_Input_File:
 		'''
 
 		output = self.provided_inp
-		requirements = {}
+
+		requirements = self.check_parameters(copy.deepcopy(TEMPLATE_BASE_REQUIREMENTS), output)
 
 		for key in self.sorted_keys:
-			data = self.get_docstring_data(key, self.inp_stub['Workflow'][key]['Type'])
+			data = self.get_docstring_data(key, self.inp_stub['Workflow'][key].get('Type', 'plugin'))
 
 			needed_parameters = self.check_parameters(data['Parameters'], output)
 			requirements = merge(requirements, needed_parameters)
@@ -189,20 +248,15 @@ class Generate_Template_Input_File:
 		self.requirements = requirements
 
 	def get_docstring_data(self, target_name, target_type):
-		'''Get parameter requirements and outputs from docstrings.
+		'''Get parameter requirements and outputs from plugin `input_dict` and `output_dict`
+		(plugins) or docstrings (analysis modules).
 		'''
 
-		if target_type == 'function':
-			target = getattr(Discounted_Cash_Flow, target_name)
-			data = extract_input_output_from_docstring(target, spaces_cutoff = 9)
+		if target_type == 'plugin':
+			data = extract_input_output_from_plugin(target_name)
 
 		else:
-			if target_type == 'plugin':
-				plugin_module = True
-			else:
-				plugin_module = False
-
-			target = import_plugin(target_name, plugin_module)
+			target = import_plugin(target_name, False)
 			data = extract_input_output_from_docstring(target)
 
 		return data
@@ -232,8 +286,7 @@ class Generate_Template_Input_File:
 		'''
 
 		for key, item in self.requirements.items():
-			path = parse_parameter(key)
-			path = ['[...]' if x == '' else x for x in path] # replacing '>>' with '> [...] >'
+			path = parse_parameter(key, delimiter = ' > ') # spaces required, WILDCARD_MARKER contains '>'
 
 			insert(self, *path, item['Type'], None, print_info = False, 
 				  add_processed = False, insert_path = False)
@@ -345,6 +398,3 @@ class Template_File:
 
 		with open(Path(file_name), 'w') as text_file:
 			text_file.write(self.output)
-
-
-		

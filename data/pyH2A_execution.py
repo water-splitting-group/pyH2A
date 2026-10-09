@@ -131,6 +131,10 @@ def test():
 def lca():
 	result = pyH2A('src/tests/end_to_end/Thermal_Base.md', '.')
 	print(result)
+ 
+def gen():
+    from pyH2A.Utilities.plugin_input_output_processing import Generate_Template_Input_File
+    Generate_Template_Input_File('src/tests/end_to_end/PV_E_Base_test.md', 'template.md', origin=False, comment=False)
 
 def main():
 	#dcf_test()
@@ -145,7 +149,8 @@ def main():
 	#photocatalytic_limit()
 	#technology_comparison()
 	#test()
-	lca()
+	#lca()
+	gen()
 
 	
 if __name__ == '__main__':
