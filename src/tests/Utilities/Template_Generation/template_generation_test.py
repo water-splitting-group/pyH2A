@@ -12,10 +12,23 @@ Templates are generated from input file stubs and compared with ground truth tem
 import pytest
 
 from tests.Utilities.check_dicts_for_testing import check_dicts
-from pyH2A.Utilities.input_modification import convert_input_to_dictionary
+from pyH2A.Utilities.input_modification import convert_file_to_dictionary, file_import
 from pyH2A.Utilities.plugin_input_output_processing import Generate_Template_Input_File
 
 TEST_DATA = 'src/tests/Utilities/Template_Generation/template_generation_test_data/'
+
+
+def read_template(file_name):
+	'''Read template file into dictionary without merging other input files.
+
+	Notes
+	-----
+	A template generated from a stub without ``Input files to merge`` contains a 
+	placeholder row (``<...> | str, optional``) in ``Input files to merge``, which 
+	``convert_input_to_dictionary`` would try to open as a file.
+	'''
+
+	return convert_file_to_dictionary(file_import(file_name, mode = 'r'))
 
 
 @pytest.mark.parametrize(
@@ -32,8 +45,8 @@ def test_template_generation(tmp_path, input_stub, ground_truth_template):
 
 	Generate_Template_Input_File(TEST_DATA + input_stub, str(actual_template))
 
-	ground_truth_dict = convert_input_to_dictionary(TEST_DATA + ground_truth_template)
-	actual_dict = convert_input_to_dictionary(str(actual_template))
+	ground_truth_dict = read_template(TEST_DATA + ground_truth_template)
+	actual_dict = read_template(str(actual_template))
 
 	check_dicts(actual_dict, ground_truth_dict)
 
