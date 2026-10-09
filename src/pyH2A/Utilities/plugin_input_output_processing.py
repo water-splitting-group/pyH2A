@@ -3,6 +3,7 @@ import copy
 
 from pyH2A.Utilities.input_modification import insert, convert_input_to_dictionary, check_for_meta_module, import_plugin, merge, parse_parameter, convert_file_to_dictionary, file_import
 from pyH2A.Utilities.plugin_specification import instantiate_plugin_for_docs, iter_spec_rows, iter_bottom_entries
+from pyH2A.Utilities.constants import WILDCARD_MARKER
 
 def is_parameter_or_output(line, spaces_for_tab = 4, spaces_cutoff = 5):
 	'''Detection of parameters and output values in line based on presence of more than `spaces_cuttoff`
@@ -71,9 +72,17 @@ def extract_input_output_from_docstring(target, **kwargs):
 												  target.__name__, variable_string, 
 												  **kwargs)
 
-	plugin_dict = {'Parameters': parameters_dict, 'Output': output_dict}
+	plugin_dict = {'Parameters': convert_docstring_wildcards(parameters_dict),
+				   'Output': convert_docstring_wildcards(output_dict)}
 
 	return plugin_dict
+
+def convert_docstring_wildcards(dictionary):
+	'''Replace docstring wildcards (`[...]` and `>>`) in keys with WILDCARD_MARKER (`<...>`),
+	which is used in plugin specifications.'''
+
+	return {key.replace('>>', f'> {WILDCARD_MARKER} >').replace('[...]', WILDCARD_MARKER): item 
+			for key, item in dictionary.items()}
 
 def convert_types_to_string(types):
 	'''Convert set of types from plugin specification (e.g. `{int, float}`) to string (e.g. `int or float`).'''
@@ -94,7 +103,7 @@ def extract_input_output_from_plugin(plugin_name):
 		for top_key, middle_key, row_dict in iter_spec_rows(spec_dict, plugin_name):
 			for bottom_key, value_spec, optional in iter_bottom_entries(row_dict):
 
-				variable_string = f'{top_key} > {middle_key} > {bottom_key}'.replace('<...>', '[...]')
+				variable_string = f'{top_key} > {middle_key} > {bottom_key}'
 				variable_type = convert_types_to_string(value_spec.get('type', set()))
 
 				if optional:
@@ -126,11 +135,8 @@ TEMPLATE_BASE_REQUIREMENTS = {
 	'Functional Unit > Functional Unit > Unit': {
 		'Type': 'str', 
 		'Origin': 'Generate_Template_Input_File',
-		'Comment Unit': 'Unit in which all results are reported. It has to name the product it refers to as bracketed reference, e.g. kg[H2].'},
-	'Input files to merge > [...] > Value': {
-		'Type': 'str, optional', 
-		'Origin': 'Generate_Template_Input_File',
-		'Comment Value': 'Path to input file which is merged into this input file, e.g. pyH2A.Config~Defaults_TEA.md. Files listed first have higher priority.'},
+		'Comment Unit': 'Unit in which all results are reported. It has to name the product it refers to as bracketed reference, e.g. kg[H2].'
+	},
 }
 
 class Generate_Template_Input_File:
@@ -161,8 +167,11 @@ class Generate_Template_Input_File:
 
 	1. Workflow and analysis modules, specified in input file stub. A ``Workflow`` 
 	   table is required, analysis modules are optional.
-	2. Tables requested by template generation itself (``TEMPLATE_BASE_REQUIREMENTS``): 
-	   ``Functional Unit`` (required) and ``Input files to merge`` (optional).
+	2. Tables handled by template generation itself: ``Functional Unit`` is always
+	   requested (``TEMPLATE_BASE_REQUIREMENTS``). ``Input files to merge`` is optional:
+	   if it is in the input file stub, the referenced files are merged (plugins and 
+	   parameters they provide are used) and the table is kept in the template; 
+	   otherwise it is not added.
 	3. Inputs requested by plugins (from their ``input_dict``) and analysis modules
 	   (from their docstrings).
 	'''
@@ -226,11 +235,7 @@ class Generate_Template_Input_File:
 
 		output = self.provided_inp
 
-		base_requirements = copy.deepcopy(TEMPLATE_BASE_REQUIREMENTS)
-		if 'Input files to merge' in self.inp_stub: # placeholder only requested if no files to merge are provided
-			del base_requirements['Input files to merge > [...] > Value']
-
-		requirements = self.check_parameters(base_requirements, output)
+		requirements = self.check_parameters(copy.deepcopy(TEMPLATE_BASE_REQUIREMENTS), output)
 
 		for key in self.sorted_keys:
 			data = self.get_docstring_data(key, self.inp_stub['Workflow'][key].get('Type', 'plugin'))
@@ -281,8 +286,7 @@ class Generate_Template_Input_File:
 		'''
 
 		for key, item in self.requirements.items():
-			path = parse_parameter(key)
-			path = ['<...>' if x == '' else x.replace('[...]', '<...>') for x in path] # replacing '>>' and '[...]' with '<...>'
+			path = parse_parameter(key, delimiter = ' > ') # spaces required, WILDCARD_MARKER contains '>'
 
 			insert(self, *path, item['Type'], None, print_info = False, 
 				  add_processed = False, insert_path = False)
