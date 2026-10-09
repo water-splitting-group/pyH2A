@@ -51,10 +51,10 @@ docs = [
 ]
 dev = [
     {include-group = "docs"},
-    "autopep8>=2.3.2",
     "genbadge[coverage]>=1.1.3",
     "pytest>=8.4.2",
     "pytest-cov>=7.1.0",
+    "ruff>=0.16.10",
 ]
 
 [project.scripts]
@@ -71,3 +71,15 @@ module-name = "pyH2A"
 
 [tool.pytest.ini_options]
 testpaths = ["src/tests"]
+
+[tool.ruff]
+target-version = "py39"      # matches requires-python
+line-length = 88
+extend-exclude = ["doc"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]   # ruff's standard default rules, written out
+
+[tool.ruff.format]
+quote-style = "double"
+docstring-code-format = true
