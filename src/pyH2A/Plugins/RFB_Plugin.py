@@ -509,7 +509,6 @@ class RFB_Plugin:
 										self.input_dict_resolved['Battery Cell Stack']['Power per cell stack']['Value'].unit['W'], 
 										'-'
 										)
-		print("Cell stack:", self.total_stack)
 
 		self.total_stack = Quantity(
 										self.number_cell_stacks.unit['-']
@@ -521,6 +520,7 @@ class RFB_Plugin:
 										)), 
 										'-'
 										)
+		print("Cell stack:", self.total_stack)
 
 	def calculate_periphery(self):
 		''' Simply pick up the dictionary entry to generate a variable with the same standard name as the other elements'''
