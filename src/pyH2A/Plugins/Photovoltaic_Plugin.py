@@ -177,15 +177,6 @@ class Photovoltaic_Plugin:
 					"description": "Solar collection area.",
 					"optional": False,	
 				},
-				"Solar collection area": {
-					"Value": {
-						"inserted_value": "area",
-						"type": {float,},
-						"dimension": "area",
-					},
-					"description": "Solar collection area.",
-					"optional": False,	
-				},
 			},
 		}
 
