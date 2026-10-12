@@ -177,6 +177,15 @@ class Photovoltaic_Plugin:
 					"description": "Solar collection area.",
 					"optional": False,	
 				},
+				"Solar collection area": {
+					"Value": {
+						"inserted_value": "area",
+						"type": {float,},
+						"dimension": "area",
+					},
+					"description": "Solar collection area.",
+					"optional": False,	
+				},
 			},
 		}
 
@@ -237,3 +246,4 @@ class Photovoltaic_Plugin:
 		self.area = Quantity(self.input_dict_resolved['Photovoltaic']['Nominal power']['Value'].unit['kW'] 
 							 / peak_kW_per_m2, 
 					'm2')
+		print("PV:", self.area)
