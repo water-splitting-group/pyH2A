@@ -223,6 +223,9 @@ class Power_Management_Hourly_Plugin:
                                         np.sum(self.total_energy_demand.unit['J'])
                                         ,
                                         '-')
+        print("Grid yearly:", self.total_unfulfilled_yearly)
+        print("Grid:", self.total_unfulfilled)
+        print("Oversizing factor:", self.production_oversizing)
 
     def calculate_electricity_cost(self):
         self.electricity_cost = Quantity(self.total_unfulfilled_yearly.unit['J']
