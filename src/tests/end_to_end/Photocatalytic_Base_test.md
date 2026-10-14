@@ -68,7 +68,7 @@ Hourly | {Hourly Irradiation > No tracking > Value, kWh/m2} | kWh/m2
 
 Name | Value | Unit | Comment 
 --- | --- | --- | --- 
-STH | 2% | - | Kang 2015, C3N4/CDot catalyst, 2% STH 
+STH | 9.2% | - | Kang 2015, C3N4/CDot catalyst, 2% STH 
 
 # Catalyst
 

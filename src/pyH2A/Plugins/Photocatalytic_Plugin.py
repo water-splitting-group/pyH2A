@@ -447,9 +447,9 @@ class Photocatalytic_Plugin:
 											thickness_m = self.input_dict_resolved['Reactor Baggies']['Filling height']['Value'].unit['m'], # only the slurry is assumed to have thermal inertia
 											Cp_J_kg_K = 4.2e3, # slurry Cp. Could later come from water + catalyst mixture actual properties. 
 											Irrad_in_W_m2 = self.input_dict_resolved['Solar Input']['Hourly']['Value'].unit['Wh/m2'],											
-											eta_irrad = 0.7, # assumed: 70% of incident irradiation is absorbed and heats up the slurry
-											lambda_soil_W_m_K = 1, # assumed
-											Cp_soil_J_kg_K = 1200, # assumed
+											eta_irrad = 0.6, # assumed: 70% of incident irradiation is absorbed and heats up the slurry
+											lambda_soil_W_m_K = 0.5, # assumed
+											Cp_soil_J_kg_K = 800, # assumed
 											rho_soil_kg_m3 = 1700, # assumed											
 											epsilon = 0.9, # black body emissivity coefficient, assumed
 											sigma_W_m2_K4 = 5.67e-8, # Stefan-Boltzmann constant
@@ -466,15 +466,17 @@ class Photocatalytic_Plugin:
 		#print('max temperature difference °C ', np.max(abs_diff))
 	
 		self.STH_calculation()
-		plt.plot(self.STH_efficiency.unit['-'])
-		plt.show()				
+		print('STH efficiency: average ', np.mean(self.STH_efficiency.unit['-']), ', max ', np.max(self.STH_efficiency.unit['-']), ', mean relative to max ', np.mean(self.STH_efficiency.unit['-'])/np.max(self.STH_efficiency.unit['-']))		
+		#plt.plot(self.STH_efficiency.unit['-'])
+		#plt.show()				
 		self.hydrogen_production()
 		self.baggie_cost()
 		self.catalyst_cost()
 		self.land_area()
 		self.catalyst_activity()
 		self.outlet_flow_properties()
-
+		#plt.plot(np.cumsum(self.hourly_H2_mass_production.unit['kg']))
+		#plt.show()		
 		
 		output_inserter_function(self.output_dict, self, dcf, 'Photocatalytic_Plugin') 
 
@@ -735,7 +737,7 @@ def energy_balance(
 	tau_s = Capacity_J_K/(h_wind_typical + 4*epsilon*sigma_W_m2_K4*T_typical**3) # typical thermal characteristic time in seconds
 	#print('characteristic time h ', tau_s/3600)
 	spin_up_time_h = 8760#round (10 * tau_s / 3600) + 1 # 10* characteristic time + 1 h to ensure we always get at least one previous step from our initial estimate
-	print('spin_up_time_h ', spin_up_time_h)
+	#print('spin_up_time_h ', spin_up_time_h)
 	# fictitious temperature estimate for initialisation
 	T_spin_up = ( # initial guess based on quasi steady-state approximation, assuming the radiative linearized heat transfer coefficient is calculated at air temperature, and the bag is in thermal equilibrium with the ground
 					(eta_irrad * Irrad_in_W_m2[-spin_up_time_h] + h_wind_W_m2_K[-spin_up_time_h] * T_air_K[-spin_up_time_h] + 4*epsilon*sigma_W_m2_K4*T_air_K[-spin_up_time_h]**4)
@@ -770,7 +772,7 @@ def energy_balance(
 	# However, the typical temperature reactor_hourly_temperature_K during the interval is not equal to the temperature at the beginning of the interval, but to the average between the beginning and end of interval
 	reactor_hourly_temperature_K = np.zeros_like(Irrad_in_W_m2)
 	time_interval_initial_temperature_K = T_spin_up
-	print('initial T ', T_spin_up)
+	#print('initial T ', T_spin_up)
 	# Loop for the actual temperature over the integration period of 1 year
 	for i in range(0, len(reactor_hourly_temperature_K)):
 		# Predictor
