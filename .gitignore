@@ -91,3 +91,6 @@ build
 
 # Packaging build artifacts
 *.egg-info/
+
+# Report written by the Optimization_Analysis end-to-end test
+src/tests/Analysis/Optimization/Optimization_Output.txt
