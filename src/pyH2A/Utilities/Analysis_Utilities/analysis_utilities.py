@@ -1,26 +1,78 @@
-import numpy as np
-from typing import List
+'''Utilities shared by the analysis modules (reading the dependent variable and the
+analysis parameters, running the model for a set of parameter values).
+'''
+
+from __future__ import annotations
+
 import copy
+import numbers
+from collections.abc import Sequence
+
+import numpy as np
 
 from pyH2A.Discounted_Cash_Flow import Discounted_Cash_Flow
 from pyH2A.Utilities.IO.input_processing import parse_parameter_to_array
 from pyH2A.Utilities.input_modification import (parse_parameter, 
-												get_by_path, 
-												set_by_path,)
+                                                get_by_path,
+                                                set_by_path,)
+
+# Entries of a "Values" cell which refer to the base value of a parameter
+SPECIAL_VALUES = ['Base', 'Reference']
 
 
-def select_non_reference_value(reference, values):
-	'''Select value from values which is not the reference one.
-	'''
+def select_non_reference_value(reference: float,
+                               values: np.ndarray) -> float:
+    '''Select the first value from `values` which is not the reference value.
 
-	idx = np.invert(np.equal(values, reference))
-	return float(values[idx][0])
+    Parameters
+    ----------
+    reference : float
+        Reference (base) value.
+    values : np.ndarray
+        Values to select from, e.g. the lower and upper end of a parameter range.
 
-def read_dependent_variable(dependent_variable_inp : dict,
-                            keys : List[str] = ['Path to variable', 'Variable unit']) -> dict:
+    Returns
+    -------
+    float
+        First entry of `values` which is not equal to `reference`.
+
+    Raises
+    ------
+    ValueError
+        If all entries of `values` are equal to `reference`.
     '''
-    Read dependent variable information from `dependent_variable_inp` dictionary 
-    and return a dictionary containing the dependent variable information.
+
+    values = np.asarray(values)
+    non_reference_values = values[np.invert(np.equal(values, reference))]
+
+    if non_reference_values.size == 0:
+        raise ValueError(f'All values in {values} are equal to the reference value ({reference}).')
+
+    return float(non_reference_values[0])
+
+def read_dependent_variable(dependent_variable_inp: dict,
+                            keys: Sequence[str] = ('Path to variable', 'Variable unit')) -> dict:
+    '''Read the dependent variable from the resolved "Dependent variable" table.
+
+    Parameters
+    ----------
+    dependent_variable_inp : dict
+        Resolved "Dependent variable" table. Only its first row is used, the row key being
+        the name of the dependent variable.
+    keys : Sequence[str], optional
+        Columns which have to be present in the table. If "Target range" is included,
+        the target range is read as well.
+
+    Returns
+    -------
+    dict
+        Dictionary with "Name", "Path" (list of keys pointing to the dependent variable in
+        the processed input dictionary), "Unit" and, if requested, "Target range" (ndarray).
+
+    Raises
+    ------
+    KeyError
+        If one of `keys` is not a column of the table.
     '''
 
     name = list(dependent_variable_inp)[0]
@@ -30,7 +82,6 @@ def read_dependent_variable(dependent_variable_inp : dict,
     for key in keys:
         if key not in dependent_variable:
             raise KeyError(f"Key '{key}' not found in dependent_variable_inp dictionary.")
-
 
     path = parse_parameter(dependent_variable['Path to variable'], delimiter = '>')
 
@@ -45,18 +96,60 @@ def read_dependent_variable(dependent_variable_inp : dict,
 
     return dependent_variable_dict
 
-def process_parameters(parameters_inp : dict,
-                       whole_inp : dict,
-                       keys = ['Parameter path', 'Values']) -> dict:
+def dependent_variable_label(dependent_variable: dict) -> str:
+    '''Label of the dependent variable for plotting, in the form "Name / Unit".
+
+    Parameters
+    ----------
+    dependent_variable : dict
+        Dependent variable as returned by :func:`read_dependent_variable`.
+
+    Returns
+    -------
+    str
+        Label, e.g. "Global warming potential (GWP100) / kg[$CO_{2}$-Eq]/kg[H2]".
     '''
-    Read parameters from `parameters_inp` dictionary, retrieve the corresponding values from `whole_inp` 
-    and return a dictionary containing the parameter information. 
+
+    return f"{dependent_variable['Name']} / {dependent_variable['Unit']}"
+
+def process_parameters(parameters_inp: dict,
+                       whole_inp: dict,
+                       keys: Sequence[str] = ('Parameter path', 'Values')) -> dict:
+    '''Read the analysis parameters and retrieve their base values from `whole_inp`.
+
+    Parameters
+    ----------
+    parameters_inp : dict
+        Resolved parameter table. Each row key is the display name of a parameter. The
+        row contains the "Parameter path" (e.g. "Photovoltaic > Efficiency > Value"), the
+        "Values" (entries separated by ";") and optionally the "Type" ("value" or "factor").
+    whole_inp : dict
+        Input dictionary of the model, used to retrieve the base values of the parameters.
+    keys : Sequence[str], optional
+        Columns which have to be present in `parameters_inp`.
+
+    Returns
+    -------
+    dict
+        Dictionary with one entry per parameter (keyed by its display name), containing
+        "Parameter" (path as list), "Type", "Values" (sorted ndarray), "Reference" (base value),
+        "Limit" (first entry of "Values" which is not the reference) and "Index" (position of 
+        the parameter in the table).
+
+    Raises
+    ------
+    KeyError
+        If one of `keys` is not a column of the table.
+    ValueError
+        If a "Parameter path" does not have the form "Table > Row > Column" or does not point
+        to a numerical value.
 
     Notes
     -----
-    The ranges for each parameter are defined in `Values` column as ';' seperated entries. Entries can
-    either be a number or a `special_value` such as `Base` or `Reference`. If such a `special_value`
-    is specified, the base value of that parameter is retrieved from `self.inp`.
+    Entries in "Values" can either be numbers or one of `SPECIAL_VALUES` ("Base", "Reference"),
+    which refer to the base value of the parameter in `whole_inp`. For parameters of "Type"
+    "factor", the values are factors by which the base value is multiplied. Their reference is
+    therefore a factor of 1, which is also what "Base" and "Reference" refer to.
     '''
 
     # Check that all keys are in the parameters_inp dictionary
@@ -69,53 +162,64 @@ def process_parameters(parameters_inp : dict,
     for counter, key in enumerate(parameters_inp):
         path = parse_parameter(parameters_inp[key]['Parameter path'], delimiter = '>')
 
+        if len(path) != 3:
+            raise ValueError(f'Parameter path "{parameters_inp[key]["Parameter path"]}" of "{key}" does not have the form "Table > Row > Column".')
+
+        value_type = parameters_inp[key].get('Type', 'value') # Default to 'value' if 'Type' is not specified
+
+        # Factors multiply the base value, so the base value corresponds to a factor of 1
+        lookup = {path[0]: {path[1]: {path[2]: 1.}}} if value_type == 'factor' else whole_inp
+
         values_range = parse_parameter_to_array(parameters_inp[key]['Values'],
                                                 delimiter = ';',
                                                 path = path,
-                                                dictionary = whole_inp,
-                                                special_values = ['Base', 'Reference'])
-        values_range = values_range[np.argsort(values_range)]
+                                                dictionary = lookup,
+                                                special_values = SPECIAL_VALUES)
+        values_range = np.sort(values_range)
 
-        reference = get_by_path(whole_inp, path)
+        reference = get_by_path(lookup, path)
+
+        if not isinstance(reference, numbers.Real):
+            raise ValueError(f'Base value of "{key}" at "{parameters_inp[key]["Parameter path"]}" is not a number ({reference}).')
+
         limit = select_non_reference_value(reference, values_range)
     
         parameters[key] = {'Parameter': path, 
+                           'Type': value_type,
                            'Values': values_range, 
                            'Reference': reference, 
                            'Limit': limit,
-                           'Index': counter, 
-                           'Input Index': counter,}
+                           'Index': counter,}
 
-        if 'Type' in keys:
-            parameters[key]['Type'] = parameters_inp[key]['Type']
-
-        if 'File index' in keys:
-            parameters[key]['File index'] = parameters_inp[key]['File index']
-        
     return parameters
 
-def substitute_parameters_and_run(parameters : dict,
-                                  values : np.ndarray,
-                                  whole_inp : dict,
-                                  dependent_variable : dict) -> float:
-    '''
-    Substitute the parameters in the input dictionary with the given values and run the calculation.
+def substitute_parameters_and_run(parameters: dict,
+                                  values: np.ndarray,
+                                  whole_inp: dict,
+                                  dependent_variable: dict) -> float:
+    '''Substitute the parameters in a copy of the input dictionary with the given values,
+    run the model and return the dependent variable.
 
     Parameters
     ----------
     parameters : dict
-        Dictionary containing the parameter information.
+        Parameters as returned by :func:`process_parameters`.
     values : np.ndarray
-        Array of parameter values to be substituted.
+        1D array of parameter values, ordered according to the "Index" of each parameter.
     whole_inp : dict
-        The original input dictionary.
+        Input dictionary of the model (not modified).
     dependent_variable : dict
-        Dictionary containing the path and unit of the dependent variable.
+        Dependent variable as returned by :func:`read_dependent_variable`.
 
     Returns
     -------
     float
-        The result of the calculation.
+        Dependent variable in the unit of `dependent_variable`.
+
+    Notes
+    -----
+    Parameters of "Type" "value" replace the base value, parameters of "Type" "factor" are
+    multiplied with it.
     '''
 
     input_dict = copy.deepcopy(whole_inp)
@@ -132,4 +236,3 @@ def substitute_parameters_and_run(parameters : dict,
     result = result.unit[dependent_variable['Unit']] # Convert result to unit of dependent variable
 
     return result
-

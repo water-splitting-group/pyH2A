@@ -16,6 +16,7 @@ pyH2A
    plugins/plugins
    analysis/analysis
    lca_guide
+   monte_carlo_guide
    
 pyH2A is a Python framework for techno-economic and life-cycle assessment.
 

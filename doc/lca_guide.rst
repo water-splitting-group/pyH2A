@@ -37,7 +37,8 @@ contain ``LCA`` (case-sensitive) anywhere in the name, not necessarily at the st
 
 Similar to the TEA workflow, LCA is fully compatible with Monte Carlo sampling: the plugin
 outputs are re-evaluated for each sample, the foreground column of the technosphere matrix
-is updated based on Monte Carlo parameters, and the impact results are collected in a CSV file.
+is updated based on Monte Carlo parameters, and the selected impact result is saved together with
+the sampled parameter values in a NumPy ``.npz`` results file (see :doc:`monte_carlo_guide`).
 
 Export the matrix from openLCA
 ==============================
@@ -316,37 +317,44 @@ Monte Carlo analysis with LCA
 .. seealso::
 
    :doc:`monte_carlo_guide` — for the general mechanics of Monte Carlo analysis (how samples are
-   generated, how parameter ranges and ``Type`` are specified, the ``Target Response Range`` and
-   development-distance concepts). This section only covers what's specific to coupling Monte
+   generated, how parameter ranges and ``Type`` are specified, the target range, the results file
+   and development-distance concepts). This section only covers what's specific to coupling Monte
    Carlo with LCA.
 
 To propagate parameter uncertainty through LCA as well, include ``Monte_Carlo_Analysis``
-in the input file and set ``Dependent Variable`` to one of the impact assessment metrics
-which is included in Characterisation matrix (C) of the openLCA matrix export. For example,
-to collect ``Climate change`` index from the results of EF Impact Assessment Method
-(Environmental Footprint Impact Assessment Method), set the dependent variable to ``Climate change``,
-as illustrated in the example below. The Monte Carlo engine will sample the specified input parameters,
-re-run the full pipeline (including LCA) for each sample, and collect the chosen output.:
+in the input file and set the ``Path to variable`` of the ``Dependent variable`` to one of the
+impact categories included in the characterisation matrix (C) of the openLCA matrix export.
+Every impact category is written to the ``Dependent Variables`` table under its name from
+``index_C.csv`` (see `Access LCA results`_), so the path has the form
+``Dependent Variables > <impact category> > Value``. The ``Variable unit`` has to match the
+unit of the impact category per functional unit, including its references. The Monte Carlo
+engine will sample the specified input parameters, re-run the full pipeline (including LCA) for
+each sample, and collect the chosen output:
 
 .. code-block:: markdown
+
+	# Dependent variable
+
+	Name | Path to variable | Variable unit | Target range
+	--- | --- | --- | ---
+	Global warming potential (GWP100) | Dependent Variables > Climate change: fossil - Global warming potential (GWP100) > Value | kg[$CO_{2}$-Eq]/kg[H2] | 1.5; 1.6
 
 	# Monte_Carlo_Analysis
 
 	Name | Value
 	--- | ---
 	Samples | 50000
-	Dependent Variable | Climate change
-	Output File | examples/LCA_example/Monte_Carlo_Output.csv
-
+	Random seed | 2026
+	Output File | examples/LCA_example/Monte_Carlo_Results.npz
 
 	# Parameters - Monte_Carlo_Analysis
 
-    Parameter | Name | Type | Values | File Index | Comment
-    --- | --- | --- | --- | --- | --- 
-    {Photovoltaic > Efficiency > Value, -} | PV efficiency (%) | value | Base; 0.4 | 0 | PV module efficiency uncertainty range.
-    {Battery > Energy density > Value, kWh/kg} |Battery density kWh / kg | value | 0.1; 0.2 | 1 | Battery specific energy uncertainty range.
-    {Reverse Osmosis > Recovery rate > Value, -} | Reverse osmosis recovery rate | value | 0.4; 0.9 | 2 | Reverse osmosis recovery range.
-    {Electrolyzer > Hydrogen yield per unit energy > Value, kg/kWh} | Electrolyzer efficiency kg($H_{2}$) / kWh | value | Base; 0.025 | 3 | Same Monte Carlo range convention as other PV_E files.
+	Name | Parameter path | Type | Values | Comment
+	--- | --- | --- | --- | ---
+	PV efficiency / - | Photovoltaic > Efficiency > Value | value | Base; 0.3 | PV module efficiency uncertainty range.
+	Battery energy density / kWh/kg[battery] | Battery > Energy density > Value | value | Base; 0.25 | Battery specific energy uncertainty range.
+	Reverse osmosis recovery rate / - | Reverse Osmosis > Recovery rate > Value | value | Base; 80% | Reverse osmosis recovery range.
+	Electrolyzer efficiency / kg[H2]/kWh[electricity] | Electrolyzer > Hydrogen yield per unit energy > Value | value | Base; 0.022 | Electrolyzer efficiency range.
 
 
 Access LCA results
@@ -394,11 +402,12 @@ impact name:
 
 	lca_results = result.base_case.plugs['LCA_Plugin'].lca_results
 
-The output CSV file from a Monte Carlo run contains the same impact category names as column 
-headers, and the values are in the same units as reported in the base case. The CSV file also
-contains the sampled input parameters for each row, so that the full uncertainty propagation
-can be analyzed in post-processing. The Monte Carlo output file is specified in the 
-``# Monte_Carlo_Analysis`` section of the input file. 
+The results file of a Monte Carlo run (``Output File`` in the ``# Monte_Carlo_Analysis`` section
+of the input file) contains the selected impact category for each sample, in the ``Variable unit``
+of the ``Dependent variable``, together with the sampled input parameters and the metadata of the
+analysis (impact category, parameters, random seed, pyH2A version), so that the full uncertainty
+propagation can be analyzed in post-processing. See :doc:`monte_carlo_guide` for its layout and
+how to read it.
 
 Artifact folder and maintenance
 ================================
