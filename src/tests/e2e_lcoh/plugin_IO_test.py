@@ -139,7 +139,7 @@ def test_plugin_IO():
         'Mass': {
             'Comment': 'Value "2" is in unit kg/J, multiplying by "Plugin A Output > Energy > Value" (which is dimension energy, used in unit "J") gives kg, second path just for testing',
             'Former Value': 2,
-            'Path': '{Plugin A Output > Energy > Value, J}; {Individual Table Sum > Entry A > Value, USD}',
+            'Path': '{Plugin A Output > Energy > Value, J} * {Individual Table Sum > Entry A > Value, USD}',
             'Processed': 'Yes',
             'Unit': 'kg',
             'Value': Quantity(np.array([1.188e+13, 1.188e+13, 1.188e+13]), 'kg')

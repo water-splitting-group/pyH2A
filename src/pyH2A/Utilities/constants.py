@@ -1,3 +1,8 @@
+# Delimiter to separate multiple values in a cell, e.g. "{Top key > middle key > bottom key, unit} * 2"
+CELL_DELIMITER = "*"
+
+EMPTY_CELL_PLACEHOLDER = ['', ' ', 'nan', 'NaN', 'N/A', 'n/a', 'None', 'none']
+
 # This marker indicates either a table group (when in top_key) or a wildcard row (when in middle_key). 
 # It is used to indicate that the number of tables/rows is flexible and can be determined based on the content of dcf_class.inp
 WILDCARD_MARKER = "<...>"

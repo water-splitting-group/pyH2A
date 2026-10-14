@@ -78,7 +78,7 @@ Layer 2 Test | 2 | {Layer 1 Unprocessed Input > Layer 1 Test > Value, kg/J} | kg
 
 Name | Value | Path | Unit | Comment
 --- | --- | --- | --- | ---
-Mass | 2 | {Plugin A Output > Energy > Value, J}; {Individual Table Sum > Entry A > Value, USD} | kg | Value "2" is in unit kg/J, multiplying by "Plugin A Output > Energy > Value" (which is dimension energy, used in unit "J") gives kg, second path just for testing
+Mass | 2 | {Plugin A Output > Energy > Value, J} * {Individual Table Sum > Entry A > Value, USD} | kg | Value "2" is in unit kg/J, multiplying by "Plugin A Output > Energy > Value" (which is dimension energy, used in unit "J") gives kg, second path just for testing
 Mass per energy | {Simple Unprocessed Input - read by Plugin B > Energy density > Value, kg/J} | {Layer 2 Unprocessed Input > Layer 2 Test > Usage_Value, kg/J} | kg/J | Retrieving two different paths, one nested, one not
 
 # Plugin B - Value/Unit pairs

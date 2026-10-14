@@ -1,4 +1,3 @@
-import numbers
 from functools import lru_cache, reduce
 import importlib.resources
 from importlib import import_module
@@ -9,13 +8,6 @@ import numpy as np
 
 from pyH2A.Utilities.Unit_Handler import Quantity
 from pyH2A.Utilities.Unit_Handler.config import DIMENSIONS
-from pyH2A.Utilities.constants import (VALUE_KEY, 
-									   UNIT_KEY, 
-									   PATH_KEY_INPUT,
-									   VALUE_SUFFIX, 
-									   UNIT_SUFFIX, 
-									   PATH_SUFFIX,
-									   SPECIAL_BOTTOM_KEYS)
 
 def import_plugin(plugin_name, plugin_module):
 	'''Importing module.
@@ -376,6 +368,20 @@ def convert_input_to_dictionary(file):
 
 	return inp
 
+def deep_get(dictionary, *keys, default=None):
+	'''Get a value from a nested dictionary using a sequence of keys. If any key is not found, return default.'''
+
+	for key in keys:
+		if not isinstance(dictionary, dict):
+			return default
+		
+		dictionary = dictionary.get(key)
+
+		if dictionary is None:
+			return default
+		
+	return dictionary
+
 def get_by_path(root, items):
 	'''Access a nested object in `root` by item sequence.'''
 	return reduce(operator.getitem, items, root)
@@ -472,18 +478,6 @@ def parse_parameter(key, delimiter = '>'):
 		
 	return output
 
-def parse_path_with_unit(text):
-	'''Parsing path with the notation "{top_key > middle_key > bottom_key, unit}" '''
-
-	text = text.strip()
-	if not (text.startswith("{") and text.endswith("}")):
-		raise ValueError("Expected a string wrapped in braces, but got '{0}' instead".format(text))
-
-	inner = text[1:-1].strip()
-	path, unit = inner.rsplit(",", 1)
-
-	return path.strip(), unit.strip()
-
 def reverse_parameter_to_string(parameter):
 	'''Reverts processed parameter list to string.'''
 
@@ -493,405 +487,6 @@ def reverse_parameter_to_string(parameter):
 		output += f' > {item}'
 
 	return output
-
-def parse_parameter_to_array(key, delimiter = '>', dictionary = None, top_key = None, 
-							 middle_key = None, bottom_key = None, special_values = [], path = None):
-	'''parse_parameter() is applied to `key` string and result is converted to num and
-	returned in ndarray 
-	
-	Parameters
-	----------
-	key : str
-		String convert to array.
-	delimiter : str, optional
-		Delimiter used in string.
-	dictionary : dict, optional
-		Dictionary used for lookup.
-	top_key : str, optional
-		Top key for lookup.
-	middle_key : str, optional
-		Middle key for lookup.
-	bottom_key : str, optional
-		Bottom key for lookup.
-	special_values : list, optional
-		If `key` contains an element of `special_values`, the value at `path`
-		is retrieved instead of using the actual value of `key`.
-	path : str, optional
-		Path for lookup in case `special_values` is triggered.
-
-	Returns
-	-------
-	array : ndarray
-		Output as array.
-	'''
-
-	output = parse_parameter(key, delimiter = delimiter)
-	array = []
-
-	for i in output:
-		if i in special_values:
-			array.append(process_cell(dictionary, top_key, middle_key, bottom_key, 
-						 cell = path, print_processing_warning = False))
-		else:
-			array.append(process_cell(dictionary, top_key, middle_key, bottom_key, 
-						 cell = i, print_processing_warning = False))
-
-	return np.asarray(array)
-
-def identify_bottom_keys(row_dict,
-                         return_paths=False,
-                         return_as_lists=False):
-    '''
-    Identify the bottom keys relevant for processing (value-unit pairs and standalone keys).
-    This is used to decide whether a row entry should be resolved as a
-    `Quantity` (value + unit) or as a plain value (for categorical strings
-    or non-quantity values).
-
-    Example
-    -------
-    For a row_dict like this:
-    {
-        'Usage_Value': 1500,
-        'Usage_Unit': 'kWh/kg',
-        'Usage_Path': 'some/path',
-        'Cost_Value': 200,
-        'Cost_Unit': 'USD/kWh/day',
-        'Type': 'natural_gas'
-    }
-
-    With return_paths=True, return_as_lists=False (default nested dict):
-    {
-        'Usage_Value': {'Value': 'Usage_Value', 'Unit': 'Usage_Unit', 'Path': 'Usage_Path'},
-        'Cost_Value': {'Cost_Value': 'Cost_Value', 'Unit': 'Cost_Unit'},
-        'Type':       {'Value': 'Type'}
-    }
-
-    With return_as_lists=True (flattened, backward-compatible):
-    {
-        'Usage_Value': ['Usage_Value', 'Usage_Unit', 'Usage_Path'],
-        'Cost_Value':  ['Cost_Value', 'Cost_Unit'],
-        'Type':        ['Type']
-    }
-    '''
-    result = {}
-    processed_keys = set(SPECIAL_BOTTOM_KEYS)
-
-    # First pass: find Value/Unit(/Path) pairs
-    for key in row_dict:
-
-        # bare Value/Unit pair (no prefix) 
-        if key == VALUE_KEY and UNIT_KEY in row_dict:
-            entry = {'Value': key, 'Unit': UNIT_KEY}
-
-            if return_paths and PATH_KEY_INPUT in row_dict:
-                entry['Path'] = PATH_KEY_INPUT
-
-            result[key] = entry
-            processed_keys.update(entry.values())
-
-        # prefixed Value/Unit pairs (_Value / _Unit suffixes) 
-        elif key.endswith(VALUE_SUFFIX):
-            prefix    = key[:-len(VALUE_SUFFIX)]
-            unit_key  = prefix + UNIT_SUFFIX
-            path_key  = prefix + PATH_SUFFIX
-
-            if unit_key in row_dict:          # only treat as a pair when unit exists
-                entry = {'Value': key, 'Unit': unit_key}
-
-                if return_paths and path_key in row_dict:
-                    entry['Path'] = path_key
-
-                result[key] = entry
-                processed_keys.update(entry.values())
-
-    # Second pass: any remaining key becomes a standalone entry
-    for key in row_dict:
-        if key not in processed_keys:
-            result[key] = {'Value': key}
-
-    # Optionally flatten to lists for backward compatibility
-    if return_as_lists:
-        return {key: list(value.values()) for key, value in result.items()}
-
-    return result
-
-def create_quantity_from_user_input_and_insert(dictionary, parsed_path):
-	'''
-	Creating quantity from user input  
-	'''
-
-	# Obtain bottom keys for the given path to identify value, unit and path keys
-	# e.g. for a path like "Table > Entry > Usage_Value", identify that value is at "Usage_Value", unit is at "Usage_Unit" and path is at "Usage_Path"
-	bottom_keys = identify_bottom_keys(dictionary[parsed_path[0]][parsed_path[1]], 
-									   return_paths = True,
-									   return_as_lists = False)
-
-	# Getting the keys for target bottom key (e.g. "Usage_Value")
-	keys = bottom_keys[parsed_path[2]]
-
-	# Processing the value found at the path location
-	value = process_input(dictionary,
-					   	  parsed_path[0],
-						  parsed_path[1],
-						  parsed_path[2],
-						  path_key = keys.get('Path', PATH_KEY_INPUT),
-						  add_processed = False,
-						  print_processing_warning = True)
-
-	# Retrieving the unit found at the path location
-	unit = dictionary[parsed_path[0]][parsed_path[1]][keys['Unit']]
-
-	# Creating quantity object
-	quantity = Quantity(value, unit)
-
-	return quantity
-
-				
-def process_path(dictionary, path, top_key, key, bottom_key):
-	'''Processing provided path. Checks are performed to see if path is valid.
-
-	Parameters
-	----------
-	dictionary : dict
-		Dictionary within which function operates.
-	path : str
-		Path.
-	top_key : str
-		Top key.
-	key : str
-		Middle key.
-	bottom_key : str
-		Bottom key.
-
-	Notes
-	-----
-	If provided path contains no ">" symbols, it is not a path and 1 is returned
-	If provided path contains only one ">" symbol, it is not a valid path. A warning is printed and 1 is returned.
-	If provided path contains two ">" symbols, it is potentially a valid path. 
-	It is then attempted to retrieve target value. If retrieval attempt is unsuccessful, a warning is printed and 1 is returned.
-	If the path is valid, the target value is retrieved:
-	If the rerieved target value comes from an unprocessed key, it is processed and a quantity object is created for further use.
-	If the retrieved target value is non-numerical, a warning is printed and 1 is returned.
-	If the retrieved target value is numerical, it is returned.
-	'''
-
-	path_alone, unit = parse_path_with_unit(path)
-	parsed_path = parse_parameter(path_alone)
-
-	if len(parsed_path) == 1:
-		print('Warning: Provided path "{0}" at "{1} > {2} > {3}" does not contain ">" symbol, treating as non-path and setting to 1.'.format(path, top_key, key, bottom_key))
-		return 1.
-
-	elif len(parsed_path) == 3:
-
-		try:
-			target_value = get_by_path(dictionary, parsed_path)
-
-			# If target value is not already processed, it is processed and a quantity object is created for further use
-			if 'Processed' not in dictionary[parsed_path[0]][parsed_path[1]]:
-				target_value = create_quantity_from_user_input_and_insert(dictionary, parsed_path)
-				
-			if isinstance(target_value, Quantity):
-				target_value = target_value.unit[unit]
-
-			else:
-				print('Warning: Non-numerical (non-Quantity) value retrieved at "{0} > {1} > {2}" (by "{3} > {4}"), obtained value is {5}, setting to 1'
-						.format(parsed_path[0], parsed_path[1], parsed_path[2], top_key, key, target_value))
-				target_value = 1.
-
-		except KeyError:
-			print('Warning: Invalid path specified for "{0}" (at "{1} > {2} > {3}"), setting to 1'
-				  .format(path, top_key, key, bottom_key))
-			target_value = 1.
-
-		return target_value
-
-	else:
-		print('Warning: Invalid path specified for "{0}" (at "{1} > {2} > {3}"), setting to 1'
-			   .format(path, top_key, key, bottom_key))
-		return 1.
-
-def process_cell(dictionary, top_key, key, bottom_key, cell = None, print_processing_warning = True):
-	'''Processing of a single cell at dictionary[top_key][key][bottom_key]
-
-	Parameters
-	----------
-	dictionary : dict
-		Dictionary within which function operates.
-	top_key : str
-		Top key.
-	key : str
-		Middle key.
-	bottom_key : str
-		Bottom key.
-	cell : int, float, str or None
-		Cell entry.
-	print_processing_warning : bool
-		Flag to control if a warning is printed when an unprocessed value is being used.
-
-	Notes
-	-----
-	If cell contains only a number, the contents of that cell are returned. 
-	If cell contains a string, but that string is not a path (indicated by absence of ">" symbol), 1 is returned
-	If cell contains a string which is potentially a path, it is processed:
-	Contents of the cell are split at ";" delimiter, separating multiple potential paths.
-	For each potential path, process_path() is applied.
-	The retrieved target value(s) are multiplied and returned.
-	Since value is initated to 1, if none of the paths are valid, simply 1 is returned.
-	'''
-	if cell is None:
-		cell = dictionary[top_key][key][bottom_key]
-
-	if isinstance(cell, numbers.Number):
-		return cell
-
-	elif '>' not in cell:
-		if isinstance(num(cell), numbers.Number):
-			return num(cell)
-		else:
-			if cell != 'None':
-				print(f'Warning: Value at "{top_key} > {key} > {bottom_key}" is not numerical (value is "{cell}"), setting to 1.')
-			return 1.
-
-
-	else:
-		value = 1.
-		paths = parse_parameter(cell, delimiter = ';')
-
-		for path in paths:
-			target_value = process_path(dictionary, path, top_key, key, bottom_key)
-			value *= target_value
-
-		return value
-
-def process_input(dictionary, top_key, key, bottom_key, path_key = 'Path', add_processed = True,
-				  print_processing_warning = True):
-	'''Processing of input at dictionary[top_key][key][bottom_key].
-
-	Parameters
-	----------
-	dictionary : dict
-		Dictionary within which function operates.
-	top_key : str
-		Top key.
-	key : str
-		Middle key.
-	bottom_key : str
-		Bottom key.
-	path_key : str, optional
-		Key used for path column. Defaults to 'Path'.
-	add_processed : bool, optional
-		Flag to control if `Processed` key is added
-	print_processing_warning : bool, optional
-		Flag to control if a warning is printed when an unprocessed value is being used.
-
-	Notes
-	-----
-	Action: if there is an entry at dictionary[top_key][key][path_key], process_input() applies process_cell() 
-	to dictionary[top_key][key][bottom_key] as well as dictionary[top_key][key][path_key] and multiplies them. 
-	The resulting value is returned and placed into dictionary[top_key][key][bottom_key]
-
-	Detailed Description:
-
-	First, it is checked if that input has already been processed by looking for the "Processed" key.
-	If this is the case, the input is simply returned.
-	If it has not already been processed, it is checked if the input is a string which could not 
-	be a path (not containing ">"). In this case the string is simply returned and "Processed" is added.
-
-	If neither condition is met, process_cell() is applied. 
-	It is then attempted to retrieve dictionary[top_key][key][path_key]. 
-	If this entry cannot be retrieved, the process_cell() value of the input is returned,
-
-	If this entry can be retrieved, process_cell() is applied to it and the resulting
-	Value is multiplied by the original process_cell() value of the input, updating value.
-
-	If the obtained value differs from the original entry, the obtained value is inserted at
-	dictionary[top_key][key][bottom_key] and the original entry is stored in
-	dictionary[top_key][key][former_bottom_key] 
-
-	At the end, "Processed" is added.
-	'''
-
-	entry = dictionary[top_key][key][bottom_key]
-
-	# If "Processed" exists, simply return entry
-	if 'Processed' in dictionary[top_key][key]:
-		return entry
-	
-	# If type is Quantity, dict or np.ndarray, this indicates that processing
-	# has already occured, thus simply return entry
-	elif isinstance(entry, (Quantity, dict, np.ndarray)): 
-		return entry
-
-	# If entry is a string and does not contain ">", it is not a path and is returned as is
-	elif isinstance(entry, str) and '>' not in entry:
-		if add_processed is True:
-			dictionary[top_key][key]['Processed'] = 'Yes'
-		return entry
-
-	# If entry is a path string, or numerical value (float, int) apply processing pipeline
-	elif isinstance(entry, (str, float, int)):
-		value = process_cell(dictionary, top_key, key, bottom_key, 
-					   		print_processing_warning = print_processing_warning)
-
-		try:
-			target_value = process_cell(dictionary, top_key, key, path_key,
-							   print_processing_warning = print_processing_warning)
-			value *= target_value
-		except KeyError: # Silent key error, this is bad 
-			pass 
-
-		if np.array_equal(value, dictionary[top_key][key][bottom_key]) is False:
-			former_bottom_key = 'Former ' + bottom_key 
-			dictionary[top_key][key][former_bottom_key] = dictionary[top_key][key][bottom_key]
-			dictionary[top_key][key][bottom_key] = value  # setting dictionary entry to obtained value
-		
-		if add_processed is True:
-			dictionary[top_key][key]['Processed'] = 'Yes'   # marking that this key has been processed
-
-		return value
-	
-	else:
-		raise TypeError(f'Unexpected type for entry [{entry}] at "{top_key} > {key} > {bottom_key}" . Expected str, float or int, but got {type(entry)}.')
-
-def process_table(dictionary, top_key, bottom_key, path_key = 'Path', 
-				  print_processing_warning = True):
-	'''Looping through all keys in dictionary[top_key] and applying process_input to
-	dictionary[top_key][key][bottom_key].
-
-	Parameters
-	----------
-	dictionary : dict
-		Dictionary within which function operates.
-	top_key : str
-		Top key.
-	bottom_key : str, ndarray or list
-		Bottom key(s).
-	path_key : str or ndarray, optional
-		Key(s) used for path column(s). Defaults to 'Path'.
-	print_processing_warning : bool, optional
-		Flag to control if a warning is printed when an unprocessed value is being used.
-	
-	Notes
-	-----
-	`bottom_key` can also be an array of keys, all of which are processed (in this case, 
-	path_key has to be an array of equal length). 
-	'''
-
-	for key in dictionary[top_key]:
-		if isinstance(bottom_key, str):
-			value = process_input(dictionary, top_key, key, bottom_key, path_key = path_key,
-						 		print_processing_warning = print_processing_warning)
-
-		else:
-			for single_key, path in zip(bottom_key[:-1], path_key[:-1]):
-				value = process_input(dictionary, top_key, key, single_key, 
-									  path_key = path, add_processed = False,
-									print_processing_warning = print_processing_warning)
-
-			process_input(dictionary, top_key, key, bottom_key[-1], 
-						  path_key = path_key[-1], add_processed = True,
-						  print_processing_warning = print_processing_warning)
 
 def sum_table_quantity(dictionary, 
 					   top_key, 
@@ -1075,3 +670,7 @@ def daily_to_yearly_power_quantity(dictionary):
 	base_unit = dictionary[list(dictionary.keys())[0]].base_unit
 
 	return Quantity(yearly_power, base_unit)
+
+class Inp_Wrapper:
+	def __init__(self, input_dict):
+		self.inp = input_dict
