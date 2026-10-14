@@ -13,7 +13,8 @@ import textwrap
 
 import numpy as np
 
-from pyH2A.Utilities.input_modification import identify_bottom_keys
+from pyH2A.Utilities.IO.input_processing import identify_bottom_keys
+
 from pyH2A.Utilities.constants import (WILDCARD_MARKER, 
 									   SPECIAL_MIDDLE_KEYS,
                                        OPTIONAL_KEY, 

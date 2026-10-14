@@ -6,12 +6,14 @@ from pyH2A.Utilities.check_functions import (check_type,
                                              check_dimension, 
                                              check_bounds)
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
-from pyH2A.Utilities.input_modification import (process_input,
-                                                sum_table_quantity, 
+from pyH2A.Utilities.input_modification import (sum_table_quantity, 
                                                 sum_all_tables_quantity, 
                                                 retrieve_base_unit,
-                                                insert,
-                                                identify_bottom_keys)
+                                                insert)
+
+from pyH2A.Utilities.IO.input_processing import (process_input, 
+                                                 identify_bottom_keys)
+
 from pyH2A.Utilities.constants import (WILDCARD_MARKER,
                                        SPECIAL_MIDDLE_KEYS,
                                        SUM_TABLES_KEY,
@@ -252,8 +254,7 @@ def value_resolver_function(top_key,
                   top_key, 
                   middle_key,
                   bottom_key,
-                  path_key = specific_path_key,
-                  add_processed = False)
+                  path_key = specific_path_key,)
 
     value_specification, value_retrieved = _get_specification_and_retrieved_value(top_key, 
                                                                                  middle_key, 

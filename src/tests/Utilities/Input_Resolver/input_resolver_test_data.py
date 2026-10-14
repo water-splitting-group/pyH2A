@@ -147,7 +147,7 @@ class DummyDCF:
                 'Recycling': {
                     'Value': 10,
                     'Unit': 'USD',
-                    'Path': '{Number of units > Bag number > Value, -}; {Catalyst > Lifetime > Value, year}' # testing that multiple path information is correctly passed and used
+                    'Path': '{Number of units > Bag number > Value, -} * {Catalyst > Lifetime > Value, year}' # testing that multiple path information is correctly passed and used
                 }                     
             },
 
