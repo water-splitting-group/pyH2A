@@ -46,7 +46,18 @@ class Photocatalytic_Plugin:
 					},
 					"optional": False,
 					"description": "Yearly output, ignoring the capacity factor."
-				},				
+				},		
+                "Operating capacity factor": { 
+                    "Value": {
+                        "type": {float, int},
+                        "bounds": (0, 1),
+                    },
+                    "Unit": {
+                        "dimension": "dimensionless",
+                    },
+                    "optional": False,
+                    "description": "Operating capacity factor value between 0 and 1."
+                },  						
 			},
 			"Reactor Baggies": {
 				"Cost material top": {
@@ -375,6 +386,26 @@ class Photocatalytic_Plugin:
 					"description": "Total water volume"
 				},
 			},
+			"Baggie Water Feed": {
+				"Gross yearly mass": {
+					"Value": {
+						"inserted_value": "gross_yearly_mass",
+						"type": {np.ndarray,},
+						"dimension": "mass",
+					},
+					"optional": False,
+					"description": "Mass of water to inject in the baggies per year, accounting for conversino and evaporation"
+				},
+				"Net yearly mass": {
+					"Value": {
+						"inserted_value": "net_yearly_mass",
+						"type": {np.ndarray,},
+						"dimension": "mass",
+					},
+					"optional": False,
+					"description": "Mass of water converted into hydrogen per year"
+				},				
+			},			
 			"Main Stream": {
 				"Is independent from year": {
 					"Value": {
@@ -475,6 +506,7 @@ class Photocatalytic_Plugin:
 		self.land_area()
 		self.catalyst_activity()
 		self.outlet_flow_properties()
+		self.water_consumption()
 		#plt.plot(np.cumsum(self.hourly_H2_mass_production.unit['kg']))
 		#plt.show()		
 		
@@ -693,6 +725,29 @@ class Photocatalytic_Plugin:
 		self.hourly_mass_flow = {round(year):hourly_mass_flow for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']}
 
 
+	def water_consumption(self):
+
+		# Mass of water converted into hydrogen per year
+		self.net_yearly_mass = Quantity(self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output by year']['Value'].unit['kg'][0] 
+		                                *
+		                                self.input_dict_resolved['Technical Operating Parameters and Specifications']['Operating capacity factor']['Value'].unit['-']
+		                                *
+										PP.MW['H2O'].unit['kg/mol']
+		                                /
+		                                PP.MW['H2'].unit['kg/mol']
+										*
+										np.ones_like(self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']),
+										'kg')
+		self.gross_yearly_mass = Quantity(np.sum(self.hourly_mass_flow[0].unit['kg']
+		                                         *
+		                                         self.outlet_mass_fraction[0]['H2O'].unit['-']
+		                                         )
+		                                *
+		                                self.input_dict_resolved['Technical Operating Parameters and Specifications']['Operating capacity factor']['Value'].unit['-']
+										*
+										np.ones_like(self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']),
+										'kg')	
+			
 @njit
 def energy_balance(
         rho_kg_m3,
@@ -807,3 +862,4 @@ def energy_balance(
 		time_interval_initial_temperature_K = time_interval_end_temperature		
 		#ground_HX[i] = h_wind_W_m2_K[i] * (T_air_K[i]-reactor_hourly_temperature_K[i])
 	return reactor_hourly_temperature_K#, ground_HX
+

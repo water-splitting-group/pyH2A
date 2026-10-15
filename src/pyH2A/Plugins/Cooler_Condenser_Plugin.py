@@ -174,6 +174,24 @@ class Cooler_Condenser_Plugin:
 
         self.output_dict = {
             "Cooler Condenser@": {
+                "Hourly heat duty": {
+                    "Value": {
+                        "inserted_value": "hourly_heat_duty",
+                        "type": {dict,},
+                        "dimension": "energy",
+                    },
+                    "optional": False,
+                    "description": "Hourly thermal power exchanged in the cooler-condenser."
+                },
+                "Yearly heat duty": {
+                    "Value": {
+                        "inserted_value": "yearly_heat_duty",
+                        "type": {np.ndarray,},
+                        "dimension": "energy",
+                    },
+                    "optional": False,
+                    "description": "Yearly thermal power exchanged in the cooler-condenser."
+                },                
                 "Sizing heat duty": {
                     "Value": {
                         "inserted_value": "sizing_heat_duty",
@@ -245,42 +263,6 @@ class Cooler_Condenser_Plugin:
                     },
                     "optional": False,
                     "description": "Mass of the cooling water used during lifetime, accounting for the operating capacity factor."
-                },    
-                "Cooling water hourly pumping energy": {
-                    "Value": {
-                        "inserted_value": "hourly_pumping_energy",
-                        "type": {dict,},
-                        "dimension": "energy",
-                    },
-                    "optional": False,
-                    "description": "Dictionary of years: hourly energy required to pump the cooling water."
-                },                  
-                "Peak cooling water pumping power": {
-                    "Value": {
-                        "inserted_value": "pump_sizing_power",
-                        "type": {float,},
-                        "dimension": "power",
-                    },
-                    "optional": False,
-                    "description": "Sizing power of the cooling water pump."
-                },                                                                            
-                "Cooling water yearly pumping energy": {
-                    "Value": {
-                        "inserted_value": "yearly_pumping_energy",
-                        "type": {np.ndarray,},
-                        "dimension": "energy",
-                    },
-                    "optional": False,
-                    "description": "Energy for the pumping of the cooling water used per year, accounting for the operating capacity factor."
-                },    
-                "Cooling water total pumping energy": {
-                    "Value": {
-                        "inserted_value": "total_pumping_energy",
-                        "type": {float,},
-                        "dimension": "energy",
-                    },
-                    "optional": False,
-                    "description": "Energy for the pumping of the cooling water used during plant lifetime."
                 },                                                     
             },
             "Main Stream": {
@@ -433,20 +415,16 @@ class Cooler_Condenser_Plugin:
             self.hourly_condensed_water = {round(year): self.hourly_condensed_water[0] for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']}
             self.hourly_mass_flow = {round(year): self.hourly_mass_flow[0] for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']}
             self.outlet_enthalpy = {round(year): self.outlet_enthalpy[0] for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']}
-            self.yearly_condensed_water_mass = self.yearly_condensed_water_mass[0]*np.ones_like(self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-'])
+            self.yearly_condensed_water_mass = self.yearly_condensed_water_mass[0]*self.input_dict_resolved['Time']['Years']['Value']['Operation years ones'].unit['-']
 
         self.yearly_condensed_water_mass = Quantity(self.yearly_condensed_water_mass, 'kg')
 
     def Energy_balance(self):
 
-        nominal_pressure_drop = Quantity(70e3, 'Pa') # hardcoded for the moment to a realistic value
-        pump_efficiency = 0.7
-
         self.hourly_heat_duty = {}
         self.hourly_coolant_mass = {}
-        self.hourly_pumping_energy = {}
+        self.yearly_heat_duty = np.zeros_like(self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-'])
         self.yearly_coolant_mass = np.zeros_like(self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-'])
-        self.yearly_pumping_energy = np.zeros_like(self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-'])
 
         for year in self.years:
             year = round(year)
@@ -463,7 +441,7 @@ class Cooler_Condenser_Plugin:
                                       *
                                       self.condensed_water_enthalpy.unit['J/kg'])
 
-            self.hourly_heat_duty[year] = Quantity(hourly_heat_duty_J, 'J')
+            self.hourly_heat_duty[year] = Quantity(np.maximum(hourly_heat_duty_J, 0), 'J') # protection against numerically negative epsilon
 
             h_coolant_in = PP.Enthalpy(T=self.input_dict_resolved[self.cooler_name]['Cold inlet temperature']['Value'], 
                             P=self.input_dict_resolved['Main Stream']['Pressure']['Value'].unit['Pa'], 
@@ -477,37 +455,27 @@ class Cooler_Condenser_Plugin:
                             phase='L', 
                             composition_basis='mass')            
             
-            self.hourly_coolant_mass[year] = Quantity(hourly_heat_duty_J
+            self.hourly_coolant_mass[year] = np.maximum(hourly_heat_duty_J
                                                       /
                                                       (h_coolant_out.unit['J'] - h_coolant_in.unit['J']), # Enthalpy for 1 kg of water
+                                                      0) # protection against numerically negative epsilon
+            self.hourly_coolant_mass[year] = Quantity(self.hourly_coolant_mass[year], 
                                                       'kg')
 
-            self.hourly_pumping_energy[year] = Quantity(nominal_pressure_drop.unit['Pa'] # Assuming constant pressure drop equal to the acceptable maximum. This is conservative, because the pressure drop decreases supra-linearly as the flowrate decreases
-                                                        * 
-                                                        self.hourly_coolant_mass[year].unit['ton'] # Water : 1 ton ~ 1 m³, so pressure drop in Pa * mass in tons ~ energy in J
-                                                        / 
-                                                        pump_efficiency, 
-                                                        'J')
-
+            self.yearly_heat_duty[year] = np.sum(self.hourly_heat_duty[year].unit['J']) * self.input_dict_resolved['Technical Operating Parameters and Specifications']['Operating capacity factor']['Value'].unit['-']
+            
             self.yearly_coolant_mass[year] = np.sum(self.hourly_coolant_mass[year].unit['kg']) * self.input_dict_resolved['Technical Operating Parameters and Specifications']['Operating capacity factor']['Value'].unit['-']
-
-            self.yearly_pumping_energy[year] = np.sum(self.hourly_pumping_energy[year].unit['J']) * self.input_dict_resolved['Technical Operating Parameters and Specifications']['Operating capacity factor']['Value'].unit['-']
 
         if ('Is independent from year' in self.input_dict_resolved['Main Stream']) and (bool(self.input_dict_resolved['Main Stream']['Is independent from year']['Value'].unit['-']) is True):
             self.hourly_heat_duty = {round(year): self.hourly_heat_duty[0] for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']}
             self.hourly_coolant_mass = {round(year): self.hourly_coolant_mass[0] for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']}
-            self.hourly_pumping_energy = {round(year): self.hourly_pumping_energy[0] for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']}
-            self.yearly_coolant_mass = self.yearly_coolant_mass[0]*np.ones_like(self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-'])
-            self.yearly_pumping_energy = self.yearly_pumping_energy[0]*np.ones_like(self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-'])
+            self.yearly_heat_duty = self.yearly_heat_duty[0]*self.input_dict_resolved['Time']['Years']['Value']['Operation years ones'].unit['-']
+            self.yearly_coolant_mass = self.yearly_coolant_mass[0]*self.input_dict_resolved['Time']['Years']['Value']['Operation years ones'].unit['-']
 
+        self.yearly_heat_duty = Quantity(self.yearly_heat_duty, 'J')
         self.yearly_coolant_mass = Quantity(self.yearly_coolant_mass, 'kg')
-        self.total_pumping_energy = Quantity(np.sum(self.yearly_pumping_energy), 'J')
-        self.yearly_pumping_energy = Quantity(self.yearly_pumping_energy, 'J')
 
         self.total_coolant_mass = Quantity(np.sum(self.yearly_coolant_mass.unit['kg']), 'kg')
-
-
-
 
     def cooler_condenser_sizing(self):
 
@@ -516,7 +484,6 @@ class Cooler_Condenser_Plugin:
         peak_heat_duty_W = 0
         T_in_peak = 0
         sizing_coolant_flowrate = 0
-        peak_pumping_power = 0
         
         for year in self.years:
             year = round(year)
@@ -534,10 +501,7 @@ class Cooler_Condenser_Plugin:
                                                     T_in_peak)        
 
             sizing_coolant_flowrate = max(np.max(self.hourly_coolant_mass[year].unit['kg']), 
-                                                    sizing_coolant_flowrate)            
-                
-            peak_pumping_power =  max(np.max(self.hourly_pumping_energy[year].unit['Wh']), 
-                                                    peak_pumping_power)                
+                                                    sizing_coolant_flowrate)                        
 
         self.peak_mass_flowrate = Quantity(peak_mass_flowrate_kg_h, 'kg/h')
         self.peak_condensed_water_flowrate = Quantity(peak_condensed_water_flowrate_kg_h, 'kg/h')
@@ -559,5 +523,3 @@ class Cooler_Condenser_Plugin:
             * self.heat_exchange_area.unit['m2'],
             'kg'
         )
-
-        self.pump_sizing_power = Quantity(peak_pumping_power, 'W')

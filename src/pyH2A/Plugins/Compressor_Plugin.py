@@ -69,6 +69,28 @@ class Compressor_Plugin:
                     "optional": False,
                     "description": "Compression work per shaft work provided to the compressor."
                 },
+                "Power per compressor unit": {
+                    "Value": {
+                        "type": {int,float,},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "power",
+                    },
+                    "optional": False,
+                    "description": "Power of a compressor unit."
+                },
+                "Weight per compressor unit": {
+                    "Value": {
+                        "type": {int,float,},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "mass",
+                    },
+                    "optional": False,
+                    "description": "Mass of a compressor unit."
+                },                                
             },
             "Technical Operating Parameters and Specifications": {
                 "Operating capacity factor": { 
@@ -190,7 +212,25 @@ class Compressor_Plugin:
                     },
                     "optional": False,
                     "description": "Total energy needed at the shaft to drive the compressor."
-                },                               
+                },  
+                "Number of units": {
+                    "Value": {
+                        "inserted_value": "number_compressor_units",
+                        "type": {float, int,},
+                        "dimension": "dimensionless",
+                    },
+                    "optional": False,
+                    "description": "Number of required compressor units."
+                },   
+                "Material mass": {
+                    "Value": {
+                        "inserted_value": "mass_compressor",
+                        "type": {float, int,},
+                        "dimension": "mass",
+                    },
+                    "optional": False,
+                    "description": "Mass of material that constitute the conpressor units."
+                },                                                               
             },
             "Main Stream": {
                 "Temperature": {
@@ -235,6 +275,8 @@ class Compressor_Plugin:
         self.input_dict_resolved = input_resolver_function(self.input_dict, dcf, plugin_name)
 
         self.calculate_compression()
+
+        self.calculate_compressors_units_impacts()
 
         output_inserter_function(self.output_dict, self, dcf, plugin_name) 
 
@@ -308,3 +350,14 @@ class Compressor_Plugin:
         self.peak_shaft_power = Quantity(self.peak_shaft_power, 'W')
         self.total_shaft_energy = Quantity(np.sum(self.yearly_shaft_energy.unit['J']), 'J')
 
+    def calculate_compressors_units_impacts(self):
+        self.number_compressor_units = Quantity(np.ceil(self.peak_shaft_power.unit['W']
+                                                        /
+                                                        self.input_dict_resolved[self.compressor_name]['Power per compressor unit']['Value'].unit['W']
+                                                        ).astype(int), 
+                                                        '-')
+        
+        self.mass_compressor = Quantity(self.number_compressor_units.unit['-']
+                                        *
+                                        self.input_dict_resolved[self.compressor_name]['Weight per compressor unit']['Value'].unit['kg'], 
+                                        'kg')

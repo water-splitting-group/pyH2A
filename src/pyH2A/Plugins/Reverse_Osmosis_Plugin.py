@@ -1,5 +1,6 @@
 from pyH2A.Utilities.IO import input_resolver_function, output_inserter_function
 from pyH2A.Utilities.Unit_Handler.quantity import Quantity
+from pyH2A.Utilities.Physical_Properties.Physical_properties import Physical_properties as PP
 import numpy as np
 
 class Reverse_Osmosis_Plugin:
@@ -39,8 +40,21 @@ class Reverse_Osmosis_Plugin:
         self.functional_unit = dcf.functional_unit
 
         self.input_dict = {
-            "Technical Operating Parameters and Specifications": {
-                "Design output by year": {
+            "Time": {
+                "Years": {
+                    "Value": {
+                        "type": {dict,},
+                        "bounds": (None, None),
+                    },
+                    "Unit": {
+                        "dimension": "dimensionless",
+                    },
+                    "optional": False,
+                    "description": "Dictionary containing all time-related quantities."
+                }, 
+            },              
+            "Purified Water Yearly Demand": {
+                "<...>": {
                     "Value": {
                         "type": {np.ndarray},
                         "bounds": (0, None),
@@ -49,24 +63,13 @@ class Reverse_Osmosis_Plugin:
                         "dimension": "mass",
                     },
                     "optional": False,
-                    "description": "Yearly output of hydrogen production (from water), ignoring capacity factor."
-                },
-        		"Operating capacity factor": { 
-        			"Value": {
-        				"type": {float, int},
-        				"bounds": (0, 1),
-                    },
-        			"Unit": {
-        				"dimension": "dimensionless",
-        			},
-        			"optional": False,
-        			"description": "Operating capacity factor value between 0 and 1 or percentage value."
-        		},	        
+                    "description": "Yearly mass of water needed by the various units of the process."
+                },        
             },
             "Reverse Osmosis": {
                 "Power demand": {
                     "Value": {
-                        "type": {float,},
+                        "type": {int, float,},
                         "bounds": (0, None),
                     },
                     "Unit": {
@@ -77,7 +80,7 @@ class Reverse_Osmosis_Plugin:
                 },
                 "Average operating time fraction": {
                     "Value": {
-                        "type": {float,},
+                        "type": {int, float,},
                         "bounds": (0, 1),
                     },
                     "Unit": {
@@ -89,7 +92,7 @@ class Reverse_Osmosis_Plugin:
                 },
                 "Recovery rate": {
                     "Value": {
-                        "type": {float,},
+                        "type": {int, float,},
                         "bounds": (0, 1),
                     },
                     "Unit": {
@@ -97,6 +100,17 @@ class Reverse_Osmosis_Plugin:
                     },
                     "optional": False,
                     "description": "Fraction of fresh water obtained from given volume of sea water."
+                },
+                "Device output": {
+                    "Value": {
+                        "type": {int,float,},
+                        "bounds": (0, None),
+                    },
+                    "Unit": {
+                        "dimension": "volume / time",
+                    },
+                    "optional": True,
+                    "description": "Purified water output of one reverse osmosis device, used to calculate the number of devices."
                 },
             },
         }
@@ -127,6 +141,15 @@ class Reverse_Osmosis_Plugin:
                     "description": "Maximum sea water processing capacity per hour of reverse osmosis plant.",
                     "optional": False,
                 },
+                "Number of devices": {
+                    "Value": {
+                        "inserted_value": "number_of_devices",
+                        "type": {float,int,},
+                        "dimension": "dimensionless",
+                    },
+                    "description": "Number of reverse osmosis devices required for the system, whole lifetime.",
+                    "optional": True,
+                },
             },
         }
 
@@ -143,16 +166,19 @@ class Reverse_Osmosis_Plugin:
         '''Calculation of electricity demand for reverse osmosis based on
         yearly amount of hydrogen production.
         '''
-        MOLAR_RATIO_WATER = 18.01528 / 2.016
-        DENSITY_WATER_KG_PER_M3 = 997
 
-        output_per_year_kg_H2 = (self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output by year']['Value'].unit['kg'] 
-                                 * self.input_dict_resolved['Technical Operating Parameters and Specifications']['Operating capacity factor']['Value'].unit['-'])
+        fresh_water_demand_kg_by_year = np.zeros_like(self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-'])
 
-        fresh_water_demand_kg_by_year = output_per_year_kg_H2 * MOLAR_RATIO_WATER
-        fresh_water_demand_m3_by_year = fresh_water_demand_kg_by_year / DENSITY_WATER_KG_PER_M3
+        for _, demand in self.input_dict_resolved['Purified Water Yearly Demand'].items():
+            fresh_water_demand_kg_by_year += demand['Value'].unit['kg']
 
-        self.sea_water_demand_by_year = Quantity(fresh_water_demand_m3_by_year 
+        self.fresh_water_demand_volume_by_year = PP.Volume(T= Quantity(25, 'degC'), 
+                                                  P = Quantity(1, 'bar'), 
+                                                  amount = {'H2O': Quantity(fresh_water_demand_kg_by_year, 'kg')},
+                                                  phase = 'L', 
+                                                  composition_basis= 'mass')
+
+        self.sea_water_demand_by_year = Quantity(self.fresh_water_demand_volume_by_year.unit['m3'] 
                                                  / self.input_dict_resolved['Reverse Osmosis']['Recovery rate']['Value'].unit['-'], 
                                         'm3')
 
@@ -170,3 +196,15 @@ class Reverse_Osmosis_Plugin:
         self.maximum_sea_water_processing_flowrate = Quantity(maximum_yearly_sea_water_demand_m3 
                                                               / self.input_dict_resolved['Reverse Osmosis']['Average operating time fraction']['Value'].unit['-'], 
                                                      'm3/year')
+
+        if 'Device output' in self.input_dict_resolved['Reverse Osmosis']:
+            maximum_fresh_water_processing_flowrate = Quantity(self.maximum_sea_water_processing_flowrate.unit['m3/year'] 
+                                                               * self.input_dict_resolved['Reverse Osmosis']['Recovery rate']['Value'].unit['-'],
+                                                      'm3/year')
+
+            self.number_of_devices = Quantity(maximum_fresh_water_processing_flowrate.unit['m3/year'] 
+                                              / self.input_dict_resolved['Reverse Osmosis']['Device output']['Value'].unit['m3/year'],
+                                     '-')
+
+        
+        
