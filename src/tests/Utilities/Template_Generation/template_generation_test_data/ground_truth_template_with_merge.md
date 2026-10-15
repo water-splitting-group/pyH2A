@@ -1,3 +1,16 @@
+# Input files to merge
+
+Parameter | Value
+--- | ---
+Default TEA | pyH2A.Config~Defaults_TEA.md
+
+# Workflow
+
+Parameter | Position
+--- | ---
+Hourly_Irradiation_Plugin | 201
+Photovoltaic_Plugin | 202
+
 # Construction
 
 Parameter | Value
@@ -119,16 +132,3 @@ Input File | str, optional
 Parameter | Name | Type | Values | File Index
 --- | --- | --- | --- | ---
 <...> | str | str | str | int, optional
-
-# Input files to merge
-
-Parameter | Value
---- | ---
-Default TEA | pyH2A.Config~Defaults_TEA.md
-
-# Workflow
-
-Parameter | Position
---- | ---
-Hourly_Irradiation_Plugin | 201
-Photovoltaic_Plugin | 202

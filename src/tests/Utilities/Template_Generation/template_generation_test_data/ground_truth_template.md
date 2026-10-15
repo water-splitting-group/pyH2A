@@ -1,3 +1,11 @@
+# Workflow
+
+Parameter | Position
+--- | ---
+Hourly_Irradiation_Plugin | 201
+Photovoltaic_Plugin | 202
+Capital_Cost_Plugin | 400
+
 # Functional Unit
 
 Parameter | Unit
@@ -106,11 +114,3 @@ Input File | str, optional
 Parameter | Name | Type | Values | File Index
 --- | --- | --- | --- | ---
 <...> | str | str | str | int, optional
-
-# Workflow
-
-Parameter | Position
---- | ---
-Hourly_Irradiation_Plugin | 201
-Photovoltaic_Plugin | 202
-Capital_Cost_Plugin | 400
