@@ -5,6 +5,12 @@ from pyH2A.Utilities.input_modification import insert, convert_input_to_dictiona
 from pyH2A.Utilities.plugin_specification import instantiate_plugin_for_docs, iter_spec_rows, iter_bottom_entries
 from pyH2A.Utilities.constants import WILDCARD_MARKER
 
+# Tables which are placed at the beginning of the template (in this order)
+TEMPLATE_FIRST_TABLES = ['Input files to merge', 'Workflow', 'Functional Unit']
+
+# Tables containing this term in their name belong to analysis modules and are placed at the end of the template
+ANALYSIS_TABLE_INDICATOR = 'Analysis'
+
 def is_parameter_or_output(line, spaces_for_tab = 4, spaces_cutoff = 5):
 	'''Detection of parameters and output values in line based on presence of more than `spaces_cuttoff`
 	spaces (tabs are converted to four spaces).
@@ -204,7 +210,8 @@ class Generate_Template_Input_File:
 
 		self.inp = merge(self.inp, 
 						 convert_file_to_dictionary(file_import(input_file_stub, mode = 'r')))
-
+		self.order_tables()
+  
 		template_file = Template_File(self.inp)
 		template_file.write_template_file(output_file)
 
@@ -280,6 +287,26 @@ class Generate_Template_Input_File:
 					pass
 
 		return requirements
+
+	def order_tables(self):
+		'''Order tables of self.inp: first `TEMPLATE_FIRST_TABLES`, then plugin tables 
+		(in workflow order), then analysis module tables.
+
+		Notes
+		-----
+		Plugin tables are already in workflow order, since requirements are collected 
+		plugin by plugin (`generate_requirements`) and inserted in this order 
+		(`convert_requirements_to_inp`). Tables from the input file stub which are not 
+		requested are added after them when the stub is merged.
+		'''
+
+		first_tables = [key for key in TEMPLATE_FIRST_TABLES if key in self.inp]
+		analysis_tables = [key for key in self.inp 
+						   if ANALYSIS_TABLE_INDICATOR in key and key not in first_tables]
+		plugin_tables = [key for key in self.inp 
+						 if key not in first_tables and key not in analysis_tables]
+
+		self.inp = {key: self.inp[key] for key in first_tables + plugin_tables + analysis_tables}
 
 	def convert_requirements_to_inp(self, insert_origin = False, insert_comment = False):
 		'''Convert dictionary of requirements to formatted self.inp
