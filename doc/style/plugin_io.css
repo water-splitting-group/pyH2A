@@ -331,7 +331,7 @@ body[data-theme="dark"] {
    diagonally (45 degrees), each in a slanted band above its column, so every
    name stays in the lane of its column. */
 #io-table thead th {
-    height: 185px;
+    height: 230px;
     padding: 0;
     overflow: visible;
     vertical-align: bottom;
@@ -358,15 +358,15 @@ body[data-theme="dark"] {
 
 .io-header-band > span {
     position: absolute;
-    left: calc(50% - 0.45rem);
-    bottom: 0.3rem;
-    max-width: 250px;
+    left: calc(50% - 0.1em);
+    bottom: 0.1em;
+    line-height: 1.2;
+    max-width: 310px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     font-size: 0.8rem;
-    transform-origin: bottom left;
-    /* undo the skew of the band, then turn the text along the band */
+    transform-origin: left bottom;
     transform: skewX(45deg) rotate(-45deg);
 }
 
