@@ -131,7 +131,7 @@ def test():
 def lca():
 	result = pyH2A('src/tests/end_to_end/Thermal_Base.md', '.')
 	print(result)
-
+ 
 def main():
 	#dcf_test()
 	#optimization_test()
@@ -146,7 +146,6 @@ def main():
 	#technology_comparison()
 	#test()
 	lca()
-
 	
 if __name__ == '__main__':
 	main()
