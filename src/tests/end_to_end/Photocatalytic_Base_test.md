@@ -17,6 +17,9 @@ Cooler_Condenser_Plugin @ 2 | Computes second cooler condenser sizing and coolan
 Compressor_Plugin @ 2 | Computes second compressor power and yearly consumption | 306 |
 Cooler_Condenser_Plugin @ 3 | Computes third cooler condenser sizing and coolant requirements | 307 |
 PSA_refactored_Plugin | Computes sizing and cost of PSA separation unit | 308
+Cooling_Tower_Plugin | Computes water and energy demand due to the cooling tower | 309
+Pump_Plugin @ Cooling circuit | Pump for the three cooler-condensers and the cooling tower | 310
+Reverse_Osmosis_Plugin | Calculates sea water and energy demand for osmosis | 311
 Multiple_Modules_Plugin | Modelling of multiple plant modules, adjustment of labor requirement | 401 |
 
 # Display Parameters
@@ -205,6 +208,8 @@ Name | Value | Unit | Comment
 Compression ratio | 4.35 | -
 Polytropic coefficient | 1.4 | -
 Efficiency | 0.7 | - | 75% efficiency of the compressor itself, but we account for a bit of loss in the rest of the chain (e.g. electric motor)
+Power per compressor unit | 300 | kW | Based on shaft power
+Weight per compressor unit | 10 | ton | assumption
 
 # Compressor @ 2
 
@@ -212,6 +217,8 @@ Name | Value | Unit | Comment
 --- | --- | --- | 
 Compression ratio | 4.78 | -
 Efficiency | 0.7 | - | 75% efficiency of the compressor itself, but we account for a bit of loss in the rest of the chain (e.g. electric motor)
+Power per compressor unit | 300 | kW | Based on shaft power
+Weight per compressor unit | 10 | ton | assumption
 
 # Cooler Condenser
 
@@ -268,3 +275,56 @@ Name | Value | Unit
 Reference bed volume | 6065 |  L
 Reference cost | 100,000 | USD
 Scaling exponent | 0.5 | -
+
+# Cooling Tower
+
+Name | Yearly_heat_duty_Value | Yearly_heat_duty_Unit | Heat_duty_sizing_Value | Heat_duty_sizing_Unit | Flowrate_sizing_Value | Flowrate_sizing_Unit   
+--- | --- | --- | --- | --- | --- | --- 
+Cooler 1 | {Cooler Condenser > Yearly heat duty > Value, J} | J |  {Cooler Condenser > Sizing heat duty > Value, W} | W |  {Cooler Condenser > Peak cooling water mass flowrate > Value, kg/s} |  kg/s
+Cooler 2 | {Cooler Condenser @ 2 > Yearly heat duty > Value, J} | J |  {Cooler Condenser > Sizing heat duty > Value, W} | W |  {Cooler Condenser > Peak cooling water mass flowrate > Value, kg/s} |  kg/s
+Cooler 3 | {Cooler Condenser @ 3 > Yearly heat duty > Value, J} | J |  {Cooler Condenser > Sizing heat duty > Value, W} | W |  {Cooler Condenser > Peak cooling water mass flowrate > Value, kg/s} |  kg/s
+
+# Cooling Tower Unit
+
+Name | Value | Unit 
+--- | --- | --- 
+Maximum heat duty per unit | 659,41 | kW
+Maximum water flowrate per unit | 28.1 | kg/s
+Ventilation power per unit | 3.73 | kW
+Steel mass per unit | 509 | kg
+Polymer mass per unit | 116 | kg
+
+
+# Pump Hourly Liquid Mass @ Cooling circuit
+
+Name | Value | Unit 
+--- | --- | --- 
+Cooler 1 | {Cooler Condenser > Hourly mass of cooling water > Value, kg} |  kg
+Cooler 2 | {Cooler Condenser @ 2 > Hourly mass of cooling water > Value, kg} |  kg
+Cooler 3 | {Cooler Condenser @ 3 > Hourly mass of cooling water > Value, kg} |  kg
+
+# Pump @ Cooling circuit
+
+Name | Value | Unit 
+--- | --- | --- 
+Efficiency | 70% | -
+Nominal pressure drop | 1.4 | bar
+Minimum flowrate ratio | 0.25 | -
+Nominal flowrate per unit | 5 | kg/s
+Steel mass per unit | 10 | kg
+
+
+# Purified Water Yearly Demand
+
+Name | Value | Unit 
+--- | --- | --- 
+Baggie | {Baggie Water Feed > Net yearly mass > Value, kg} | kg
+Cooling tower | {Cooling Tower > Yearly water makeup > Value, kg} | kg
+
+# Reverse Osmosis
+
+Name | Value | Unit | Comment
+--- | --- | --- | ---
+Power demand | 2.71 | kWh/m3 | based on Hausmann 2021 and Kim 2008 (this was chosen for a purity of < 10 ppm of disolved salts in the obtained water), kWh per m3 of sea water
+Average operating time fraction | 0.16666666666666666 | - | Assumption that reverse osmosis runs for 4 h/day, relevant for scaling of reverse osmosis plant
+Recovery rate | 40% | - | Fraction of fresh water obtained from given volume of sea water, based Palmer 2021 and Terlouw 2022
