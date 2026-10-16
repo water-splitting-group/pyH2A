@@ -315,11 +315,8 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    function renderBody(rows, plugins) {
+        function renderBody(rows, plugins) {
         tableBody.innerHTML = "";
-
-        pluginCell.textContent = (directionAbbreviations[direction] || direction) +
-            (optional ? "*" : "");
 
         const groupedRows = groupRowsByVariable(rows);
         const startIndex = (currentPage - 1) * rowsPerPage;
@@ -362,8 +359,10 @@ document.addEventListener("DOMContentLoaded", () => {
                         titleParts.push(pluginRow.description);
                     }
 
+                    // "I", "O" or "I/O", with "*" when optional for this plugin
                     pluginCell.textContent =
-                        directionAbbreviations[direction] || direction;
+                        (directionAbbreviations[direction] || direction) +
+                        (optional ? "*" : "");
                     pluginCell.title = titleParts.join("\n");
                     pluginCell.className =
                         directionClasses[direction] || "io-cell-empty";

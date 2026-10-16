@@ -74,12 +74,12 @@ plugin during the documentation build
 
        </div>
 
+       <div id="io-count"></div>
+
         <div id="io-legend">
            I = input, O = output, I/O = input and output,
-           * (dashed border) = optional for this plugin. Hover a cell for its description.
+           * = optional for this plugin. Hover a cell for its description.
        </div>
-
-       <div id="io-count"></div>
 
        <div id="io-table-container">
 
