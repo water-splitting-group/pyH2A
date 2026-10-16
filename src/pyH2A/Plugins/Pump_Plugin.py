@@ -4,7 +4,7 @@ from pyH2A.Utilities.Physical_Properties.Physical_properties import Physical_pro
 import numpy as np
 
 class Pump_Plugin:
-    '''Simulation of cooling tower.
+    '''Simulation of a pump.
     '''
 
 
