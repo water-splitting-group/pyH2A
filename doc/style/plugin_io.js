@@ -318,6 +318,9 @@ document.addEventListener("DOMContentLoaded", () => {
     function renderBody(rows, plugins) {
         tableBody.innerHTML = "";
 
+        pluginCell.textContent = (directionAbbreviations[direction] || direction) +
+            (optional ? "*" : "");
+
         const groupedRows = groupRowsByVariable(rows);
         const startIndex = (currentPage - 1) * rowsPerPage;
         const pageRows = groupedRows.slice(startIndex, startIndex + rowsPerPage);
