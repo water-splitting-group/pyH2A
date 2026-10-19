@@ -60,16 +60,36 @@ class RFB_Plugin:
 				},									
 			},
 			"Battery Cell Stack": {		
-				"Power per cell stack": {
+				"Area": {
 					"Value": {
 						"type": {float, int,},
 						"bounds": (0, None),
 					},
 					"Unit": {
-						"dimension": "power",
+						"dimension": "area",
 					},
-					"description": "Power of each stack."
+					"description": "Surface area of each stack."
 				},		
+				"Current density": {
+					"Value": {
+						"type": {float, int,},
+						"bounds": (0, None),
+					},
+					"Unit": {
+						"dimension": "current/area",
+					},
+					"description": "Current per area of cell stack."
+				},		
+				"Discharge voltage": {
+					"Value": {
+						"type": {float, int,},
+						"bounds": (0, None),
+					},
+					"Unit": {
+						"dimension": "voltage",
+					},
+					"description": "Discharge voltage of the stack."
+				},										
 				"Lifetime": {
 					"Value": {
 						"type": {float, int,},
@@ -124,49 +144,18 @@ class RFB_Plugin:
 				},																				
 			},
 			"Battery Periphery": {	
-				"Number of periphery items": {
+				"Pumps lifetime": {
 					"Value": {
 						"type": {float, int,},
 						"bounds": (0, None),
 					},
 					"Unit": {
-						"dimension": "dimensionless",
+						"dimension": "time",
 					},
-					"description": "Lumped system of pumps, cables, piping..."
+					"description": "Duration between two replacements of the pumps"
 				},
-			},	
+			},				
 			"RFB Specific Impacts": {
-				"Stack": {
-					"GWP_Value": {
-						"type": {int, float},
-						"bounds": (0, None),
-					},
-					"GWP_Unit": {
-						"dimension": "mass" 
-					},	
-					"Energy_Value": {
-						"type": {int, float},
-						"bounds": (0, None),
-					},
-					"Energy_Unit": {
-						"dimension": "energy" 
-					},		
-					"Toxicity_Value": {
-						"type": {int, float},
-						"bounds": (0, None),
-					},
-					"Toxicity_Unit": {
-						"dimension": "dimensionless" 
-					},		
-					"Resource_use_Value": {
-						"type": {int, float},
-						"bounds": (0, None),
-					},
-					"Resource_use_Unit": {
-						"dimension": "mass" 
-					},														
-					"description": "Impact per stack."
-				}, 
 				"Electrolyte": {
 					"GWP_Value": {
 						"type": {int, float},
@@ -197,68 +186,6 @@ class RFB_Plugin:
 						"dimension": "mass/mass" 
 					},														
 					"description": "Impact per mass of electrolyte."
-				}, 	
-				"Periphery": {
-					"GWP_Value": {
-						"type": {int, float},
-						"bounds": (0, None),
-					},
-					"GWP_Unit": {
-						"dimension": "mass" 
-					},	
-					"Energy_Value": {
-						"type": {int, float},
-						"bounds": (0, None),
-					},
-					"Energy_Unit": {
-						"dimension": "energy" 
-					},		
-					"Toxicity_Value": {
-						"type": {int, float},
-						"bounds": (0, None),
-					},
-					"Toxicity_Unit": {
-						"dimension": "dimensionless" 
-					},		
-					"Resource_use_Value": {
-						"type": {int, float},
-						"bounds": (0, None),
-					},
-					"Resource_use_Unit": {
-						"dimension": "mass" 
-					},														
-					"description": "Impact per periphery item."
-				}, 
-				"Tank": {
-					"GWP_Value": {
-						"type": {int, float},
-						"bounds": (0, None),
-					},
-					"GWP_Unit": {
-						"dimension": "mass/mass" 
-					},	
-					"Energy_Value": {
-						"type": {int, float},
-						"bounds": (0, None),
-					},
-					"Energy_Unit": {
-						"dimension": "energy/mass" 
-					},		
-					"Toxicity_Value": {
-						"type": {int, float},
-						"bounds": (0, None),
-					},
-					"Toxicity_Unit": {
-						"dimension": "1/mass" 
-					},		
-					"Resource_use_Value": {
-						"type": {int, float},
-						"bounds": (0, None),
-					},
-					"Resource_use_Unit": {
-						"dimension": "mass/mass" 
-					},														
-					"description": "Impact per mass of tank material."
 				}, 								
 			},  					
 		}
@@ -309,31 +236,34 @@ class RFB_Plugin:
 					},
 					"description": "Mass of material needed to build the tank.",
 				},					
-						},		
-			"RFB Lifetime Impacts": {
-				"Stack": {
-					"GWP_Value": {
-						"inserted_value": "total_stack_gwp",
-						"type": {float,},
-						"dimension": "mass",
-					},
-					"Energy_Value": {
-						"inserted_value": "total_stack_energy",
-						"type": {float,},
-						"dimension": "energy",
-					},		
-					"Toxicity_Value": {
-						"inserted_value": "total_stack_toxicity",
+			},		
+			"Battery Periphery": {
+				"Number of pumps installed": {
+					"Value": {
+						"inserted_value": "number_pumps",
 						"type": {float,},
 						"dimension": "dimensionless",
-					},		
-					"Resource_use_Value": {
-						"inserted_value": "total_stack_resource_use",
+					},
+					"description": "Number of pumps (two per stack).",
+				},	
+				"Number of pumps over lifetime": {
+					"Value": {
+						"inserted_value": "total_pumps",
 						"type": {float,},
-						"dimension": "mass",
-					},													
-					"description": "Impact of the stacks for the entire the battery lifetime.",
-				},
+						"dimension": "dimensionless",
+					},
+					"description": "Number of pumps over lifetime, including replacement.",
+				},					
+				"Number of periphery items": {
+					"Value": {
+						"inserted_value": "total_periphery",
+						"type": {float,},
+						"dimension": "dimensionless",
+					},
+					"description": "Number of periphery items (inverter + pipe + cables), 1 periphery for per 5 kW of power.",
+				},									
+			},					
+			"RFB Lifetime Impacts": {
 				"Electrolyte": {
 					"GWP_Value": {
 						"inserted_value": "total_electrolyte_gwp",
@@ -356,53 +286,7 @@ class RFB_Plugin:
 						"dimension": "mass",
 					},													
 					"description": "Impact of the electrolyte for the entire the battery lifetime.",
-				},	
-				"Periphery": {
-					"GWP_Value": {
-						"inserted_value": "total_periphery_gwp",
-						"type": {float,},
-						"dimension": "mass",
-					},
-					"Energy_Value": {
-						"inserted_value": "total_periphery_energy",
-						"type": {float,},
-						"dimension": "energy",
-					},		
-					"Toxicity_Value": {
-						"inserted_value": "total_periphery_toxicity",
-						"type": {float,},
-						"dimension": "dimensionless",
-					},		
-					"Resource_use_Value": {
-						"inserted_value": "total_periphery_resource_use",
-						"type": {float,},
-						"dimension": "mass",
-					},													
-					"description": "Impact of the periphery for the entire the battery lifetime.",
-				},
-				"Tank": {
-					"GWP_Value": {
-						"inserted_value": "total_tank_gwp",
-						"type": {float,},
-						"dimension": "mass",
-					},
-					"Energy_Value": {
-						"inserted_value": "total_tank_energy",
-						"type": {float,},
-						"dimension": "energy",
-					},		
-					"Toxicity_Value": {
-						"inserted_value": "total_tank_toxicity",
-						"type": {float,},
-						"dimension": "dimensionless",
-					},		
-					"Resource_use_Value": {
-						"inserted_value": "total_tank_resource_use",
-						"type": {float,},
-						"dimension": "mass",
-					},													
-					"description": "Impact of the tank for the entire the battery lifetime.",
-				},		
+				},				
 				"Battery": {
 					"GWP_Value": {
 						"inserted_value": "total_battery_gwp",
@@ -430,8 +314,8 @@ class RFB_Plugin:
 						"dimension": "area",
 					},																		
 					"description": "Impact of the battery for its entire lifetime.",
-				},												
-			},			
+				},	
+			},																
 		}
 
 
@@ -481,7 +365,6 @@ class RFB_Plugin:
 		# but with a number of tanks proportional to the volume of electrolytes
 
 		# Hardcoded values obtained from the article
-		reference_capacity_MWh = 8
 		reference_density_kg_per_m3 = 1350 # 506746 kg / 375.4 m3
 		reference_tank_kg = 264622
 		reference_electrolyte_mass_kg = 506746
@@ -502,10 +385,16 @@ class RFB_Plugin:
 	def calculate_stack(self):
 		''' Calculate the number of cell stacks in the battery, and the total number of cell stack that need to be manufactured during the battery lifetime'''
 
-		self.number_cell_stacks = Quantity(
+		power_per_cell_stack_W = (self.input_dict_resolved['Battery Cell Stack']['Area']['Value'].unit['m2'] 
+		                          * 
+								  self.input_dict_resolved['Battery Cell Stack']['Current density']['Value'].unit['A/m2'] 
+								  * 
+								  self.input_dict_resolved['Battery Cell Stack']['Discharge voltage']['Value'].unit['V'])
+
+		self.number_cell_stacks = Quantity(np.ceil(
 										self.input_dict_resolved['Battery']['Power']['Value'].unit['W']
 										/
-										self.input_dict_resolved['Battery Cell Stack']['Power per cell stack']['Value'].unit['W'], 
+										power_per_cell_stack_W).astype(int), 
 										'-'
 										)
 
@@ -521,8 +410,19 @@ class RFB_Plugin:
 										)
 
 	def calculate_periphery(self):
-		''' Simply pick up the dictionary entry to generate a variable with the same standard name as the other elements'''
-		self.total_periphery = self.input_dict_resolved['Battery Periphery']['Number of periphery items']['Value']
+		''' Pump number scaled according to the number of stacks ; other epriphery items (piping + cables + inverter) are lumped and mapped internally in OLCA, we consider that 1 periphery supports a power of 5 kW'''
+		reference_power_kW = 5 # value from Zhang et al  https://doi.org/10.1039/d4eb00027g , hardcoded for the moment
+		self.number_pumps = Quantity(2*self.number_cell_stacks.unit['-'], '-')
+		self.total_pumps = Quantity(self.number_pumps.unit['-'] 
+									*
+									np.ceil(
+									(np.sum(self.input_dict_resolved['Time']['Years']['Value']['Operation years ones'].unit['-'])
+									/
+									self.input_dict_resolved['Battery Periphery']['Pumps lifetime']['Value'].unit['year']
+									)).astype(int), 
+		                            '-')
+
+		self.total_periphery = Quantity(self.input_dict_resolved['Battery']['Power']['Value'].unit['kW'] / reference_power_kW, '-') # Potential problem with the current approach: Blume also replaced inverters after 10 years ; Zhang doesn't
 
 
 	def calculate_impact(self):
@@ -531,7 +431,7 @@ class RFB_Plugin:
 		impact_categories = {'GWP': 'kg', 'Energy': 'J', 'Resource_use': 'kg', 'Toxicity': '-'}
 		for impact_name, impact_unit in impact_categories.items():
 			grand_total = 0
-			for subsystem_name in self.input_dict_resolved['RFB Specific Impacts']:
+			for subsystem_name in self.input_dict_resolved['RFB Specific Impacts']: # for the moment there's only the electrolye. We can have more later if so desired
 				subsystem_quantity = getattr(self, f"total_{subsystem_name.lower()}")
 				value_key = f"{impact_name}_Value"
 				impact_per_unit = self.input_dict_resolved['RFB Specific Impacts'][subsystem_name][value_key].base_value

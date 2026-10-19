@@ -14,29 +14,19 @@ class DummyDCF:
         Battery_power,
         Storage_capacity, 
         areal_energy_capacity,
-        Power_per_cell_stack, 
+        cell_stack_area,
+        current_density, 
+        discharge_voltage, 
         lifetime,
         Energy_density, 
         electrolyte_replacement, 
         electrolyte_regeneration,
         electrolyte_density,
-        periphery,
-        stack_gwp, 
-        stack_energy, 
-        stack_toxicity, 
-        stack_resource_use,
+        pump_lifetime,
         electrolyte_gwp, 
         electrolyte_energy, 
         electrolyte_toxicity, 
         electrolyte_resource_use,
-        periphery_gwp, 
-        periphery_energy, 
-        periphery_toxicity, 
-        periphery_resource_use,
-        tank_gwp, 
-        tank_energy, 
-        tank_toxicity, 
-        tank_resource_use,
     ):
         
         self.functional_unit = resolve_functional_unit('kWh[electricity]')
@@ -54,7 +44,9 @@ class DummyDCF:
                 "Areal energy capacity": {"Value": areal_energy_capacity, "Unit" : "kWh/m2"},
             },
             "Battery Cell Stack":{                             
-                "Power per cell stack": {"Value": Power_per_cell_stack, "Unit" : "kW"},
+                "Area": {"Value": cell_stack_area, "Unit" : "m2"},
+                "Current density" : {"Value": current_density, "Unit" : "A/m2"},
+                "Discharge voltage" : {"Value": discharge_voltage, "Unit" : "V"},
                 "Lifetime": {"Value": lifetime, "Unit" : "year"},
             },  
             "Battery Electrolyte":{
@@ -64,25 +56,13 @@ class DummyDCF:
                 "Electrolyte density": {"Value": electrolyte_density, "Unit" : "kg/m3"}
             },
             "Battery Periphery":{
-                "Number of periphery items": {"Value": periphery, "Unit" : "-"},
+                "Pumps lifetime": {"Value": pump_lifetime, "Unit" : "year"},
             },
             "RFB Specific Impacts": {
-                "Stack": {"GWP_Value": stack_gwp, "GWP_Unit": "kg",
-                          "Energy_Value": stack_energy, "Energy_Unit": "J", 
-                          "Toxicity_Value": stack_toxicity, "Toxicity_Unit": "-", 
-                          "Resource_use_Value": stack_resource_use, "Resource_use_Unit": "kg" },
                 "Electrolyte": {"GWP_Value": electrolyte_gwp, "GWP_Unit": "kg/kg",
                           "Energy_Value": electrolyte_energy, "Energy_Unit": "J/kg", 
                           "Toxicity_Value": electrolyte_toxicity, "Toxicity_Unit": "1/kg", 
-                          "Resource_use_Value": electrolyte_resource_use, "Resource_use_Unit": "kg/kg" },
-                "Periphery": {"GWP_Value": periphery_gwp, "GWP_Unit": "kg",
-                          "Energy_Value": periphery_energy, "Energy_Unit": "J", 
-                          "Toxicity_Value": periphery_toxicity, "Toxicity_Unit": "-", 
-                          "Resource_use_Value": periphery_resource_use, "Resource_use_Unit": "kg" },                          
-                "Tank": {"GWP_Value": tank_gwp, "GWP_Unit": "kg/kg",
-                          "Energy_Value": tank_energy, "Energy_Unit": "J/kg", 
-                          "Toxicity_Value": tank_toxicity, "Toxicity_Unit": "1/kg", 
-                          "Resource_use_Value": tank_resource_use, "Resource_use_Unit": "kg/kg" },     
+                          "Resource_use_Value": electrolyte_resource_use, "Resource_use_Unit": "kg/kg" },  
             },                       
         }
 
@@ -96,55 +76,37 @@ class DummyDCF:
                 "Battery_power": 5,
                 "Storage_capacity": 200,
                 "areal_energy_capacity": 32, 
-                "Power_per_cell_stack": 10,
+                "cell_stack_area": 6,
+                "current_density": 200, 
+                "discharge_voltage": 1.25,
                 "lifetime": 2,
                 "Energy_density": 40,
                 "electrolyte_replacement": 0.05,
                 "electrolyte_regeneration": 0.6,
-                "periphery": 1,
+                "pump_lifetime": 2,
                 "electrolyte_density": 1400,
-                "stack_gwp":20,
-                "stack_energy":100,
-                "stack_toxicity":12,
-                "stack_resource_use":15,
                 "electrolyte_gwp":20,
                 "electrolyte_energy":100,
                 "electrolyte_toxicity":12,
-                "electrolyte_resource_use":15,    
-                "periphery_gwp":20,
-                "periphery_energy":100,
-                "periphery_toxicity":12,
-                "periphery_resource_use":15,
-                "tank_gwp":20,
-                "tank_energy":100,
-                "tank_toxicity":12,
-                "tank_resource_use":15,                                                          
+                "electrolyte_resource_use":15,                                                       
             },
             "expected": {
-                "number_cell_stacks":Quantity(500, '-'),
-                "total_stack": Quantity(1000, '-'),
-                "initial_electrolyte_amount": Quantity(5000, 'ton'),                    
-                "total_electrolyte": Quantity(5400, 'ton'),                    
-                "total_stack_gwp": Quantity(20, 'ton'),                    
-                "total_stack_energy": Quantity(1e5, 'J'),                    
-                "total_stack_toxicity": Quantity(12e3, '-'),                    
-                "total_stack_resource_use": Quantity(15, 'ton'), 
+                "number_cell_stacks":Quantity(3334, '-'),
+                "total_stack": Quantity(6668, '-'),
+                "initial_electrolyte_amount": Quantity(5000, 'ton'),         
+                "total_electrolyte": Quantity(5400, 'ton'),             
+                "total_tank": Quantity(2517742.7575719818, 'kg'),                                                
                 "total_electrolyte_gwp": Quantity(108000, 'ton'),                    
                 "total_electrolyte_energy": Quantity(5.4e8, 'J'),                    
                 "total_electrolyte_toxicity": Quantity(648e5, '-'),                    
-                "total_electrolyte_resource_use": Quantity(81e3, 'ton'),  
-                "total_periphery_gwp": Quantity(20, 'kg'),                    
-                "total_periphery_energy": Quantity(100, 'J'),                    
-                "total_periphery_toxicity": Quantity(12, '-'),                    
-                "total_periphery_resource_use": Quantity(15, 'kg'),  
-                "total_tank_gwp": Quantity(50354855.15143964, 'kg'),                    
-                "total_tank_energy": Quantity(069.93729882144394, 'kWh'),                    
-                "total_tank_toxicity": Quantity(30212913.09086378, '-'),                    
-                "total_tank_resource_use": Quantity(37766.14136357973, 'ton'),        
-                "total_battery_gwp": Quantity(158374.87515143964, 'ton'),                    
-                "total_battery_energy": Quantity(219.9651043769995, 'kWh'),                    
-                "total_battery_toxicity": Quantity(95024925.09086378, '-'),                    
-                "total_battery_resource_use": Quantity(118781.15636357972, 'ton'),   
+                "total_electrolyte_resource_use": Quantity(81e3, 'ton'),
+                "number_pumps": Quantity(6668, '-'), 
+                "total_pumps": Quantity(13336, '-'), 
+                "total_periphery": Quantity(1000, '-'), 
+                "total_battery_gwp": Quantity(108000, 'ton'),                    
+                "total_battery_energy": Quantity(5.4e8, 'J'),                    
+                "total_battery_toxicity": Quantity(648e5, '-'),                    
+                "total_battery_resource_use": Quantity(81e3, 'ton'),   
                 "total_battery_land_use": Quantity(6250, 'm2'),                       
             },
         },
@@ -183,25 +145,26 @@ def test_RFB_plugin(case):
         abs=tolerance
     )    
 
-    assert plugin.total_stack_gwp.unit["kg"] == pytest.approx(
-        expected["total_stack_gwp"].unit["kg"],
+    assert plugin.total_tank.unit["kg"] == pytest.approx(
+        expected["total_tank"].unit["kg"],
         abs=tolerance
-    )
+    )   
 
-    assert plugin.total_stack_energy.unit["J"] == pytest.approx(
-        expected["total_stack_energy"].unit["J"],
+    assert plugin.number_pumps.unit["-"] == pytest.approx(
+        expected["number_pumps"].unit["-"],
         abs=tolerance
-    )
+    )   
 
-    assert plugin.total_stack_toxicity.unit["-"] == pytest.approx(
-        expected["total_stack_toxicity"].unit["-"],
+    assert plugin.total_pumps.unit["-"] == pytest.approx(
+        expected["total_pumps"].unit["-"],
         abs=tolerance
-    )                    
+    ) 
 
-    assert plugin.total_stack_resource_use.unit["kg"] == pytest.approx(
-        expected["total_stack_resource_use"].unit["kg"],
+    assert plugin.total_periphery.unit["-"] == pytest.approx(
+        expected["total_periphery"].unit["-"],
         abs=tolerance
-    )  
+    )           
+
 
     assert plugin.total_electrolyte_gwp.unit["kg"] == pytest.approx(
         expected["total_electrolyte_gwp"].unit["kg"],
@@ -220,46 +183,6 @@ def test_RFB_plugin(case):
 
     assert plugin.total_electrolyte_resource_use.unit["kg"] == pytest.approx(
         expected["total_electrolyte_resource_use"].unit["kg"],
-        abs=tolerance
-    )   
-
-    assert plugin.total_periphery_gwp.unit["kg"] == pytest.approx(
-        expected["total_periphery_gwp"].unit["kg"],
-        abs=tolerance
-    )
-
-    assert plugin.total_periphery_energy.unit["J"] == pytest.approx(
-        expected["total_periphery_energy"].unit["J"],
-        abs=tolerance
-    )
-
-    assert plugin.total_periphery_toxicity.unit["-"] == pytest.approx(
-        expected["total_periphery_toxicity"].unit["-"],
-        abs=tolerance
-    )                    
-
-    assert plugin.total_periphery_resource_use.unit["kg"] == pytest.approx(
-        expected["total_periphery_resource_use"].unit["kg"],
-        abs=tolerance
-    )   
-
-    assert plugin.total_tank_gwp.unit["kg"] == pytest.approx(
-        expected["total_tank_gwp"].unit["kg"],
-        abs=tolerance
-    )
-
-    assert plugin.total_tank_energy.unit["MWh"] == pytest.approx(
-        expected["total_tank_energy"].unit["MWh"],
-        abs=tolerance
-    )
-
-    assert plugin.total_tank_toxicity.unit["-"] == pytest.approx(
-        expected["total_tank_toxicity"].unit["-"],
-        abs=tolerance
-    )                    
-
-    assert plugin.total_tank_resource_use.unit["kg"] == pytest.approx(
-        expected["total_tank_resource_use"].unit["kg"],
         abs=tolerance
     )   
 
