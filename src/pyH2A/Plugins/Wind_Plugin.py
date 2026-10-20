@@ -179,10 +179,10 @@ class Wind_Plugin:
 		output_inserter_function(self.output_dict, self, dcf, 'Wind_Plugin') 
 
 	def calculate_turbines_number(self):
-		self.number_turbines = Quantity(
+		self.number_turbines = Quantity(np.ceil(
 										self.input_dict_resolved['Wind Turbine']['Installed wind capacity']['Value'].unit['W']
 										/
-										self.input_dict_resolved['Wind Turbine']['Power per wind turbine']['Value'].unit['W'], 
+										self.input_dict_resolved['Wind Turbine']['Power per wind turbine']['Value'].unit['W']).astype(int), 
 								  	'-')
 
 	def calculate_wind_power_production(self):

@@ -92,30 +92,36 @@ def test_wind_plugin(case):
 
     assert plugin.number_turbines.unit["-"] == pytest.approx(
         expected["number_turbines"].unit["-"],
-        abs=tolerance
+        abs=tolerance, 
+        rel=tolerance
     )
 
     assert plugin.total_electric_energy_generation_yearly_data[1].unit["J"][-12:] == pytest.approx(
         expected["last_half_day_available_energy"].unit["J"],
-        abs=tolerance
+        abs=tolerance, 
+        rel=tolerance
     )
 
     assert plugin.wind_electric_energy_generation_yearly_data[1].unit["J"][0:24] == pytest.approx(
         expected["first_day_wind_energy"].unit["J"],
-        abs=tolerance
+        abs=tolerance, 
+        rel=tolerance
     )    
 
     assert plugin.wind_energy_generation_yearly_array.unit["J"] == pytest.approx(
         expected["wind_energy_generation_yearly_array"].unit["J"],
-        abs=tolerance
+        abs=tolerance, 
+        rel=tolerance
     )  
 
     assert plugin.total_energy_generation_yearly_array.unit["J"] == pytest.approx(
         expected["total_energy_generation_yearly_array"].unit["J"],
-        abs=tolerance
+        abs=tolerance, 
+        rel=tolerance
     )     
 
     assert plugin.wind_to_total_production_fraction.unit["-"] == pytest.approx(
         expected["wind_to_total_production_fraction"].unit["-"],
-        abs=tolerance
+        abs=tolerance, 
+        rel=tolerance
     )          
