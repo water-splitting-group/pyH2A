@@ -11,6 +11,7 @@ Plugins allow for modelling of different hydrogen production pathways. They proc
    Battery_Plugin
    Capital_Cost_Plugin
    Catalyst_Separation_Plugin
+   Electricity_Consumer_Plugin
    Electrolyzer_Plugin
    Fixed_Operating_Cost_Plugin
    Hourly_Irradiation_Plugin
