@@ -1,9 +1,9 @@
 from pathlib import Path
-import copy
 
 from pyH2A.Utilities.input_modification import insert, convert_input_to_dictionary, check_for_meta_module, import_plugin, merge, parse_parameter, convert_file_to_dictionary, file_import
 from pyH2A.Utilities.plugin_specification import instantiate_plugin_for_docs, iter_spec_rows, iter_bottom_entries
-from pyH2A.Utilities.constants import WILDCARD_MARKER
+from pyH2A.Utilities.constants import WILDCARD_MARKER, UNIT_KEY, TYPE_KEY, OPTIONAL_KEY
+from pyH2A.Discounted_Cash_Flow import Discounted_Cash_Flow
 
 # Tables which are placed at the beginning of the template (in this order)
 TEMPLATE_FIRST_TABLES = ['Input files to merge', 'Workflow', 'Functional Unit']
@@ -97,17 +97,49 @@ def convert_types_to_string(types):
 
 	return ' or '.join(names.get(t, t.__name__) for t in sorted(types, key = lambda t: list(names).index(t) if t in names else len(names)))
 
+def iter_bottom_entries_with_unit_only_rows(row_dict):
+	'''Same as `iter_bottom_entries`, but also yields the `Unit` key of rows which only
+	have a `Unit` key (no value), such as `Functional Unit > Functional Unit > Unit`.
+
+	Notes
+	-----
+	`iter_bottom_entries` skips `Unit` keys, since they usually only accompany a value.
+	'''
+
+	entries = list(iter_bottom_entries(row_dict))
+
+	if not entries and UNIT_KEY in row_dict and TYPE_KEY in row_dict[UNIT_KEY]:
+		entries = [(UNIT_KEY, row_dict[UNIT_KEY], row_dict.get(OPTIONAL_KEY, False))]
+
+	return entries
+
 def extract_input_output_from_plugin(plugin_name):
 	'''Convert plugin `input_dict` and `output_dict` to structured dictionary
 	(same structure as `extract_input_output_from_docstring`).'''
 
 	plugin = instantiate_plugin_for_docs(plugin_name)
 
+	return extract_input_output_from_specification(plugin.input_dict, plugin.output_dict, plugin_name)
+
+def extract_input_output_from_dcf():
+	'''Convert `input_dict` of `Discounted_Cash_Flow` (`Input files to merge`, 
+	`Workflow`, `Functional Unit`) to structured dictionary (same structure as 
+	`extract_input_output_from_docstring`). `Discounted_Cash_Flow` is set up 
+	without running a model.'''
+
+	dcf = Discounted_Cash_Flow(None, run = False)
+
+	return extract_input_output_from_specification(dcf.input_dict, {}, 'Discounted_Cash_Flow')
+
+def extract_input_output_from_specification(input_dict, output_dict, origin):
+	'''Convert `input_dict` and `output_dict` (IO dictionary structure of plugins)
+	to structured dictionary (same structure as `extract_input_output_from_docstring`).'''
+
 	plugin_dict = {'Parameters': {}, 'Output': {}}
 
-	for key, spec_dict in (('Parameters', plugin.input_dict), ('Output', plugin.output_dict)):
-		for top_key, middle_key, row_dict in iter_spec_rows(spec_dict, plugin_name):
-			for bottom_key, value_spec, optional in iter_bottom_entries(row_dict):
+	for key, spec_dict in (('Parameters', input_dict), ('Output', output_dict)):
+		for top_key, middle_key, row_dict in iter_spec_rows(spec_dict, origin):
+			for bottom_key, value_spec, optional in iter_bottom_entries_with_unit_only_rows(row_dict):
 
 				variable_string = f'{top_key} > {middle_key} > {bottom_key}'
 				variable_type = convert_types_to_string(value_spec.get('type', set()))
@@ -115,7 +147,7 @@ def extract_input_output_from_plugin(plugin_name):
 				if optional:
 					variable_type += ', optional'
 
-				plugin_dict[key][variable_string] = {'Type': variable_type, 'Origin': plugin_name}
+				plugin_dict[key][variable_string] = {'Type': variable_type, 'Origin': origin}
 
 				if row_dict.get('description'):
 					plugin_dict[key][variable_string][f'Comment {bottom_key}'] = row_dict['description']
@@ -135,20 +167,6 @@ def convert_inp_to_requirements(dictionary, path = None):
 				output[path] = {'Entry': bottom_item, 'Origin': 'Input'}
 
 	return output
-
-# Tables which are always requested by template generation (independent of plugins and analysis modules)
-TEMPLATE_BASE_REQUIREMENTS = {
-	'Functional Unit > Functional Unit > Unit': {
-		'Type': 'str', 
-		'Origin': 'Generate_Template_Input_File',
-		'Comment Unit': 'Unit in which all results are reported. It has to name the product it refers to as bracketed reference, e.g. kg[H2].'
-	},
-	f'Input files to merge > {WILDCARD_MARKER} > Value': {
-		'Type': 'str, optional', 
-		'Origin': 'Generate_Template_Input_File',
-		'Comment Value': 'Path to input file which is merged into this input file, e.g. pyH2A.Config~Defaults_TEA.md. Files listed first have higher priority.'
-	},
-}
 
 class Generate_Template_Input_File:
 	'''Generate input file template from a minimal input file.
@@ -178,11 +196,11 @@ class Generate_Template_Input_File:
 
 	1. Workflow and analysis modules, specified in input file stub. A ``Workflow`` 
 	   table is required, analysis modules are optional.
-	2. Tables requested by template generation itself (``TEMPLATE_BASE_REQUIREMENTS``): 
-	   ``Functional Unit`` (required) and ``Input files to merge`` (optional). If 
-	   ``Input files to merge`` is in the input file stub, the referenced files are 
-	   merged (plugins and parameters they provide are used), the table is kept in the 
-	   template and no placeholder row is added.
+	2. Inputs of ``Discounted_Cash_Flow`` (from its ``input_dict``): ``Functional Unit`` 
+	   (required), ``Input files to merge`` (optional) and ``Workflow``. If a table with
+	   a wildcard row (``Input files to merge``, ``Workflow``) is in the input file stub,
+	   it is kept in the template and no placeholder row is added. Files referenced in 
+	   ``Input files to merge`` are merged (plugins and parameters they provide are used).
 	3. Inputs requested by plugins (from their ``input_dict``) and analysis modules
 	   (from their docstrings).
 	'''
@@ -248,11 +266,8 @@ class Generate_Template_Input_File:
 
 		output = self.provided_inp
 
-		base_requirements = copy.deepcopy(TEMPLATE_BASE_REQUIREMENTS)
-		if 'Input files to merge' in self.inp_stub: # placeholder only requested if no files to merge are provided
-			del base_requirements[f'Input files to merge > {WILDCARD_MARKER} > Value']
-
-		requirements = self.check_parameters(base_requirements, output)
+		dcf_parameters = self.remove_provided_wildcard_rows(extract_input_output_from_dcf()['Parameters'])
+		requirements = self.check_parameters(dcf_parameters, output)
 
 		for key in self.sorted_keys:
 			data = self.get_docstring_data(key, self.inp_stub['Workflow'][key].get('Type', 'plugin'))
@@ -263,6 +278,29 @@ class Generate_Template_Input_File:
 			output = merge(output, data['Output'])
 
 		self.requirements = requirements
+
+	def remove_provided_wildcard_rows(self, parameters):
+		'''Remove wildcard row requirements (e.g. `Input files to merge > <...> > Value`)
+		of tables which are present in the input file stub.
+
+		Notes
+		-----
+		Wildcard rows stand for any number of rows with any name, so they never match 
+		the actual rows of the input file. If the table is present, the placeholder row 
+		is therefore not requested.
+		'''
+
+		requirements = {}
+
+		for key, item in parameters.items():
+			top_key, middle_key, _ = parse_parameter(key, delimiter = ' > ')
+
+			if middle_key == WILDCARD_MARKER and top_key in self.inp_stub:
+				continue
+
+			requirements[key] = item
+
+		return requirements
 
 	def get_docstring_data(self, target_name, target_type):
 		'''Get parameter requirements and outputs from plugin `input_dict` and `output_dict`
