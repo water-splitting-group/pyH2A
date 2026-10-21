@@ -5,6 +5,7 @@ from pyH2A.Utilities.input_modification import (convert_input_to_dictionary,
 												execute_plugin)
 
 from pyH2A.Utilities.functional_unit import resolve_functional_unit
+from pyH2A.Utilities.IO import input_resolver_function
 
 def discounted_cash_flow_function(inp, 
 								  values, 
@@ -189,7 +190,53 @@ class Discounted_Cash_Flow:
 	statements. Within the __init__ function of the class the actions of the plugins are specified.
 	'''
 
-	def __init__(self, input_file, print_info = True, check_processing = True):
+	def __init__(self, input_file, print_info = True, check_processing = True, run = True):
+		self._set_up()
+		if run:
+			self._run(input_file, print_info, check_processing)
+
+	def _set_up(self):
+		'''Set up input specification (`input_dict`) of `Discounted_Cash_Flow`.
+
+		Notes
+		-----
+		Same structure as the `input_dict` of plugins (see input resolver), so that 
+		the information can also be used without running a model (e.g. for input 
+		file template generation).
+		'''
+
+		self.input_dict = {
+			'Input files to merge': {
+				'<...>': {
+					'Value': {
+						'type': {str},
+					},
+					'optional': True,
+					'description': 'Path to input file which is merged into this input file, e.g. pyH2A.Config~Defaults_TEA.md. Files listed first have higher priority.'
+				},
+			},
+			'Workflow': {
+				'<...>': {
+					'Position': {
+						'type': {int, float},
+					},
+					'optional': False,
+					'description': 'Position of plugin in workflow. Plugins are executed in order of their position.'
+				},
+			},
+			'Functional Unit': {
+				'Functional Unit': {
+					'Unit': {
+						'type': {str},
+					},
+					'optional': False,
+					'description': 'Unit in which all results are reported. It has to name the product it refers to as bracketed reference, e.g. kg[H2].'
+				},
+			},
+		}
+
+	def _run(self, input_file, print_info, check_processing):
+		'''Read input, resolve `input_dict` and execute workflow.'''
 
 		if isinstance(input_file, str):
 			self.inp = convert_input_to_dictionary(input_file)
@@ -198,7 +245,9 @@ class Discounted_Cash_Flow:
 
 		self.print_info = print_info
 		self.plugs = {}
-		self.functional_unit = resolve_functional_unit(self.inp['Functional Unit']['Functional Unit']['Unit'])
+
+		self.input_dict_resolved = input_resolver_function(self.input_dict, self, 'Discounted_Cash_Flow')
+		self.functional_unit = resolve_functional_unit(self.input_dict_resolved['Functional Unit']['Functional Unit']['Unit'])
 
 		self.workflow(self.inp, self.plugs)  # execution of all functions and plugins specified in "Workflow"
 
@@ -237,4 +286,3 @@ class Discounted_Cash_Flow:
 				for middle_key in self.inp[top_key]:
 					if 'Processed' not in self.inp[top_key][middle_key]:
 						print('Warning: "{0} > {1}" has not been processed'.format(top_key, middle_key))
-
