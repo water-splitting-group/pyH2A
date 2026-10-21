@@ -1,3 +1,9 @@
+# Input files to merge
+
+Parameter | Value
+--- | ---
+<...> | str, optional
+
 # Workflow
 
 Parameter | Position
@@ -11,12 +17,6 @@ Capital_Cost_Plugin | 400
 Parameter | Unit
 --- | ---
 Functional Unit | str
-
-# Input files to merge
-
-Parameter | Value
---- | ---
-<...> | str, optional
 
 # Hourly Irradiation
 

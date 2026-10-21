@@ -50,6 +50,9 @@ def test_template_generation(tmp_path, input_stub, ground_truth_template):
 
 	check_dicts(actual_dict, ground_truth_dict)
 
+	# check_dicts does not check the order, so the order of the tables is compared separately
+	assert list(actual_dict) == list(ground_truth_dict), 'Order of tables in template differs from ground truth.'
+
 
 def test_template_generation_without_workflow(tmp_path):
 	'''Template generation has to raise an error if no `Workflow` table is provided.'''
