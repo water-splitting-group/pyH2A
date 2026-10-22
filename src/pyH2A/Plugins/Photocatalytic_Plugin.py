@@ -394,7 +394,7 @@ class Photocatalytic_Plugin:
 						"dimension": "mass",
 					},
 					"optional": False,
-					"description": "Mass of water to inject in the baggies per year, accounting for conversino and evaporation"
+					"description": "Mass of water to inject in the baggies per year, accounting for conversion and evaporation"
 				},
 				"Net yearly mass": {
 					"Value": {

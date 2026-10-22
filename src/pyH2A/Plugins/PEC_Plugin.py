@@ -42,7 +42,18 @@ class PEC_Plugin:
 					},
 					"optional": False,
 					"description": "Yearly output, ignoring the capacity factor."
-				},						
+				},	
+                "Operating capacity factor": { 
+                    "Value": {
+                        "type": {float, int},
+                        "bounds": (0, 1),
+                    },
+                    "Unit": {
+                        "dimension": "dimensionless",
+                    },
+                    "optional": False,
+                    "description": "Operating capacity factor value between 0 and 1."
+                },  									
 			},
 			"PEC Cells": {
 				"Cell cost": {
@@ -212,15 +223,44 @@ class PEC_Plugin:
 					"optional": False,
 				}
 			},
+			"PEC Water Feed": {
+				"Gross yearly mass": {
+					"Value": {
+						"inserted_value": "gross_yearly_mass",
+						"type": {np.ndarray,},
+						"dimension": "mass",
+					},
+					"optional": False,
+					"description": "Mass of water to inject in the baggies per year, accounting for conversion and evaporation"
+				},
+				"Net yearly mass": {
+					"Value": {
+						"inserted_value": "net_yearly_mass",
+						"type": {np.ndarray,},
+						"dimension": "mass",
+					},
+					"optional": False,
+					"description": "Mass of water converted into hydrogen per year"
+				},				
+			},			
 			"Main Stream": {
+				"Is independent from year": {
+					"Value": {
+						"inserted_value": "year_independence",
+						"type": {int, float,},
+						"dimension": "dimensionless",
+					},
+					"optional": False,
+					"description": "if True: all the years behave identically. Else: each year has to be solved"
+				},				
 				"Temperature": {
 					"Value": {
 						"inserted_value": "outlet_temperature",
-						"type": {float,},
+						"type": {dict,},
 						"dimension": "absolute_temperature",
 					},
 					"optional": False,
-					"description": "Mixture outlet temperature."
+					"description": "Mixture outlet temperature, dictionary of years whose items are hourly arrays."
 				},
 				"Pressure": {
 					"Value": {
@@ -234,11 +274,11 @@ class PEC_Plugin:
 				"Specific enthalpy": {
 					"Value": {
 						"inserted_value": "outlet_enthalpy",
-						"type": {float,},
+						"type": {dict,},
 						"dimension": "energy/mass",
 					},
 					"optional": False,
-					"description": "Mixture outlet specific enthalpy."
+					"description": "Mixture outlet specific enthalpy, dictionary of years whose items are hourly arrays."
 				},  
 				"Mass fraction": {
 					"Value": {
@@ -247,7 +287,7 @@ class PEC_Plugin:
 						"dimension": "dimensionless",
 					},
 					"optional": False,
-					"description": "Mixture outlet mass fraction."
+					"description": "Mixture outlet mass fraction, dictionary of years whose items are hourly arrays."
 				},   
 				"Mass flow (hourly)": {
 					"Value": {
@@ -257,26 +297,8 @@ class PEC_Plugin:
 					},
 					"optional": False,
 					"description": "Mixture outlet mass flow, dictionary of years whose items are hourly arrays."
-				},  			
-				"Design mass flow by year": {
-					"Value": {
-						"inserted_value": "yearly_mass_flow",
-						"type": {np.ndarray,},
-						"dimension": "mass",
-					},
-					"optional": False,
-					"description": "Mixture outlet mass per year, excluding downtime (array of years)."
-				},  
-				"Peak mass flowrate": {
-					"Value": {
-						"inserted_value": "peak_mass_flowrate",
-						"type": {float,},
-						"dimension": "mass/time",
-					},
-					"optional": False,
-					"description": "Mixture outlet mass flowrate on peak production day."
-				},   			 					                
-			},					
+				},  						 					                
+			},				
 		}
 
 	def _run(self, dcf):
@@ -286,6 +308,7 @@ class PEC_Plugin:
 		self.PEC_cost()
 		self.land_area()
 		self.outlet_flow_properties()
+		self.water_consumption()		
 
 		self.cell_lifetime = self.input_dict_resolved['PEC Cells']['Lifetime']['Value']
 
@@ -357,24 +380,36 @@ class PEC_Plugin:
 
 	def outlet_flow_properties(self):
 		'''Establishes the thermophysical characteristics of the fluid leaving the reactor, for downstream process sizing'''
-
-		self.outlet_temperature = Quantity(60., 'degC') # hardcoded for the moment, could become an input or even an hourly array (from energy balance) later
+		self.year_independence = Quantity(True, '-')
+		outlet_temperature_degC = 60 # hardcoded for the moment, could become an input later		
+		self.outlet_temperature = {round(year): Quantity(outlet_temperature_degC*np.ones_like(self.hourly_mol_H2_per_surface.unit['mol/m2']), # hardcoded for the moment, could become an input later
+											'degC') 
+									for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']}		
+		
 		self.outlet_pressure = Quantity(300, 'psi') # hardcoded for the moment, could become an input later
 
-		# Assuming water vapour is saturated in the reactor, determination of the water vapour pressure
-		psat = PP.Water_saturation_pressure(self.outlet_temperature)
+        # Assuming water vapour is saturated in the electrolyzer, determination of the water vapour pressure
+        # since the temperature is constant, we only need to calculate the saturation pressure once
+		psat = PP.Water_saturation_pressure(Quantity(outlet_temperature_degC, 'degC'))
 
 		mol_fraction = {} # molar fraction of the gas mixture, assuming ideal gas, expressed in mol of species for a total amount of 1 mol 
-		mol_fraction['H2O'] = Quantity(
-								psat.unit['Pa']/self.outlet_pressure.unit['Pa'], 
-								 '-') 
+		mol_fraction['H2O'] = Quantity(psat.unit['Pa']/self.outlet_pressure.unit['Pa'], '-')
 		# The pressure that is not due to water is due to H2
-		mol_fraction['H2'] = Quantity(
-								1-mol_fraction['H2O'].unit['-'], 
-								'-')
+		mol_fraction['H2'] = Quantity(1-mol_fraction['H2O'].unit['-'], '-')        
 
-		_, self.outlet_mass_fraction = PP.Substance_to_mass(mol_fraction)
+		_, outlet_mass_fraction = PP.Substance_to_mass(mol_fraction)
 
+		# Converting the outlet mass fraction into a dict of arrays, then into a dict of years 
+		self.outlet_mass_fraction = {'H2O': Quantity(outlet_mass_fraction['H2O'].unit['-'] 
+														* 
+														np.ones_like(self.hourly_mol_H2_per_surface.unit['mol/m2']), 
+													'-'), 
+									'H2': Quantity(outlet_mass_fraction['H2'].unit['-'] 
+														* 
+														np.ones_like(self.hourly_mol_H2_per_surface.unit['mol/m2']), 
+													'-')
+									}        
+		self.outlet_mass_fraction = {round(year):self.outlet_mass_fraction for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']}
 
 		smoothening_period = Quantity(1, 'h')
 		self.hourly_mass_flow = {}
@@ -387,30 +422,48 @@ class PEC_Plugin:
 										/
 										self.mean_mol_rate_H2_per_surface.unit['mol/year/m2']
 										/ 
-										self.outlet_mass_fraction['H2'].unit['-']
+										outlet_mass_fraction['H2'].unit['-']
 										)
 		for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']:			
 			year = round(year)
 			self.hourly_mass_flow[year] = Quantity(smoothened_production(hourly_unsmoothened_output_kg, round(smoothening_period.unit['h'])), 
 														'kg')
 
-		self.yearly_mass_flow = Quantity(self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output by year']['Value'].unit['kg']
-									   / 
-									   self.outlet_mass_fraction['H2'].unit['-']
-									   ,
-									   'kg')
-
-		self.peak_mass_flowrate = Quantity(np.max(self.hourly_mass_flow[0].unit['kg']), 'kg/h')
-
-		print('self.peak_mass_flowrate', self.peak_mass_flowrate)
-		print('in H2: ', self.peak_mass_flowrate.unit['kg/h']*self.outlet_mass_fraction['H2'].unit['-'])
-		print('in vapour: ', self.peak_mass_flowrate.unit['kg/h']*self.outlet_mass_fraction['H2O'].unit['-'])
-
+        # specific enthalpy at the outlet of the baggie
+		h = PP.Enthalpy(T = Quantity(outlet_temperature_degC, 'degC'),
+                        P = self.outlet_pressure, 
+                        amount = outlet_mass_fraction,
+                        phase = 'V', 
+                        composition_basis = 'mass'
+                        )
+	
 		# specific enthalpy at the outlet of the baggie
-		h = PP.Enthalpy(T = self.outlet_temperature,
-						P = self.outlet_pressure, 
-						amount = self.outlet_mass_fraction,
-						phase = 'V', 
-						composition_basis = 'mass'
-						)
-		self.outlet_enthalpy = Quantity(h.unit['J'], 'J/kg')
+		h = Quantity(h.unit['J'] 
+                     *
+                     np.ones_like(self.hourly_mol_H2_per_surface.unit['mol/m2']), 
+                     'J/kg')
+		self.outlet_enthalpy = {round(year):h for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']}
+	
+
+	def water_consumption(self):
+
+		# Mass of water converted into hydrogen per year
+		self.net_yearly_mass = Quantity(self.input_dict_resolved['Technical Operating Parameters and Specifications']['Design output by year']['Value'].unit['kg'][0] 
+		                                *
+		                                self.input_dict_resolved['Technical Operating Parameters and Specifications']['Operating capacity factor']['Value'].unit['-']
+		                                *
+										PP.MW['H2O'].unit['kg/mol']
+		                                /
+		                                PP.MW['H2'].unit['kg/mol']
+										*
+										np.ones_like(self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']),
+										'kg')
+		self.gross_yearly_mass = Quantity(np.sum(self.hourly_mass_flow[0].unit['kg']
+		                                         *
+		                                         self.outlet_mass_fraction[0]['H2O'].unit['-']
+		                                         )
+		                                *
+		                                self.input_dict_resolved['Technical Operating Parameters and Specifications']['Operating capacity factor']['Value'].unit['-']
+										*
+										np.ones_like(self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']),
+										'kg')			

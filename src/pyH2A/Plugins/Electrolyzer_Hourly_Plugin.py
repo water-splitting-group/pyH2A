@@ -356,31 +356,35 @@ class Electrolyzer_Hourly_Plugin:
     def outlet_flow_properties(self):
         '''Establishes the thermophysical characteristics of the fluid leaving the reactor, for downstream process sizing'''
 
-        self.outlet_temperature = {round(year): Quantity(85*np.ones_like(self.hourly_h2_production[0].unit['kg']), # hardcoded for the moment, could become an input later
+        outlet_temperature_degC = 85 # hardcoded for the moment, could become an input later
+        self.outlet_temperature = {round(year): Quantity(outlet_temperature_degC *np.ones_like(self.hourly_h2_production[0].unit['kg']), 
                                            'degC') 
                                     for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']}
         
         self.outlet_pressure = Quantity(20, 'bar') # hardcoded for the moment, could become an input later
 
         # Assuming water vapour is saturated in the electrolyzer, determination of the water vapour pressure
-        psat = PP.Water_saturation_pressure(self.outlet_temperature[0])
+        # since the temperature is constant, we only need to calculate the saturation pressure once
+        psat = PP.Water_saturation_pressure(Quantity(outlet_temperature_degC, 'degC'))
 
         mol_fraction = {} # molar fraction of the gas mixture, assuming ideal gas, expressed in mol of species for a total amount of 1 mol 
-        mol_fraction['H2O'] = Quantity(
-                                psat.unit['Pa']/self.outlet_pressure.unit['Pa']
-                                *
-                                np.ones_like(self.hourly_h2_production[0].unit['kg']), 
-                                '-') 
-        # The pressure that is not due to water is due to H2
-        mol_fraction['H2'] = Quantity(
-                                (1-mol_fraction['H2O'].unit['-'])
-                                *
-                                np.ones_like(self.hourly_h2_production[0].unit['kg']), 
-                                '-')
+        mol_fraction['H2O'] = Quantity(psat.unit['Pa']/self.outlet_pressure.unit['Pa'], '-')
+       # The pressure that is not due to water is due to H2
+        mol_fraction['H2'] = Quantity(1-mol_fraction['H2O'].unit['-'], '-')        
 
         _, outlet_mass_fraction = PP.Substance_to_mass(mol_fraction)
-        self.outlet_mass_fraction = {round(year):outlet_mass_fraction for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']}
 
+        # Converting the outlet mass fraction into a dict of arrays, then into a dict of years 
+        self.outlet_mass_fraction = {'H2O': Quantity(outlet_mass_fraction['H2O'].unit['-'] 
+                                                     * 
+                                                     np.ones_like(self.hourly_h2_production[0].unit['kg']), 
+                                                    '-'), 
+                                    'H2': Quantity(outlet_mass_fraction['H2'].unit['-'] 
+                                                     * 
+                                                     np.ones_like(self.hourly_h2_production[0].unit['kg']), 
+                                                    '-')
+                                    }        
+        self.outlet_mass_fraction = {round(year):self.outlet_mass_fraction for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']}
 
         smoothening_period = Quantity(1, 'h')
         self.hourly_mass_flow = {}
@@ -393,15 +397,19 @@ class Electrolyzer_Hourly_Plugin:
                                             )            
             self.hourly_mass_flow[year] = Quantity(smoothened_production(hourly_unsmoothened_output_kg, round(smoothening_period.unit['h'])), 
                                                         'kg')
-
+            
         # specific enthalpy at the outlet of the baggie
-        h = PP.Enthalpy(T = self.outlet_temperature[0],
+        h = PP.Enthalpy(T = Quantity(outlet_temperature_degC, 'degC'),
                         P = self.outlet_pressure, 
                         amount = outlet_mass_fraction,
                         phase = 'V', 
                         composition_basis = 'mass'
                         )
-        h = Quantity(h.unit['J'], 'J/kg')
+        
+        h = Quantity(h.unit['J'] 
+                     *
+                     np.ones_like(self.hourly_h2_production[0].unit['kg']), 
+                     'J/kg')
         self.outlet_enthalpy = {round(year):h for year in self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']}
 
     def water_consumption(self):
