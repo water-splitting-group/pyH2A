@@ -81,15 +81,24 @@ def execute_plugin(plugin_name, plugs_dict, plugin_module = True,
 	a class with the same name as `plugin_name`. An instance of this class is created
 	using `**kwargs`. The class object is then stored in `plugs_dict`.
 	'''
-
-	plugin_class = import_plugin(plugin_name, plugin_module)
-	plugin_object = plugin_class(**kwargs)
+	if '@' in plugin_name:
+		base_plugin_name, instance_suffix = plugin_name.rsplit('@', 1)
+		base_plugin_name = base_plugin_name.strip()
+		instance_suffix = f'@ {instance_suffix.strip()}'
+		instance_name = f'{base_plugin_name} {instance_suffix}' # Internal name used to store the plugin instance
+		plugin_class = import_plugin(base_plugin_name, plugin_module)
+		plugin_object = plugin_class(instance_suffix=instance_suffix,**kwargs)		
+	else:
+		base_plugin_name = plugin_name
+		instance_name = plugin_name
+		plugin_class = import_plugin(base_plugin_name, plugin_module)
+		plugin_object = plugin_class(**kwargs)
 
 	if nested_dictionary is True:
-		plugs_dict[plugin_name] = {}
-		plugs_dict[plugin_name]['Module'] = plugin_object
+		plugs_dict[instance_name] = {}
+		plugs_dict[instance_name]['Module'] = plugin_object
 	else:
-		plugs_dict[plugin_name] = plugin_object
+		plugs_dict[instance_name] = plugin_object
 
 	return plugin_object
 
