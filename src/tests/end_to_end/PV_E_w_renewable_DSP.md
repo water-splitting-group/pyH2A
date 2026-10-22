@@ -8,17 +8,19 @@ Default TEA | pyH2A.Config~Defaults_TEA.md
 
 Name | Position 
 --- | --- 
-Hourly_Irradiation_Plugin | 201 |
-Photovoltaic_Plugin | 202 |
-Wind_Plugin | 203 |
-Electrolyzer_Hourly_Plugin | 204 |
-Cooler_Condenser_Plugin | 301 |
-Reverse_Osmosis_Plugin | 302 |
-Electricity_Consumer_Plugin | 303 |
-Battery_Calculation_Plugin | 304 |
-Power_Management_Hourly_Plugin | 305 |
-RFB_Plugin | 306 |
-Multiple_Modules_Plugin | 401 |
+Hourly_Irradiation_Plugin | 201 
+Photovoltaic_Plugin | 202 
+Wind_Plugin | 203 
+Electrolyzer_Hourly_Plugin | 204 
+Cooler_Condenser_Plugin | 301 
+Cooling_Tower_Plugin | 302
+Pump_Plugin @ Cooling circuit | 303
+Reverse_Osmosis_Plugin | 304
+Electricity_Consumer_Plugin | 305
+Battery_Calculation_Plugin | 306
+Power_Management_Hourly_Plugin | 307
+RFB_Plugin | 308
+Multiple_Modules_Plugin | 401 
 
 # Display Parameters
 
@@ -59,8 +61,8 @@ File | pyH2A.Lookup_Tables.Hourly_Wind_Data~Almeria.494_2005_2023.csv | Location
 
 Name | Value | Unit 
 --- | --- | --- 
-Cooler condenser | {Cooler Condenser > Cooling water hourly pumping energy > Value, J} | J 
 Electrolyzer | {Electrolyzer > Missing required energy (hourly) > Value, J} | J 
+Pump | {Pump @ Cooling circuit > Hourly pumping energy > Value, J} | J 
 
 # Technical Operating Parameters and Specifications
 
@@ -151,6 +153,29 @@ Electrolyte | 20 | kg/kg | 100 | kWh/kg | 12 | 1/kg | 2 | kg/kg
 Steel | 2 | kg/kg | 6 | kWh/kg | 20 | 1/kg | 10 | kg/kg
 Periphery | 10 | kg | 10 | J | 10 | - | 10 | kg
 
+# Pump @ Cooling circuit
+
+Name | Value | Unit 
+--- | --- | --- 
+Efficiency | 70% | -
+Nominal pressure drop | 1.4 | bar
+Minimum flowrate ratio | 0.25 | -
+Nominal flowrate per unit | 5 | kg/s
+Steel mass per unit | 10 | kg
+
+# Pump Hourly Liquid Mass @ Cooling circuit
+
+Name | Value | Unit 
+--- | --- | --- 
+Cooler | {Cooler Condenser > Hourly mass of cooling water > Value, kg} |  kg
+
+
+# Purified Water Yearly Demand
+
+Name | Value | Unit 
+--- | --- | --- 
+Baggie | {Electrolyzer Water Feed > Net yearly mass > Value, kg} | kg
+Cooling tower | {Cooling Tower > Yearly water makeup > Value, kg} | kg
 
 # Reverse Osmosis
 
@@ -236,3 +261,19 @@ Cold outlet temperature | 30. | degC |
 Hot outlet temperature | 40. | degC |
 Heat transfer coefficient | 300. | W/m2/delta_K 
 Material weight per area | 34. | kg/m2 | assuming the condensing fluid circulates in tubes whose thickness is 10% of the inner diameter, and taking a safety margin
+
+# Cooling Tower Unit
+
+Name | Value | Unit 
+--- | --- | --- 
+Maximum heat duty per unit | 659,41 | kW
+Maximum water flowrate per unit | 28.1 | kg/s
+Ventilation power per unit | 3.73 | kW
+Steel mass per unit | 509 | kg
+Polymer mass per unit | 116 | kg
+
+# Cooling Tower
+
+Name | Yearly_heat_duty_Value | Yearly_heat_duty_Unit | Heat_duty_sizing_Value | Heat_duty_sizing_Unit | Flowrate_sizing_Value | Flowrate_sizing_Unit   
+--- | --- | --- | --- | --- | --- | --- 
+Cooler 1 | {Cooler Condenser > Yearly heat duty > Value, J} | J |  {Cooler Condenser > Sizing heat duty > Value, W} | W |  {Cooler Condenser > Peak cooling water mass flowrate > Value, kg/s} |  kg/s

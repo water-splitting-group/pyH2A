@@ -16,14 +16,15 @@ Compressor_Plugin | Computes compressor power and yearly consumption | 304 |
 Cooler_Condenser_Plugin @ second one | Computes second cooler condenser sizing and coolant requirements | 305 |
 Compressor_Plugin @ 2  | Computes second compressor power and yearly consumption | 306 |
 Cooler_Condenser_Plugin @ 3 | Computes third cooler condenser sizing and coolant requirements | 307 |
-PSA_refactored_Plugin | Computes sizing and cost of PSA separation unit | 308
-Hourly_Irradiation_Plugin @ PV | Plugin to calculate solar irradiation from typical meteorological year data | 309 |
-Photovoltaic_Plugin | - | 310
-Wind_Plugin | - | 311 
-Electricity_Consumer_Plugin | - | 312 |
-Battery_Calculation_Plugin | - | 313 |
-Power_Management_Hourly_Plugin | - | 314 |
-RFB_Plugin | - | 315 | 
+Pump_Plugin @ Cooling circuit | Pump for the three cooler-condensers and the cooling tower | 308
+PSA_refactored_Plugin | Computes sizing and cost of PSA separation unit | 309
+Hourly_Irradiation_Plugin @ PV | Plugin to calculate solar irradiation from typical meteorological year data | 310 |
+Photovoltaic_Plugin | - | 311
+Wind_Plugin | - | 312 
+Electricity_Consumer_Plugin | - | 313 |
+Battery_Calculation_Plugin | - | 314 |
+Power_Management_Hourly_Plugin | - | 315 |
+RFB_Plugin | - | 316 | 
 Multiple_Modules_Plugin | Modelling of multiple plant modules, adjustment of labor requirement | 401 |
 
 # Display Parameters
@@ -64,11 +65,9 @@ File | pyH2A.Lookup_Tables.Hourly_Wind_Data~Jena.615_2005_2023.csv | Location: J
 
 Name | Value | Unit 
 --- | --- | --- 
-Cooler condenser | {Cooler Condenser > Cooling water hourly pumping energy > Value, J} | J 
 Compressor | {Compressor > Hourly energy requirement > Value, J} | J 
-Cooler condenser second | {Cooler Condenser @ second one > Cooling water hourly pumping energy > Value, J} | J
 Compressor 2 | {Compressor @ 2 > Hourly energy requirement > Value, J} | J 
-Cooler condenser 3 | {Cooler Condenser @ 3 > Cooling water hourly pumping energy > Value, J} | J
+Pump | {Pump @ Cooling circuit > Hourly pumping energy > Value, J} | J 
 
 # Irradiance Area Parameters @ Baggie
 
@@ -107,7 +106,7 @@ Data | {Hourly Irradiation @ PV > Horizontal single axis tracking > Value, kWh/m
 
 Name | Value | Unit | Comment 
 --- | --- | --- | --- 
-STH | 2% | - | Kang 2015, C3N4/CDot catalyst, 2% STH 
+STH | 9.2% | - | Kang 2015, C3N4/CDot catalyst, 2% STH 
 
 # Catalyst
 
@@ -123,7 +122,7 @@ Molar attenuation coefficient | 8000 | liter/(cm*mol) | Assumption for calculati
 
 Name | Value | Unit | Comment 
 --- | --- | --- | --- 
-Filling height | 0.1 | m | Optimal height depends on absorption coefficient of material/complex and catalytic activity (TOF or mol H2/h/g). Height of 5 cm based on experimental set-up used in Kang 2015 (shown in Kang 2015 SI)
+Filling height | 0.05 | m | Optimal height depends on absorption coefficient of material/complex and catalytic activity (TOF or mol H2/h/g). Height of 5 cm based on experimental set-up used in Kang 2015 (shown in Kang 2015 SI)
 Length | 323.0 | m | Baggie parameters based on Pinaud 2013
 Width | 12.2 | m | Baggie parameters based on Pinaud 2013
 Cost material top | 0.54 | USD/m2 
@@ -247,6 +246,8 @@ Name | Value | Unit | Comment
 Compression ratio | 4.35 | -
 Polytropic coefficient | 1.4 | -
 Efficiency | 0.7 | - | 75% efficiency of the compressor itself, but we account for a bit of loss in the rest of the chain (e.g. electric motor)
+Power per compressor unit | 300 | kW | Based on shaft power
+Weight per compressor unit | 10 | ton | assumption
 
 # Compressor @ 2
 
@@ -254,6 +255,8 @@ Name | Value | Unit | Comment
 --- | --- | --- | 
 Compression ratio | 4.78 | -
 Efficiency | 0.7 | - | 75% efficiency of the compressor itself, but we account for a bit of loss in the rest of the chain (e.g. electric motor)
+Power per compressor unit | 300 | kW | Based on shaft power
+Weight per compressor unit | 10 | ton | assumption
 
 # Cooler Condenser
 
@@ -284,6 +287,24 @@ Cold outlet temperature | 30. | degC |
 Hot outlet temperature | 40. | degC |
 Heat transfer coefficient | 300. | W/m2/delta_K 
 Material weight per area | 34. | kg/m2 | assuming the condensing fluid circulates in tubes whose thickness is 10% of the inner diameter, and taking a safety margin
+
+# Pump @ Cooling circuit
+
+Name | Value | Unit 
+--- | --- | --- 
+Efficiency | 70% | -
+Nominal pressure drop | 1.4 | bar
+Minimum flowrate ratio | 0.25 | -
+Nominal flowrate per unit | 5 | kg/s
+Steel mass per unit | 10 | kg
+
+# Pump Hourly Liquid Mass @ Cooling circuit
+
+Name | Value | Unit 
+--- | --- | --- 
+Cooler 1 | {Cooler Condenser > Hourly mass of cooling water > Value, kg} |  kg
+Cooler 2 | {Cooler Condenser @ second one > Hourly mass of cooling water > Value, kg} |  kg
+Cooler 3 | {Cooler Condenser @ 3 > Hourly mass of cooling water > Value, kg} |  kg
 
 # PSA
 
@@ -331,7 +352,7 @@ Power loss per year | 0.5% | -
 
 Name | Value | Unit | Comment
 --- | --- | --- | ---
-Gross capacity | 3000 | MWh | 
+Gross capacity | 4 | MWh | 
 Lowest charge level | 20% | - | Lowest level to which battery can be discharged
 Capacity loss per year | 0.5% | - | Loss of capacity per year
 Capacity loss per full charge | 0.1% | - | loss per full charge equivalent
