@@ -74,7 +74,7 @@ Capital spent in 1st year of construction | 100% | -
 
 Name | Value | Path | Unit | Comment
 --- | --- | --- | --- | --- 
-Nominal power | 392 | None | MW | Optimal PV oversize ratio, same as Chang 2020
+Nominal power | 392 | None | MW | 
 Power loss per year | 0.5% | None | - | Based on Chang 2020
 Efficiency | 22% | None | - | Only used for area calculation
 
@@ -92,8 +92,8 @@ Name | Value | Unit | Comment
 --- | --- | --- | ---
 Gross capacity | 1000 | MWh | 
 Lowest charge level | 20% | - | Lowest level to which battery can be discharged
-Capacity loss per year | 0% | - | Loss of capacity per year
-Capacity loss per full charge | 0% | - | loss per full charge equivalent
+Capacity loss per year | 0% | - | No loss of capacity: regeneration
+Capacity loss per full charge | 0% | - | No loss of capacity: regeneration
 Round trip efficiency | 80% | - | 
 Highest charge level | 80% | - | 
 Power | 100 | MW | 
@@ -105,7 +105,9 @@ Areal energy capacity | 32 | kWh/m2
 
 Name | Value | Unit 
 --- | --- | --- 
-Power per cell stack | 100 | kW
+Area | 6 | m2
+Current density | 200 | A/m2
+Discharge voltage | 1.25 | V
 Lifetime | 20 | year
 
 # Battery Electrolyte
@@ -121,16 +123,13 @@ Electrolyte density | 1400 | kg/m3
 
 Name | Value | Unit
 --- | --- | ---
-Number of periphery items | 1 | -
+Pumps lifetime | 10 | year
 
 # RFB Specific Impacts
 
 Name | GWP_Value | GWP_Unit | Energy_Value | Energy_Unit | Toxicity_Value | Toxicity_Unit | Resource_use_Value | Resource_use_Unit
 --- | --- | --- | --- | --- | --- | --- | --- | --- 
-Stack | 10 | kg | 10 | J | 10 | - | 10 | kg
 Electrolyte | 20 | kg/kg | 100 | kWh/kg | 12 | 1/kg | 2 | kg/kg
-Tank | 2 | kg/kg | 6 | kWh/kg | 20 | 1/kg | 10 | kg/kg
-Periphery | 10 | kg | 10 | J | 10 | - | 10 | kg
 
 # Grid Electricity
 
@@ -154,7 +153,7 @@ UUID of product | 9dc809f5-ec26-4dfa-b484-0f5f83615934
 
 Name | Value | Unit | UUID
 --- | --- | --- | ---
-PV Modules (by area) | {Photovoltaics > Module area > Value, m2} | m2 | 8f0e6658-3ffc-3c37-b92a-b2cd0b369b46
+PV Modules (by area) | {Photovoltaic > Module area > Value, m2} | m2 | 8f0e6658-3ffc-3c37-b92a-b2cd0b369b46
 
 # LCA - Wind turbine
 

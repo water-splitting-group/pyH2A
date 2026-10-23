@@ -74,7 +74,7 @@ Capital spent in 1st year of construction | 100% | -
 
 Name | Value | Path | Unit | Comment
 --- | --- | --- | --- | --- 
-Nominal power | 100 | None | MW | Optimal PV oversize ratio, same as Chang 2020
+Nominal power | 100 | None | MW | 
 Power loss per year | 0.5% | None | - | Based on Chang 2020
 Efficiency | 22% | None | - | Only used for area calculation
 
@@ -92,8 +92,8 @@ Name | Value | Unit | Comment
 --- | --- | --- | ---
 Gross capacity | 1000 | MWh | 
 Lowest charge level | 20% | - | Lowest level to which battery can be discharged
-Capacity loss per year | 0% | - | Loss of capacity per year
-Capacity loss per full charge | 0% | - | loss per full charge equivalent
+Capacity loss per year | 0% | - | No loss of capacity: regeneration
+Capacity loss per full charge | 0% | - | No loss of capacity: regeneration
 Round trip efficiency | 80% | - | 
 Highest charge level | 80% | - | 
 Power | 100 | MW | 
