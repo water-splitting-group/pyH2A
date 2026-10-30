@@ -290,7 +290,7 @@ class DummyDCF:
                     0: Quantity(np.array([4019790003.9999995]), 'kWh'),
                     1: Quantity(np.array([4040389673.9999995]), 'kWh'),
                 },
-                "gross_yearly_mass": Quantity(np.array([584.5649717871395, 584.5649717871395]), 'kg'), 
+                "gross_yearly_mass": Quantity(np.array([20224.13193607285, 19487.648174912134]), 'kg'), 
                 "net_yearly_mass" : Quantity(np.array([19639.56696428571, 18903.083203124996]), 'kg'),
                 "outlet_enthalpy": {0: Quantity(np.array([-2120556.428686637]*24), 'J/kg'), 
                                         1: Quantity(np.array([-2120556.428686637]*24), 'J/kg')}, 

@@ -456,6 +456,7 @@ class Electrolyzer_Plugin:
                                         PP.MW['H2'].unit['kg/mol'],
                                         'kg')
         
+        # Mass of water to inject per year, due to conversion and evaporation 
         self.gross_yearly_mass = Quantity(np.sum(self.hourly_mass_flow[0].unit['kg']
                                                     *
                                                     self.outlet_mass_fraction[0]['H2O'].unit['-']
@@ -463,7 +464,9 @@ class Electrolyzer_Plugin:
                                         *
                                         self.input_dict_resolved['Technical Operating Parameters and Specifications']['Operating capacity factor']['Value'].unit['-']
                                         *
-                                        np.ones_like(self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']),
+                                        np.ones_like(self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-'])
+                                        +
+                                        self.net_yearly_mass.unit['kg'],
                                         'kg')	        
 
 def calculate_electrolyzer_power_demand(power_requirement_increase, nominal_power, year):
