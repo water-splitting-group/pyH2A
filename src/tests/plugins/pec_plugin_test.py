@@ -138,7 +138,7 @@ class DummyDCF:
                 "total_solar_collection_area": Quantity(51334.2, 'm2'),
                 "cell_cost": Quantity(1078018199.9999998, 'USD'),
                 "cell_number": Quantity(28519.0, '-'),
-                "gross_yearly_mass": Quantity(np.array([8120.656052050545, 8120.656052050545]), 'kg'), 
+                "gross_yearly_mass": Quantity(np.array([8159.778720932961, 8159.778720932961]), 'kg'), 
                 "net_yearly_mass" : Quantity(np.array([8042.410714285714, 8042.410714285714]), 'kg'),
                 "outlet_enthalpy": {'first': Quantity(-608468.9013445798, 'J/kg'), 
                                         'last': Quantity(-608468.9013445798, 'J/kg')}, 
