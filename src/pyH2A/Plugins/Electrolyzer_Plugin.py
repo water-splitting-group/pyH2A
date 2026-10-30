@@ -457,7 +457,9 @@ class Electrolyzer_Plugin:
                                         'kg')
         
         # Mass of water to inject per year, due to conversion and evaporation 
-        self.gross_yearly_mass = Quantity(np.sum(self.hourly_mass_flow[0].unit['kg']
+        self.gross_yearly_mass = Quantity(1.5 # 3/2 factor becasue for each mole of H2 that leaves the electrolyzer, 0.5 mol O2 leaves as well. Each side has the same vapour fraction. So, for each water molecule leaving the system on H2 side, 0.5 water molecule leaves on O2 side
+                                          *
+                                          np.sum(self.hourly_mass_flow[0].unit['kg']
                                                     *
                                                     self.outlet_mass_fraction[0]['H2O'].unit['-']
                                                     )
