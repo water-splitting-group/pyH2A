@@ -249,7 +249,7 @@ class DummyDCF:
                 "baggies_cost": Quantity(2146131.051,"USD"),
                 "baggie_number": Quantity(289,"-"),
                 "total_volume": Quantity(56941670,"liter"), 
-                "gross_yearly_mass": Quantity(np.array([334.2569477524765, 334.2569477524765]), 'kg'), 
+                "gross_yearly_mass": Quantity(np.array([8376.66766203819, 8376.66766203819]), 'kg'), 
                 "net_yearly_mass" : Quantity(np.array([8042.410714285714, 8042.410714285714]), 'kg'),
                 "outlet_temperature" : {'first': Quantity(287.75878374896547, 'K'), 
                                         'last': Quantity(292.0720326729867, 'K')}, 

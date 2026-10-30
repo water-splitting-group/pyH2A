@@ -725,6 +725,7 @@ class Photocatalytic_Plugin:
 										*
 										np.ones_like(self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']),
 										'kg')
+		# Mass of water to inject per year, due to conversion and evaporation
 		self.gross_yearly_mass = Quantity(np.sum(self.hourly_mass_flow[0].unit['kg']
 												*
 												self.outlet_mass_fraction[0]['H2O'].unit['-']
@@ -732,7 +733,9 @@ class Photocatalytic_Plugin:
 										*
 										self.input_dict_resolved['Technical Operating Parameters and Specifications']['Operating capacity factor']['Value'].unit['-']
 										*
-										np.ones_like(self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-']),
+										np.ones_like(self.input_dict_resolved['Time']['Years']['Value']['Operation years relative'].unit['-'])
+										+
+										self.net_yearly_mass.unit['kg'],
 										'kg')	
 			
 @njit
